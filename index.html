@@ -729,7 +729,9 @@ function startSession(player){
   document.getElementById('top-bar-username').textContent=player.username;
   G=makeInitialG();
   G.bankroll=parseFloat(player.bankroll)||0;
-  G.startingBankroll=G.bankroll;
+  // P&L = current bankroll (+ bets in play) - lifetime redeemed
+  // startingBankroll represents lifetime redeemed so calcNet() is always correct
+  G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
   updateUI();initDice();
 }
@@ -762,19 +764,22 @@ async function redeemCode(){
   const{data:codeRow,error}=await sb.from('codes').select('*').eq('code',code).maybeSingle();
   if(error||!codeRow){errEl.textContent='Code not found.';btn.disabled=false;btn.textContent='Redeem';return;}
   if(codeRow.used){errEl.textContent='This code has already been used.';btn.disabled=false;btn.textContent='Redeem';return;}
-  const newBankroll=r2(G.bankroll+parseFloat(codeRow.value));
-  const newStarting=r2(G.startingBankroll+parseFloat(codeRow.value));
+  const codeValue=parseFloat(codeRow.value);
+  const newBankroll=r2(G.bankroll+codeValue);
+  const newTotalRedeemed=r2(G.startingBankroll+codeValue);
   await sb.from('codes').update({used:true}).eq('id',codeRow.id);
-  await sb.from('players').update({bankroll:newBankroll}).eq('id',currentPlayer.id);
-  G.bankroll=newBankroll;G.startingBankroll=newStarting;G.bankrollAfterLastRoll=newBankroll;
-  currentPlayer.bankroll=newBankroll;
+  await sb.from('players').update({bankroll:newBankroll,total_redeemed:newTotalRedeemed}).eq('id',currentPlayer.id);
+  G.bankroll=newBankroll;G.startingBankroll=newTotalRedeemed;G.bankrollAfterLastRoll=newBankroll;
+  currentPlayer.bankroll=newBankroll;currentPlayer.total_redeemed=newTotalRedeemed;
   closeRedeemModal();addLog('Code redeemed! +'+fmt(codeRow.value)+' added to your bankroll.','win');
   updateUI();btn.disabled=false;btn.textContent='Redeem';
 }
 
 async function saveToSupabase(){
   if(!currentPlayer)return;
-  await sb.from('players').update({bankroll:G.bankroll,net_pnl:calcNet()}).eq('id',currentPlayer.id);
+  // net_pnl stored for admin visibility: bankroll - total_redeemed (bets in play excluded here)
+  const net=r2(G.bankroll-G.startingBankroll);
+  await sb.from('players').update({bankroll:G.bankroll,net_pnl:net}).eq('id',currentPlayer.id);
 }
 
 // ── DICE ──────────────────────────────────────────────────────────────────────
