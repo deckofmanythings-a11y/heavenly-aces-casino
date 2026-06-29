@@ -546,6 +546,9 @@ function closeRedeemModal() {
   document.getElementById('modal-redeem').classList.add('hidden');
 }
 
+const r2 = n => Math.round(n * 100) / 100;
+const fmt = n => '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+
 async function redeemCode() {
   const code = document.getElementById('redeem-input').value.trim().toUpperCase();
   const errEl = document.getElementById('redeem-error');
