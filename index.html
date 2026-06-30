@@ -783,7 +783,7 @@ async function redeemCode(){
   try{
     res=await fetch(FUNCTIONS_URL+'/redeem',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+EDGE_FN_AUTH_KEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
       body:JSON.stringify({session_token:token,code})
     });
     data=await res.json();
@@ -991,7 +991,7 @@ async function rollDice(){
   const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
   const serverPromise=fetch(FUNCTIONS_URL+'/roll',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+EDGE_FN_AUTH_KEY},
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
     body:requestBody
   }).then(r=>r.json()).catch(()=>({ok:false,error:'network',message:'Network error. Try again.'}));
 
