@@ -597,6 +597,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
 <script>
 const SUPABASE_URL='https://qgiksiauptrqmxsupwqe.supabase.co';
+const FUNCTIONS_URL='https://qgiksiauptrqmxsupwqe.supabase.co/functions/v1';
 const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
@@ -604,7 +605,7 @@ const HOP_MAP={hop11:[1,1],hop12:[1,2],hop13:[1,3],hop14:[1,4],hop15:[1,5],hop16
 const ODDS_PAY={2:6,3:3,4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2,11:3,12:6};
 const ODDS_MULT={2:1,3:2,4:3,5:4,6:5,8:5,9:4,10:3,11:2,12:1};
 const ODDS_LABEL={2:'6:1',3:'3:1',4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1',11:'3:1',12:'6:1'};
-const NUM_DEFS={2:{label:'2',place:[25,5],buyRatio:6},3:{label:'3',place:[13,5],buyRatio:3},4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2},11:{label:'11',place:[13,5],buyRatio:3},12:{label:'12',place:[25,5],buyRatio:6}};
+const NUM_DEFS={2:{label:'2',place:[11,2],buyRatio:119/20/0.95},3:{label:'3',place:[11,4],buyRatio:59/20/0.95},4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2},11:{label:'11',place:[11,4],buyRatio:59/20/0.95},12:{label:'12',place:[11,2],buyRatio:119/20/0.95}};
 const ALL_NUMS=[2,3,4,5,6,8,9,10,11,12];
 const ALL_BOX_NUMS=[2,3,4,5,6,8,9,10,11,12];
 const HARD_NUMS=new Set([4,6,8,10]);
@@ -723,6 +724,25 @@ async function tryRestoreSession(){
   if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
   startSession(data);
 }
+function applyServerGameState(player){
+  // Restore G from the server's authoritative game_state JSONB blob.
+  const gs=player.game_state||{};
+  G.bets=gs.bets||{};
+  G.comeBets=gs.comeBets||[];
+  G.point=gs.point??null;
+  G.phase=gs.phase||'comeout';
+  G.betsOn=!!gs.betsOn;
+  G.betsOffThisRoll=!!gs.betsOffThisRoll;
+  G.passLocked=!!gs.passLocked;
+  if(gs.bonus){
+    G.bonus.low=gs.bonus.low||0;G.bonus.all=gs.bonus.all||0;G.bonus.high=gs.bonus.high||0;
+    G.bonus.lowMax=gs.bonus.lowMax||0;G.bonus.allMax=gs.bonus.allMax||0;G.bonus.highMax=gs.bonus.highMax||0;
+    G.bonus.lowHit=new Set(gs.bonus.lowHit||[]);G.bonus.highHit=new Set(gs.bonus.highHit||[]);
+    G.bonus.open=gs.bonus.open!==undefined?gs.bonus.open:true;
+    G.bonus.locked=!!gs.bonus.locked;
+  }
+  if(gs.rollHistory)G.rollHistory=gs.rollHistory;
+}
 function startSession(player){
   currentPlayer=player;
   document.getElementById('auth-screen').style.display='none';
@@ -732,6 +752,7 @@ function startSession(player){
   G.bankroll=parseFloat(player.bankroll)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
+  applyServerGameState(player);
   updateUI();initDice();
 }
 async function logout(){
@@ -756,23 +777,28 @@ async function redeemCode(){
   const errEl=document.getElementById('redeem-error');const btn=document.getElementById('redeem-btn');
   errEl.textContent='';if(!code){errEl.textContent='Please enter a code.';return;}
   btn.disabled=true;btn.textContent='Checking...';
-  const{data:codeRow,error}=await sb.from('codes').select('*').eq('code',code).maybeSingle();
-  if(error||!codeRow){errEl.textContent='Code not found.';btn.disabled=false;btn.textContent='Redeem';return;}
-  if(codeRow.used){errEl.textContent='This code has already been used.';btn.disabled=false;btn.textContent='Redeem';return;}
-  const codeValue=parseFloat(codeRow.value);
-  const newBankroll=r2(G.bankroll+codeValue);
-  const newTotalRedeemed=r2(G.startingBankroll+codeValue);
-  await sb.from('codes').update({used:true}).eq('id',codeRow.id);
-  await sb.from('players').update({bankroll:newBankroll,total_redeemed:newTotalRedeemed}).eq('id',currentPlayer.id);
-  G.bankroll=newBankroll;G.startingBankroll=newTotalRedeemed;G.bankrollAfterLastRoll=newBankroll;
-  currentPlayer.bankroll=newBankroll;currentPlayer.total_redeemed=newTotalRedeemed;
-  closeRedeemModal();addLog('Code redeemed! +'+fmt(codeValue)+' added.','win');updateUI();
+  const token=localStorage.getItem('craps_session');
+  let res,data;
+  try{
+    res=await fetch(FUNCTIONS_URL+'/redeem',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token,code})
+    });
+    data=await res.json();
+  }catch(e){
+    errEl.textContent='Network error. Try again.';btn.disabled=false;btn.textContent='Redeem';return;
+  }
+  if(!data.ok){
+    errEl.textContent=data.message||'Could not redeem code.';btn.disabled=false;btn.textContent='Redeem';return;
+  }
+  G.bankroll=data.newBankroll;G.startingBankroll=data.newTotalRedeemed;G.bankrollAfterLastRoll=data.newBankroll;
+  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=data.newTotalRedeemed;
+  closeRedeemModal();addLog('Code redeemed! +'+fmt(data.value)+' added.','win');updateUI();
   btn.disabled=false;btn.textContent='Redeem';
 }
-async function saveToSupabase(){
-  if(!currentPlayer)return;
-  await sb.from('players').update({bankroll:G.bankroll,net_pnl:r2(G.bankroll-G.startingBankroll)}).eq('id',currentPlayer.id);
-}
+// saveToSupabase removed: the roll and redeem Edge Functions are now the
+// only things that ever write bankroll/net_pnl/total_redeemed/game_state.
 
 // ── DICE ──────────────────────────────────────────────────────────────────────
 function initDice(){
@@ -910,7 +936,9 @@ function toggleBetsOn(){if(G.phase==='comeout'){G.betsOn=!G.betsOn;updateUI();}e
 function clearRemovable(){
   let ret=0;const keep={};
   for(const k in G.bets){if(CONTRACT.has(k)&&G.passLocked)keep[k]=G.bets[k];else ret=r2(ret+G.bets[k]);}
-  G.comeBets.forEach(c=>{ret=r2(ret+c.flat+(c.odds||0));});G.comeBets=[];G.bets=keep;G.bankroll=r2(G.bankroll+ret);
+  // Established Come bets (on a number, with or without odds) are contract bets — never cleared.
+  // Only an un-numbered waiting Come bet (G.bets['come']) is removable, handled above.
+  G.bets=keep;G.bankroll=r2(G.bankroll+ret);
   ['low','all','high'].forEach(t=>{if(G.bonus[t]>0)G.bankroll=r2(G.bankroll+G.bonus[t]);G.bonus[t]=0;});
   G.bonus.gracePeriod=true;updateUI();
 }
@@ -924,102 +952,84 @@ function loseComesBetsSeven(){
 }
 
 // ── ROLL ──────────────────────────────────────────────────────────────────────
-function rollDice(){
+function gameStateForServer(){
+  return{
+    bets:G.bets,
+    comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
+    bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high,lowMax:G.bonus.lowMax,allMax:G.bonus.allMax,highMax:G.bonus.highMax,lowHit:[...G.bonus.lowHit],highHit:[...G.bonus.highHit],open:G.bonus.open,locked:G.bonus.locked},
+    point:G.point,phase:G.phase,betsOn:G.betsOn,betsOffThisRoll:G.betsOffThisRoll,passLocked:G.passLocked
+  };
+}
+function restoreFromServerState(state){
+  G.bankroll=state.bankroll;
+  G.bets=state.bets||{};
+  G.comeBets=(state.comeBets||[]).map(c=>({num:c.num,flat:c.flat,odds:c.odds||0}));
+  G.point=state.point??null;G.phase=state.phase||'comeout';
+  G.betsOn=!!state.betsOn;G.betsOffThisRoll=!!state.betsOffThisRoll;G.passLocked=!!state.passLocked;
+  if(state.bonus){
+    G.bonus.low=state.bonus.low||0;G.bonus.all=state.bonus.all||0;G.bonus.high=state.bonus.high||0;
+    G.bonus.lowMax=state.bonus.lowMax||0;G.bonus.allMax=state.bonus.allMax||0;G.bonus.highMax=state.bonus.highMax||0;
+    G.bonus.lowHit=new Set(state.bonus.lowHit||[]);G.bonus.highHit=new Set(state.bonus.highHit||[]);
+    G.bonus.open=state.bonus.open!==undefined?state.bonus.open:true;
+    G.bonus.locked=!!state.bonus.locked;
+  }
+  if(state.rollHistory)G.rollHistory=state.rollHistory;
+  G.bankrollAfterLastRoll=G.bankroll;
+}
+async function rollDice(){
   if(animating||!renderer)return;
   if(!hasWorkingBets()){addLog('Place an active bet before rolling.','info');return;}
   G.bonus.gracePeriod=false;
   document.getElementById('roll-btn').disabled=true;
   const nm=r2(G.bankrollAfterLastRoll-G.bankroll);G._lastBetDisplay=nm>0?nm:null;
   snap();
-  const v1=Math.ceil(Math.random()*6),v2=Math.ceil(Math.random()*6),sum=v1+v2,hard=v1===v2;
-  startAnim(v1,v2,()=>{
+  // Immediately animate with a local placeholder roll for responsiveness —
+  // the server is the source of truth and will correct the dice if it differs.
+  const placeholderV1=Math.ceil(Math.random()*6),placeholderV2=Math.ceil(Math.random()*6);
+  const token=localStorage.getItem('craps_session');
+  const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
+  const serverPromise=fetch(FUNCTIONS_URL+'/roll',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY},
+    body:requestBody
+  }).then(r=>r.json()).catch(()=>({ok:false,error:'network',message:'Network error. Try again.'}));
+
+  startAnim(placeholderV1,placeholderV2,async()=>{
+    const data=await serverPromise;
+    if(!data.ok){
+      if(data.error==='sync'&&data.lastGoodState){
+        addLog(data.message||'Sync Error. Restoring last known good bet and bankroll state.','lose');
+        restoreFromServerState(data.lastGoodState);
+      }else{
+        addLog(data.message||'Roll failed. Try again.','lose');
+      }
+      document.getElementById('roll-btn').disabled=false;
+      updateUI();
+      return;
+    }
+    // Server is truth: snap dice to the real values if they differ from placeholder
+    const{d1,d2,sum}=data.roll;
+    if(d1!==placeholderV1||d2!==placeholderV2){
+      die1.quaternion.copy(tQ(d1));die2.quaternion.copy(tQ(d2));
+    }
     document.getElementById('dice-sum-overlay').textContent=sum;document.getElementById('dice-sum-overlay').style.opacity='1';
-    const returned=resolve(v1,v2,sum,hard);
-    chkRepeat();G.bankrollAfterLastRoll=G.bankroll;
-    saveToSupabase();document.getElementById('roll-btn').disabled=false;
-    updateUI();checkBroke();if(returned>0)showWinnerModal(returned);
+    (data.log||[]).forEach(line=>{
+      const cls=/wins?[!:]|WON|made!|returned/i.test(line)?'win':/lost|loses/i.test(line)?'lose':'info';
+      addLog(line,cls);
+    });
+    restoreFromServerState(data.newState);
+    if(data.returned>0)G.lastWin=data.returned;
+    G.rollHistory=data.newState.rollHistory||G.rollHistory;
+    chkRepeat();
+    document.getElementById('roll-btn').disabled=false;
+    updateUI();checkBroke();
+    if(data.returned>0)showWinnerModal(data.returned);
   });
 }
 
-// ── RESOLVE ───────────────────────────────────────────────────────────────────
-function resolve(d1,d2,sum,hard){
-  let returned=0;const act=bActive();
-  if(sum===7)loseBonus();
-  function pP(key,ratio,lbl){const s=G.bets[key]||0;if(!s)return;const p=r2(s*ratio),tot=r2(s+p);G.bankroll=r2(G.bankroll+p);returned=r2(returned+p);G.wins++;addLog(lbl+': +'+fmt(p)+' ('+fmt(tot)+' stays)','win');}
-  function pR(key,ratio,lbl){const s=G.bets[key]||0;if(!s)return;const p=r2(s*ratio),tot=r2(s+p);G.bankroll=r2(G.bankroll+s+p);returned=r2(returned+s+p);G.wins++;delete G.bets[key];addLog(lbl+': +'+fmt(p)+' ('+fmt(tot)+' returned)','win');}
-  function lose(key,lbl){const s=G.bets[key]||0;if(!s)return;G.losses++;delete G.bets[key];addLog(lbl+': lost '+fmt(s),'lose');}
-  const wc=G.bets['come']||0;
-  if(sum!==7){
-    const rem=[];
-    G.comeBets.forEach((cb,i)=>{
-      if(cb.num!==sum)return;
-      const ow=comeOddsActive();const op=r2((cb.odds||0)*(ODDS_PAY[cb.num]||0));
-      if(wc>0&&wc===cb.flat){const pr=r2(cb.flat+op);G.bankroll=r2(G.bankroll+pr);returned=r2(returned+pr);G.wins++;cb.odds=0;delete G.bets['come'];addLog('Come ('+cb.num+') wins — off and on. '+fmt(pr)+' returned, bet stays.','win');}
-      else{const fp=cb.flat;const tot=r2(cb.flat+fp+(cb.odds||0)+op);G.bankroll=r2(G.bankroll+tot);returned=r2(returned+tot);G.wins++;rem.push(i);addLog('Come ('+cb.num+') wins — '+fmt(tot)+' returned.','win');if(cb.odds>0){if(ow)addLog('Come ('+cb.num+') odds win — were working.','win');else addLog('Come ('+cb.num+') odds returned — not working.','info');}}
-    });
-    for(let i=rem.length-1;i>=0;i--)G.comeBets.splice(rem[i],1);
-  }
-  if(sum!==7){
-    const def=NUM_DEFS[sum];
-    if(def&&act){
-      const pk='place'+sum;if(G.bets[pk]){const[w,d]=def.place,s=G.bets[pk],p=r2(s*w/d),tot=r2(s+p);G.bankroll=r2(G.bankroll+p);returned=r2(returned+p);G.wins++;addLog('Place '+sum+': +'+fmt(p)+' ('+fmt(tot)+' stays)','win');}
-      const bk='buy'+sum;if(G.bets[bk]){const s=G.bets[bk],gr=r2(s*def.buyRatio),net=r2(gr-r2(gr*.05)),tot=r2(s+net);G.bankroll=r2(G.bankroll+s+net);returned=r2(returned+s+net);G.wins++;delete G.bets[bk];addLog('Buy '+sum+': +'+fmt(net)+' ('+fmt(tot)+' returned)','win');}
-    }else if(def&&!act&&(G.bets['place'+sum]||G.bets['buy'+sum]))addLog('Place/Buy '+sum+': off','info');
-  }
-  let tag='normal';
-  if(G.phase==='comeout'){
-    if(sum===7){
-      tag='seven-win';const hasPass=!!G.bets['pass'];const hasCome=G.comeBets.length>0;
-      pR('pass',1,'Pass Line');const ow=comeOddsActive();
-      if(hasCome){if(hasPass)addLog('Front line winner — Pass Line wins.','win');if(ow)addLog('Come bets lose — odds were working and also lost.','lose');else addLog('Come bets lose — odds returned (not working).','info');loseComesBetsSeven();}
-      else if(hasPass)addLog('Front line winner — Pass Line wins.','win');
-      if(G.betsOn)sweepPlace();
-    }else{
-      if(G.bonus.open){G.bonus.open=false;G.bonus.locked=true;}
-      G.point=sum;G.phase='point';if(G.bets['pass'])G.passLocked=true;
-      addLog('Point is '+sum,'info');
-      if(G.bets['pass']&&G.bankroll>0)setTimeout(()=>openOddsModal('pass',null,G.bets['pass'],sum),50);
-    }
-  }else{
-    if(sum===7){
-      tag='seven-out';const hadPass=!!G.bets['pass'];const hadCome=G.comeBets.length>0;const hadPreCome=!!G.bets['come'];
-      lose('pass','Pass Line');if(G.bets['passodds']){G.losses++;addLog('Pass Odds: lost '+fmt(G.bets['passodds']),'lose');delete G.bets['passodds'];}
-      sweepPlace();let msg='Seven-out — line away.';if(hadPass)msg+=' Pass Line loses.';if(hadCome||hadPreCome)msg+=' Come bets lose.';addLog(msg,'lose');
-      loseComesBetsSeven();if(G.bets['come'])lose('come','Come (waiting)');
-      G.passLocked=false;G.point=null;G.phase='comeout';resetOff();
-    }else if(sum===G.point){
-      pR('pass',1,'Pass Line');
-      if(G.bets['passodds']){const op=r2(G.bets['passodds']*ODDS_PAY[G.point]),tot=r2(G.bets['passodds']+op);G.bankroll=r2(G.bankroll+G.bets['passodds']+op);returned=r2(returned+G.bets['passodds']+op);G.wins++;addLog('Pass Odds: +'+fmt(op)+' ('+fmt(tot)+' returned)','win');delete G.bets['passodds'];}
-      G.passLocked=false;G.point=null;G.phase='comeout';resetOff();addLog('Point made!','win');tag='point-made';
-    }
-  }
-  if(G.bets['come']){const flat=G.bets['come'];if(sum===7)lose('come','Come');else{delete G.bets['come'];const cbIdx=G.comeBets.length;G.comeBets.push({num:sum,flat,odds:0});addLog('Come → '+sum,'info');const pa=G.bets['place'+sum]||0,ba=G.bets['buy'+sum]||0;if(pa>0||ba>0)setTimeout(()=>openMoveModal(sum,pa,ba),60);else if(G.bankroll>0)setTimeout(()=>openOddsModal('come',cbIdx,flat,sum),60);}}
-  if(G.bets['field']){if([2,3,4,9,10,11,12].includes(sum)){let rx=1;if(sum===2||sum===12)rx=2;pP('field',rx,'Field'+(sum===2||sum===12?' (2x)':''));}else lose('field','Field');}
-  if(G.bets['any7'])sum===7?pP('any7',4,'Seven'):lose('any7','Seven');
-  if(G.bets['midnight'])sum===12?pP('midnight',30,'Midnight'):lose('midnight','Midnight');
-  if(G.bets['aces'])sum===2?pP('aces',30,'Aces'):lose('aces','Aces');
-  if(G.bets['ace2'])sum===3?pP('ace2',15,'Ace-Deuce'):lose('ace2','Ace-Deuce');
-  if(G.bets['yo'])sum===11?pP('yo',15,'Yo'):lose('yo','Yo');
-  if(G.bets['anyCraps'])[2,3,12].includes(sum)?pP('anyCraps',7,'Any Craps'):lose('anyCraps','Any Craps');
-  if(G.bets['horn']){const s=G.bets['horn'],u=r2(s/4);let pr=0;if(sum===2||sum===12)pr=r2(r2(u*30)-r2(u*3));else if(sum===3||sum===11)pr=r2(r2(u*15)-r2(u*3));if([2,3,11,12].includes(sum)){const tot=r2(s+pr);G.bankroll=r2(G.bankroll+s+pr);returned=r2(returned+s+pr);G.wins++;delete G.bets['horn'];addLog('Horn: +'+fmt(pr)+' ('+fmt(tot)+' returned)','win');}else lose('horn','Horn');}
-  if(G.bets['cande']){const s=G.bets['cande'],h=r2(s/2);if([2,3,12].includes(sum)){const p=r2(h*7),tot=r2(s+p);G.bankroll=r2(G.bankroll+s+p);returned=r2(returned+s+p);G.wins++;delete G.bets['cande'];addLog('C&E (craps): +'+fmt(p)+' ('+fmt(tot)+' returned)','win');}else if(sum===11){const p=r2(h*15),tot=r2(s+p);G.bankroll=r2(G.bankroll+s+p);returned=r2(returned+s+p);G.wins++;delete G.bets['cande'];addLog('C&E (eleven): +'+fmt(p)+' ('+fmt(tot)+' returned)','win');}else lose('cande','C&E');}
-  if(G.bets['eleven'])sum===11?pP('eleven',15,'Eleven'):lose('eleven','Eleven');
-  const hT={hard4:4,hard6:6,hard8:8,hard10:10},hM={hard4:7,hard6:9,hard8:9,hard10:7};
-  for(const k in hT){if(!G.bets[k])continue;const t=hT[k];if(sum===t&&hard)pP(k,hM[k],k.replace('hard','Hard '));else if(sum===7||(sum===t&&!hard))lose(k,k.replace('hard','Hard '));}
-  for(const key in HOP_MAP){if(!G.bets[key])continue;const[a,b]=HOP_MAP[key],iH=a===b,m=(d1===a&&d2===b)||(d1===b&&d2===a);if(m)pP(key,iH?30:15,'Hop '+a+'-'+b);else lose(key,'Hop '+a+'-'+b);}
-  if(sum!==7){
-    if(LOW_NUMS.includes(sum))G.bonus.lowHit.add(sum);if(HIGH_NUMS.includes(sum))G.bonus.highHit.add(sum);
-    if(G.bonus.low>0&&LOW_NUMS.every(n=>G.bonus.lowHit.has(n))){const s=G.bonus.low,p=r2(s*30),tot=r2(s+p);G.bankroll=r2(G.bankroll+s+p);returned=r2(returned+s+p);G.wins++;G.bonus.low=0;G.bonus.lowMax=0;G.bonus.lowHit=new Set();addLog('Low Rolls WON! +'+fmt(p)+' ('+fmt(tot)+' returned)','win');}
-    if(G.bonus.high>0&&HIGH_NUMS.every(n=>G.bonus.highHit.has(n))){const s=G.bonus.high,p=r2(s*30),tot=r2(s+p);G.bankroll=r2(G.bankroll+s+p);returned=r2(returned+s+p);G.wins++;G.bonus.high=0;G.bonus.highMax=0;G.bonus.highHit=new Set();addLog('High Rolls WON! +'+fmt(p)+' ('+fmt(tot)+' returned)','win');}
-    if(G.bonus.all>0&&ALL_BONUS.every(n=>G.bonus.lowHit.has(n)||G.bonus.highHit.has(n))){const s=G.bonus.all,p=r2(s*155),tot=r2(s+p);G.bankroll=r2(G.bankroll+s+p);returned=r2(returned+s+p);G.wins++;G.bonus.all=0;G.bonus.allMax=0;addLog("Roll'em All WON! +"+fmt(p)+' ('+fmt(tot)+' returned)','win');}
-  }
-  if(G.betsOffThisRoll&&G.phase==='point')G.betsOffThisRoll=false;
-  if(returned>0)G.lastWin=returned;
-  G.rollHistory.unshift({sum,d1,d2,isHard:hard&&HARD_NUMS.has(sum),tag});
-  return returned;
-}
+// resolve() removed — dice resolution now lives exclusively in the server-side
+// 'roll' Edge Function. The client never computes win/loss locally.
 
-// ── UPDATE UI ─────────────────────────────────────────────────────────────────
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
