@@ -29,10 +29,10 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
 #game-screen{display:none;height:100vh;max-height:100vh;flex-direction:column;overflow:hidden;background:#0a2a14}
 
 /* ── TOP ROW: left col label area + lucky roller + info panel ── */
-#top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);border-bottom:1px solid rgba(255,255,255,.12);min-height:44px;max-height:80px}
+#top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 3 / 16);border-bottom:1px solid rgba(255,255,255,.12);min-height:54px;max-height:100px}
 
 /* Left col header (matches left col width) */
-#left-col-header{width:195px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:3px}
+#left-col-header{width:240px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:3px}
 .mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);cursor:pointer;font-size:10px;font-weight:700;color:rgba(255,255,255,.6)}
 .mode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
 .mode-btn-amt{font-size:9px;color:#ffd700;font-weight:600}
@@ -74,15 +74,13 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
 .hud-item{display:flex;flex-direction:column}
 .hud-lbl{font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
 .hud-val{font-size:11px;font-weight:600;line-height:1.3}
-.pnl-row{display:flex;align-items:center;gap:4px}
-.pnl-lbl{font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em}
-.pnl-val{font-size:13px;font-weight:700}
+
 
 /* ── PLAY AREA ── */
 #play-area{display:flex;flex:1;min-height:0;overflow:hidden}
 
 /* Left column: full height */
-#left-col{width:195px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.15);overflow:hidden}
+#left-col{width:240px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.15);overflow:hidden}
 #panel-hw{display:flex;flex-direction:column;flex:1;overflow:hidden}
 #panel-hop{display:none;flex-direction:column;flex:1;overflow:hidden;padding:3px;gap:3px}
 
@@ -106,16 +104,17 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
 .prop-bar-name{font-size:11px;font-weight:900;letter-spacing:.08em}
 .prop-bar-odds{font-size:9px;font-weight:600}
 .prop-bar-stk{font-size:9px;color:#ffd700;min-height:11px;text-align:center}
-.horn-grid{display:grid;grid-template-columns:1fr 1fr 1fr;flex:1}
-.horn-cell{padding:3px 2px;text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0.5px solid rgba(255,255,255,.08);position:relative}
+.horn-stack{display:flex;flex-direction:column;flex:5;min-height:0}
+.horn-row{display:flex;flex:2;min-height:0}
+.horn-row.horn-mid-row{flex:1}
+.horn-cell{padding:3px 2px;text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0.5px solid rgba(255,255,255,.08);position:relative;flex:1}
 .horn-cell:hover{background:rgba(255,255,255,.1)}
-.hc-dice{font-size:24px;line-height:1}
+.hc-dice{font-size:36px;line-height:1}
 .hc-pay{font-size:7px;color:rgba(255,255,255,.45);margin-top:1px}
 .hc-stk{font-size:8px;color:#ffd700;min-height:10px}
-.horn-center{background:rgba(0,40,80,.4);grid-row:1/3}
+.horn-center{background:rgba(0,40,80,.4);flex:1;flex-direction:row;gap:6px}
 .horn-center:hover{background:rgba(0,65,130,.55)}
-.horn-center-name{font-size:10px;font-weight:900;color:#7ec8ff;letter-spacing:.05em}
-.horn-center-sub{font-size:7px;color:rgba(255,255,255,.4);margin-top:1px}
+.horn-center-name{font-size:11px;font-weight:900;color:#7ec8ff;letter-spacing:.05em}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:8px;font-weight:700;color:rgba(255,255,255,.55);background:rgba(0,0,0,.3);letter-spacing:.05em;flex-shrink:0}
@@ -372,14 +371,14 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
         </div>
         <button class="mbtn-bonus" id="mb-bonus-low" onclick="event.stopPropagation();bonusRemove('low')">−</button>
       </div>
-      <!-- Dice + Roll'em All -->
-      <div id="dice-zone">
-        <div id="dice-canvas-wrap">
-          <canvas id="dice-canvas" width="160" height="56"></canvas>
+      <!-- Dice (2u) + Roll'em All (1u) stacked -->
+      <div id="dice-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:0">
+        <div id="dice-canvas-wrap" style="flex:2;display:flex;align-items:center;justify-content:center;position:relative;width:160px">
+          <canvas id="dice-canvas" width="160" height="56" style="width:100%;height:100%;object-fit:contain"></canvas>
           <div id="dice-sum-overlay">—</div>
         </div>
-        <div class="lr-bonus-wrap" style="width:160px;flex:none">
-          <div class="rollem-all-bar" id="bbonus-all-bar" onclick="bonusBet('all')" style="width:100%">
+        <div class="lr-bonus-wrap" style="width:160px;flex:1;flex-shrink:0">
+          <div class="rollem-all-bar" id="bbonus-all-bar" onclick="bonusBet('all')" style="width:100%;height:100%">
             <div><span class="lr-title" style="font-size:8px">Roll'em All</span><span class="lr-pay">156 for 1</span></div>
             <span class="lr-stake" id="bstk-all" style="font-size:10px"></span>
             <span class="lr-note" id="bnote-all" style="font-size:8px">Bet after 7</span>
@@ -412,10 +411,7 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
         <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
         <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
       </div>
-      <div class="pnl-row">
-        <span class="pnl-lbl">P&amp;L</span>
-        <span class="pnl-val" id="hud-pnl" style="color:#7ee87e">+$0.00</span>
-      </div>
+
     </div>
   </div><!-- end top-row -->
 
@@ -434,12 +430,18 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
         </div>
         <div id="prop-block">
           <div class="bwrap"><div id="bet-any7" onclick="placeBet('any7')" class="prop-bar" style="background:rgba(0,60,20,.7);border-top:1px solid rgba(255,255,255,.1)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">SEVEN</div><div class="prop-bar-stk" id="stk-any7"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span></div><button class="mbtn" id="m-any7" onclick="removeBet('any7')" style="top:4px">−</button></div>
-          <div class="horn-grid">
-            <div class="horn-cell" style="grid-column:1;grid-row:1;border-bottom:0.5px solid rgba(255,255,255,.1)" id="bet-aces" onclick="placeBet('aces')"><span class="hc-dice">⚀⚀</span><div class="hc-pay">31 for 1</div><div class="hc-stk" id="stk-aces"></div><button class="mbtn" id="m-aces" onclick="event.stopPropagation();removeBet('aces')" style="top:1px;right:1px">−</button></div>
-            <div class="horn-cell horn-center" style="grid-column:2;grid-row:1/3" id="bet-horn" onclick="placeBet('horn')"><div class="horn-center-name">HORN<br>BET</div><div class="horn-center-sub">2·3·11·12</div><div class="hc-stk" id="stk-horn"></div><button class="mbtn" id="m-horn" onclick="event.stopPropagation();removeBet('horn')" style="top:2px;right:2px">−</button></div>
-            <div class="horn-cell" style="grid-column:3;grid-row:1;border-bottom:0.5px solid rgba(255,255,255,.1)" id="bet-ace2" onclick="placeBet('ace2')"><span class="hc-dice">⚀⚁</span><div class="hc-pay">16 for 1</div><div class="hc-stk" id="stk-ace2"></div><button class="mbtn" id="m-ace2" onclick="event.stopPropagation();removeBet('ace2')" style="top:1px;right:1px">−</button></div>
-            <div class="horn-cell" style="grid-column:1;grid-row:2" id="bet-midnight" onclick="placeBet('midnight')"><span class="hc-dice">⚅⚅</span><div class="hc-pay">31 for 1</div><div class="hc-stk" id="stk-midnight"></div><button class="mbtn" id="m-midnight" onclick="event.stopPropagation();removeBet('midnight')" style="bottom:1px;right:1px">−</button></div>
-            <div class="horn-cell" style="grid-column:3;grid-row:2" id="bet-yo" onclick="placeBet('yo')"><span class="hc-dice">⚄⚅</span><div class="hc-pay">16 for 1</div><div class="hc-stk" id="stk-yo"></div><button class="mbtn" id="m-yo" onclick="event.stopPropagation();removeBet('yo')" style="bottom:1px;right:1px">−</button></div>
+          <div class="horn-stack">
+            <div class="horn-row" style="border-bottom:0.5px solid rgba(255,255,255,.1)">
+              <div class="horn-cell" id="bet-aces" onclick="placeBet('aces')"><span class="hc-dice">⚀⚀</span><div class="hc-pay">31 for 1</div><div class="hc-stk" id="stk-aces"></div><button class="mbtn" id="m-aces" onclick="event.stopPropagation();removeBet('aces')" style="top:1px;right:1px">−</button></div>
+              <div class="horn-cell" style="border-left:0.5px solid rgba(255,255,255,.08)" id="bet-ace2" onclick="placeBet('ace2')"><span class="hc-dice">⚀⚁</span><div class="hc-pay">16 for 1</div><div class="hc-stk" id="stk-ace2"></div><button class="mbtn" id="m-ace2" onclick="event.stopPropagation();removeBet('ace2')" style="top:1px;right:1px">−</button></div>
+            </div>
+            <div class="horn-row horn-mid-row" style="border-bottom:0.5px solid rgba(255,255,255,.1)">
+              <div class="horn-cell horn-center" id="bet-horn" onclick="placeBet('horn')"><div class="horn-center-name">HORN BET</div><div class="hc-stk" id="stk-horn"></div><button class="mbtn" id="m-horn" onclick="event.stopPropagation();removeBet('horn')" style="top:2px;right:2px">−</button></div>
+            </div>
+            <div class="horn-row">
+              <div class="horn-cell" id="bet-midnight" onclick="placeBet('midnight')"><span class="hc-dice">⚅⚅</span><div class="hc-pay">31 for 1</div><div class="hc-stk" id="stk-midnight"></div><button class="mbtn" id="m-midnight" onclick="event.stopPropagation();removeBet('midnight')" style="bottom:1px;right:1px">−</button></div>
+              <div class="horn-cell" style="border-left:0.5px solid rgba(255,255,255,.08)" id="bet-yo" onclick="placeBet('yo')"><span class="hc-dice">⚄⚅</span><div class="hc-pay">16 for 1</div><div class="hc-stk" id="stk-yo"></div><button class="mbtn" id="m-yo" onclick="event.stopPropagation();removeBet('yo')" style="bottom:1px;right:1px">−</button></div>
+            </div>
           </div>
           <div class="bwrap"><div id="bet-anyCraps" onclick="placeBet('anyCraps')" class="prop-bar" style="background:rgba(0,60,20,.7);border-top:1px solid rgba(255,255,255,.1)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">ANY CRAPS</div><div class="prop-bar-stk" id="stk-anyCraps"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span></div><button class="mbtn" id="m-anyCraps" onclick="removeBet('anyCraps')" style="bottom:4px">−</button></div>
         </div>
@@ -450,33 +452,33 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
         <div style="background:rgba(0,0,0,.2);border-radius:4px;overflow:hidden;flex-shrink:0">
           <div class="hop-section-hdr">31 for 1 · HOPPING HARD WAYS · 31 for 1</div>
           <div class="hop-hard-grid">
-            <div class="bwrap"><div class="bb" id="bet-hop22" onclick="placeBet('hop22')"><span style="font-size:22px">⚁⚁</span><span class="stk" id="stk-hop22"></span></div><button class="mbtn" id="m-hop22" onclick="removeBet('hop22')">−</button></div>
-            <div class="bwrap"><div class="bb" id="bet-hop44" onclick="placeBet('hop44')"><span style="font-size:22px">⚃⚃</span><span class="stk" id="stk-hop44"></span></div><button class="mbtn" id="m-hop44" onclick="removeBet('hop44')">−</button></div>
-            <div class="bwrap"><div class="bb" id="bet-hop33" onclick="placeBet('hop33')"><span style="font-size:22px">⚂⚂</span><span class="stk" id="stk-hop33"></span></div><button class="mbtn" id="m-hop33" onclick="removeBet('hop33')">−</button></div>
-            <div class="bwrap"><div class="bb" id="bet-hop55" onclick="placeBet('hop55')"><span style="font-size:22px">⚄⚄</span><span class="stk" id="stk-hop55"></span></div><button class="mbtn" id="m-hop55" onclick="removeBet('hop55')">−</button></div>
+            <div class="bwrap"><div class="bb" id="bet-hop22" onclick="placeBet('hop22')"><span style="font-size:36px">⚁⚁</span><span class="stk" id="stk-hop22"></span></div><button class="mbtn" id="m-hop22" onclick="removeBet('hop22')">−</button></div>
+            <div class="bwrap"><div class="bb" id="bet-hop44" onclick="placeBet('hop44')"><span style="font-size:36px">⚃⚃</span><span class="stk" id="stk-hop44"></span></div><button class="mbtn" id="m-hop44" onclick="removeBet('hop44')">−</button></div>
+            <div class="bwrap"><div class="bb" id="bet-hop33" onclick="placeBet('hop33')"><span style="font-size:36px">⚂⚂</span><span class="stk" id="stk-hop33"></span></div><button class="mbtn" id="m-hop33" onclick="removeBet('hop33')">−</button></div>
+            <div class="bwrap"><div class="bb" id="bet-hop55" onclick="placeBet('hop55')"><span style="font-size:36px">⚄⚄</span><span class="stk" id="stk-hop55"></span></div><button class="mbtn" id="m-hop55" onclick="removeBet('hop55')">−</button></div>
           </div>
         </div>
         <div style="background:rgba(0,0,0,.2);border-radius:4px;overflow:hidden;flex:1;display:flex;flex-direction:column">
           <div class="hop-section-hdr">16 for 1 · HOP BETS · 16 for 1</div>
           <div class="hop-easy-grid">
             <div class="hop-col">
-              <div class="bwrap"><div class="bb" id="bet-hop13" onclick="placeBet('hop13')"><span style="font-size:16px">⚀⚂</span><span class="stk" id="stk-hop13"></span></div><button class="mbtn" id="m-hop13" onclick="removeBet('hop13')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop14" onclick="placeBet('hop14')"><span style="font-size:16px">⚀⚃</span><span class="stk" id="stk-hop14"></span></div><button class="mbtn" id="m-hop14" onclick="removeBet('hop14')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop23" onclick="placeBet('hop23')"><span style="font-size:16px">⚁⚂</span><span class="stk" id="stk-hop23"></span></div><button class="mbtn" id="m-hop23" onclick="removeBet('hop23')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop24" onclick="placeBet('hop24')"><span style="font-size:16px">⚁⚃</span><span class="stk" id="stk-hop24"></span></div><button class="mbtn" id="m-hop24" onclick="removeBet('hop24')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop15" onclick="placeBet('hop15')"><span style="font-size:16px">⚀⚄</span><span class="stk" id="stk-hop15"></span></div><button class="mbtn" id="m-hop15" onclick="removeBet('hop15')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop13" onclick="placeBet('hop13')"><span style="font-size:36px">⚀⚂</span><span class="stk" id="stk-hop13"></span></div><button class="mbtn" id="m-hop13" onclick="removeBet('hop13')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop14" onclick="placeBet('hop14')"><span style="font-size:36px">⚀⚃</span><span class="stk" id="stk-hop14"></span></div><button class="mbtn" id="m-hop14" onclick="removeBet('hop14')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop23" onclick="placeBet('hop23')"><span style="font-size:36px">⚁⚂</span><span class="stk" id="stk-hop23"></span></div><button class="mbtn" id="m-hop23" onclick="removeBet('hop23')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop24" onclick="placeBet('hop24')"><span style="font-size:36px">⚁⚃</span><span class="stk" id="stk-hop24"></span></div><button class="mbtn" id="m-hop24" onclick="removeBet('hop24')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop15" onclick="placeBet('hop15')"><span style="font-size:36px">⚀⚄</span><span class="stk" id="stk-hop15"></span></div><button class="mbtn" id="m-hop15" onclick="removeBet('hop15')">−</button></div>
             </div>
             <div class="hop-col">
-              <div class="bwrap"><div class="bb" id="bet-hop16" onclick="placeBet('hop16')"><span style="font-size:16px">⚀⚅</span><span class="stk" id="stk-hop16"></span></div><button class="mbtn" id="m-hop16" onclick="removeBet('hop16')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop25" onclick="placeBet('hop25')"><span style="font-size:16px">⚁⚄</span><span class="stk" id="stk-hop25"></span></div><button class="mbtn" id="m-hop25" onclick="removeBet('hop25')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop34" onclick="placeBet('hop34')"><span style="font-size:16px">⚂⚃</span><span class="stk" id="stk-hop34"></span></div><button class="mbtn" id="m-hop34" onclick="removeBet('hop34')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop16" onclick="placeBet('hop16')"><span style="font-size:36px">⚀⚅</span><span class="stk" id="stk-hop16"></span></div><button class="mbtn" id="m-hop16" onclick="removeBet('hop16')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop25" onclick="placeBet('hop25')"><span style="font-size:36px">⚁⚄</span><span class="stk" id="stk-hop25"></span></div><button class="mbtn" id="m-hop25" onclick="removeBet('hop25')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop34" onclick="placeBet('hop34')"><span style="font-size:36px">⚂⚃</span><span class="stk" id="stk-hop34"></span></div><button class="mbtn" id="m-hop34" onclick="removeBet('hop34')">−</button></div>
             </div>
             <div class="hop-col">
-              <div class="bwrap"><div class="bb" id="bet-hop26" onclick="placeBet('hop26')"><span style="font-size:16px">⚁⚅</span><span class="stk" id="stk-hop26"></span></div><button class="mbtn" id="m-hop26" onclick="removeBet('hop26')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop35" onclick="placeBet('hop35')"><span style="font-size:16px">⚂⚄</span><span class="stk" id="stk-hop35"></span></div><button class="mbtn" id="m-hop35" onclick="removeBet('hop35')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop36" onclick="placeBet('hop36')"><span style="font-size:16px">⚂⚅</span><span class="stk" id="stk-hop36"></span></div><button class="mbtn" id="m-hop36" onclick="removeBet('hop36')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop45" onclick="placeBet('hop45')"><span style="font-size:16px">⚃⚄</span><span class="stk" id="stk-hop45"></span></div><button class="mbtn" id="m-hop45" onclick="removeBet('hop45')">−</button></div>
-              <div class="bwrap"><div class="bb" id="bet-hop46" onclick="placeBet('hop46')"><span style="font-size:16px">⚃⚅</span><span class="stk" id="stk-hop46"></span></div><button class="mbtn" id="m-hop46" onclick="removeBet('hop46')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop26" onclick="placeBet('hop26')"><span style="font-size:36px">⚁⚅</span><span class="stk" id="stk-hop26"></span></div><button class="mbtn" id="m-hop26" onclick="removeBet('hop26')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop35" onclick="placeBet('hop35')"><span style="font-size:36px">⚂⚄</span><span class="stk" id="stk-hop35"></span></div><button class="mbtn" id="m-hop35" onclick="removeBet('hop35')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop36" onclick="placeBet('hop36')"><span style="font-size:36px">⚂⚅</span><span class="stk" id="stk-hop36"></span></div><button class="mbtn" id="m-hop36" onclick="removeBet('hop36')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop45" onclick="placeBet('hop45')"><span style="font-size:36px">⚃⚄</span><span class="stk" id="stk-hop45"></span></div><button class="mbtn" id="m-hop45" onclick="removeBet('hop45')">−</button></div>
+              <div class="bwrap"><div class="bb" id="bet-hop46" onclick="placeBet('hop46')"><span style="font-size:36px">⚃⚅</span><span class="stk" id="stk-hop46"></span></div><button class="mbtn" id="m-hop46" onclick="removeBet('hop46')">−</button></div>
             </div>
           </div>
         </div>
@@ -581,6 +583,7 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
         <div class="chip" style="background:#7d4f30;border-color:#5d3a22" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" style="background:#2c2c2c;border-color:#111" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1"></div>
+        <span id="hud-pnl" style="font-size:11px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
         <button class="bar-btn" id="double-btn" onclick="doubleBet()">Double</button>
         <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
