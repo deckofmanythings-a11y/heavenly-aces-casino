@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff}
+html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
 
 /* ── AUTH ── */
 #auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;padding:20px}
@@ -26,10 +26,10 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
 .auth-error{background:rgba(180,0,0,.25);border:1px solid rgba(255,80,80,.3);border-radius:6px;padding:8px 10px;font-size:11px;color:#ff9a9a;margin-bottom:12px;display:none}
 
 /* ── GAME: full viewport, no scroll ── */
-#game-screen{display:none;height:100vh;max-height:100vh;width:100vw;flex-direction:column;overflow:hidden;background:#0a2a14}
+#game-screen{display:none;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a2a14}
 
 /* ── TOP ROW: left col label area + lucky roller + info panel ── */
-#top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 3 / 16);border-bottom:1px solid rgba(255,255,255,.12)}
+#top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 3 / 16);height:calc(100dvh * 3 / 16);border-bottom:1px solid rgba(255,255,255,.12)}
 
 /* Left col header (matches left col width) */
 #left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:3px}
@@ -199,7 +199,7 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
 #pass-main.active-bar{background:rgba(255,215,0,.15)}
 
 /* ── BOTTOM SECTION ── */
-#bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
+#bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
 #bottom-left{flex:1;display:flex;flex-direction:column;min-width:0}
 #history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.35);border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
 #roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
@@ -531,11 +531,11 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
         </div>
         <!-- Come / Field / Pass with 1-unit spacers -->
         <div id="cfp-zone">
-          <div style="flex:1;min-height:0"></div>
+          <div style="flex:.5;min-height:0"></div>
           <div class="zone-bar" id="come-bar" onclick="placeBet('come')">
             <div style="text-align:center"><div class="zone-name">COME</div><div class="zone-stk" id="stk-come"></div></div>
           </div>
-          <div style="flex:1;min-height:0"></div>
+          <div style="flex:.5;min-height:0"></div>
           <div class="zone-bar" id="field-bar" onclick="placeBet('field')">
             <div style="text-align:center">
               <div style="font-size:8px;color:rgba(255,255,255,.55)">2 · 3 · 4 · 9 · 10 · 11 · 12</div>
@@ -545,7 +545,7 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,sans-serif;backgroun
             </div>
             <button class="mbtn" id="m-field" onclick="event.stopPropagation();removeBet('field')" style="top:3px;right:3px">−</button>
           </div>
-          <div style="flex:1;min-height:0"></div>
+          <div style="flex:.5;min-height:0"></div>
           <div id="pass-bar">
             <div id="pass-odds-cell" onclick="openPassOddsManual()">
               <span class="odds-lbl">ODDS</span>
