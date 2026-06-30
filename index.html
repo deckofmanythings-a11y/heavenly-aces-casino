@@ -623,8 +623,9 @@ const oddsLim=(flat,pt)=>r2(flat*(ODDS_MULT[pt]||1));
 function makeInitialG(){return{bankroll:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),open:true,locked:false,gracePeriod:false}};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
-let animating=false,animStart=0;
+let animating=false,animStart=0,tumbling=false,tumbleStart=0;
 const ANIM_MS=1100;
+const LAND_MS=550; // shorter landing animation once real values are known
 let tgt1,tgt2,src1,src2,onDone=null,die1,die2,renderer,scene,camera,THREE=null;
 let winnerTimer=null,_winnerAmount=0,_winnerAnimating=false;
 
@@ -826,8 +827,46 @@ const FMAT=[2,5,3,4,1,6];
 function makeDie(x){const m=FMAT.map(v=>new THREE.MeshPhongMaterial({map:pipTex(v),shininess:60}));const d=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5),m);d.position.x=x;scene.add(d);return d;}
 function tQ(v){const Q=new THREE.Quaternion(),PI=Math.PI,H=PI/2,m={1:new THREE.Euler(0,0,0),6:new THREE.Euler(0,PI,0),2:new THREE.Euler(0,-H,0),5:new THREE.Euler(0,H,0),3:new THREE.Euler(H,0,0),4:new THREE.Euler(-H,0,0)};Q.setFromEuler(m[v]||new THREE.Euler(0,0,0));return Q;}
 function eO(t){return 1-Math.pow(1-t,3);}function eIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
-function startAnim(v1,v2,cb){tgt1=tQ(v1);tgt2=tQ(v2);src1.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6,Math.random()*5));src2.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6+Math.PI,Math.random()*5));animating=true;animStart=performance.now();onDone=cb;document.getElementById('dice-sum-overlay').style.opacity='0';}
-function renderLoop(now){requestAnimationFrame(renderLoop);if(!renderer)return;if(animating){const t=Math.min((now-animStart)/ANIM_MS,1),sT=eIO(Math.min(t/.6,1)),seT=eO(Math.max((t-.5)/.5,0));const a1=new THREE.Vector3(.55,.82,.14).normalize(),a2=new THREE.Vector3(-.48,.75,.46).normalize();const s1=new THREE.Quaternion().setFromAxisAngle(a1,sT*Math.PI*6).multiply(src1);const s2=new THREE.Quaternion().setFromAxisAngle(a2,sT*Math.PI*5.4).multiply(src2);die1.quaternion.slerpQuaternions(s1,tgt1,seT);die2.quaternion.slerpQuaternions(s2,tgt2,seT);if(t>=1){animating=false;die1.quaternion.copy(tgt1);die2.quaternion.copy(tgt2);if(onDone){onDone();onDone=null;}}}renderer.render(scene,camera);}
+function startTumble(){
+  // Indefinite tumble with no target — loops forever until landDice() is called.
+  src1.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6,Math.random()*5));
+  src2.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6+Math.PI,Math.random()*5));
+  tumbling=true;tumbleStart=performance.now();
+  document.getElementById('dice-sum-overlay').style.opacity='0';
+}
+function landDice(v1,v2,cb){
+  // Transition from tumbling into a short settle animation onto the true values.
+  tumbling=false;
+  tgt1=tQ(v1);tgt2=tQ(v2);
+  // Capture current rotation as the new src so the landing blends smoothly from wherever the tumble left off
+  src1.copy(die1.quaternion);src2.copy(die2.quaternion);
+  animating=true;animStart=performance.now();onDone=cb;
+}
+function startAnim(v1,v2,cb){
+  // Legacy single-phase animation (kept for any other callers, currently unused by rollDice)
+  tgt1=tQ(v1);tgt2=tQ(v2);
+  src1.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6,Math.random()*5));
+  src2.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6+Math.PI,Math.random()*5));
+  animating=true;animStart=performance.now();onDone=cb;
+  document.getElementById('dice-sum-overlay').style.opacity='0';
+}
+function renderLoop(now){
+  requestAnimationFrame(renderLoop);
+  if(!renderer)return;
+  if(tumbling){
+    const t=((now-tumbleStart)/600)%1; // continuous spin cycle, never settles
+    const a1=new THREE.Vector3(.55,.82,.14).normalize(),a2=new THREE.Vector3(-.48,.75,.46).normalize();
+    const s1=new THREE.Quaternion().setFromAxisAngle(a1,t*Math.PI*2).multiply(src1);
+    const s2=new THREE.Quaternion().setFromAxisAngle(a2,t*Math.PI*2*0.9).multiply(src2);
+    die1.quaternion.copy(s1);die2.quaternion.copy(s2);
+  }else if(animating){
+    const t=Math.min((now-animStart)/LAND_MS,1),seT=eO(t);
+    die1.quaternion.slerpQuaternions(src1,tgt1,seT);
+    die2.quaternion.slerpQuaternions(src2,tgt2,seT);
+    if(t>=1){animating=false;die1.quaternion.copy(tgt1);die2.quaternion.copy(tgt2);if(onDone){onDone();onDone=null;}}
+  }
+  renderer.render(scene,camera);
+}
 
 // ── NUM STRIP ─────────────────────────────────────────────────────────────────
 function buildStrip(){
@@ -978,41 +1017,44 @@ function restoreFromServerState(state){
   G.bankrollAfterLastRoll=G.bankroll;
 }
 async function rollDice(){
-  if(animating||!renderer)return;
+  if(animating||tumbling||!renderer)return;
   if(!hasWorkingBets()){addLog('Place an active bet before rolling.','info');return;}
   G.bonus.gracePeriod=false;
   document.getElementById('roll-btn').disabled=true;
   const nm=r2(G.bankrollAfterLastRoll-G.bankroll);G._lastBetDisplay=nm>0?nm:null;
   snap();
-  // Immediately animate with a local placeholder roll for responsiveness —
-  // the server is the source of truth and will correct the dice if it differs.
-  const placeholderV1=Math.ceil(Math.random()*6),placeholderV2=Math.ceil(Math.random()*6);
+  // Dice tumble indefinitely with no resting value — they never show a wrong
+  // number, since they only ever land once the server's true roll is known.
+  startTumble();
   const token=localStorage.getItem('craps_session');
   const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
-  const serverPromise=fetch(FUNCTIONS_URL+'/roll',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
-    body:requestBody
-  }).then(r=>r.json()).catch(()=>({ok:false,error:'network',message:'Network error. Try again.'}));
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/roll',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:requestBody
+    });
+    data=await res.json();
+  }catch(e){
+    data={ok:false,error:'network',message:'Network error. Try again.'};
+  }
 
-  startAnim(placeholderV1,placeholderV2,async()=>{
-    const data=await serverPromise;
-    if(!data.ok){
-      if(data.error==='sync'&&data.lastGoodState){
-        addLog(data.message||'Sync Error. Restoring last known good bet and bankroll state.','lose');
-        restoreFromServerState(data.lastGoodState);
-      }else{
-        addLog(data.message||'Roll failed. Try again.','lose');
-      }
-      document.getElementById('roll-btn').disabled=false;
-      updateUI();
-      return;
+  if(!data.ok){
+    tumbling=false; // stop tumbling, freeze dice wherever they are
+    if(data.error==='sync'&&data.lastGoodState){
+      addLog(data.message||'Sync Error. Restoring last known good bet and bankroll state.','lose');
+      restoreFromServerState(data.lastGoodState);
+    }else{
+      addLog(data.message||'Roll failed. Try again.','lose');
     }
-    // Server is truth: snap dice to the real values if they differ from placeholder
-    const{d1,d2,sum}=data.roll;
-    if(d1!==placeholderV1||d2!==placeholderV2){
-      die1.quaternion.copy(tQ(d1));die2.quaternion.copy(tQ(d2));
-    }
+    document.getElementById('roll-btn').disabled=false;
+    updateUI();
+    return;
+  }
+
+  const{d1,d2,sum}=data.roll;
+  landDice(d1,d2,()=>{
     document.getElementById('dice-sum-overlay').textContent=sum;document.getElementById('dice-sum-overlay').style.opacity='1';
     (data.log||[]).forEach(line=>{
       const cls=/wins?[!:]|WON|made!|returned/i.test(line)?'win':/lost|loses/i.test(line)?'lose':'info';
