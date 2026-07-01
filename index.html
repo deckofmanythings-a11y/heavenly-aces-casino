@@ -709,21 +709,22 @@ function canSwitchMode(){
 async function switchGameMode(mode){
   if(activeGame===mode)return;
   if(!canSwitchMode()){addLog('Clear contract bets before switching modes.','info');return;}
-  // Act like Clear — return removable bets
   clearRemovable();
-  // Save current G into the old mode's sub-state slot (it's now cleared, that's fine)
   applyGameMode(mode);
-  // Load the new mode's saved state (if any)
   const savedGs=currentPlayer&&currentPlayer.game_state;
   if(savedGs&&savedGs[mode]){
     applyServerGameState({game_state:{[mode]:savedGs[mode]}},mode);
   }else{
-    // Fresh state for this mode
     G.bets={};G.comeBets=[];G.point=null;G.phase='comeout';
     G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
     G.bonus={low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),open:true,locked:false,gracePeriod:false};
   }
-  // Persist activeGame to DB immediately
+  // Always allow switching after a mode change — a saved locked bonus from a previous
+  // session in that mode is stale. We're not mid-roll, so unlock everything.
+  G.bonus.locked=false;
+  G.bonus.gracePeriod=false;
+  G.passLocked=false;
+  G.comeBets=[];
   if(currentPlayer){
     const existingGs=currentPlayer.game_state||{};
     const newGs={...existingGs,activeGame:mode};
@@ -1224,6 +1225,20 @@ async function rollDice(){
     updateUI();checkBroke();
     if(data.returned>0)showWinnerModal(data.returned);
     if(data.capped)setTimeout(openCapModal, data.returned>0?4200:300);
+    // Auto-open odds modal when a point is set (Pass Line with no odds yet)
+    // or when a new Come bet just landed on a number (no odds yet).
+    // Delay slightly so the winner modal doesn't collide.
+    const oddsDelay=(data.returned>0)?4400:300;
+    setTimeout(()=>{
+      if(document.getElementById('modal-odds')&&!document.getElementById('modal-odds').classList.contains('hidden'))return;
+      // Check Pass Line odds opportunity
+      if(G.phase==='point'&&G.bets['pass']&&!G.bets['passodds']&&G.bankroll>0){
+        openOddsModal('pass',null,G.bets['pass'],G.point);return;
+      }
+      // Check for Come bets with no odds (pick the first one)
+      const newCome=G.comeBets.findIndex(cb=>cb.num>0&&(!cb.odds||cb.odds===0));
+      if(newCome>=0&&G.bankroll>0)openOddsModal('come',newCome,G.comeBets[newCome].flat,G.comeBets[newCome].num);
+    },oddsDelay);
   });
 }
 
