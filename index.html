@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Crapless Craps</title>
+<title>Rated Hex Craps</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -146,8 +146,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
 /* Number strip */
 #num-zone{flex:5;display:flex;flex-direction:column;min-height:0}
-#puck-row-h{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:1px 3px 0;height:12px;flex-shrink:0}
-#num-strip-h{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:0 3px 2px;flex:1;min-height:0}
+#puck-row-h{display:grid;grid-template-columns:repeat(var(--num-cols,10),1fr);gap:2px;padding:1px 3px 0;height:12px;flex-shrink:0}
+#num-strip-h{display:grid;grid-template-columns:repeat(var(--num-cols,10),1fr);gap:2px;padding:0 3px 2px;flex:1;min-height:0}
 .num-box{border:0.5px solid rgba(255,255,255,.2);border-radius:3px;overflow:hidden;background:rgba(0,0,0,.2);display:flex;flex-direction:column;height:100%}
 .num-box.is-point{border:2px solid #fff;box-shadow:0 0 5px rgba(255,255,255,.4)}
 .nb-buy{background:rgba(0,80,180,.2);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
@@ -198,6 +198,20 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #pass-main:hover{background:rgba(0,80,180,.35)}
 #pass-main.active-bar{background:rgba(255,215,0,.15)}
 
+/* ── GAME MODE TOGGLE ── */
+#game-mode-toggle{display:flex;gap:3px;padding:3px;width:100%;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
+.gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
+.gmode-btn:disabled{opacity:.35;cursor:not-allowed}
+.gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(255,255,255,.4);display:block}
+.gmode-btn.active .gmode-sub{color:rgba(255,215,0,.6)}
+/* Don't Pass stub */
+#dont-pass-stub{display:none;flex:.5;min-height:0;border-radius:4px;background:rgba(40,0,0,.3);border:0.5px solid rgba(255,80,80,.2);align-items:center;justify-content:center;flex-direction:column;opacity:.5;cursor:not-allowed}
+.dp-stub-name{font-size:16px;font-weight:900;letter-spacing:.08em;color:rgba(255,100,100,.7)}
+.dp-stub-note{font-size:11px;color:rgba(255,255,255,.3)}
+/* Field info text per mode */
+.field-info-crapless{display:block}
+.field-info-standard{display:none}
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
 #bottom-left{flex:1;display:flex;flex-direction:column;min-width:0}
@@ -273,7 +287,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 <!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
-    <h1>🎲 Crapless Craps</h1>
+    <h1>🎲 Rated Hex Craps</h1>
     <p>Hosted by Deck</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Log In</button>
@@ -340,8 +354,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <p>Place a Pass Line bet before the come-out roll. If the shooter rolls a <strong style="color:#7ee87e">7</strong>, you win even money. Any other number becomes <em>the Point</em>.<br><br>Once the Point is set, keep rolling. Hit <strong style="color:#7ee87e">the Point again</strong> and Pass Line wins. Roll a <strong style="color:#f08080">7</strong> before the Point and it's a seven-out — Pass Line loses. Back your Pass Line with Odds — a bet with no house edge.</p>
       </div>
       <div class="info-section">
-        <h3>What Makes Crapless Craps Different</h3>
-        <p>In standard craps, 7 and 11 are naturals and 2, 3, 12 are craps. <strong style="color:#ffe066">In Crapless Craps, only a 7 wins on the come-out.</strong> Every other number — <strong style="color:#ffe066">2 through 12 except 7</strong> — becomes the Point. No Don't Pass or Don't Come.</p>
+        <h3>Two Modes</h3>
+        <p><strong style="color:#ffe066">Crapless Craps:</strong> Only a 7 wins on the come-out. Every other number (2–12) becomes the Point. You can Place or Buy all 10 numbers. No Don't Pass.<br><br><strong style="color:#ffe066">Standard Craps:</strong> 7 or 11 wins on the come-out; 2, 3, or 12 loses. Only 4, 5, 6, 8, 9, 10 are box numbers. Don't Pass coming soon.<br><br>Switch modes using the CRAPLESS / STANDARD buttons. Switching is only allowed between hands when no contract bets are live.</p>
       </div>
       <button class="modal-btn cancel" onclick="closeInfoModal()">Close</button>
     </div>
@@ -356,9 +370,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
   <!-- TOP ROW -->
   <div id="top-row">
-    <!-- Left col header: mode buttons -->
-    <div id="left-col-header">
-      <div style="display:flex;gap:3px;width:100%">
+    <!-- Left col header: mode buttons + game mode toggle -->
+    <div id="left-col-header" style="flex-direction:column;gap:0">
+      <div style="display:flex;gap:3px;width:100%;flex:1;align-items:center;padding:3px">
         <button class="mode-btn active" id="tab-hw" onclick="switchTab('hw')" style="flex:1">
           <span>HARDWAYS</span>
           <span class="mode-btn-amt" id="hw-total">$0.00</span>
@@ -366,6 +380,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <button class="mode-btn" id="tab-hop" onclick="switchTab('hop')" style="flex:1">
           <span>HOP BETS</span>
           <span class="mode-btn-amt" id="hop-total">$0.00</span>
+        </button>
+      </div>
+      <div id="game-mode-toggle">
+        <button class="gmode-btn active" id="gmode-crapless" onclick="switchGameMode('crapless')">
+          CRAPLESS<span class="gmode-sub">No naturals</span>
+        </button>
+        <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
+          STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
         </button>
       </div>
     </div>
@@ -550,11 +572,16 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
               <div style="font-size:15px;color:rgba(255,255,255,.55)">2 · 3 · 4 · 9 · 10 · 11 · 12</div>
               <div class="zone-name" style="font-size:23px">FIELD</div>
               <div class="zone-stk" id="stk-field"></div>
-              <div class="field-info">1:1 · 2x on 2 · 2x on 12</div>
+              <div class="field-info field-info-crapless">1:1 · 2x on 2 · 2x on 12</div>
+              <div class="field-info field-info-standard">1:1 · 2x on 2 · 3x on 12</div>
             </div>
             <button class="mbtn" id="m-field" onclick="event.stopPropagation();removeBet('field')" style="top:3px;right:3px">−</button>
           </div>
           <div style="flex:.5;min-height:0"></div>
+          <div id="dont-pass-stub">
+            <div class="dp-stub-name">DON'T PASS</div>
+            <div class="dp-stub-note">Coming Soon</div>
+          </div>
           <div id="pass-bar">
             <div id="pass-odds-cell" onclick="openPassOddsManual()">
               <span class="odds-lbl">ODDS</span>
@@ -613,16 +640,98 @@ const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 const HOP_MAP={hop11:[1,1],hop12:[1,2],hop13:[1,3],hop14:[1,4],hop15:[1,5],hop16:[1,6],hop22:[2,2],hop23:[2,3],hop24:[2,4],hop25:[2,5],hop26:[2,6],hop33:[3,3],hop34:[3,4],hop35:[3,5],hop36:[3,6],hop44:[4,4],hop45:[4,5],hop46:[4,6],hop55:[5,5],hop56:[5,6],hop66:[6,6]};
-const ODDS_PAY={2:6,3:3,4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2,11:3,12:6};
-const ODDS_MULT={2:1,3:2,4:3,5:4,6:5,8:5,9:4,10:3,11:2,12:1};
-const ODDS_LABEL={2:'6:1',3:'3:1',4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1',11:'3:1',12:'6:1'};
-const NUM_DEFS={2:{label:'2',place:[11,2],buyRatio:119/20/0.95},3:{label:'3',place:[11,4],buyRatio:59/20/0.95},4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2},11:{label:'11',place:[11,4],buyRatio:59/20/0.95},12:{label:'12',place:[11,2],buyRatio:119/20/0.95}};
-const ALL_NUMS=[2,3,4,5,6,8,9,10,11,12];
-const ALL_BOX_NUMS=[2,3,4,5,6,8,9,10,11,12];
+
+// ── MODE-SPECIFIC CONSTANTS ───────────────────────────────────────────────────
+// Crapless: all 10 numbers are box numbers
+const ODDS_PAY_CRAPLESS={2:6,3:3,4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2,11:3,12:6};
+const ODDS_MULT_CRAPLESS={2:1,3:2,4:3,5:4,6:5,8:5,9:4,10:3,11:2,12:1};
+const ODDS_LABEL_CRAPLESS={2:'6:1',3:'3:1',4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1',11:'3:1',12:'6:1'};
+const NUM_DEFS_CRAPLESS={2:{label:'2',place:[11,2],buyRatio:119/20/0.95},3:{label:'3',place:[11,4],buyRatio:59/20/0.95},4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2},11:{label:'11',place:[11,4],buyRatio:59/20/0.95},12:{label:'12',place:[11,2],buyRatio:119/20/0.95}};
+const ALL_NUMS_CRAPLESS=[2,3,4,5,6,8,9,10,11,12];
+
+// Standard: only 4,5,6,8,9,10 are box numbers
+const ODDS_PAY_STANDARD={4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2};
+const ODDS_MULT_STANDARD={4:3,5:4,6:5,8:5,9:4,10:3};
+const ODDS_LABEL_STANDARD={4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1'};
+const NUM_DEFS_STANDARD={4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2}};
+const ALL_NUMS_STANDARD=[4,5,6,8,9,10];
+
+// Live references — updated by applyGameMode()
+let ODDS_PAY=ODDS_PAY_CRAPLESS;
+let ODDS_MULT=ODDS_MULT_CRAPLESS;
+let ODDS_LABEL=ODDS_LABEL_CRAPLESS;
+let NUM_DEFS=NUM_DEFS_CRAPLESS;
+let ALL_NUMS=ALL_NUMS_CRAPLESS;
+let ALL_BOX_NUMS=ALL_NUMS_CRAPLESS;
+let activeGame='crapless'; // 'crapless' | 'standard'
+
 const HARD_NUMS=new Set([4,6,8,10]);
 const LOW_NUMS=[2,3,4,5,6],HIGH_NUMS=[8,9,10,11,12],ALL_BONUS=[2,3,4,5,6,8,9,10,11,12];
 const CONTRACT=new Set(['pass','passodds']);
-const REPEATABLE=new Set(['field','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);
+
+function getRepeatable(){return new Set(['field','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
+let REPEATABLE=getRepeatable();
+// ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
+function applyGameMode(mode){
+  activeGame=mode;
+  if(mode==='standard'){
+    ODDS_PAY=ODDS_PAY_STANDARD;ODDS_MULT=ODDS_MULT_STANDARD;ODDS_LABEL=ODDS_LABEL_STANDARD;
+    NUM_DEFS=NUM_DEFS_STANDARD;ALL_NUMS=ALL_NUMS_STANDARD;ALL_BOX_NUMS=ALL_NUMS_STANDARD;
+  }else{
+    ODDS_PAY=ODDS_PAY_CRAPLESS;ODDS_MULT=ODDS_MULT_CRAPLESS;ODDS_LABEL=ODDS_LABEL_CRAPLESS;
+    NUM_DEFS=NUM_DEFS_CRAPLESS;ALL_NUMS=ALL_NUMS_CRAPLESS;ALL_BOX_NUMS=ALL_NUMS_CRAPLESS;
+  }
+  REPEATABLE=getRepeatable();
+  // Update CSS column count for number strip
+  document.documentElement.style.setProperty('--num-cols', mode==='standard'?'6':'10');
+  // Update mode toggle buttons
+  document.getElementById('gmode-crapless').classList.toggle('active',mode==='crapless');
+  document.getElementById('gmode-standard').classList.toggle('active',mode==='standard');
+  // Show/hide Don't Pass stub (standard only)
+  const dps=document.getElementById('dont-pass-stub');
+  if(dps)dps.style.display=mode==='standard'?'flex':'none';
+  // Show field payout label for current mode
+  document.querySelectorAll('.field-info-crapless').forEach(el=>el.style.display=mode==='crapless'?'block':'none');
+  document.querySelectorAll('.field-info-standard').forEach(el=>el.style.display=mode==='standard'?'block':'none');
+  // Rebuild number strip for the new set of box numbers
+  buildStrip();
+}
+
+function canSwitchMode(){
+  // Switching is only allowed when no contract or semi-contract bets are live
+  if(G.passLocked)return false;
+  if(G.comeBets.length>0)return false;
+  if(G.bonus.locked)return false;
+  return true;
+}
+
+async function switchGameMode(mode){
+  if(activeGame===mode)return;
+  if(!canSwitchMode()){addLog('Clear contract bets before switching modes.','info');return;}
+  // Act like Clear — return removable bets
+  clearRemovable();
+  // Save current G into the old mode's sub-state slot (it's now cleared, that's fine)
+  applyGameMode(mode);
+  // Load the new mode's saved state (if any)
+  const savedGs=currentPlayer&&currentPlayer.game_state;
+  if(savedGs&&savedGs[mode]){
+    applyServerGameState({game_state:{[mode]:savedGs[mode]}},mode);
+  }else{
+    // Fresh state for this mode
+    G.bets={};G.comeBets=[];G.point=null;G.phase='comeout';
+    G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
+    G.bonus={low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),open:true,locked:false,gracePeriod:false};
+  }
+  // Persist activeGame to DB immediately
+  if(currentPlayer){
+    const existingGs=currentPlayer.game_state||{};
+    const newGs={...existingGs,activeGame:mode};
+    currentPlayer.game_state=newGs;
+    await sb.from('players').update({game_state:newGs}).eq('id',currentPlayer.id);
+  }
+  updateUI();
+}
+
 function dieFaceImg(n,sz){return '<img src="data:image/png;base64,'+DIE_B64[n]+'" style="width:'+sz+';height:'+sz+';vertical-align:middle;display:inline-block">';}
 
 const r2=n=>Math.round(n*100)/100;
@@ -738,9 +847,16 @@ async function tryRestoreSession(){
   if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
   startSession(data);
 }
-function applyServerGameState(player){
+function applyServerGameState(player,forcedMode){
   // Restore G from the server's authoritative game_state JSONB blob.
-  const gs=player.game_state||{};
+  // Supports both legacy flat shape and new nested { activeGame, crapless:{}, standard:{} } shape.
+  const rawGs=player.game_state||{};
+  // Determine which mode to load
+  const mode=forcedMode||(rawGs.activeGame)||'crapless';
+  // Extract the sub-state for this mode (legacy flat blobs have no sub-keys)
+  const gs=rawGs[mode]||(rawGs.activeGame?{}:rawGs);
+  // Apply the mode constants before restoring state
+  applyGameMode(mode);
   G.bets=gs.bets||{};
   G.comeBets=gs.comeBets||[];
   G.point=gs.point??null;
@@ -766,7 +882,7 @@ function startSession(player){
   G.bankroll=parseFloat(player.bankroll)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
-  applyServerGameState(player);
+  applyServerGameState(player); // this calls applyGameMode() internally, setting mode from saved state
   updateUI();initDice();
 }
 async function logout(){
@@ -901,6 +1017,8 @@ function renderLoop(now){
 function buildStrip(){
   const strip=document.getElementById('num-strip-h'),pr=document.getElementById('puck-row-h');
   if(!strip||!pr)return;
+  // Clear existing content (supports rebuild on mode switch)
+  strip.innerHTML='';pr.innerHTML='';
   ALL_NUMS.forEach(n=>{
     const def=NUM_DEFS[n],[w,d]=def.place;
     const ps=document.createElement('div');ps.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';
@@ -921,7 +1039,9 @@ function buildStrip(){
     wrap.appendChild(mb);wrap.appendChild(mp);strip.appendChild(wrap);
   });
 }
-buildStrip();
+// applyGameMode calls buildStrip internally; set initial state to crapless
+// (will be overridden by startSession/applyServerGameState on login)
+applyGameMode('crapless');
 
 // ── ODDS MODAL ────────────────────────────────────────────────────────────────
 function openOddsModal(type,cbIdx,flatAmt,num){
@@ -1044,6 +1164,11 @@ function restoreFromServerState(state){
   }
   if(state.rollHistory)G.rollHistory=state.rollHistory;
   G.bankrollAfterLastRoll=G.bankroll;
+  // Keep currentPlayer.game_state in sync so mode switching sees fresh data
+  if(currentPlayer){
+    const existing=currentPlayer.game_state||{};
+    currentPlayer.game_state={...existing,activeGame,[''+activeGame]:state};
+  }
 }
 async function rollDice(){
   if(animating||tumbling||!renderer)return;
@@ -1059,7 +1184,8 @@ async function rollDice(){
   const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll',{
+    const rollEndpoint=activeGame==='standard'?'/roll-standard':'/roll-crapless';
+    const res=await fetch(FUNCTIONS_URL+rollEndpoint,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
       body:requestBody
@@ -1116,6 +1242,11 @@ function updateUI(){
   if(G.phase==='point'){betonBtn.textContent=G.betsOffThisRoll?'Bets On':'Bets Off';betonBtn.classList.toggle('on',!G.betsOffThisRoll);}
   else{betonBtn.textContent=G.betsOn?'Bets Off':'Bets On';betonBtn.classList.toggle('on',G.betsOn);}
   document.getElementById('repeat-btn').disabled=!G.canRepeat;
+  // Game mode toggle: disable when contract bets are live
+  const canSwitch=canSwitchMode();
+  const gmCl=document.getElementById('gmode-crapless');const gmSt=document.getElementById('gmode-standard');
+  if(gmCl)gmCl.disabled=!canSwitch||activeGame==='crapless';
+  if(gmSt)gmSt.disabled=!canSwitch||activeGame==='standard';
   const dc=dblCost();document.getElementById('double-btn').disabled=!dc||dc>G.bankroll;
   // Mode totals
   const hwT=r2((G.bets['hard4']||0)+(G.bets['hard6']||0)+(G.bets['hard8']||0)+(G.bets['hard10']||0));
