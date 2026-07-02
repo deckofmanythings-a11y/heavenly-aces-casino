@@ -29,18 +29,32 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #game-screen{display:none;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a2218}
 
 /* ── TOP ROW ── */
-#top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100dvh * 3 / 16);border-bottom:1px solid rgba(255,255,255,.12);min-height:48px;max-height:72px}
-#top-left{width:72px;flex-shrink:0;background:rgba(0,0,0,.3);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:4px}
-.tl-lbl{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em}
-.tl-val{font-size:15px;font-weight:700;color:#ffd700;line-height:1.1}
-.tl-sub{font-size:9px;color:rgba(255,200,0,.45)}
-#dice-zone{flex:1;background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;gap:4px;position:relative}
-#dice-canvas-wrap{position:relative;flex-shrink:0}
+#top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 3 / 16);height:calc(100dvh * 3 / 16);border-bottom:1px solid rgba(255,255,255,.12)}
+#left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:0}
+#game-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0}
+.gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
+.gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
+.gmode-btn:disabled{opacity:.35;cursor:not-allowed}
+.gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(255,255,255,.4);display:block}
+.gmode-btn.active .gmode-sub{color:rgba(255,215,0,.6)}
+#info-panel{width:20vw;min-width:130px;max-width:200px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:2px;justify-content:space-between}
+.info-row{display:flex;gap:6px;align-items:center}
+.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:15px;padding:3px 5px;cursor:pointer;white-space:nowrap}
+.info-btn:hover{background:rgba(255,255,255,.2)}
+.info-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
+.hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+#dice-zone{flex:1;background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;position:relative}
+#dice-canvas-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
 #dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:26px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
-#top-right{width:100px;flex-shrink:0;background:rgba(0,0,0,.3);border-left:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:space-around;padding:4px 7px}
+#info-panel{width:20vw;min-width:130px;max-width:200px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:2px;justify-content:space-between}
+.info-row{display:flex;gap:6px;align-items:center}
+.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:15px;padding:3px 5px;cursor:pointer;white-space:nowrap}
+.info-btn:hover{background:rgba(255,255,255,.2)}
+.info-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
+.hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
 .hud-item{display:flex;flex-direction:column}
-.hud-lbl{font-size:11px;color:rgba(255,255,255,.38);text-transform:uppercase;letter-spacing:.04em;line-height:1}
-.hud-val{font-size:17px;font-weight:600;line-height:1.25}
+.hud-lbl{font-size:15px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.hud-val{font-size:17px;font-weight:600;line-height:1.3}
 
 /* ── TABLE AREA ── */
 #table-area{flex:1;display:flex;flex-direction:column;gap:2px;padding:2px;min-height:0;overflow:hidden}
@@ -54,9 +68,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #btn-big{background:rgba(180,0,0,.25);border-color:rgba(255,100,100,.4)}
 #btn-big:hover{background:rgba(180,0,0,.4)}
 #btn-big.active{background:rgba(220,0,0,.45);border-color:#f66}
-.bs-label{font-size:min(15px,2.2vw);font-weight:700;letter-spacing:.06em}
-.bs-sub{font-size:min(9px,1.5vw);color:rgba(255,255,255,.35)}
-.bs-stk{font-size:min(13px,2vw);color:#ffd700;position:absolute;bottom:3px;right:6px}
+.bs-label{font-size:min(45px,6.6vw);font-weight:700;letter-spacing:.06em}
+.bs-sub{font-size:min(27px,4.5vw);color:rgba(255,255,255,.35)}
+.bs-stk{font-size:min(39px,6.0vw);color:#ffd700;position:absolute;bottom:3px;right:6px}
 .mbtn-corner{display:none;position:absolute;top:2px;right:3px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:13px;text-align:center;cursor:pointer;z-index:5;padding:0}
 .bs-btn:hover .mbtn-corner.vis{display:block}
 .mbtn-corner:hover{background:rgba(180,0,0,.7)}
@@ -66,50 +80,53 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .tot-cell{background:rgba(0,0,0,.25);border:0.5px solid rgba(255,255,255,.15);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:1px}
 .tot-cell:hover{background:rgba(255,255,255,.08)}
 .tot-cell.active{background:rgba(255,215,0,.2);border-color:#ffd700}
-.tot-num{font-size:min(14px,2.2vw);font-weight:700;line-height:1}
-.tot-pay{font-size:min(8px,1.4vw);color:rgba(255,255,255,.4);line-height:1}
-.tot-stk{font-size:min(9px,1.5vw);color:#ffd700;line-height:1;min-height:8px}
-.mbtn-tot{display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:13px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0}
+.tot-num{font-size:min(42px,6.6vw);font-weight:700;line-height:1}
+.tot-pay{font-size:min(24px,4.2vw);color:rgba(255,255,255,.4);line-height:1}
+.tot-stk{font-size:min(27px,4.5vw);color:#ffd700;line-height:1;min-height:8px}
+.mbtn-tot{display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:39px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0}
 .tot-cell:hover .mbtn-tot.vis{display:block}
 .mbtn-tot:hover{background:rgba(180,0,0,.7)}
 
 /* Mid row: triples left + right col */
+/* Lower area: triples left (full height) + right col (doubles+combos+any-number) */
+#lower-area{display:flex;gap:2px;flex:1;min-height:0}
+#triples-col{width:132px;flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+#right-col{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
 #mid-row{display:flex;gap:2px;flex:1;min-height:0}
-#triples-col{width:66px;flex-shrink:0;display:flex;flex-direction:column;gap:2px}
-.sec-lbl{font-size:7px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.04em;text-align:center;flex-shrink:0}
+#doubles-combos-col{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.sec-lbl{font-size:21px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.04em;text-align:center;flex-shrink:0}
 #any-triple-btn{background:rgba(150,0,150,.22);border:0.5px solid rgba(200,80,200,.35);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;height:26px;position:relative;transition:background .1s}
 #any-triple-btn:hover{background:rgba(160,0,160,.38)}
 #any-triple-btn.active{background:rgba(180,0,180,.45);border-color:#d060d0}
-.at-lbl{font-size:9px;font-weight:700;color:rgba(255,200,255,.9);line-height:1}
-.at-pay{font-size:7px;color:rgba(220,140,220,.5);line-height:1}
-.at-stk{font-size:8px;color:#ffd700;position:absolute;bottom:2px;right:4px}
+.at-lbl{font-size:27px;font-weight:700;color:rgba(255,200,255,.9);line-height:1}
+.at-pay{font-size:21px;color:rgba(220,140,220,.5);line-height:1}
+.at-stk{font-size:24px;color:#ffd700;position:absolute;bottom:2px;right:4px}
 #specific-triples-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;flex:1;min-height:0}
 .trip-cell{background:rgba(90,0,90,.22);border:0.5px solid rgba(170,55,170,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
 .trip-cell:hover{background:rgba(110,0,110,.38)}
 .trip-cell.active{background:rgba(140,0,140,.45);border-color:#c050c0}
 .trip-dice{display:flex;flex-direction:column;align-items:center;gap:0;line-height:1}
 .trip-dice img{display:block}
-.trip-pay{font-size:6px;color:rgba(210,150,210,.45);line-height:1}
-.trip-stk{font-size:7px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+.trip-pay{font-size:18px;color:rgba(210,150,210,.45);line-height:1}
+.trip-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 
 /* Right col: doubles + combos */
-#right-col{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
 #doubles-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;flex-shrink:0}
 .dbl-cell{background:rgba(0,65,95,.28);border:0.5px solid rgba(75,165,195,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
 .dbl-cell:hover{background:rgba(0,80,120,.42)}
 .dbl-cell.active{background:rgba(0,100,150,.5);border-color:#50b4d4}
-.dbl-dice{display:flex;flex-direction:column;align-items:center;gap:0;line-height:1}
+.dbl-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
 .dbl-dice img{display:block}
-.dbl-pay{font-size:6px;color:rgba(120,200,220,.45);line-height:1}
-.dbl-stk{font-size:7px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+.dbl-pay{font-size:18px;color:rgba(120,200,220,.45);line-height:1}
+.dbl-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 #combos-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;flex:1;min-height:0}
 .dom-cell{background:rgba(0,50,32,.35);border:0.5px solid rgba(65,165,105,.25);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
 .dom-cell:hover{background:rgba(0,70,45,.5)}
 .dom-cell.active{background:rgba(0,90,58,.55);border-color:#40b870}
-.dom-dice{display:flex;flex-direction:column;align-items:center;gap:0;line-height:1}
+.dom-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
 .dom-dice img{display:block}
-.dom-pay{font-size:6px;color:rgba(75,185,115,.4);line-height:1}
-.dom-stk{font-size:7px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+.dom-pay{font-size:18px;color:rgba(75,185,115,.4);line-height:1}
+.dom-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 
 /* Any Number row */
 #any-num-row{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.7 / 16)}
@@ -117,31 +134,41 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .any-cell:hover{background:rgba(60,55,0,.55)}
 .any-cell.active{background:rgba(80,70,0,.6);border-color:#d4c040}
 .any-die img{display:block}
-.any-pay{font-size:min(8px,1.5vw);color:rgba(210,190,55,.5);line-height:1}
-.any-stk{font-size:min(9px,1.6vw);color:#ffd700;position:absolute;bottom:2px;right:4px;line-height:1}
+.any-pay{font-size:min(24px,4.5vw);color:rgba(210,190,55,.5);line-height:1}
+.any-stk{font-size:min(27px,4.8vw);color:#ffd700;position:absolute;bottom:2px;right:4px;line-height:1}
 
 /* ── BOTTOM SECTION ── */
-#bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1);min-height:44px;max-height:68px}
+#bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
 #bottom-left{flex:1;display:flex;flex-direction:column;min-width:0}
-#log-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.3);border-bottom:0.5px solid rgba(255,255,255,.1);flex-shrink:0;height:40%}
+#history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.35);border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
+#roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
+#roll-history::-webkit-scrollbar{display:none}
+.roll-pip{min-width:32px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 3px;background:rgba(255,255,255,.1)}
+.roll-pip .rp-dice{font-size:14px;line-height:1;letter-spacing:1px}
+.roll-pip .rp-sum{font-size:17px;line-height:1;margin-top:1px}
+.roll-pip.normal .rp-sum{color:#fff}
+.roll-pip.triple .rp-sum{color:#e87ef0}
+.roll-pip.triple{background:rgba(140,0,140,.35)}
 .log-line{font-size:11px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .log-line.win{color:#7ee87e}
 .log-line.lose{color:#f08080}
 #log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;flex:1}
+#bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .nav-btn:hover{background:rgba(255,255,255,.15)}
 .nav-btn.active-game{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.12)}
 .chip{width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#fff}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
-.bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:14px;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:26px}
+.bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
+.bar-btn.danger{border-color:rgba(255,100,100,.4)}
 .bar-btn:hover{background:rgba(255,255,255,.2)}
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
-#hud-pnl{font-size:16px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 3px}
-#roll-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:28px;font-weight:900;padding:4px 14px;cursor:pointer;flex-shrink:0;letter-spacing:.06em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
-#roll-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%)}
-#roll-btn:disabled{opacity:.45;cursor:not-allowed}
+#hud-pnl{font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px}
+#roll-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:34px;font-weight:900;padding:6px 20px;cursor:pointer;flex-shrink:0;letter-spacing:.06em;box-shadow:inset -2px 0 0 #7a5c00,0 0 20px rgba(255,215,0,.3);text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
+#roll-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%);box-shadow:inset -2px 0 0 #7a5c00,0 0 30px rgba(255,215,0,.5)}
+#roll-btn:active{filter:brightness(.9)}
+#roll-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
 
 /* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
@@ -230,21 +257,35 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
   <!-- TOP ROW -->
   <div id="top-row">
-    <div id="top-left">
-      <div class="tl-lbl">Playable</div>
-      <div class="tl-val" id="hud-bankroll">$0</div>
-      <div class="tl-sub" id="hud-bet">Bet: $0</div>
+    <!-- Game Selector (matches craps left-col-header) -->
+    <div id="left-col-header">
+      <div id="game-mode-toggle">
+        <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
+        <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
+        <button class="gmode-btn active">SIC-BO<span class="gmode-sub">3 dice</span></button>
+        <button class="gmode-btn" disabled>DESTROYER<span class="gmode-sub">Coming soon</span></button>
+      </div>
     </div>
+    <!-- Dice zone -->
     <div id="dice-zone">
       <div id="dice-canvas-wrap">
-        <canvas id="dice-canvas" width="240" height="56" style="width:240px;height:56px;object-fit:contain"></canvas>
+        <canvas id="dice-canvas" width="720" height="168" style="width:100%;height:100%;object-fit:contain"></canvas>
         <div id="dice-sum-overlay">—</div>
       </div>
     </div>
-    <div id="top-right">
-      <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
-      <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
-      <div class="hud-item"><div class="hud-lbl">P&amp;L</div><div class="hud-val" id="hud-pnl-top" style="color:#7ee87e">+$0</div></div>
+    <!-- Info panel (matches craps) -->
+    <div id="info-panel">
+      <div class="info-row">
+        <span id="top-bar-username" style="font-size:15px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
+        <button class="info-btn" onclick="logout()">Out</button>
+      </div>
+      <div class="hud-grid">
+        <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
+        <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
+        <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
+        <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
+      </div>
     </div>
   </div>
 
@@ -269,7 +310,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <div class="totals-row" id="totals-low"></div>
     <div class="totals-row" id="totals-high"></div>
     <!-- Mid row -->
-    <div id="mid-row">
+    <!-- Lower area: Triples (full height left) + right stack (Doubles, Combos, Any Number) -->
+    <div id="lower-area">
       <div id="triples-col">
         <div class="sec-lbl">Triples</div>
         <div id="any-triple-btn" onclick="placeBet('anyTriple')">
@@ -280,30 +322,28 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <div id="specific-triples-grid"></div>
       </div>
       <div id="right-col">
-        <div class="sec-lbl">Doubles (≥2 matching) · 11:1</div>
-        <div id="doubles-grid"></div>
-        <div class="sec-lbl" style="margin-top:1px">Combos (two specific faces) · 6:1</div>
-        <div id="combos-grid"></div>
+        <div id="mid-row">
+          <div id="doubles-combos-col">
+            <div class="sec-lbl">Doubles (≥2 matching) · 11:1</div>
+            <div id="doubles-grid"></div>
+            <div class="sec-lbl" style="margin-top:1px">Combos (two specific faces) · 6:1</div>
+            <div id="combos-grid"></div>
+          </div>
+        </div>
+        <!-- Any Number row -->
+        <div id="any-num-row"></div>
       </div>
     </div>
-    <!-- Any Number row -->
-    <div id="any-num-row"></div>
   </div>
 
   <!-- BOTTOM SECTION -->
   <div id="bottom-section">
     <div id="bottom-left">
-      <div id="log-strip">
-        <div class="log-line" id="last-log-line">—</div>
+      <div id="history-strip">
+        <div id="roll-history"></div>
         <button id="log-btn-sb" onclick="openLogModal()">?</button>
       </div>
       <div id="bottom-bar">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;flex-shrink:0;padding-right:3px">
-          <button class="nav-btn" onclick="window.location.href='index.html'" style="font-size:10px;text-align:center;line-height:1.2">CRAPLESS<span style="display:block;font-size:8px;font-weight:400;opacity:.6">No naturals</span></button>
-          <button class="nav-btn" onclick="window.location.href='index.html'" style="font-size:10px;text-align:center;line-height:1.2">STANDARD<span style="display:block;font-size:8px;font-weight:400;opacity:.6">7 &amp; 11 win</span></button>
-          <button class="nav-btn active-game" style="font-size:10px;text-align:center;line-height:1.2">SIC-BO<span style="display:block;font-size:8px;font-weight:400;opacity:.7">3 dice</span></button>
-          <button class="nav-btn" disabled style="font-size:10px;text-align:center;line-height:1.2;opacity:.3;cursor:not-allowed">DESTROYER<span style="display:block;font-size:8px;font-weight:400">Coming soon</span></button>
-        </div>
         <div class="chip" style="background:#b0b0b0;color:#222;border-color:#888" data-val="1" onclick="selectChip(1)">$1</div>
         <div class="chip" style="background:#c0392b;border-color:#922b21" data-val="5" onclick="selectChip(5)">$5</div>
         <div class="chip" style="background:#f39c12;border-color:#d68910;color:#111" data-val="10" onclick="selectChip(10)">$10</div>
@@ -311,10 +351,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <div class="chip" style="background:#7d4f30;border-color:#5d3a22" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" style="background:#2c2c2c;border-color:#111" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1"></div>
-        <span id="hud-pnl" style="font-size:15px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 2px">+$0.00</span>
-        <button class="bar-btn" onclick="clearBets()">Clear</button>
+        <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
+        <button class="bar-btn danger" onclick="clearBets()">Clear</button>
+        <button class="bar-btn" id="double-btn" onclick="doubleBet()" disabled>Double</button>
         <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
-        <button class="bar-btn" onclick="openRedeemModal(false)" style="border-color:rgba(255,215,0,.4);color:#ffd700">Redeem</button>
       </div>
     </div>
     <button id="roll-btn" onclick="rollDice()">ROLL</button>
@@ -340,7 +380,7 @@ const DIE_IMG_SZ='min(13px,2vw)'; // size for inline pip images in bet cells
 const DIE_IMG_SZ_LG='min(18px,2.8vw)'; // any-number row
 
 // ── STATE ────────────────────────────────────────────────────────────────────
-let G={bankroll:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null};
+let G={bankroll:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
 let currentPlayer=null,_authMode='login';
 let animating=false,tumbling=false,tumbleStart=0,animStart=0;
 const LAND_MS=550,ANIM_MS=1100;
@@ -632,6 +672,10 @@ async function rollDice(){
     G.bets={};
     G.bankroll=data.newBankroll;
     G.lastWin=data.returned||0;
+    const isTriple=d1===d2&&d2===d3;
+    if(!G.rollHistory)G.rollHistory=[];
+    G.rollHistory.unshift({d1,d2,d3,sum,isTriple});
+    if(G.rollHistory.length>20)G.rollHistory.length=20;
     if(currentPlayer)currentPlayer.bankroll=data.newBankroll;
     document.getElementById('repeat-btn').disabled=false;
     document.getElementById('roll-btn').disabled=false;
@@ -644,14 +688,36 @@ async function rollDice(){
 // ── UPDATE UI ─────────────────────────────────────────────────────────────────
 function dieImg(n,sz){return '<img src="data:image/png;base64,'+DIE_B64[n]+'" style="width:'+sz+';height:'+sz+';display:block">';}
 
+function dieFaceImg(n,sz){return '<img src="data:image/png;base64,'+DIE_B64[n]+'" style="width:'+sz+';height:'+sz+';vertical-align:middle;display:inline-block">';}
+
+function doubleBet(){
+  if(!G.lastBets)return;
+  Object.keys(G.lastBets).forEach(k=>{
+    const v=G.lastBets[k];if(v>0)placeBet(k,v);
+  });
+}
+
+function renderRollHistory(){
+  const hist=document.getElementById('roll-history');
+  if(!hist||!G.rollHistory)return;
+  hist.innerHTML='';
+  G.rollHistory.forEach(r=>{
+    const pip=document.createElement('div');
+    pip.className='roll-pip '+(r.isTriple?'triple':'normal');
+    pip.innerHTML='<span class="rp-dice">'+dieFaceImg(r.d1,'11px')+dieFaceImg(r.d2,'11px')+dieFaceImg(r.d3,'11px')+'</span><span class="rp-sum">'+r.sum+'</span>';
+    hist.appendChild(pip);
+  });
+  hist.scrollLeft=0;
+}
+
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
-  const pnlTop=document.getElementById('hud-pnl-top');if(pnlTop){pnlTop.textContent=(net>=0?'+':'-')+fmtS(Math.abs(net));pnlTop.style.color=net>=0?'#7ee87e':'#f08080';}
   document.getElementById('hud-bankroll').textContent=fmtS(G.bankroll);
-  document.getElementById('hud-bet').textContent='Bet: '+fmtS(tBets());
+  document.getElementById('hud-bet').textContent=fmtS(tBets());
   document.getElementById('hud-lastbet').textContent=G.lastBetDisplay>0?fmtS(G.lastBetDisplay):'—';
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
+  renderRollHistory();
 
   // Big / Small
   ['small','big'].forEach(k=>{
@@ -722,7 +788,7 @@ function buildTable(){
     const cell=document.createElement('div');cell.className='trip-cell';cell.id='cell-triple'+v;
     cell.onclick=()=>placeBet('triple'+v);
     const dd=document.createElement('div');dd.className='trip-dice';
-    for(let i=0;i<3;i++){const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(11px,1.8vw);height:min(11px,1.8vw);display:block';dd.appendChild(img);}
+    for(let i=0;i<3;i++){const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);display:block';dd.appendChild(img);}
     const pay=document.createElement('div');pay.className='trip-pay';pay.textContent='180:1';
     const stk=document.createElement('span');stk.className='trip-stk';stk.id='stk-triple'+v;
     const mb=document.createElement('button');mb.className='mbtn-corner trip-stk';mb.id='m-triple'+v;mb.textContent='−';mb.style.cssText='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
@@ -738,7 +804,7 @@ function buildTable(){
     const cell=document.createElement('div');cell.className='dbl-cell';cell.id='cell-double'+v;
     cell.onclick=()=>placeBet('double'+v);
     const dd=document.createElement('div');dd.className='dbl-dice';
-    for(let i=0;i<2;i++){const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(13px,2vw);height:min(13px,2vw);display:block';dd.appendChild(img);}
+    for(let i=0;i<2;i++){const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(39px,6vw);height:min(39px,6vw);display:block';dd.appendChild(img);}
     const pay=document.createElement('div');pay.className='dbl-pay';pay.textContent='11:1';
     const stk=document.createElement('span');stk.className='dbl-stk';stk.id='stk-double'+v;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-double'+v;mb.textContent='−';mb.style.cssText='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
@@ -754,7 +820,7 @@ function buildTable(){
     const cell=document.createElement('div');cell.className='dom-cell';cell.id='cell-'+key;
     cell.onclick=()=>placeBet(key);
     const dd=document.createElement('div');dd.className='dom-dice';
-    [a,b].forEach(v=>{const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(13px,2vw);height:min(13px,2vw);display:block';dd.appendChild(img);});
+    [a,b].forEach(v=>{const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(39px,6vw);height:min(39px,6vw);display:block';dd.appendChild(img);});
     const pay=document.createElement('div');pay.className='dom-pay';pay.textContent='6:1';
     const stk=document.createElement('span');stk.className='dom-stk';stk.id='stk-'+key;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-'+key;mb.textContent='−';mb.style.cssText='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
@@ -769,7 +835,7 @@ function buildTable(){
     const cell=document.createElement('div');cell.className='any-cell';cell.id='cell-any'+v;
     cell.onclick=()=>placeBet('any'+v);
     const die=document.createElement('div');die.className='any-die';
-    const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(20px,3.2vw);height:min(20px,3.2vw);display:block';
+    const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(60px,9.6vw);height:min(60px,9.6vw);display:block';
     die.appendChild(img);
     const pay=document.createElement('div');pay.className='any-pay';pay.textContent='1/2/3:1';
     const stk=document.createElement('span');stk.className='any-stk';stk.id='stk-any'+v;
@@ -863,7 +929,7 @@ function renderLoop(now){
 function initDice(){
   if(renderer)return;
   THREE=window.THREE;if(!THREE)return;
-  const W=240,H=56,cvs=document.getElementById('dice-canvas');
+  const W=720,H=168,cvs=document.getElementById('dice-canvas');
   renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   renderer.setSize(W,H);renderer.setClearColor(0,0);
