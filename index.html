@@ -38,8 +38,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .mode-btn-amt{font-size:17px;color:#ffd700;font-weight:600}
 
 /* Lucky Roller strip */
-#lucky-roller{flex:1;display:flex;align-items:stretch;background:rgba(0,0,0,.25);padding:3px 4px;gap:4px;border-right:1px solid rgba(255,255,255,.1)}
-.lr-bonus-wrap{position:relative;flex:1;min-width:0}
+#lucky-roller{flex:1;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.25);padding:3px 4px;gap:4px;border-right:1px solid rgba(255,255,255,.1)}
+.lr-bonus-wrap{position:relative;width:min(100px,16vw);flex-shrink:0;height:50%}
 .lr-bonus{border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);cursor:pointer;height:100%;display:flex;flex-direction:column;transition:background .12s}
 .lr-bonus:hover{background:rgba(255,255,255,.08)}
 .lr-bonus.has-bet{border-color:#ffd700;background:rgba(255,215,0,.08)}
@@ -65,7 +65,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .rollem-all-bar.has-bet{border-color:#ffd700}
 
 /* Info panel (upper right) */
-#info-panel{width:16vw;min-width:110px;max-width:175px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:2px;justify-content:space-between}
+#info-panel{width:20vw;min-width:130px;max-width:200px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:2px;justify-content:space-between}
 .info-row{display:flex;gap:6px;align-items:center}
 .info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:17px;padding:3px 5px;cursor:pointer;white-space:nowrap}
 .info-btn:hover{background:rgba(255,255,255,.2)}
@@ -73,7 +73,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
 .hud-item{display:flex;flex-direction:column}
 .hud-lbl{font-size:15px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
-.hud-val{font-size:21px;font-weight:600;line-height:1.3}
+.hud-val{font-size:17px;font-weight:600;line-height:1.3}
 
 
 /* ── PLAY AREA ── */
@@ -426,8 +426,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <button class="gmode-btn" onclick="window.location.href='sicbo.html'" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
           SIC-BO<span class="gmode-sub">3 dice</span>
         </button>
-        <button class="gmode-btn" onclick="window.location.href='destroyer.html'" style="opacity:.7">
-          DESTROYER<span class="gmode-sub">Naval Strike</span>
+        <button class="gmode-btn" disabled style="opacity:.25;cursor:not-allowed">
+          DESTROYER<span class="gmode-sub">Coming soon</span>
         </button>
       </div>
     </div>
@@ -443,12 +443,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <button class="mbtn-bonus" id="mb-bonus-low" onclick="event.stopPropagation();bonusRemove('low')">−</button>
       </div>
       <!-- Dice (2u) + Roll'em All (1u) stacked -->
-      <div id="dice-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:0">
-        <div id="dice-canvas-wrap" style="flex:2;display:flex;align-items:center;justify-content:center;position:relative;width:min(160px,14vw)">
-          <canvas id="dice-canvas" width="160" height="56" style="width:100%;height:100%;object-fit:contain"></canvas>
+      <div id="dice-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:0;align-self:center">
+        <div id="dice-canvas-wrap" style="flex:2;display:flex;align-items:center;justify-content:center;position:relative;width:min(480px,42vw)">
+          <canvas id="dice-canvas" width="480" height="168" style="width:100%;height:100%;object-fit:contain"></canvas>
           <div id="dice-sum-overlay">—</div>
         </div>
-        <div class="lr-bonus-wrap" style="width:min(160px,14vw);flex:1;flex-shrink:0">
+        <div class="lr-bonus-wrap" style="width:min(480px,42vw);flex:1;flex-shrink:0;height:50%">
           <div class="rollem-all-bar" id="bbonus-all-bar" onclick="bonusBet('all')" style="width:100%;height:100%">
             <div><span class="lr-title" style="font-size:15px">Roll'em All</span><span class="lr-pay">156 for 1</span></div>
             <span class="lr-stake" id="bstk-all" style="font-size:19px"></span>
@@ -1017,7 +1017,7 @@ async function redeemCode(){
 function initDice(){
   if(renderer)return;
   THREE=window.THREE;if(!THREE)return;
-  const W=160,H=56,cvs=document.getElementById('dice-canvas');
+  const W=480,H=168,cvs=document.getElementById('dice-canvas');
   renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   renderer.setSize(W,H);renderer.setClearColor(0,0);
@@ -1450,10 +1450,10 @@ async function rollDice(){
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
-  document.getElementById('hud-bankroll').textContent=fmtS(G.bankroll);
-  document.getElementById('hud-bet').textContent=fmtS(tBets());
-  document.getElementById('hud-lastbet').textContent=(G._lastBetDisplay&&G._lastBetDisplay>0)?fmtS(G._lastBetDisplay):'—';
-  document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
+  document.getElementById('hud-bankroll').textContent=fmt(G.bankroll);
+  document.getElementById('hud-bet').textContent=fmt(tBets());
+  document.getElementById('hud-lastbet').textContent=(G._lastBetDisplay&&G._lastBetDisplay>0)?fmt(G._lastBetDisplay):'—';
+  document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmt(G.lastWin):'—';
   const act=bActive();
   const bsEl=document.getElementById('bets-status-bar');bsEl.textContent=act?'ON':'OFF';bsEl.style.color=act?'rgba(100,255,150,.8)':'rgba(255,200,0,.8)';
   const betonBtn=document.getElementById('beton-btn');

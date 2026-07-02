@@ -652,8 +652,7 @@ function playAgain(){
   resetGameState();
   const dL=document.getElementById('die-letter'),dN=document.getElementById('die-number');
   dL.className='die-box';dL.textContent='—';dN.className='die-box';dN.textContent='—';
-  document.getElementById('last-result-text').textContent='Place ships
-to begin';
+  document.getElementById('last-result-text').textContent='Place ships to begin';
   G.ships=randomizeLocal();
   buildMainGrid();
   renderPlacementGrid();
@@ -732,8 +731,7 @@ function updateUI(){
     const showBuy=G.phase==='firing'&&G.missilesRemaining===0&&G.canBuy;
     buyBtn.style.display=G.phase==='firing'?'block':'none';
     buyBtn.disabled=!showBuy||G.firing||G.buyPrice>G.bankroll;
-    if(showBuy)buyBtn.textContent='🎯 Buy Missile
-'+fmt(G.buyPrice);
+    if(showBuy)buyBtn.textContent='🎯 Buy Missile '+fmt(G.buyPrice);
     else if(G.phase==='firing'&&G.missilesRemaining===0&&!G.canBuy)buyBtn.textContent='Max missiles bought';
     else buyBtn.textContent='';
   }
