@@ -4,7 +4,87 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Rated Hex Sic-Bo</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ── CASHOUT ───────────────────────────────────────────────────────────────────
+async function cashOut(){
+  if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
+  const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/cashout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token})
+    });
+    data=await res.json();
+  }catch(e){data={ok:false,message:'Network error.'};}
+  if(btn)btn.disabled=false;
+  if(!data.ok){addLog(data.message||'Cash out failed.','info');return;}
+  // Zero local bankroll
+  G.bankroll=0;
+  if(currentPlayer)currentPlayer.bankroll=0;
+  // Show voucher modal
+  const code=data.code;
+  const amount=parseFloat(data.amount);
+  const now=new Date(data.created_at||Date.now());
+  const dateStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'
+    +now.getDate().toString().padStart(2,'0')+'/'
+    +now.getFullYear();
+  const timeStr=now.getHours().toString().padStart(2,'0')+':'
+    +now.getMinutes().toString().padStart(2,'0')+':'
+    +now.getSeconds().toString().padStart(2,'0');
+  const voucherNum=Math.floor(Math.random()*9000+1000);
+  const assetNum=Math.floor(Math.random()*9000+1000);
+  document.getElementById('voucher-barcode').textContent=code;
+  document.getElementById('voucher-validation').innerHTML=
+    'VALIDATION &nbsp;&nbsp; '+code+'<br>'
+    +dateStr+' &nbsp; '+timeStr+' &nbsp;&nbsp; VOUCHER # '+voucherNum;
+  document.getElementById('voucher-amount').textContent='$'+amount.toFixed(2);
+  document.getElementById('voucher-asset').textContent='ASSET# '+assetNum;
+  document.getElementById('modal-cashout').classList.remove('hidden');
+  updateUI();
+}
+function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
+
+// ── VOUCHER LIST IN REDEEM MODAL ──────────────────────────────────────────────
+async function loadVoucherList(){
+  const token=localStorage.getItem('craps_session');
+  const container=document.getElementById('voucher-list-items');
+  if(!container)return;
+  container.innerHTML='<div class="voucher-list-empty">Loading...</div>';
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/redeem',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token,action:'list'})
+    });
+    data=await res.json();
+  }catch(e){container.innerHTML='<div class="voucher-list-empty">Could not load vouchers.</div>';return;}
+  if(!data.ok||!data.vouchers||data.vouchers.length===0){
+    container.innerHTML='<div class="voucher-list-empty">No unredeemed vouchers.</div>';return;
+  }
+  container.innerHTML='';
+  data.vouchers.forEach(v=>{
+    const exp=new Date(v.expires_at);
+    const expStr='Exp '+(exp.getMonth()+1)+'/'+exp.getDate()+'/'+exp.getFullYear();
+    const row=document.createElement('div');row.className='voucher-row';
+    row.innerHTML='<span class="voucher-row-amount">$'+parseFloat(v.amount).toFixed(2)+'</span>'
+      +'<span class="voucher-row-code">'+v.code+'</span>'
+      +'<span class="voucher-row-expiry">'+expStr+'</span>'
+      +'<button class="voucher-row-btn" onclick="redeemVoucher(''+v.code+'')">Redeem</button>';
+    container.appendChild(row);
+  });
+}
+
+async function redeemVoucher(code){
+  document.getElementById('redeem-input').value=code;
+  await redeemCode();
+  loadVoucherList();
+}
+
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
@@ -197,6 +277,40 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .winner-amount{font-size:43px;font-weight:700;color:#111;margin-top:5px}
 .winner-tap{font-size:19px;color:rgba(0,0,0,.5);margin-top:10px;letter-spacing:.05em}
 #modal-cap .modal-box{text-align:center}
+
+/* ── CASHOUT VOUCHER MODAL ── */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
+#modal-cashout{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:12px}
+#modal-cashout.hidden{display:none}
+.voucher{background:#fff;color:#111;width:100%;max-width:420px;border-radius:4px;padding:20px 24px 16px;box-shadow:0 8px 40px rgba(0,0,0,.8);font-family:system-ui,sans-serif;position:relative;overflow:hidden}
+.voucher::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:repeating-linear-gradient(90deg,#111 0px,#111 3px,#fff 3px,#fff 6px)}
+.voucher::after{content:'';position:absolute;bottom:0;left:0;right:0;height:6px;background:repeating-linear-gradient(90deg,#111 0px,#111 3px,#fff 3px,#fff 6px)}
+.voucher-insert{position:absolute;left:-26px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:9px;font-weight:700;letter-spacing:.12em;color:#555;white-space:nowrap}
+.voucher-header{text-align:center;border-bottom:1px solid #ccc;padding-bottom:8px;margin-bottom:8px}
+.voucher-property{font-size:22px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;line-height:1.1}
+.voucher-address{font-size:10px;letter-spacing:.04em;color:#444;margin-top:2px}
+.voucher-type{font-size:28px;font-weight:900;letter-spacing:.08em;margin-top:6px;text-transform:uppercase}
+.voucher-barcode{font-family:'Libre Barcode 128 Text',monospace;font-size:56px;text-align:center;line-height:1;letter-spacing:0;color:#111;margin:6px 0 2px;overflow:hidden;white-space:nowrap}
+.voucher-validation{font-size:9px;text-align:center;letter-spacing:.04em;color:#333;line-height:1.7;margin-bottom:4px}
+.voucher-amount{font-size:48px;font-weight:900;text-align:center;letter-spacing:.02em;margin:4px 0}
+.voucher-footer{display:flex;justify-content:space-between;font-size:9px;color:#555;letter-spacing:.04em;margin-top:6px;padding-top:6px;border-top:1px solid #ccc}
+.voucher-btns{display:flex;gap:8px;margin-top:14px}
+.voucher-btn{flex:1;padding:9px;border-radius:5px;font-size:15px;font-weight:700;cursor:pointer;border:none;letter-spacing:.04em}
+.voucher-btn.print{background:#111;color:#fff}
+.voucher-btn.print:hover{background:#333}
+.voucher-btn.close{background:rgba(0,0,0,.08);color:#111;border:1px solid #ccc}
+.voucher-btn.close:hover{background:rgba(0,0,0,.15)}
+
+/* ── VOUCHER LIST IN REDEEM MODAL ── */
+.voucher-list{margin-bottom:12px}
+.voucher-list-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.voucher-list-empty{font-size:13px;color:rgba(255,255,255,.3);font-style:italic;margin-bottom:8px}
+.voucher-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:0.5px solid rgba(255,255,255,.15);border-radius:5px;padding:6px 8px;margin-bottom:4px}
+.voucher-row-amount{font-size:18px;font-weight:700;color:#ffd700;flex-shrink:0}
+.voucher-row-code{font-size:11px;color:rgba(255,255,255,.4);font-family:monospace;flex:1}
+.voucher-row-expiry{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
+.voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
+.voucher-row-btn:hover{background:rgba(255,215,0,.3)}
 </style>
 </head>
 <body>
@@ -241,6 +355,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <div class="modal-box dark">
       <div class="modal-title" id="redeem-title">Redeem a Code</div>
       <div class="modal-sub" id="redeem-sub">Enter the code Deck sent you.</div>
+      <div class="voucher-list" id="voucher-list-section">
+        <div class="voucher-list-title">Your Vouchers</div>
+        <div id="voucher-list-items"><div class="voucher-list-empty">Loading...</div></div>
+      </div>
       <input class="modal-input" id="redeem-input" type="text" placeholder="RH-XXXXXXXX" maxlength="11" oninput="this.value=this.value.toUpperCase()">
       <div class="modal-input-error" id="redeem-error"></div>
       <button class="modal-submit" id="redeem-btn" onclick="redeemCode()">Redeem</button>
@@ -358,6 +476,33 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       </div>
     </div>
     <button id="roll-btn" onclick="rollDice()">ROLL</button>
+  </div>
+
+
+  <!-- CASHOUT VOUCHER MODAL -->
+  <div id="modal-cashout" class="hidden">
+    <div class="voucher">
+      <div class="voucher-insert">INSERT THIS SIDE UP</div>
+      <div class="voucher-header">
+        <div class="voucher-property">⬡ Rated Hex</div>
+        <div class="voucher-address">Virtual Casino &nbsp;·&nbsp; Rated Hex Gaming Network</div>
+        <div class="voucher-type">Cashout Voucher</div>
+      </div>
+      <div class="voucher-barcode" id="voucher-barcode">RH-00000000</div>
+      <div class="voucher-validation" id="voucher-validation">
+        VALIDATION &nbsp;&nbsp; RH-00000000<br>
+        00/00/0000 &nbsp; 00:00:00 &nbsp;&nbsp; VOUCHER # 0000
+      </div>
+      <div class="voucher-amount" id="voucher-amount">$0.00</div>
+      <div class="voucher-footer">
+        <span>Void after 180 days</span>
+        <span id="voucher-asset">ASSET# 0000</span>
+      </div>
+      <div class="voucher-btns">
+        <button class="voucher-btn print" onclick="window.print()">Print</button>
+        <button class="voucher-btn close" onclick="closeCashoutModal()">Close</button>
+      </div>
+    </div>
   </div>
 
 </div><!-- end game-screen -->
@@ -504,7 +649,7 @@ function openRedeemModal(broke){
   document.getElementById('redeem-btn').disabled=false;document.getElementById('redeem-btn').textContent='Redeem';
   if(broke){document.getElementById('redeem-title').textContent='Out of Chips!';document.getElementById('redeem-sub').textContent='Get a code from Deck to continue playing.';document.getElementById('redeem-cancel').style.display='none';}
   else{document.getElementById('redeem-title').textContent='Redeem a Code';document.getElementById('redeem-sub').textContent='Enter the code Deck sent you.';document.getElementById('redeem-cancel').style.display='block';}
-  document.getElementById('modal-redeem').classList.remove('hidden');
+  document.getElementById('modal-redeem').classList.remove('hidden');loadVoucherList();
 }
 function closeRedeemModal(){document.getElementById('modal-redeem').classList.add('hidden');}
 async function redeemCode(){
