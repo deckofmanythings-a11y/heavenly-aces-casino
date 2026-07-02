@@ -413,7 +413,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
           STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
         </button>
-        <button class="gmode-btn" onclick="window.location.href='sicbo.html'" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
+        <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
           SIC-BO<span class="gmode-sub">3 dice</span>
         </button>
         <button class="gmode-btn" disabled style="opacity:.25;cursor:not-allowed">
@@ -783,33 +783,50 @@ function applyGameMode(mode){
 }
 
 function canSwitchMode(){
-  // Switching is only allowed when no contract or semi-contract bets are live
+  // Block if any contracted Pass Line or Come bets exist
   if(G.passLocked)return false;
   if(G.comeBets.length>0)return false;
   if(G.dcBets.length>0)return false;
-  if(G.bonus.locked)return false;
+  // Block if any Lucky Roller bets are placed
+  if(G.bonus.low>0||G.bonus.all>0||G.bonus.high>0)return false;
   return true;
+}
+
+// Saves a clean come-out state for the current mode to Supabase,
+// clearing props and resetting point/phase/bonus. Called before navigating away.
+async function saveCleanState(mode){
+  clearRemovable();
+  G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
+  G.comeBets=[];G.dcBets=[];G.bonus=makeInitialG().bonus;
+  if(currentPlayer){
+    const existingGs=currentPlayer.game_state||{};
+    const cleanGs={...existingGs,[mode]:{
+      phase:'comeout',point:null,betsOn:false,betsOffThisRoll:false,passLocked:false,
+      bets:{},comeBets:[],dcBets:[],rollHistory:G.rollHistory,
+      lastWin:0,bankrollAfterLastRoll:G.bankrollAfterLastRoll,snapshot:null,canRepeat:false,
+      bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,
+             lowHit:[],highHit:[],lowComplete:false,highComplete:false,
+             open:true,locked:false,gracePeriod:false},
+    }};
+    currentPlayer.game_state=cleanGs;
+    await sb.from('players').update({game_state:cleanGs}).eq('id',currentPlayer.id);
+  }
 }
 
 async function switchGameMode(mode){
   if(activeGame===mode)return;
-  if(!canSwitchMode()){addLog('Clear contract bets before switching modes.','info');return;}
-  clearRemovable();
+  if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before switching.','info');return;}
+  const currentMode=activeGame;
+  await saveCleanState(currentMode);
   applyGameMode(mode);
   const savedGs=currentPlayer&&currentPlayer.game_state;
   if(savedGs&&savedGs[mode]){
     applyServerGameState({game_state:{[mode]:savedGs[mode]}},mode);
   }else{
-    G.bets={};G.comeBets=[];G.point=null;G.phase='comeout';
+    G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
     G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
-    G.bonus={low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false};
+    G.bonus=makeInitialG().bonus;
   }
-  // Always allow switching after a mode change — a saved locked bonus from a previous
-  // session in that mode is stale. We're not mid-roll, so unlock everything.
-  G.bonus.locked=false;
-  G.bonus.gracePeriod=false;
-  G.passLocked=false;
-  G.comeBets=[];
   if(currentPlayer){
     const existingGs=currentPlayer.game_state||{};
     const newGs={...existingGs,activeGame:mode};
@@ -983,7 +1000,17 @@ function startSession(player){
   applyServerGameState(player); // this calls applyGameMode() internally, setting mode from saved state
   updateUI();initDice();
 }
+async function navigateAway(url){
+  if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before leaving.','info');return;}
+  const mode=activeGame||'crapless';
+  await saveCleanState(mode);
+  window.location.href=url;
+}
+
 async function logout(){
+  if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before logging out.','info');return;}
+  const mode=activeGame||'crapless';
+  await saveCleanState(mode);
   if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
   localStorage.removeItem('craps_session');currentPlayer=null;G=makeInitialG();
   document.getElementById('game-screen').style.display='none';
