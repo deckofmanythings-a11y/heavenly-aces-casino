@@ -158,7 +158,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #btn-big:hover{background:rgba(180,0,0,.4)}
 #btn-big.active{background:rgba(220,0,0,.45);border-color:#f66}
 .bs-label{font-size:min(42px,6.6vw);font-weight:700;letter-spacing:.06em}
-.bs-sub{font-size:min(24px,4.5vw);color:rgba(255,255,255,.35)}
+.bs-sub{font-size:min(24px,4.5vw);color:rgba(255,255,255,.9)}
 .bs-stk{font-size:min(39px,6.0vw);color:#ffd700;position:absolute;bottom:3px;right:6px}
 .mbtn-corner{display:none;position:absolute;top:2px;right:3px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:13px;text-align:center;cursor:pointer;z-index:5;padding:0}
 .bs-btn:hover .mbtn-corner.vis{display:block}
@@ -427,7 +427,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <!-- Row 1: SMALL | Any Triple | BIG -->
       <div id="row-top">
         <div class="bs-btn" id="btn-small" onclick="placeBet('small')">
-          <span class="bs-label">SMALL</span>
+          <span class="at-lbl" style="color:rgba(255,255,255,.9)">SMALL</span>
           <span class="bs-sub">Numbers from 4 to 10, any triple loses</span>
           <span class="bs-sub">1 pays 1</span>
           <span class="bs-stk" id="stk-small"></span>
@@ -440,7 +440,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
           <span class="at-stk" id="stk-anyTriple"></span>
         </div>
         <div class="bs-btn" id="btn-big" onclick="placeBet('big')">
-          <span class="bs-label">BIG</span>
+          <span class="at-lbl" style="color:rgba(255,255,255,.9)">BIG</span>
           <span class="bs-sub">Numbers from 11 to 17, any triple loses</span>
           <span class="bs-sub">1 pays 1</span>
           <span class="bs-stk" id="stk-big"></span>
