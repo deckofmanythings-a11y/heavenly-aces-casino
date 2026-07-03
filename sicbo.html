@@ -117,46 +117,55 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .gmode-btn:disabled{opacity:.35;cursor:not-allowed}
 .gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(255,255,255,.4);display:block}
 .gmode-btn.active .gmode-sub{color:rgba(255,215,0,.6)}
-#info-panel{width:20vw;min-width:130px;max-width:200px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:2px;justify-content:space-between}
-.info-row{display:flex;gap:6px;align-items:center}
-.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:15px;padding:3px 5px;cursor:pointer;white-space:nowrap}
+#info-panel{width:30vw;min-width:200px;max-width:325px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
+.info-row{display:flex;gap:4px;align-items:center}
+.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
 .info-btn:hover{background:rgba(255,255,255,.2)}
 .info-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
 #dice-zone{flex:1;background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;position:relative}
 #dice-canvas-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
 #dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:26px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
-#info-panel{width:20vw;min-width:130px;max-width:200px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:2px;justify-content:space-between}
-.info-row{display:flex;gap:6px;align-items:center}
-.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:15px;padding:3px 5px;cursor:pointer;white-space:nowrap}
-.info-btn:hover{background:rgba(255,255,255,.2)}
-.info-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
+
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
 .hud-item{display:flex;flex-direction:column}
-.hud-lbl{font-size:15px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
-.hud-val{font-size:17px;font-weight:600;line-height:1.3}
+.hud-lbl{font-size:17px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.hud-val{font-size:19px;font-weight:600;line-height:1.3}
 
 /* ── TABLE AREA ── */
 #table-area{flex:1;display:flex;flex-direction:column;gap:2px;padding:2px;min-height:0;overflow:hidden}
+/* Row 1: SMALL | Any Triple | BIG */
+#row-top{display:flex;flex-direction:row;gap:2px;flex-shrink:0;height:calc(100dvh * 1.6 / 16)}
+#any-triple-btn{flex:1}
+/* Rows 2-3: Doubles (left half) | Triples (right half) */
+#row-dt-top,#row-dt-bot{display:flex;flex-direction:row;gap:2px;flex-shrink:0;height:calc(100dvh * 1.8 / 16)}
+#doubles-grid-low,#doubles-grid-high{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;flex:1;min-width:0}
+#triples-grid-low,#triples-grid-high{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;flex:1;min-width:0}
+/* Row 4: Totals 4-17 (14 cells) */
+#totals-row-all{display:grid;grid-template-columns:repeat(14,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.4 / 16)}
+/* Row 5: Combos (15 cells, vertical dice) */
+#combos-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:2px;flex:1;min-height:0}
+/* Row 6: Any Number */
+#any-num-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.4 / 16)}
 
 /* Big / Small */
-#big-small-row{display:flex;gap:2px;flex-shrink:0;height:calc(100dvh * 1.6 / 16)}
-.bs-btn{flex:1;border-radius:4px;border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;transition:background .1s}
+#big-small-row{display:none} /* removed — SMALL and BIG are now column headers */
+.bs-btn{border-radius:4px;border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:background .1s;flex:1;padding:4px 6px;text-align:center}
 #btn-small{background:rgba(0,80,180,.25);border-color:rgba(100,160,255,.4)}
 #btn-small:hover{background:rgba(0,80,180,.4)}
 #btn-small.active{background:rgba(0,100,220,.45);border-color:#6af}
 #btn-big{background:rgba(180,0,0,.25);border-color:rgba(255,100,100,.4)}
 #btn-big:hover{background:rgba(180,0,0,.4)}
 #btn-big.active{background:rgba(220,0,0,.45);border-color:#f66}
-.bs-label{font-size:min(45px,6.6vw);font-weight:700;letter-spacing:.06em}
-.bs-sub{font-size:min(27px,4.5vw);color:rgba(255,255,255,.35)}
+.bs-label{font-size:min(42px,6.6vw);font-weight:700;letter-spacing:.06em}
+.bs-sub{font-size:min(24px,4.5vw);color:rgba(255,255,255,.35)}
 .bs-stk{font-size:min(39px,6.0vw);color:#ffd700;position:absolute;bottom:3px;right:6px}
 .mbtn-corner{display:none;position:absolute;top:2px;right:3px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:13px;text-align:center;cursor:pointer;z-index:5;padding:0}
 .bs-btn:hover .mbtn-corner.vis{display:block}
 .mbtn-corner:hover{background:rgba(180,0,0,.7)}
 
 /* Totals strip */
-.totals-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.6 / 16)}
+.totals-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.6 / 16)} /* legacy, unused */
 .tot-cell{background:rgba(0,0,0,.25);border:0.5px solid rgba(255,255,255,.15);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:1px}
 .tot-cell:hover{background:rgba(255,255,255,.08)}
 .tot-cell.active{background:rgba(255,215,0,.2);border-color:#ffd700}
@@ -169,53 +178,56 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
 /* Mid row: triples left + right col */
 /* Lower area: triples left (full height) + right col (doubles+combos+any-number) */
-#lower-area{display:flex;gap:2px;flex:1;min-height:0}
-#triples-col{width:132px;flex-shrink:0;display:flex;flex-direction:column;gap:2px}
-#right-col{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
-#mid-row{display:flex;gap:2px;flex:1;min-height:0}
-#doubles-combos-col{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+/* layout rules consolidated above */
+#triples-col{flex:1;display:flex;flex-direction:column;gap:2px;min-height:0}
 .sec-lbl{font-size:21px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.04em;text-align:center;flex-shrink:0}
-#any-triple-btn{background:rgba(150,0,150,.22);border:0.5px solid rgba(200,80,200,.35);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;height:26px;position:relative;transition:background .1s}
+#row-dt-hdr{display:flex;flex-direction:row;gap:2px;flex-shrink:0;height:20px}
+.dt-hdr{flex:1;font-size:17px;font-weight:700;text-align:center;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;border-radius:2px}
+.dbl-hdr{color:rgba(120,200,220,.7);background:rgba(0,65,95,.2)}
+.trip-hdr{color:rgba(210,150,210,.7);background:rgba(90,0,90,.15)}
+.full-width-hdr{flex-shrink:0;height:20px;font-size:17px;font-weight:700;text-align:center;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;border-radius:2px}
+.combo-hdr{color:rgba(75,185,115,.7);background:rgba(0,50,32,.2)}
+#any-triple-btn{flex:1;background:rgba(150,0,150,.22);border:0.5px solid rgba(200,80,200,.35);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s}
 #any-triple-btn:hover{background:rgba(160,0,160,.38)}
 #any-triple-btn.active{background:rgba(180,0,180,.45);border-color:#d060d0}
 .at-lbl{font-size:27px;font-weight:700;color:rgba(255,200,255,.9);line-height:1}
 .at-pay{font-size:21px;color:rgba(220,140,220,.5);line-height:1}
 .at-stk{font-size:24px;color:#ffd700;position:absolute;bottom:2px;right:4px}
-#specific-triples-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;flex:1;min-height:0}
+/* #specific-triples-grid removed */
 .trip-cell{background:rgba(90,0,90,.22);border:0.5px solid rgba(170,55,170,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
 .trip-cell:hover{background:rgba(110,0,110,.38)}
 .trip-cell.active{background:rgba(140,0,140,.45);border-color:#c050c0}
-.trip-dice{display:flex;flex-direction:column;align-items:center;gap:0;line-height:1}
-.trip-dice img{display:block}
+.trip-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
+.trip-dice img{display:inline-block}
 .trip-pay{font-size:18px;color:rgba(210,150,210,.45);line-height:1}
 .trip-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 
 /* Right col: doubles + combos */
-#doubles-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;flex-shrink:0}
+/* #doubles-grid removed */
 .dbl-cell{background:rgba(0,65,95,.28);border:0.5px solid rgba(75,165,195,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
 .dbl-cell:hover{background:rgba(0,80,120,.42)}
 .dbl-cell.active{background:rgba(0,100,150,.5);border-color:#50b4d4}
 .dbl-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
-.dbl-dice img{display:block}
+.dbl-dice img{display:inline-block}
 .dbl-pay{font-size:18px;color:rgba(120,200,220,.45);line-height:1}
 .dbl-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
-#combos-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;flex:1;min-height:0}
+#combos-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:2px;flex:1;min-height:0}
 .dom-cell{background:rgba(0,50,32,.35);border:0.5px solid rgba(65,165,105,.25);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
 .dom-cell:hover{background:rgba(0,70,45,.5)}
 .dom-cell.active{background:rgba(0,90,58,.55);border-color:#40b870}
-.dom-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
-.dom-dice img{display:block}
+.dom-dice{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1}
+.dom-dice img{display:inline-block}
 .dom-pay{font-size:18px;color:rgba(75,185,115,.4);line-height:1}
 .dom-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 
 /* Any Number row */
-#any-num-row{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.7 / 16)}
-.any-cell{background:rgba(45,40,0,.4);border:0.5px solid rgba(210,190,55,.28);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:1px}
+/* any-num-row legacy removed */
+.any-cell{background:rgba(45,40,0,.4);border:0.5px solid rgba(210,190,55,.28);border-radius:3px;display:flex;flex-direction:row;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:3px;padding:1px 2px}
 .any-cell:hover{background:rgba(60,55,0,.55)}
 .any-cell.active{background:rgba(80,70,0,.6);border-color:#d4c040}
-.any-die img{display:block}
-.any-pay{font-size:min(24px,4.5vw);color:rgba(210,190,55,.5);line-height:1}
-.any-stk{font-size:min(27px,4.8vw);color:#ffd700;position:absolute;bottom:2px;right:4px;line-height:1}
+.any-die img{display:inline-block}
+.any-pay{font-size:min(12px,2.2vw);color:rgba(210,190,55,.5);line-height:1}
+.any-stk{font-size:min(12px,2.2vw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -394,9 +406,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <!-- Info panel (matches craps) -->
     <div id="info-panel">
       <div class="info-row">
-        <span id="top-bar-username" style="font-size:15px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <span id="top-bar-username" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      </div>
+      <div class="info-row">
         <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
-        <button class="info-btn" onclick="logout()">Out</button>
+        <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
+        <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
@@ -407,52 +422,54 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     </div>
   </div>
 
-  <!-- TABLE AREA -->
-  <div id="table-area">
-    <!-- Big / Small -->
-    <div id="big-small-row">
-      <div class="bs-btn" id="btn-small" onclick="placeBet('small')">
-        <span class="bs-label">SMALL</span>
-        <span class="bs-sub">4–10 · no triple</span>
-        <span class="bs-stk" id="stk-small"></span>
-        <button class="mbtn-corner" id="m-small" onclick="event.stopPropagation();removeBet('small')">−</button>
-      </div>
-      <div class="bs-btn" id="btn-big" onclick="placeBet('big')">
-        <span class="bs-label">BIG</span>
-        <span class="bs-sub">11–17 · no triple</span>
-        <span class="bs-stk" id="stk-big"></span>
-        <button class="mbtn-corner" id="m-big" onclick="event.stopPropagation();removeBet('big')">−</button>
-      </div>
-    </div>
-    <!-- Totals rows -->
-    <div class="totals-row" id="totals-low"></div>
-    <div class="totals-row" id="totals-high"></div>
-    <!-- Mid row -->
-    <!-- Lower area: Triples (full height left) + right stack (Doubles, Combos, Any Number) -->
-    <div id="lower-area">
-      <div id="triples-col">
-        <div class="sec-lbl">Triples</div>
+    <!-- Table area -->
+    <div id="table-area">
+      <!-- Row 1: SMALL | Any Triple | BIG -->
+      <div id="row-top">
+        <div class="bs-btn" id="btn-small" onclick="placeBet('small')">
+          <span class="bs-label">SMALL</span>
+          <span class="bs-sub">Numbers from 4 to 10, any triple loses</span>
+          <span class="bs-sub">1 pays 1</span>
+          <span class="bs-stk" id="stk-small"></span>
+          <button class="mbtn-corner" id="m-small" onclick="event.stopPropagation();removeBet('small')">−</button>
+        </div>
         <div id="any-triple-btn" onclick="placeBet('anyTriple')">
-          <div class="at-lbl">Any Triple</div>
-          <div class="at-pay">30:1</div>
+          <div class="at-lbl">ANY</div>
+          <div class="at-lbl">TRIPLE</div>
+          <div class="at-pay">1 pays 30</div>
           <span class="at-stk" id="stk-anyTriple"></span>
         </div>
-        <div id="specific-triples-grid"></div>
-      </div>
-      <div id="right-col">
-        <div id="mid-row">
-          <div id="doubles-combos-col">
-            <div class="sec-lbl">Doubles (≥2 matching) · 11:1</div>
-            <div id="doubles-grid"></div>
-            <div class="sec-lbl" style="margin-top:1px">Combos (two specific faces) · 6:1</div>
-            <div id="combos-grid"></div>
-          </div>
+        <div class="bs-btn" id="btn-big" onclick="placeBet('big')">
+          <span class="bs-label">BIG</span>
+          <span class="bs-sub">Numbers from 11 to 17, any triple loses</span>
+          <span class="bs-sub">1 pays 1</span>
+          <span class="bs-stk" id="stk-big"></span>
+          <button class="mbtn-corner" id="m-big" onclick="event.stopPropagation();removeBet('big')">−</button>
         </div>
-        <!-- Any Number row -->
-        <div id="any-num-row"></div>
       </div>
+      <!-- Row 2: Doubles/Triples headers -->
+      <div id="row-dt-hdr">
+        <div class="dt-hdr dbl-hdr">1 pays 12</div>
+        <div class="dt-hdr trip-hdr">1 pays 190</div>
+      </div>
+      <!-- Row 2: Doubles 1-3 | Triples 1-3 -->
+      <div id="row-dt-top">
+        <div id="doubles-grid-low"></div>
+        <div id="triples-grid-low"></div>
+      </div>
+      <!-- Row 3: Doubles 4-6 | Triples 4-6 -->
+      <div id="row-dt-bot">
+        <div id="doubles-grid-high"></div>
+        <div id="triples-grid-high"></div>
+      </div>
+      <!-- Row 4: All 14 totals in one row -->
+      <div id="totals-row-all"></div>
+      <!-- Row 5: Combos full width -->
+      <div class="full-width-hdr combo-hdr">1 pays 6</div>
+      <div id="combos-grid"></div>
+      <!-- Row 6: Any Number full width -->
+      <div id="any-num-row"></div>
     </div>
-  </div>
 
   <!-- BOTTOM SECTION -->
   <div id="bottom-section">
@@ -463,6 +480,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       </div>
       <div id="bottom-bar">
         <div class="chip" style="background:#b0b0b0;color:#222;border-color:#888" data-val="1" onclick="selectChip(1)">$1</div>
+        <div class="chip" style="background:#2471a3;border-color:#1a5276" data-val="2" onclick="selectChip(2)">$2</div>
+        <div class="chip" style="background:#d4ac0d;border-color:#b7950b;color:#111" data-val="3" onclick="selectChip(3)">$3</div>
         <div class="chip" style="background:#c0392b;border-color:#922b21" data-val="5" onclick="selectChip(5)">$5</div>
         <div class="chip" style="background:#f39c12;border-color:#d68910;color:#111" data-val="10" onclick="selectChip(10)">$10</div>
         <div class="chip" style="background:#27ae60;border-color:#1e8449" data-val="25" onclick="selectChip(25)">$25</div>
@@ -518,7 +537,7 @@ const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,max
 const fmtS=n=>'$'+Math.abs(n).toFixed(0);
 
 // ── CONSTANTS ────────────────────────────────────────────────────────────────
-const TOTAL_PAY={4:60,5:20,6:18,7:12,8:8,9:6,10:6,11:6,12:6,13:8,14:12,15:18,16:20,17:60};
+const TOTAL_PAY={4:62,5:31,6:18,7:12,8:8,9:7,10:6,11:6,12:7,13:8,14:12,15:18,16:31,17:62};
 const COMBO_PAIRS=[];
 for(let a=1;a<=5;a++)for(let b=a+1;b<=6;b++)COMBO_PAIRS.push([a,b]);
 const DIE_IMG_SZ='min(13px,2vw)'; // size for inline pip images in bet cells
@@ -921,81 +940,105 @@ function updateUI(){
 
 // ── BUILD TABLE ───────────────────────────────────────────────────────────────
 function buildTable(){
-  // Totals rows
-  const lowRow=document.getElementById('totals-low');
-  const highRow=document.getElementById('totals-high');
-  for(let t=4;t<=10;t++) lowRow.appendChild(makeTotCell(t));
-  for(let t=11;t<=17;t++) highRow.appendChild(makeTotCell(t));
+  const DIE_SZ='width:min(33px,5.4vw);height:min(33px,5.4vw);display:inline-block;vertical-align:middle';
+  const MB_CSS='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
 
-  // Specific triples grid — 2 cols, 3 rows
-  const tg=document.getElementById('specific-triples-grid');
-  for(let v=1;v<=6;v++){
-    const cell=document.createElement('div');cell.className='trip-cell';cell.id='cell-triple'+v;
-    cell.onclick=()=>placeBet('triple'+v);
-    const dd=document.createElement('div');dd.className='trip-dice';
-    for(let i=0;i<3;i++){const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);display:block';dd.appendChild(img);}
-    const pay=document.createElement('div');pay.className='trip-pay';pay.textContent='180:1';
-    const stk=document.createElement('span');stk.className='trip-stk';stk.id='stk-triple'+v;
-    const mb=document.createElement('button');mb.className='mbtn-corner trip-stk';mb.id='m-triple'+v;mb.textContent='−';mb.style.cssText='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
-    mb.onclick=e=>{e.stopPropagation();removeBet('triple'+v);};
-    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
-    tg.appendChild(cell);
-  }
+  // Row 4: All 14 totals in one row (4-17)
+  const ta=document.getElementById('totals-row-all');
+  for(let t=4;t<=17;t++) ta.appendChild(makeTotCell(t));
 
-  // Doubles grid — 6 cells in a single row
-  const dg=document.getElementById('doubles-grid');
-  // Set grid height dynamically based on available space — done via CSS flex
-  for(let v=1;v<=6;v++){
+  // Rows 2-3: Doubles and Triples split into low (1-3) and high (4-6)
+  function makeDblCell(v){
     const cell=document.createElement('div');cell.className='dbl-cell';cell.id='cell-double'+v;
     cell.onclick=()=>placeBet('double'+v);
-    const dd=document.createElement('div');dd.className='dbl-dice';
-    for(let i=0;i<2;i++){const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(39px,6vw);height:min(39px,6vw);display:block';dd.appendChild(img);}
-    const pay=document.createElement('div');pay.className='dbl-pay';pay.textContent='11:1';
+    // Use a table row to guarantee horizontal dice regardless of flex context
+    const dd=document.createElement('div');
+    dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
+    for(let i=0;i<2;i++){
+      const img=document.createElement('img');
+      img.src='data:image/png;base64,'+DIE_B64[v];
+      img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
+      dd.appendChild(img);
+    }
     const stk=document.createElement('span');stk.className='dbl-stk';stk.id='stk-double'+v;
-    const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-double'+v;mb.textContent='−';mb.style.cssText='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
+    const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-double'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet('double'+v);};
-    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
-    dg.appendChild(cell);
+    cell.appendChild(dd);cell.appendChild(stk);cell.appendChild(mb);
+    return cell;
   }
+  function makeTripCell(v){
+    const cell=document.createElement('div');cell.className='trip-cell';cell.id='cell-triple'+v;
+    cell.onclick=()=>placeBet('triple'+v);
+    const dd=document.createElement('div');
+    dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
+    for(let i=0;i<3;i++){
+      const img=document.createElement('img');
+      img.src='data:image/png;base64,'+DIE_B64[v];
+      img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
+      dd.appendChild(img);
+    }
+    const stk=document.createElement('span');stk.className='trip-stk';stk.id='stk-triple'+v;
+    const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-triple'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
+    mb.onclick=e=>{e.stopPropagation();removeBet('triple'+v);};
+    cell.appendChild(dd);cell.appendChild(stk);cell.appendChild(mb);
+    return cell;
+  }
+  const dlLow=document.getElementById('doubles-grid-low');
+  const dlHigh=document.getElementById('doubles-grid-high');
+  const tlLow=document.getElementById('triples-grid-low');
+  const tlHigh=document.getElementById('triples-grid-high');
+  for(let v=1;v<=3;v++){dlLow.appendChild(makeDblCell(v));tlLow.appendChild(makeTripCell(v));}
+  for(let v=4;v<=6;v++){dlHigh.appendChild(makeDblCell(v));tlHigh.appendChild(makeTripCell(v));}
 
-  // Combos grid — 5 cols × 3 rows = 15 cells
+  // Row 5: Combos (15 cells, vertical dice, no payout label in cell)
   const cg=document.getElementById('combos-grid');
   for(const[a,b]of COMBO_PAIRS){
     const key='combo'+a+'-'+b;
     const cell=document.createElement('div');cell.className='dom-cell';cell.id='cell-'+key;
     cell.onclick=()=>placeBet(key);
-    const dd=document.createElement('div');dd.className='dom-dice';
-    [a,b].forEach(v=>{const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(39px,6vw);height:min(39px,6vw);display:block';dd.appendChild(img);});
-    const pay=document.createElement('div');pay.className='dom-pay';pay.textContent='6:1';
+    const dd=document.createElement('div');
+    dd.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0';
+    [a,b].forEach(v=>{
+      const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];
+      img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
+      dd.appendChild(img);
+    });
     const stk=document.createElement('span');stk.className='dom-stk';stk.id='stk-'+key;
-    const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-'+key;mb.textContent='−';mb.style.cssText='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
+    const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-'+key;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet(key);};
-    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(dd);cell.appendChild(stk);cell.appendChild(mb);
     cg.appendChild(cell);
   }
 
-  // Any Number row — 6 cells
+  // Row 6: Any Number (6 cells, no payout label in cell)
   const an=document.getElementById('any-num-row');
   for(let v=1;v<=6;v++){
     const cell=document.createElement('div');cell.className='any-cell';cell.id='cell-any'+v;
     cell.onclick=()=>placeBet('any'+v);
     const die=document.createElement('div');die.className='any-die';
-    const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText='width:min(60px,9.6vw);height:min(60px,9.6vw);display:block';
+    const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText=DIE_SZ;
     die.appendChild(img);
-    const pay=document.createElement('div');pay.className='any-pay';pay.textContent='1/2/3:1';
     const stk=document.createElement('span');stk.className='any-stk';stk.id='stk-any'+v;
-    const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-any'+v;mb.textContent='−';mb.style.cssText='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
+    const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-any'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet('any'+v);};
-    cell.appendChild(die);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(die);cell.appendChild(stk);cell.appendChild(mb);
     an.appendChild(cell);
   }
+  // 7th cell: payout info
+  const infoCell=document.createElement('div');
+  infoCell.className='any-cell';
+  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(11px,1.8vw);color:rgba(210,190,55,.7);line-height:1.4;pointer-events:none';
+  infoCell.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
+  an.appendChild(infoCell);
 }
 
 function makeTotCell(t){
   const cell=document.createElement('div');cell.className='tot-cell';cell.id='cell-total'+t;
   cell.onclick=()=>placeBet('total'+t);
+  if(t<=10){cell.style.background='rgba(0,80,180,.25)';cell.style.borderColor='rgba(100,160,255,.4)';}
+  else{cell.style.background='rgba(180,0,0,.25)';cell.style.borderColor='rgba(255,100,100,.4)';}
   const num=document.createElement('div');num.className='tot-num';num.textContent=t;
-  const pay=document.createElement('div');pay.className='tot-pay';pay.textContent=TOTAL_PAY[t]+':1';
+  const pay=document.createElement('div');pay.className='tot-pay';pay.textContent='1 pays '+TOTAL_PAY[t];
   const stk=document.createElement('div');stk.className='tot-stk';stk.id='stk-total'+t;
   const mb=document.createElement('button');mb.className='mbtn-tot';mb.id='m-total'+t;mb.textContent='−';
   mb.onclick=e=>{e.stopPropagation();removeBet('total'+t);};
