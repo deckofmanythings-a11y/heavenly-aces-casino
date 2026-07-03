@@ -173,25 +173,25 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #pnl-display{font-size:22px;font-weight:700;text-align:center;color:#7ee87e;padding:2px}
 
 /* ── PLACEMENT SCREEN ── */
-#placement-overlay{position:absolute;inset:0;background:rgba(0,0,10,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:32px}
+#placement-overlay{position:absolute;inset:0;background:rgba(0,0,10,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:19px;padding:26px}
 #placement-overlay.hidden{display:none}
-.placement-title{font-size:56px;font-weight:700;color:#4a9eff;letter-spacing:.05em}
-.placement-sub{font-size:34px;color:rgba(255,255,255,.5)}
+.placement-title{font-size:45px;font-weight:700;color:#4a9eff;letter-spacing:.05em}
+.placement-sub{font-size:27px;color:rgba(255,255,255,.5)}
 #placement-grid-wrap{position:relative}
-#placement-col-labels{display:flex;margin-left:44px;gap:2px;max-width:520px;width:100%}
-#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:520px;width:100%}
-.p-col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4)}
+#placement-col-labels{display:flex;margin-left:35px;gap:2px;max-width:416px;width:100%}
+#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:416px;width:100%}
+.p-col-label{flex:1;text-align:center;font-size:18px;font-weight:700;color:rgba(255,255,255,.4)}
 .p-row{display:flex;gap:2px;align-items:center}
-.p-row-label{width:36px;text-align:center;font-size:22px;color:rgba(255,255,255,.4)}
-.p-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.12);background:rgba(0,20,60,.4);display:flex;align-items:center;justify-content:center;font-size:24px}
+.p-row-label{width:29px;text-align:center;font-size:18px;color:rgba(255,255,255,.4)}
+.p-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.12);background:rgba(0,20,60,.4);display:flex;align-items:center;justify-content:center;font-size:19px}
 .p-cell.ship{background:rgba(40,80,160,.25);border-color:rgba(74,158,255,.3)}
-.placement-btns{display:flex;gap:16px}
-.placement-btn{padding:16px 40px;border-radius:12px;font-size:36px;font-weight:700;cursor:pointer;border:none}
+.placement-btns{display:flex;gap:13px}
+.placement-btn{padding:13px 32px;border-radius:10px;font-size:29px;font-weight:700;cursor:pointer;border:none}
 #re-randomize-btn{background:rgba(74,158,255,.2);border:1px solid rgba(74,158,255,.5);color:#4a9eff}
 #start-battle-btn{background:linear-gradient(180deg,#ff6400,#cc4400);color:#fff}
-.bet-row{display:flex;align-items:center;gap:16px}
-.bet-lbl{font-size:34px;color:rgba(255,255,255,.5)}
-#bet-input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;font-size:48px;font-weight:700;padding:10px 20px;width:200px;text-align:center;outline:none}
+.bet-row{display:flex;align-items:center;gap:13px}
+.bet-lbl{font-size:27px;color:rgba(255,255,255,.5)}
+#bet-input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:38px;font-weight:700;padding:8px 16px;width:160px;text-align:center;outline:none}
 #bet-input:focus{border-color:rgba(74,158,255,.5)}
 
 /* ── DONE OVERLAY ── */
@@ -325,6 +325,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .gmode-btn:hover{background:rgba(255,255,255,.12)}
 .gmode-btn.active{background:rgba(74,158,255,.18);border-color:#4a9eff;color:#fff}
 .gmode-sub{font-size:10px;font-weight:400;opacity:.6;display:block}
+
+/* Draggable ships on placement grid */
+.p-cell{position:relative}
+.p-cell.ship{cursor:grab;user-select:none}
+.p-cell.ship:active{cursor:grabbing}
+.p-cell.drag-over{background:rgba(74,158,255,.25);border-color:rgba(74,158,255,.6)}
+.p-cell.drag-invalid{background:rgba(255,60,60,.2);border-color:rgba(255,60,60,.5)}
 </style>
 </head>
 <body>
@@ -357,26 +364,28 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <button class="gmode-btn active" style="font-size:13px">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
     </div>
     <div class="placement-title">⚓ BATTLE STATIONS</div>
-    <div class="placement-sub">Ships placed randomly. Fire when ready.</div>
-    <div class="bet-row">
-      <span class="bet-lbl">Bet $</span>
-      <input type="number" id="bet-input" value="5" min="1" step="1">
+    <div class="placement-sub">Drag ships to move · Click to rotate</div>
+    <div class="bet-row" style="align-items:center;gap:10px">
+      <span class="bet-lbl">Bet</span>
+      <div id="bet-display" style="position:relative;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:38px;font-weight:700;padding:6px 16px;min-width:100px;text-align:center;cursor:pointer" onclick="addBetChip()">$0
+        <button id="bet-minus" onclick="event.stopPropagation();removeBetChip()" style="display:none;position:absolute;top:2px;right:4px;background:rgba(180,0,0,.3);border:0.5px solid rgba(255,80,80,.5);border-radius:3px;color:#ff9a9a;font-size:14px;font-weight:700;cursor:pointer;padding:1px 4px;line-height:1">−</button>
+      </div>
     </div>
     <div id="placement-col-labels"></div>
     <div id="placement-rows"></div>
     <div class="placement-btns">
       <button class="placement-btn" id="re-randomize-btn" onclick="reRandomize()">🎲 Re-randomize</button>
-      <button class="placement-btn" id="start-battle-btn" onclick="startBattle()">🚀 FIRE!</button>
+      <button class="placement-btn" id="start-battle-btn" onclick="startBattle()">⚓ Begin Game</button>
     </div>
     <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center">
-      <div class="chip" style="background:#b0b0b0;color:#222;border-color:#888" data-val="1" onclick="selectChip(1)">$1</div>
-      <div class="chip" style="background:#2471a3;border-color:#1a5276" data-val="2" onclick="selectChip(2)">$2</div>
-      <div class="chip" style="background:#d4ac0d;border-color:#b7950b;color:#111" data-val="3" onclick="selectChip(3)">$3</div>
-      <div class="chip" style="background:#c0392b;border-color:#922b21" data-val="5" onclick="selectChip(5)">$5</div>
-      <div class="chip" style="background:#f39c12;border-color:#d68910;color:#111" data-val="10" onclick="selectChip(10)">$10</div>
-      <div class="chip" style="background:#27ae60;border-color:#1e8449" data-val="25" onclick="selectChip(25)">$25</div>
-      <div class="chip" style="background:#7d4f30;border-color:#5d3a22" data-val="50" onclick="selectChip(50)">$50</div>
-      <div class="chip" style="background:#2c2c2c;border-color:#111" data-val="100" onclick="selectChip(100)">$100</div>
+      <div class="chip" style="background:#b0b0b0;color:#222;border-color:#888" data-val="1" onclick="selectChip(1);addBetChip()">$1</div>
+      <div class="chip" style="background:#2471a3;border-color:#1a5276" data-val="2" onclick="selectChip(2);addBetChip()">$2</div>
+      <div class="chip" style="background:#d4ac0d;border-color:#b7950b;color:#111" data-val="3" onclick="selectChip(3);addBetChip()">$3</div>
+      <div class="chip" style="background:#c0392b;border-color:#922b21" data-val="5" onclick="selectChip(5);addBetChip()">$5</div>
+      <div class="chip" style="background:#f39c12;border-color:#d68910;color:#111" data-val="10" onclick="selectChip(10);addBetChip()">$10</div>
+      <div class="chip" style="background:#27ae60;border-color:#1e8449" data-val="25" onclick="selectChip(25);addBetChip()">$25</div>
+      <div class="chip" style="background:#7d4f30;border-color:#5d3a22" data-val="50" onclick="selectChip(50);addBetChip()">$50</div>
+      <div class="chip" style="background:#2c2c2c;border-color:#111" data-val="100" onclick="selectChip(100);addBetChip()">$100</div>
     </div>
     <div style="display:flex;gap:8px">
       <button class="bar-btn" onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
@@ -570,6 +579,7 @@ let G={
   sunkenCount:0,
   rollHistory:[],
   freeMissiles:4,
+  placementBet:5,
   bet:5,
   lastWin:0,
   buyPrice:0,
@@ -685,6 +695,7 @@ function startSession(player){
     showPlacementScreen();
   }
   selectChip(G.chip);
+  updateBetDisplay();
   updateUI();
 }
 async function logout(){
@@ -700,7 +711,7 @@ function resetGameState(){
   G.phase='placement';G.ships=null;G.grid=null;
   G.shipHits=[0,0,0,0];G.shipSunk=[false,false,false,false];
   G.missilesRemaining=4;G.missilesBought=0;G.sunkenCount=0;
-  G.canBuy=false;G.buyPrice=0;G.firing=false;G.lastWin=0;G.rollHistory=[];G.totalSpent=0;G.freeMissiles=4;
+  G.canBuy=false;G.buyPrice=0;G.firing=false;G.lastWin=0;G.rollHistory=[];G.totalSpent=0;G.freeMissiles=4;G.placementBet=G.placementBet||5;
 }
 
 // ── CHIP SELECTION ────────────────────────────────────────────────────────────
@@ -745,9 +756,37 @@ function buildGrid(ships){
 function showPlacementScreen(){document.getElementById('placement-overlay').classList.remove('hidden');}
 function hidePlacementScreen(){document.getElementById('placement-overlay').classList.add('hidden');}
 function reRandomize(){G.ships=randomizeLocal();renderPlacementGrid();}
+// ── BET MANAGEMENT ────────────────────────────────────────────────────────────
+function updateBetDisplay(){
+  const bet=G.placementBet||0;
+  const el=document.getElementById('bet-display');
+  const mb=document.getElementById('bet-minus');
+  if(el){
+    // Update text node (not the button)
+    el.childNodes[0].textContent='$'+bet.toFixed(2);
+  }
+  if(mb)mb.style.display=bet>0?'block':'none';
+}
+function addBetChip(){
+  const chip=G.chip||5;
+  G.placementBet=Math.round(((G.placementBet||0)+chip)*100)/100;
+  if(G.placementBet>G.bankroll)G.placementBet=Math.round(G.bankroll*100)/100;
+  updateBetDisplay();
+}
+function removeBetChip(){
+  const chip=G.chip||5;
+  G.placementBet=Math.max(0,Math.round(((G.placementBet||0)-chip)*100)/100);
+  updateBetDisplay();
+}
+
+// ── PLACEMENT GRID WITH DRAG AND CLICK-TO-ROTATE ──────────────────────────────
+let _dragShipIdx=null;
+let _dragOffset=null; // offset within the ship where the drag started
+
 function renderPlacementGrid(){
   const colLabels=document.getElementById('placement-col-labels');
   const rowsEl=document.getElementById('placement-rows');
+  if(!colLabels||!rowsEl)return;
   colLabels.innerHTML='<div style="width:18px;flex-shrink:0"></div>'+
     'ABCDEF'.split('').map(l=>'<div class="p-col-label">'+l+'</div>').join('');
   rowsEl.innerHTML='';
@@ -760,19 +799,103 @@ function renderPlacementGrid(){
       const cell=document.createElement('div');
       cell.className='p-cell'+(tempGrid[r][c]==='ship'?' ship':'');
       cell.dataset.pr=r;cell.dataset.pc=c;
+      const si=G.ships.findIndex(ship=>ship.some(([sr,sc])=>sr===r&&sc===c));
+      if(si>=0){
+        cell.dataset.shipIdx=si;
+        let _startCell=null;
+        cell.addEventListener('mousedown',e=>{
+          e.preventDefault();
+          _startCell={r,c};
+          _dragShipIdx=si;
+          const ship=G.ships[si];
+          _dragOffset={dr:r-ship[0][0], dc:c-ship[0][1]};
+        });
+        // Mouseup on same cell = rotate; mouseup on different cell = drop
+        cell.addEventListener('mouseup',e=>{
+          if(_dragShipIdx!==si){return;} // handled by drop logic below
+          if(_startCell&&_startCell.r===r&&_startCell.c===c){
+            // No movement -- rotate
+            _dragShipIdx=null;_dragOffset=null;_startCell=null;
+            document.querySelectorAll('.drag-over,.drag-invalid').forEach(el=>el.classList.remove('drag-over','drag-invalid'));
+            rotateShip(si);
+            return;
+          }
+        });
+      }
+      // Hover during drag
+      cell.addEventListener('mouseenter',()=>{
+        if(_dragShipIdx===null)return;
+        highlightDrop(r,c);
+      });
+      // Drop on mouseup
+      cell.addEventListener('mouseup',e=>{
+        if(_dragShipIdx===null)return;
+        const moved=commitDrop(r,c);
+        if(moved) ; // drag committed
+        _dragShipIdx=null;_dragOffset=null;
+        document.querySelectorAll('.drag-over,.drag-invalid').forEach(el=>el.classList.remove('drag-over','drag-invalid'));
+      });
       row.appendChild(cell);
     }
     rowsEl.appendChild(row);
   }
-  // Defer ship image overlay until cells are in the DOM
+  // Cancel drag if mouse leaves grid
+  document.addEventListener('mouseup',()=>{
+    if(_dragShipIdx!==null){
+      _dragShipIdx=null;_dragOffset=null;
+      document.querySelectorAll('.drag-over,.drag-invalid').forEach(el=>el.classList.remove('drag-over','drag-invalid'));
+    }
+  },{once:true});
   requestAnimationFrame(()=>renderShipImagesOnGrid('placement-rows','pr','pc'));
+}
+
+function rotateShip(si){
+  if(si<0||si>=G.ships.length)return;
+  const ship=G.ships[si];
+  const rowsSame=ship.every(([r])=>r===ship[0][0]);
+  const anchorR=ship[0][0];
+  const anchorC=ship[0][1];
+  const newSquares=ship.map((_,j)=>rowsSame?[anchorR+j,anchorC]:[anchorR,anchorC+j]);
+  if(newSquares.some(([r,c])=>r<0||r>=GRID_SIZE||c<0||c>=GRID_SIZE))return;
+  const others=G.ships.filter((_,i)=>i!==si).flat().map(([r,c])=>r+','+c);
+  if(newSquares.some(([r,c])=>others.includes(r+','+c)))return;
+  G.ships[si]=newSquares;
+  renderPlacementGrid();
+}
+
+function getDropSquares(targetR,targetC){
+  if(_dragShipIdx===null)return null;
+  const ship=G.ships[_dragShipIdx];
+  const baseR=targetR-(_dragOffset?_dragOffset.dr:0);
+  const baseC=targetC-(_dragOffset?_dragOffset.dc:0);
+  return ship.map(([sr,sc])=>[baseR+(sr-ship[0][0]),baseC+(sc-ship[0][1])]);
+}
+
+function highlightDrop(targetR,targetC){
+  document.querySelectorAll('.drag-over,.drag-invalid').forEach(el=>el.classList.remove('drag-over','drag-invalid'));
+  const squares=getDropSquares(targetR,targetC);
+  if(!squares)return;
+  const others=G.ships.filter((_,i)=>i!==_dragShipIdx).flat().map(([r,c])=>r+','+c);
+  const valid=squares.every(([r,c])=>r>=0&&r<GRID_SIZE&&c>=0&&c<GRID_SIZE&&!others.includes(r+','+c));
+  squares.forEach(([r,c])=>{
+    const el=document.querySelector('[data-pr="'+r+'"][data-pc="'+c+'"]');
+    if(el)el.classList.add(valid?'drag-over':'drag-invalid');
+  });
+}
+
+function commitDrop(targetR,targetC){
+  const squares=getDropSquares(targetR,targetC);
+  if(!squares)return false;
+  const others=G.ships.filter((_,i)=>i!==_dragShipIdx).flat().map(([r,c])=>r+','+c);
+  const valid=squares.every(([r,c])=>r>=0&&r<GRID_SIZE&&c>=0&&c<GRID_SIZE&&!others.includes(r+','+c));
+  if(valid){G.ships[_dragShipIdx]=squares;renderPlacementGrid();}
+  return valid;
 }
 
 // ── START BATTLE ──────────────────────────────────────────────────────────────
 async function startBattle(){
-  const betInput=document.getElementById('bet-input');
-  const bet=parseFloat(betInput.value)||0;
-  if(bet<=0){addLog('Enter a valid bet.','info');return;}
+  const bet=G.placementBet||0;
+  if(bet<=0){addLog('Place a bet before starting.','info');return;}
   if(bet>G.bankroll){addLog('Bet exceeds bankroll.','info');return;}
   const btn=document.getElementById('start-battle-btn');btn.disabled=true;
   const token=localStorage.getItem('craps_session');
