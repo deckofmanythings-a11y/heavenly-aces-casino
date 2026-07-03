@@ -1357,6 +1357,8 @@ selectChip(5);
 buildMainGrid();
 tryRestoreSession();
 
+
+
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
 async function cashOut(){
   if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
@@ -1396,8 +1398,6 @@ async function cashOut(){
   updateUI();
 }
 function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
-
-// ── VOUCHER LIST IN REDEEM MODAL ──────────────────────────────────────────────
 async function loadVoucherList(){
   const token=localStorage.getItem('craps_session');
   const container=document.getElementById('voucher-list-items');
@@ -1427,7 +1427,6 @@ async function loadVoucherList(){
     container.appendChild(row);
   });
 }
-
 async function redeemVoucher(code){
   document.getElementById('redeem-input').value=code;
   await redeemCode();

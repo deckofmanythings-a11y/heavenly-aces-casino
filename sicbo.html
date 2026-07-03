@@ -1091,8 +1091,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementB
 selectChip(25);
 buildTable();
 tryRestoreSession();
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">// ── CASHOUT ───────────────────────────────────────────────────────────────────
+
+// ── CASHOUT ───────────────────────────────────────────────────────────────────
 async function cashOut(){
   if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
   const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
@@ -1131,8 +1131,6 @@ async function cashOut(){
   updateUI();
 }
 function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
-
-// ── VOUCHER LIST IN REDEEM MODAL ──────────────────────────────────────────────
 async function loadVoucherList(){
   const token=localStorage.getItem('craps_session');
   const container=document.getElementById('voucher-list-items');
@@ -1162,12 +1160,13 @@ async function loadVoucherList(){
     container.appendChild(row);
   });
 }
-
 async function redeemVoucher(code){
   document.getElementById('redeem-input').value=code;
   await redeemCode();
   loadVoucherList();
 }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
 </script>
 </body>
 </html>
