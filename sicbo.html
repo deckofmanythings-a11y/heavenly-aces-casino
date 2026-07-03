@@ -5,85 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Rated Hex Sic-Bo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-// ── CASHOUT ───────────────────────────────────────────────────────────────────
-async function cashOut(){
-  if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
-  const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
-  const token=localStorage.getItem('craps_session');
-  let data;
-  try{
-    const res=await fetch(FUNCTIONS_URL+'/cashout',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
-      body:JSON.stringify({session_token:token})
-    });
-    data=await res.json();
-  }catch(e){data={ok:false,message:'Network error.'};}
-  if(btn)btn.disabled=false;
-  if(!data.ok){addLog(data.message||'Cash out failed.','info');return;}
-  // Zero local bankroll
-  G.bankroll=0;
-  if(currentPlayer)currentPlayer.bankroll=0;
-  // Show voucher modal
-  const code=data.code;
-  const amount=parseFloat(data.amount);
-  const now=new Date(data.created_at||Date.now());
-  const dateStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'
-    +now.getDate().toString().padStart(2,'0')+'/'
-    +now.getFullYear();
-  const timeStr=now.getHours().toString().padStart(2,'0')+':'
-    +now.getMinutes().toString().padStart(2,'0')+':'
-    +now.getSeconds().toString().padStart(2,'0');
-  const voucherNum=Math.floor(Math.random()*9000+1000);
-  const assetNum=Math.floor(Math.random()*9000+1000);
-  document.getElementById('voucher-barcode').textContent=code;
-  document.getElementById('voucher-validation').innerHTML=
-    'VALIDATION &nbsp;&nbsp; '+code+'<br>'
-    +dateStr+' &nbsp; '+timeStr+' &nbsp;&nbsp; VOUCHER # '+voucherNum;
-  document.getElementById('voucher-amount').textContent='$'+amount.toFixed(2);
-  document.getElementById('voucher-asset').textContent='ASSET# '+assetNum;
-  document.getElementById('modal-cashout').classList.remove('hidden');
-  updateUI();
-}
-function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
-
-// ── VOUCHER LIST IN REDEEM MODAL ──────────────────────────────────────────────
-async function loadVoucherList(){
-  const token=localStorage.getItem('craps_session');
-  const container=document.getElementById('voucher-list-items');
-  if(!container)return;
-  container.innerHTML='<div class="voucher-list-empty">Loading...</div>';
-  let data;
-  try{
-    const res=await fetch(FUNCTIONS_URL+'/redeem',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
-      body:JSON.stringify({session_token:token,action:'list'})
-    });
-    data=await res.json();
-  }catch(e){container.innerHTML='<div class="voucher-list-empty">Could not load vouchers.</div>';return;}
-  if(!data.ok||!data.vouchers||data.vouchers.length===0){
-    container.innerHTML='<div class="voucher-list-empty">No unredeemed vouchers.</div>';return;
-  }
-  container.innerHTML='';
-  data.vouchers.forEach(v=>{
-    const exp=new Date(v.expires_at);
-    const expStr='Exp '+(exp.getMonth()+1)+'/'+exp.getDate()+'/'+exp.getFullYear();
-    const row=document.createElement('div');row.className='voucher-row';
-    row.innerHTML='<span class="voucher-row-amount">$'+parseFloat(v.amount).toFixed(2)+'</span>'
-      +'<span class="voucher-row-code">'+v.code+'</span>'
-      +'<span class="voucher-row-expiry">'+expStr+'</span>'
-      +'<button class="voucher-row-btn" onclick="redeemVoucher(''+v.code+'')">Redeem</button>';
-    container.appendChild(row);
-  });
-}
-
-async function redeemVoucher(code){
-  document.getElementById('redeem-input').value=code;
-  await redeemCode();
-  loadVoucherList();
-}
-
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1171,6 +1092,82 @@ selectChip(25);
 buildTable();
 tryRestoreSession();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">// ── CASHOUT ───────────────────────────────────────────────────────────────────
+async function cashOut(){
+  if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
+  const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/cashout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token})
+    });
+    data=await res.json();
+  }catch(e){data={ok:false,message:'Network error.'};}
+  if(btn)btn.disabled=false;
+  if(!data.ok){addLog(data.message||'Cash out failed.','info');return;}
+  G.bankroll=0;
+  if(currentPlayer)currentPlayer.bankroll=0;
+  const code=data.code;
+  const amount=parseFloat(data.amount);
+  const now=new Date(data.created_at||Date.now());
+  const dateStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'
+    +now.getDate().toString().padStart(2,'0')+'/'
+    +now.getFullYear();
+  const timeStr=now.getHours().toString().padStart(2,'0')+':'
+    +now.getMinutes().toString().padStart(2,'0')+':'
+    +now.getSeconds().toString().padStart(2,'0');
+  const voucherNum=Math.floor(Math.random()*9000+1000);
+  const assetNum=Math.floor(Math.random()*9000+1000);
+  document.getElementById('voucher-barcode').textContent=code;
+  document.getElementById('voucher-validation').innerHTML=
+    'VALIDATION &nbsp;&nbsp; '+code+'<br>'
+    +dateStr+' &nbsp; '+timeStr+' &nbsp;&nbsp; VOUCHER # '+voucherNum;
+  document.getElementById('voucher-amount').textContent='$'+amount.toFixed(2);
+  document.getElementById('voucher-asset').textContent='ASSET# '+assetNum;
+  document.getElementById('modal-cashout').classList.remove('hidden');
+  updateUI();
+}
+function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
+
+// ── VOUCHER LIST IN REDEEM MODAL ──────────────────────────────────────────────
+async function loadVoucherList(){
+  const token=localStorage.getItem('craps_session');
+  const container=document.getElementById('voucher-list-items');
+  if(!container)return;
+  container.innerHTML='<div class="voucher-list-empty">Loading...</div>';
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/redeem',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token,action:'list'})
+    });
+    data=await res.json();
+  }catch(e){container.innerHTML='<div class="voucher-list-empty">Could not load vouchers.</div>';return;}
+  if(!data.ok||!data.vouchers||data.vouchers.length===0){
+    container.innerHTML='<div class="voucher-list-empty">No unredeemed vouchers.</div>';return;
+  }
+  container.innerHTML='';
+  data.vouchers.forEach(v=>{
+    const exp=new Date(v.expires_at);
+    const expStr='Exp '+(exp.getMonth()+1)+'/'+exp.getDate()+'/'+exp.getFullYear();
+    const row=document.createElement('div');row.className='voucher-row';
+    row.innerHTML='<span class="voucher-row-amount">$'+parseFloat(v.amount).toFixed(2)+'</span>'
+      +'<span class="voucher-row-code">'+v.code+'</span>'
+      +'<span class="voucher-row-expiry">'+expStr+'</span>'
+      +'<button class="voucher-row-btn" onclick="redeemVoucher(''+v.code+'')">Redeem</button>';
+    container.appendChild(row);
+  });
+}
+
+async function redeemVoucher(code){
+  document.getElementById('redeem-input').value=code;
+  await redeemCode();
+  loadVoucherList();
+}
+</script>
 </body>
 </html>
