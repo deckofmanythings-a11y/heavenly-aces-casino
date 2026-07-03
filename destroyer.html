@@ -1372,7 +1372,7 @@ async function cashOut(){
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error.'};}
   if(btn)btn.disabled=false;
-  if(!data.ok){addLog(data.message||'Cash out failed.','info');return;}
+  if(!data.ok){const msg=data.message||'Cash out failed. Is the cashout function deployed?';addLog(msg,'info');alert(msg);return;}
   G.bankroll=0;
   if(currentPlayer)currentPlayer.bankroll=0;
   const code=data.code;
