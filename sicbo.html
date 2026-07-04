@@ -1156,7 +1156,7 @@ async function loadVoucherList(){
     row.innerHTML='<span class="voucher-row-amount">$'+parseFloat(v.amount).toFixed(2)+'</span>'
       +'<span class="voucher-row-code">'+v.code+'</span>'
       +'<span class="voucher-row-expiry">'+expStr+'</span>'
-      +'<button class="voucher-row-btn" onclick="redeemVoucher(''+v.code+'')">Redeem</button>';
+      +'<button class="voucher-row-btn" onclick="redeemVoucher(\''+v.code+'\')">Redeem</button>';
     container.appendChild(row);
   });
 }

@@ -359,8 +359,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     </div>
     <div id="top-center">
       <div class="dice-display">
-        <div class="die-box" id="die-letter">—</div>
-        <div class="die-box" id="die-number">—</div>
+        <div class="die-box" id="die-letter"><img id="die-letter-img" style="width:100%;height:100%;object-fit:contain;display:none"><span id="die-letter-txt">—</span></div>
+        <div class="die-box" id="die-number"><img id="die-number-img" style="width:100%;height:100%;object-fit:contain;display:none"><span id="die-number-txt">—</span></div>
       </div>
       <div id="last-result-text">Place ships<br>to begin</div>
     </div>
@@ -848,7 +848,10 @@ async function fireMissile(){
   document.getElementById('buy-btn').disabled=true;
   const dL=document.getElementById('die-letter'),dN=document.getElementById('die-number');
   dL.className='die-box rolling';dN.className='die-box rolling';
-  dL.textContent='?';dN.textContent='?';
+  const dLi=document.getElementById('die-letter-img');const dLt=document.getElementById('die-letter-txt');
+  const dNi=document.getElementById('die-number-img');const dNt=document.getElementById('die-number-txt');
+  if(dLi){dLi.style.display='none';}if(dLt)dLt.textContent='?';
+  if(dNi){dNi.style.display='none';}if(dNt)dNt.textContent='?';
   const token=localStorage.getItem('craps_session');
   let data;
   try{
@@ -861,15 +864,26 @@ async function fireMissile(){
   }catch(e){data={ok:false,message:'Network error.'};}
   G.firing=false;
   if(!data.ok){
-    dL.className='die-box';dL.textContent='—';dN.className='die-box';dN.textContent='—';
+    dL.className='die-box';dN.className='die-box';
+  const rli=document.getElementById('die-letter-img');const rlt=document.getElementById('die-letter-txt');
+  const rni=document.getElementById('die-number-img');const rnt=document.getElementById('die-number-txt');
+  if(rli)rli.style.display='none';if(rlt)rlt.textContent='—';
+  if(rni)rni.style.display='none';if(rnt)rnt.textContent='—';
     addLog(data.message||'Error.','info');
     updateUI();return;
   }
   const{roll,hit,done,finalPayout,newBankroll,state,buyPrice,canBuy,capped}=data;
   // Land dice
   setTimeout(()=>{
-    dL.className='die-box '+(hit?'hit':'miss');dL.textContent=roll.letter;
-    dN.className='die-box '+(hit?'hit':'miss');dN.textContent=roll.number;
+    dL.className='die-box '+(hit?'hit':'miss');
+    dN.className='die-box '+(hit?'hit':'miss');
+    // Show real die images
+    const li=document.getElementById('die-letter-img');const lt=document.getElementById('die-letter-txt');
+    const ni=document.getElementById('die-number-img');const nt=document.getElementById('die-number-txt');
+    if(li&&DESTROYER_DICE[roll.letter]){li.src=DESTROYER_DICE[roll.letter];li.style.display='block';if(lt)lt.textContent='';}
+    else if(lt)lt.textContent=roll.letter;
+    if(ni&&DESTROYER_DICE[String(roll.number)]){ni.src=DESTROYER_DICE[String(roll.number)];ni.style.display='block';if(nt)nt.textContent='';}
+    else if(nt)nt.textContent=roll.number;
     document.getElementById('last-result-text').textContent=(hit?'💥 HIT!':'💧 Miss')+' '+roll.letter+roll.number;
     // Flash target cell
     const cellEl=document.querySelector('[data-r="'+roll.row+'"][data-c="'+roll.col+'"]');
@@ -1077,7 +1091,11 @@ function playAgain(){
   document.getElementById('done-overlay').classList.add('hidden');
   resetGameState();
   const dL=document.getElementById('die-letter'),dN=document.getElementById('die-number');
-  dL.className='die-box';dL.textContent='—';dN.className='die-box';dN.textContent='—';
+  dL.className='die-box';dN.className='die-box';
+  const rli=document.getElementById('die-letter-img');const rlt=document.getElementById('die-letter-txt');
+  const rni=document.getElementById('die-number-img');const rnt=document.getElementById('die-number-txt');
+  if(rli)rli.style.display='none';if(rlt)rlt.textContent='—';
+  if(rni)rni.style.display='none';if(rnt)rnt.textContent='—';
   document.getElementById('last-result-text').textContent='Place ships to begin';
   G.ships=randomizeLocal();
   buildMainGrid();
@@ -1280,7 +1298,10 @@ function renderRollHistory(){
   G.rollHistory.forEach(r=>{
     const pip=document.createElement('div');
     pip.className='roll-pip '+(r.hit?'hit-pip':'miss-pip');
-    pip.innerHTML='<span class="rp-coord">'+r.letter+r.number+'</span>';
+    const sz='14px';
+    const lImg=DESTROYER_DICE[r.letter]?`<img src="${DESTROYER_DICE[r.letter]}" style="width:${sz};height:${sz};vertical-align:middle">`:`<span>${r.letter}</span>`;
+    const nImg=DESTROYER_DICE[String(r.number)]?`<img src="${DESTROYER_DICE[String(r.number)]}" style="width:${sz};height:${sz};vertical-align:middle">`:`<span>${r.number}</span>`;
+    pip.innerHTML='<span class="rp-coord">'+lImg+nImg+'</span>';
     hist.appendChild(pip);
   });
   hist.scrollLeft=hist.scrollWidth;
@@ -1423,7 +1444,7 @@ async function loadVoucherList(){
     row.innerHTML='<span class="voucher-row-amount">$'+parseFloat(v.amount).toFixed(2)+'</span>'
       +'<span class="voucher-row-code">'+v.code+'</span>'
       +'<span class="voucher-row-expiry">'+expStr+'</span>'
-      +'<button class="voucher-row-btn" onclick="redeemVoucher(''+v.code+'')">Redeem</button>';
+      +'<button class="voucher-row-btn" onclick="redeemVoucher(\''+v.code+'\')">Redeem</button>';
     container.appendChild(row);
   });
 }
