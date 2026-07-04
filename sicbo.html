@@ -720,12 +720,23 @@ async function logout(){
 }
 
 // ── ROLL ─────────────────────────────────────────────────────────────────────
+function showFinalDice(v1,v2,v3){
+  // Snap the inline dice straight to their final faces — the 3D roll already
+  // played out in the cloche overlay, so no second animation is needed.
+  tumbling=false;animating=false;
+  if(renderer){die1.quaternion.copy(tQ(v1));die2.quaternion.copy(tQ(v2));die3.quaternion.copy(tQ(v3));}
+}
 async function rollDice(){
-  if(animating||tumbling||!renderer)return;
+  if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
   if(tBets()===0){addLog('Place at least one bet before rolling.','info');return;}
   document.getElementById('roll-btn').disabled=true;
   G.lastBetDisplay=tBets();
-  startTumble();
+  document.getElementById('dice-sum-overlay').style.opacity='0';
+  // Cloche overlay roll: agitates until the server responds, then lands
+  // guaranteed on the server's true d1,d2,d3.
+  let feedValues=null,failRoll=null;
+  const clochePromise=ClocheDice.roll(new Promise((res,rej)=>{feedValues=res;failRoll=rej;}));
+  clochePromise.catch(()=>{});
   const token=localStorage.getItem('craps_session');
   let data;
   try{
@@ -739,13 +750,16 @@ async function rollDice(){
     data={ok:false,error:'network',message:'Network error. Try again.'};
   }
   if(!data.ok){
-    tumbling=false;
+    failRoll(new Error(data.message||'roll failed')); // closes the cloche overlay
     addLog(data.message||'Roll failed. Try again.','lose');
     document.getElementById('roll-btn').disabled=false;
     updateUI();return;
   }
   const{d1,d2,d3,sum}=data.roll;
-  landDice(d1,d2,d3,()=>{
+  feedValues([d1,d2,d3]);         // cloche now pre-simulates and lands on d1,d2,d3
+  try{await clochePromise;}catch(e){}
+  showFinalDice(d1,d2,d3);
+  {
     document.getElementById('dice-sum-overlay').textContent=sum;
     document.getElementById('dice-sum-overlay').style.opacity='1';
     (data.log||[]).forEach(line=>{
@@ -767,7 +781,7 @@ async function rollDice(){
     updateUI();checkBroke();
     if(data.returned>0)showWinnerModal(data.returned);
     if(data.capped)setTimeout(openCapModal,data.returned>0?4200:300);
-  });
+  }
 }
 
 // ── UPDATE UI ─────────────────────────────────────────────────────────────────
@@ -1167,6 +1181,16 @@ async function redeemVoucher(code){
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script src="cloche-dice.js"></script>
+<script>
+// Cloche dice overlay: shared module, configured for sic-bo (3 dice, 1.8 scale)
+// using the table's own DIE_B64 face art.
+(function(){
+  const faces={};for(const k in DIE_B64)faces[k]='data:image/png;base64,'+DIE_B64[k];
+  ClocheDice.init({diceCount:3,dieSize:1.8,faceImages:faces});
+})();
 </script>
 </body>
 </html>

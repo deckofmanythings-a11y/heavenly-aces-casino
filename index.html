@@ -1491,16 +1491,26 @@ function restoreFromServerState(state){
     currentPlayer.game_state={...existing,activeGame,[''+activeGame]:state};
   }
 }
+function showFinalDice(v1,v2){
+  // Snap the inline dice straight to their final faces — the 3D roll already
+  // played out in the cloche overlay, so no second animation is needed.
+  tumbling=false;animating=false;
+  if(renderer){die1.quaternion.copy(tQ(v1));die2.quaternion.copy(tQ(v2));}
+}
 async function rollDice(){
-  if(animating||tumbling||!renderer)return;
+  if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
   if(!hasWorkingBets()){addLog('Place an active bet before rolling.','info');return;}
   G.bonus.gracePeriod=false;
   document.getElementById('roll-btn').disabled=true;
   const nm=r2(G.bankrollAfterLastRoll-G.bankroll);G._lastBetDisplay=nm>0?nm:null;
   snap();
-  // Dice tumble indefinitely with no resting value — they never show a wrong
-  // number, since they only ever land once the server's true roll is known.
-  startTumble();
+  document.getElementById('dice-sum-overlay').style.opacity='0';
+  // Cloche overlay roll: the dice agitate in the bell jar until the server
+  // responds, then land guaranteed on the server's true values. They never
+  // show a wrong number, same contract as the old tumble-then-land flow.
+  let feedValues=null,failRoll=null;
+  const clochePromise=ClocheDice.roll(new Promise((res,rej)=>{feedValues=res;failRoll=rej;}));
+  clochePromise.catch(()=>{}); // rejection is handled via the error branch below
   const token=localStorage.getItem('craps_session');
   const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
   let data;
@@ -1517,7 +1527,7 @@ async function rollDice(){
   }
 
   if(!data.ok){
-    tumbling=false; // stop tumbling, freeze dice wherever they are
+    failRoll(new Error(data.message||'roll failed')); // closes the cloche overlay
     if(data.error==='sync'&&data.lastGoodState){
       addLog(data.message||'Sync Error. Restoring last known good bet and bankroll state.','lose');
       restoreFromServerState(data.lastGoodState);
@@ -1530,7 +1540,10 @@ async function rollDice(){
   }
 
   const{d1,d2,sum}=data.roll;
-  landDice(d1,d2,()=>{
+  feedValues([d1,d2]);            // cloche now pre-simulates and lands on d1,d2
+  try{await clochePromise;}catch(e){}
+  showFinalDice(d1,d2);
+  {
     document.getElementById('dice-sum-overlay').textContent=sum;document.getElementById('dice-sum-overlay').style.opacity='1';
     (data.log||[]).forEach(line=>{
       const cls=/wins?[!:]|WON|made!|returned/i.test(line)?'win':/lost|loses/i.test(line)?'lose':'info';
@@ -1558,7 +1571,7 @@ async function rollDice(){
       const newCome=G.comeBets.findIndex(cb=>cb.num>0&&(!cb.odds||cb.odds===0));
       if(newCome>=0&&G.bankroll>0)openOddsModal('come',newCome,G.comeBets[newCome].flat,G.comeBets[newCome].num);
     },oddsDelay);
-  });
+  }
 }
 
 // resolve() removed — dice resolution now lives exclusively in the server-side
@@ -1747,6 +1760,16 @@ async function redeemVoucher(code){
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script src="cloche-dice.js"></script>
+<script>
+// Cloche dice overlay: shared module, configured for craps (2 dice, 2.0 scale)
+// using the table's own DIE_B64 face art.
+(function(){
+  const faces={};for(const k in DIE_B64)faces[k]='data:image/png;base64,'+DIE_B64[k];
+  ClocheDice.init({diceCount:2,dieSize:2.0,faceImages:faces});
+})();
 </script>
 </body>
 </html>
