@@ -736,7 +736,7 @@ async function rollDice(){
   // guaranteed on the server's true d1,d2,d3.
   let feedValues=null,failRoll=null;
   const clochePromise=ClocheDice.roll(new Promise((res,rej)=>{feedValues=res;failRoll=rej;}));
-  clochePromise.catch(()=>{});
+  clochePromise.catch(e=>console.warn('[cloche] overlay skipped:',e&&e.message?e.message:e));
   const token=localStorage.getItem('craps_session');
   let data;
   try{

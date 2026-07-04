@@ -154,7 +154,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .nb-buy{background:rgba(0,80,180,.2);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-buy:hover{background:rgba(0,80,180,.45)}
 .nb-buy.active{background:rgba(0,120,255,.4)}
-.nb-mid{background:rgba(255,255,255,.07);border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:21px;font-weight:700;flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.nb-mid{background:rgba(255,255,255,.07);border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:40px;font-weight:700;flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
 .nb-place{background:rgba(0,0,0,.15);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-place:hover{background:rgba(255,255,255,.1)}
 .nb-place.active{background:rgba(255,215,0,.22)}
@@ -182,7 +182,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .zone-bar{cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;position:relative;flex-shrink:0}
 .zone-bar:hover{background:rgba(255,255,255,.06)}
 .zone-bar.active-bar{background:rgba(255,215,0,.12)}
-.zone-name{font-size:24px;font-weight:900;letter-spacing:.1em;color:#fff}
+.zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;color:#fff}
 .zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
 .zone-note{font-size:15px;color:rgba(255,100,100,.8)}
 #come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;background:rgba(0,80,180,.15);border:0.5px solid rgba(100,160,255,.3)}
@@ -657,7 +657,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
           <div class="zone-bar" id="field-bar" onclick="placeBet('field')">
             <div style="text-align:center">
               <div style="font-size:15px;color:rgba(255,255,255,.55)">2 · 3 · 4 · 9 · 10 · 11 · 12</div>
-              <div class="zone-name" style="font-size:23px">FIELD</div>
+              <div class="zone-name" style="font-size:40px">FIELD</div>
               <div class="zone-stk" id="stk-field"></div>
               <div class="field-info field-info-crapless" id="field-info-crapless"></div>
               <div class="field-info field-info-standard" id="field-info-standard"></div>
@@ -691,7 +691,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
               <span class="odds-pay" id="po-limit">—</span>
             </div>
             <div id="pass-main" onclick="placeBet('pass')" style="position:relative">
-              <div class="zone-name" style="font-size:23px">PASS LINE</div>
+              <div class="zone-name" style="font-size:40px">PASS LINE</div>
               <div class="zone-stk" id="stk-pass"></div>
               <div class="zone-note" id="lk-pass"></div>
               <button class="mbtn" id="m-pass" onclick="event.stopPropagation();removeBet('pass')" style="display:none;bottom:3px;right:3px">−</button>
@@ -1238,7 +1238,7 @@ function buildStrip(){
       box.appendChild(bd);
     }
     const md=document.createElement('div');md.className='nb-mid';md.id='nb-mid-'+n;
-    const nl=document.createElement('span');nl.style.cssText='font-size:21px;font-weight:700';nl.textContent=def.label;
+    const nl=document.createElement('span');nl.style.cssText='font-size:40px;font-weight:700';nl.textContent=def.label;
     const cs=document.createElement('div');cs.id='come-slot-'+n;cs.style.cssText='width:100%;margin-top:1px';
     const dcs=document.createElement('div');dcs.id='dc-slot-'+n;dcs.className='dc-chip-box';
     md.appendChild(nl);md.appendChild(cs);md.appendChild(dcs);
@@ -1510,7 +1510,7 @@ async function rollDice(){
   // show a wrong number, same contract as the old tumble-then-land flow.
   let feedValues=null,failRoll=null;
   const clochePromise=ClocheDice.roll(new Promise((res,rej)=>{feedValues=res;failRoll=rej;}));
-  clochePromise.catch(()=>{}); // rejection is handled via the error branch below
+  clochePromise.catch(e=>console.warn('[cloche] overlay skipped:',e&&e.message?e.message:e)); // rejection is handled via the error branch below
   const token=localStorage.getItem('craps_session');
   const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
   let data;
