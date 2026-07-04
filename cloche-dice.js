@@ -46,6 +46,17 @@
 (function (global) {
   'use strict';
 
+  // The tables declare a top-level `let THREE` that is only assigned inside
+  // initDice() after login. That lexical global shadows window.THREE for
+  // bare references in every script on the page, so bind explicitly to the
+  // real libraries here. Same treatment for CANNON as cheap insurance.
+  const THREE = global.THREE;
+  const CANNON = global.CANNON;
+  if (!THREE || !CANNON) {
+    console.error('cloche-dice.js: three.js and cannon.js must be loaded first');
+    return;
+  }
+
   // ---------- config ----------
   const CFG = {
     diceCount: 2,
