@@ -383,6 +383,7 @@ body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
 /* transparent skins: art draws the felt, DOM supplies hit areas + live data */
 body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img){display:none!important}
 #roll-history img{display:inline!important}
+body.felt-mode #felt-stage #roll-history img:not(#felt-img){display:inline!important}
 body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .nb-buy,
 body.felt-mode #felt-stage .nb-mid,body.felt-mode #felt-stage .nb-place,body.felt-mode #felt-stage .zone-bar,
 body.felt-mode #felt-stage .horn-cell,body.felt-mode #felt-stage .prop-circle,
@@ -2018,13 +2019,18 @@ function updateUI(){
     const cbIdx=G.comeBets.findIndex(c=>c.num===n);
     if(cbIdx>=0){const cb=G.comeBets[cbIdx],cur=cb.odds||0,lim=oddsLim(cb.flat,n),atMax=r2(cur)>=r2(lim),canOdds=!atMax&&G.bankroll>0;
       const feltOn=document.body.classList.contains('felt-mode');
-      let html='<div class="come-on-box">';
+      let html='';
       if(feltOn){
+        const nbEl=document.getElementById('numbox-'+n);
+        const capPx=nbEl?Math.max(10,Math.round(nbEl.clientHeight*0.5)):null;
+        const capStyle=capPx?(' style="--chip:'+capPx+'px"'):'';
+        html+='<div class="come-on-box"'+capStyle+'>';
         html+='<div class="come-half flat-half">'+chipStackHTML(cb.flat,false)+'<span class="come-lock-ico">\uD83D\uDD12</span></div>';
         html+='<div class="come-half odds-half">'+(cur>0?chipStackHTML(cur,false):'')+'</div>';
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
         if(cur>0)html+='<button class="come-odds-rm" onclick="event.stopPropagation();removeComeOdds('+cbIdx+')">−</button>';
       }else{
+        html+='<div class="come-on-box">';
         html+='<span class="come-flat-amt">'+fmt(cb.flat)+'</span><span style="font-size:10px;opacity:.6">🔒</span>';
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
         if(cur>0)html+='<span class="come-odds-amt">'+fmt(cur)+'</span><button class="come-odds-rm" onclick="event.stopPropagation();removeComeOdds('+cbIdx+')">−</button>';
