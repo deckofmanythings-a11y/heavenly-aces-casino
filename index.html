@@ -269,7 +269,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
 /* ── BOTTOM BAR ── */
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
-.chip{width:30px;height:30px;border-radius:50%;font-size:17px;font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#fff}
+.chip{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.png');}
+.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:10px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -349,6 +357,63 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .voucher-row-expiry{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
 .voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
+
+/* ===================== FELT IMAGE MODE (crapless) ===================== */
+body.felt-mode #play-area{position:relative}
+#felt-stage{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);overflow:hidden}
+body.felt-mode #felt-stage{display:block}
+#felt-img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none;-webkit-user-drag:none}
+body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
+#felt-stage .felt-abs{position:absolute;margin:0}
+/* transparent skins: art draws the felt, DOM supplies hit areas + live data */
+body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img){display:none!important}
+body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .nb-buy,
+body.felt-mode #felt-stage .nb-mid,body.felt-mode #felt-stage .nb-place,body.felt-mode #felt-stage .zone-bar,
+body.felt-mode #felt-stage .horn-cell,body.felt-mode #felt-stage .prop-circle,
+body.felt-mode #felt-stage #pass-bar,body.felt-mode #felt-stage #pass-main{background:transparent;border-color:transparent;box-shadow:none}
+body.felt-mode #felt-stage .prop-bar{background:transparent!important;border:none!important;justify-content:center}
+body.felt-mode #felt-stage .bwrap>.bb,body.felt-mode #felt-stage .bwrap>.prop-bar{width:100%;height:100%}
+body.felt-mode #felt-stage .bb:hover,body.felt-mode #felt-stage .nb-buy:hover,body.felt-mode #felt-stage .nb-place:hover,
+body.felt-mode #felt-stage .horn-cell:hover,body.felt-mode #felt-stage .prop-circle:hover,body.felt-mode #felt-stage .zone-bar:hover,
+body.felt-mode #felt-stage .prop-bar:hover,body.felt-mode #felt-stage #pass-main:hover{background:rgba(255,255,255,.10)!important}
+body.felt-mode #felt-stage .bb.active,body.felt-mode #felt-stage .nb-buy.active,body.felt-mode #felt-stage .nb-place.active,
+body.felt-mode #felt-stage .horn-cell.active,body.felt-mode #felt-stage .prop-circle.active,body.felt-mode #felt-stage .zone-bar.active-bar,
+body.felt-mode #felt-stage .prop-bar.active{outline:2px solid rgba(255,215,0,.75);outline-offset:-2px;background:rgba(255,215,0,.12)!important}
+/* hide labels/odds/dice the art already draws */
+body.felt-mode #felt-stage .nb-lbl,body.felt-mode #felt-stage .nb-pay,body.felt-mode #felt-stage .pay,
+body.felt-mode #felt-stage .prop-bar-name,body.felt-mode #felt-stage .prop-bar-odds,
+body.felt-mode #felt-stage .hc-pay,body.felt-mode #felt-stage .horn-center-name,
+body.felt-mode #felt-stage .zone-name,body.felt-mode #felt-stage .field-info,
+body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:none!important}
+body.felt-mode #felt-stage .nb-mid>span{visibility:hidden}
+body.felt-mode #felt-stage .prop-circle{color:transparent;width:100%;height:100%}
+body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
+/* readable stakes over the art */
+body.felt-mode #felt-stage .stk,body.felt-mode #felt-stage .nb-stk,body.felt-mode #felt-stage .hc-stk,
+body.felt-mode #felt-stage .prop-bar-stk,body.felt-mode #felt-stage .circle-stk,body.felt-mode #felt-stage .zone-stk{color:#ffd700;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.5)}
+/* internal proportions matched to the art */
+body.felt-mode #num-zone{display:flex;flex-direction:column;padding:0}
+body.felt-mode #puck-row-h{height:11%;padding:0;gap:2px}
+body.felt-mode #num-strip-h{flex:1;padding:0;gap:2px}
+body.felt-mode #felt-stage .nb-buy{flex:0 0 21%}
+body.felt-mode #felt-stage .nb-mid{flex:1}
+body.felt-mode #felt-stage .nb-place{flex:0 0 21%}
+body.felt-mode #felt-stage .horn-cell{width:100%;height:100%}
+body.felt-mode #felt-stage .circle-stack{justify-content:space-between;gap:0;width:100%;height:100%}
+body.felt-mode #felt-stage .circle-stack .circle-wrap{width:100%;height:28%}
+body.felt-mode #felt-stage .sc-stack{gap:6%;justify-content:center}
+body.felt-mode #felt-stage #pass-bar{display:flex}
+body.felt-mode #felt-stage #pass-odds-cell{flex:0 0 17.4%}
+body.felt-mode #felt-stage #pass-main{flex:1}
+/* ===== CHIP STACK BET INDICATORS ===== */
+#felt-stage{--chip:32px;--edge:calc(var(--chip)*0.16)}
+body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
+body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{overflow:visible}
+body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
+.chip-stack{position:relative;display:block;width:100%}
+.chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
+
 </style>
 </head>
 <body>
@@ -537,6 +602,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
   <!-- PLAY AREA -->
   <div id="play-area">
+    <div id="felt-stage">
+      <img id="felt-img" src="Crapless-Felt-with-Horn.gif" alt="" draggable="false">
+    </div>
 
     <!-- LEFT COL -->
     <div id="left-col">
@@ -713,14 +781,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       </div>
       <!-- Chips row (1 unit) -->
       <div id="bottom-bar">
-        <div class="chip" style="background:#b0b0b0;color:#222;border-color:#888" data-val="1" onclick="selectChip(1)">$1</div>
-        <div class="chip" style="background:#2471a3;border-color:#1a5276" data-val="2" onclick="selectChip(2)">$2</div>
-        <div class="chip" style="background:#d4ac0d;border-color:#b7950b;color:#111" data-val="3" onclick="selectChip(3)">$3</div>
-        <div class="chip" style="background:#c0392b;border-color:#922b21" data-val="5" onclick="selectChip(5)">$5</div>
-        <div class="chip" style="background:#f39c12;border-color:#d68910;color:#111" data-val="10" onclick="selectChip(10)">$10</div>
-        <div class="chip" style="background:#27ae60;border-color:#1e8449" data-val="25" onclick="selectChip(25)">$25</div>
-        <div class="chip" style="background:#7d4f30;border-color:#5d3a22" data-val="50" onclick="selectChip(50)">$50</div>
-        <div class="chip" style="background:#2c2c2c;border-color:#111" data-val="100" onclick="selectChip(100)">$100</div>
+        <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
+        <div class="chip" data-val="2" onclick="selectChip(2)">$2</div>
+        <div class="chip" data-val="3" onclick="selectChip(3)">$3</div>
+        <div class="chip" data-val="5" onclick="selectChip(5)">$5</div>
+        <div class="chip" data-val="10" onclick="selectChip(10)">$10</div>
+        <div class="chip" data-val="25" onclick="selectChip(25)">$25</div>
+        <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
+        <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1"></div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -811,6 +879,111 @@ const CONTRACT=new Set(['pass','passodds']);
 function getRepeatable(){return new Set(['field','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
 let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
+// ===================== FELT IMAGE MODE (crapless) =====================
+const FELT_IMG={hw:'Crapless-Felt-with-Horn.gif',hop:'Crapless-Felt-with-HopBets.gif'};
+// [selector, leftPct, topPct, widthPct, heightPct, tab or null]
+// '@name' = the .bwrap around #bet-name (or the bet element itself if unwrapped)
+const FELT_LAYOUT=[
+  // shared right side
+  ['.circle-stack',  34.84,52.22, 6.56,34.00,null],
+  ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
+  ['#num-zone',      34.25,18.60,61.25,28.90,null],
+  ['#come-bar',      52.97,49.56,42.47, 8.89,null],
+  ['#field-bar',     53.03,60.50,42.47,12.00,null],
+  ['#pass-bar',      53.03,74.50,42.47, 8.89,null],
+  // HARDWAYS view: hard ways pills (art order: 6,10 / 8,4)
+  ['@hard6',          5.00,28.00,14.25, 7.89,'hw'],
+  ['@hard10',        19.34,28.00,14.25, 7.89,'hw'],
+  ['@hard8',          5.00,36.00,14.25, 7.89,'hw'],
+  ['@hard4',         19.34,36.00,14.25, 7.89,'hw'],
+  // HARDWAYS view: one roll pills
+  ['@any7',           5.19,54.22,28.22, 7.89,'hw'],
+  ['@aces',           5.25,62.50, 7.44, 7.06,'hw'],
+  ['@ace2',          25.97,62.50, 7.34, 7.06,'hw'],
+  ['@horn',          12.69,66.11,13.28, 7.28,'hw'],
+  ['@midnight',       5.25,70.44, 7.44, 7.11,'hw'],
+  ['@yo',            25.97,70.44, 7.34, 7.11,'hw'],
+  ['@anyCraps',       5.09,78.17,28.22, 7.89,'hw'],
+  // HOP view: hopping hard ways pills (art order: 22,44 / 33,55)
+  ['@hop22',          5.00,28.00,14.25, 7.89,'hop'],
+  ['@hop44',         19.34,28.00,14.25, 7.89,'hop'],
+  ['@hop33',          5.00,36.00,14.25, 7.89,'hop'],
+  ['@hop55',         19.34,36.00,14.25, 7.89,'hop'],
+  // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3)
+  ['@hop13',          6.09,54.61, 8.81, 6.22,'hop'],
+  ['@hop16',         14.94,54.61, 8.75, 6.22,'hop'],
+  ['@hop26',         23.72,54.61, 8.81, 6.22,'hop'],
+  ['@hop14',          6.09,60.89, 8.81, 6.22,'hop'],
+  ['@hop25',         14.94,60.89, 8.75, 6.22,'hop'],
+  ['@hop35',         23.66,60.89, 8.81, 6.22,'hop'],
+  ['@hop23',          6.00,67.17, 8.81, 6.22,'hop'],
+  ['@hop34',         14.94,67.17, 8.75, 6.22,'hop'],
+  ['@hop36',         23.66,67.17, 8.81, 6.22,'hop'],
+  ['@hop24',          6.03,73.50, 8.81, 6.22,'hop'],
+  ['@hop45',         23.66,73.50, 8.81, 6.22,'hop'],
+  ['@hop15',          6.00,79.89, 8.81, 6.22,'hop'],
+  ['@hop46',         23.66,79.89, 8.81, 6.22,'hop']
+];
+let feltActive=false,feltTab='hw';
+const feltHomes=new Map();
+function feltEl(sel){
+  if(sel.charAt(0)==='@'){
+    const b=document.getElementById('bet-'+sel.slice(1));
+    if(!b)return null;
+    return b.closest('.bwrap')||b;
+  }
+  return document.querySelector(sel);
+}
+function sizeFeltStage(){
+  const pa=document.getElementById('play-area'),st=document.getElementById('felt-stage');
+  if(!pa||!st)return;
+  const W=pa.clientWidth,H=pa.clientHeight;if(!W||!H)return;
+  let w=W,h=W*9/16;if(h>H){h=H;w=H*16/9;}
+  st.style.width=w+'px';st.style.height=h+'px';st.style.setProperty('--chip',Math.max(20,Math.round(h*0.052))+'px');
+}
+function feltApplyTab(t){
+  feltTab=t;
+  const im=document.getElementById('felt-img');if(im)im.src=FELT_IMG[t];
+  FELT_LAYOUT.forEach(([sel,,,,,tab])=>{
+    if(!tab)return;const el=feltEl(sel);if(!el)return;
+    el.style.display=(tab===t)?'':'none';
+  });
+}
+function enterFeltMode(){
+  if(feltActive)return;
+  const st=document.getElementById('felt-stage');if(!st)return;
+  FELT_LAYOUT.forEach(([sel,l,t,w,h])=>{
+    const el=feltEl(sel);if(!el)return;
+    if(!feltHomes.has(el))feltHomes.set(el,{parent:el.parentNode,next:el.nextSibling});
+    st.appendChild(el);el.classList.add('felt-abs');
+    el.style.left=l+'%';el.style.top=t+'%';el.style.width=w+'%';el.style.height=h+'%';
+  });
+  document.body.classList.add('felt-mode');
+  feltActive=true;
+  feltApplyTab(feltTab);
+  sizeFeltStage();
+}
+function exitFeltMode(){
+  if(!feltActive)return;
+  FELT_LAYOUT.forEach(([sel])=>{
+    const el=feltEl(sel);if(!el)return;
+    const home=feltHomes.get(el);if(!home)return;
+    el.classList.remove('felt-abs');
+    el.style.left=el.style.top=el.style.width=el.style.height=el.style.display='';
+    if(home.next&&home.next.parentNode===home.parent)home.parent.insertBefore(el,home.next);
+    else home.parent.appendChild(el);
+  });
+  document.body.classList.remove('felt-mode');
+  feltActive=false;
+}
+window.addEventListener('resize',sizeFeltStage);
+if(window.ResizeObserver){
+  document.addEventListener('DOMContentLoaded',()=>{
+    const pa=document.getElementById('play-area');
+    if(pa)new ResizeObserver(sizeFeltStage).observe(pa);
+  });
+}
+
 function applyGameMode(mode){
   activeGame=mode;
   if(mode==='standard'){
@@ -849,6 +1022,8 @@ function applyGameMode(mode){
   document.querySelectorAll('.field-info-standard').forEach(el=>el.style.display=mode==='standard'?'block':'none');
   // Rebuild number strip for the new set of box numbers
   buildStrip();
+  // Felt image layout for crapless; classic DOM layout for standard
+  if(mode==='crapless')enterFeltMode();else exitFeltMode();
 }
 
 function canSwitchMode(){
@@ -1273,6 +1448,38 @@ function buildStrip(){
 }
 // applyGameMode calls buildStrip internally; set initial state to crapless
 // (will be overridden by startSession/applyServerGameState on login)
+// ===================== CHIP STACK BET INDICATORS =====================
+const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
+function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
+function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
+function chipStackHTML(amt){
+  const chips=chipBreakdown(amt),n=chips.length;
+  let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
+  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" style="bottom:calc(var(--edge)*'+i+')">';});
+  const label=chipLabel(amt);
+  const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
+  h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span></span>';
+  return h;
+}
+const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,#stk-pass,#stk-come,#stk-field';
+function renderChipStacks(){
+  if(!document.body.classList.contains('felt-mode')){
+    document.querySelectorAll('.has-stack').forEach(e=>e.classList.remove('has-stack'));
+    return;
+  }
+  document.querySelectorAll(CHIP_STK_SEL).forEach(el=>{
+    if(el.closest('#pass-odds-cell'))return;
+    const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
+    if(!m){el.classList.remove('has-stack');return;}
+    const amt=parseFloat(m[1].replace(/,/g,''));
+    if(!(amt>0)){el.classList.remove('has-stack');return;}
+    el.innerHTML=chipStackHTML(amt);
+    el.classList.add('has-stack');
+  });
+}
+const _updateUI_orig=updateUI;
+updateUI=function(){_updateUI_orig();renderChipStacks();};
+
 applyGameMode('crapless');
 
 // ── ODDS MODAL ────────────────────────────────────────────────────────────────
@@ -1402,6 +1609,7 @@ function switchTab(t){
     if(tab)tab.classList.toggle('active',x===t);
     if(panel)panel.style.display=x===t?'flex':'none';
   });
+  if(feltActive)feltApplyTab(t);else feltTab=t;
 }
 function bonusBet(t){
   const max=G.bonus[t+'Max']||0;
