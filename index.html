@@ -413,6 +413,26 @@ body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bott
 .chip-stack{position:relative;display:block;width:100%}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
+.chip-stack .chip-off{position:absolute;left:50%;transform:translateX(-50%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
+body.felt-mode #felt-stage .off-ov{display:none!important}
+/* ===== FULLSCREEN FELT: top & bottom UI bands ===== */
+body.felt-mode #top-row{display:none!important}
+body.felt-mode #felt-stage #left-col-header{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;flex-direction:column;gap:0;display:flex}
+body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px}
+body.felt-mode #felt-stage #bottom-section{height:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
+/* Lucky Roller art */
+body.felt-mode #felt-stage #lucky-roller{background:url('lucky-roller.png') center/100% 100% no-repeat;border:none;padding:0}
+body.felt-mode #felt-stage #lucky-roller>*:not(.felt-lr){display:none!important}
+body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
+body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:transparent;border:none;width:100%;height:100%;border-radius:10px}
+body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{background:rgba(255,255,255,.10)}
+body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{outline:2px solid rgba(255,215,0,.75);outline-offset:-3px}
+body.felt-mode #felt-stage #lucky-roller .lr-header,body.felt-mode #felt-stage #lucky-roller .lr-note,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{display:none!important}
+body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:0}
+body.felt-mode #felt-stage #lucky-roller .lr-nums{display:flex;height:100%;width:100%;gap:2%;flex-wrap:nowrap;align-items:stretch;padding:0}
+body.felt-mode #felt-stage #lucky-roller .lr-num{flex:1;width:auto;height:auto;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0}
+body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,.30);box-shadow:0 0 10px rgba(60,255,140,.9),inset 0 0 6px rgba(60,255,140,.5);color:transparent}
 
 </style>
 </head>
@@ -891,6 +911,11 @@ const FELT_LAYOUT=[
   ['#come-bar',      52.97,49.56,42.47, 8.89,null],
   ['#field-bar',     53.03,60.50,42.47,12.00,null],
   ['#pass-bar',      53.03,74.50,42.47, 8.89,null],
+  // fullscreen bands: top UI and bottom UI live in the felt's blank areas
+  ['#left-col-header', 0.40, 0.70,12.60,17.00,null],
+  ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
+  ['#info-panel',     87.00, 0.70,12.60,17.00,null],
+  ['#bottom-section',  0.30,86.70,99.40,13.00,null],
   // HARDWAYS view: hard ways pills (art order: 6,10 / 8,4)
   ['@hard6',          5.00,28.00,14.25, 7.89,'hw'],
   ['@hard10',        19.34,28.00,14.25, 7.89,'hw'],
@@ -924,6 +949,21 @@ const FELT_LAYOUT=[
   ['@hop15',          6.00,79.89, 8.81, 6.22,'hop'],
   ['@hop46',         23.66,79.89, 8.81, 6.22,'hop']
 ];
+// Lucky Roller art interior (percent of the art box)
+const LR_LAYOUT=[
+  ['low',    5.80,51.90,27.00,37.70],
+  ['all',   37.30,52.00,25.40,37.40],
+  ['high',  66.90,51.90,27.10,37.70],
+  ['#bnums-low',  6.20,31.50,27.70,13.00],
+  ['#bnums-high',65.30,31.60,28.50,12.80],
+  ['#dice-zone', 34.50, 1.00,31.00,49.00]
+];
+function lrEl(sel){
+  if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
+  if(sel==='all'){const e=document.getElementById('bbonus-all-bar');return e?e.closest('.lr-bonus-wrap'):null;}
+  if(sel==='high'){const e=document.getElementById('bbonus-high');return e?e.closest('.lr-bonus-wrap'):null;}
+  return document.querySelector(sel);
+}
 let feltActive=false,feltTab='hw';
 const feltHomes=new Map();
 function feltEl(sel){
@@ -958,6 +998,13 @@ function enterFeltMode(){
     st.appendChild(el);el.classList.add('felt-abs');
     el.style.left=l+'%';el.style.top=t+'%';el.style.width=w+'%';el.style.height=h+'%';
   });
+  const lr=document.getElementById('lucky-roller');
+  if(lr){LR_LAYOUT.forEach(([sel,l,t,w,h])=>{
+    const el=lrEl(sel);if(!el)return;
+    if(!feltHomes.has(el))feltHomes.set(el,{parent:el.parentNode,next:el.nextSibling});
+    lr.appendChild(el);el.classList.add('felt-lr');
+    el.style.left=l+'%';el.style.top=t+'%';el.style.width=w+'%';el.style.height=h+'%';
+  });}
   document.body.classList.add('felt-mode');
   feltActive=true;
   feltApplyTab(feltTab);
@@ -965,6 +1012,14 @@ function enterFeltMode(){
 }
 function exitFeltMode(){
   if(!feltActive)return;
+  LR_LAYOUT.forEach(([sel])=>{
+    const el=lrEl(sel);if(!el)return;
+    const home=feltHomes.get(el);if(!home)return;
+    el.classList.remove('felt-lr');
+    el.style.left=el.style.top=el.style.width=el.style.height='';
+    if(home.next&&home.next.parentNode===home.parent)home.parent.insertBefore(el,home.next);
+    else home.parent.appendChild(el);
+  });
   FELT_LAYOUT.forEach(([sel])=>{
     const el=feltEl(sel);if(!el)return;
     const home=feltHomes.get(el);if(!home)return;
@@ -1452,16 +1507,18 @@ function buildStrip(){
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
 function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
-function chipStackHTML(amt){
+function chipStackHTML(amt,off){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" style="bottom:calc(var(--edge)*'+i+')">';});
   const label=chipLabel(amt);
   const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
-  h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span></span>';
+  h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
+  if(off)h+='<span class="chip-off" style="bottom:calc(var(--edge)*'+(n-1)+' + var(--chip)*0.82)">OFF</span>';
+  h+='</span>';
   return h;
 }
-const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,#stk-pass,#stk-come,#stk-field';
+const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,#stk-pass,#stk-come,#stk-field,.lr-stake';
 function renderChipStacks(){
   if(!document.body.classList.contains('felt-mode')){
     document.querySelectorAll('.has-stack').forEach(e=>e.classList.remove('has-stack'));
@@ -1473,7 +1530,10 @@ function renderChipStacks(){
     if(!m){el.classList.remove('has-stack');return;}
     const amt=parseFloat(m[1].replace(/,/g,''));
     if(!(amt>0)){el.classList.remove('has-stack');return;}
-    el.innerHTML=chipStackHTML(amt);
+    let off=false;
+    const cell=el.closest('.nb-buy,.nb-place');
+    if(cell){const ov=cell.querySelector('.off-ov');off=!!(ov&&ov.style.display&&ov.style.display!=='none');}
+    el.innerHTML=chipStackHTML(amt,off);
     el.classList.add('has-stack');
   });
 }
