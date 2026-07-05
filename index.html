@@ -179,6 +179,10 @@ body.felt-mode #felt-stage .come-on-box{background:transparent;border:none;paddi
 body.felt-mode #felt-stage .come-half{position:absolute;left:50%;transform:translateX(-50%);width:auto;display:flex;align-items:center;justify-content:center}
 body.felt-mode #felt-stage .come-half.flat-half{top:0}
 body.felt-mode #felt-stage .come-half.odds-half{bottom:0}
+/* .come-half is width:auto (so it can shrink-wrap and center), which breaks the width:100%
+   chain .chip-stack normally relies on to size itself off its parent. Give it a definite
+   width directly off --chip instead, same source Pass Line's own stack size comes from. */
+body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
 body.felt-mode #felt-stage .come-lock-ico{position:absolute;top:1px;right:-11px;font-size:9px;opacity:.75;pointer-events:none}
 body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
 body.felt-mode #felt-stage .come-odds-rm{position:absolute;bottom:1px;left:2px;font-size:9px;padding:0 3px;z-index:8}
@@ -1084,7 +1088,14 @@ function enterFeltMode(){
   document.body.classList.remove('game-crapless','game-standard');
   document.body.classList.add('game-'+mode);
   if(mode==='standard')ALL_NUMS.forEach(feltSplitStandardNumBox);
-  if(feltActive)return;
+  // NOTE: this used to return early whenever felt mode was already active, which made sense
+  // back when only crapless had a felt sheet (enter once, never re-enter with different data).
+  // Now that both games use felt mode, switching games while felt mode is already on needs to
+  // re-run the per-mode repositioning below AND the feltApplyTab() call that swaps the image --
+  // both used to sit after this guard and so were silently skipped on every game switch after
+  // the first. Re-running this block on every call is safe: feltHomes.set() is itself guarded
+  // by "if(!feltHomes.has(el))" so the ORIGINAL pre-felt home is never overwritten, and moving
+  // an already-moved element again or re-setting the same inline styles is a no-op in effect.
   const st=document.getElementById('felt-stage');if(!st)return;
   feltLayoutFor(mode).forEach(([sel,l,t,w,h])=>{
     const el=feltEl(sel);if(!el)return;
