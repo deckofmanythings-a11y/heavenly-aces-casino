@@ -2021,8 +2021,10 @@ function updateUI(){
       const feltOn=document.body.classList.contains('felt-mode');
       let html='';
       if(feltOn){
-        const nbEl=document.getElementById('numbox-'+n);
-        const capPx=nbEl?Math.max(10,Math.round(nbEl.clientHeight*0.5)):null;
+        // The dark digit area (nb-mid) should hold exactly 2 chips stacked to its full height,
+        // so a single chip's height is nb-mid's own height divided by 2 -- not the whole numbox.
+        const midEl=document.getElementById('nb-mid-'+n);
+        const capPx=midEl?Math.max(10,Math.round(midEl.clientHeight*0.5)):null;
         const capStyle=capPx?(' style="--chip:'+capPx+'px"'):'';
         html+='<div class="come-on-box"'+capStyle+'>';
         html+='<div class="come-half flat-half">'+chipStackHTML(cb.flat,false)+'<span class="come-lock-ico">\uD83D\uDD12</span></div>';
