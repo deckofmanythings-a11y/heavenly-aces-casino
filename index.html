@@ -421,6 +421,37 @@ body.felt-mode #felt-stage .sc-stack{gap:6%;justify-content:center}
 body.felt-mode #felt-stage #pass-bar{display:flex}
 body.felt-mode #felt-stage #pass-odds-cell{flex:0 0 17.4%}
 body.felt-mode #felt-stage #pass-main{flex:1}
+/* ===== STANDARD CRAPS FELT (separate image + layout from crapless) ===== */
+/* Crapless-only proportions, scoped so they don't leak onto the standard felt */
+body.felt-mode.game-crapless #felt-stage .nb-buy{flex:0 0 21%}
+body.felt-mode.game-crapless #felt-stage .nb-mid{flex:1}
+body.felt-mode.game-crapless #felt-stage .nb-place{flex:0 0 21%}
+body.felt-mode.game-crapless #prop-block>.bwrap{flex:0 0 21%}
+body.felt-mode.game-crapless #prop-block .horn-stack{flex:1}
+
+/* Standard: each number column is [blank|Lay] thin top row, big [digit+Come] middle, [Place|Buy] thin bottom row */
+body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;padding:0}
+body.felt-mode.game-standard #puck-row-h{height:8%;padding:0;gap:2px}
+body.felt-mode.game-standard #num-strip-h{flex:1;padding:0;gap:2px}
+body.felt-mode.game-standard #felt-stage .nb-buy-wrap{flex:0 0 17.5%}
+body.felt-mode.game-standard #felt-stage .nb-mid{flex:1}
+body.felt-mode.game-standard #felt-stage .nb-place-wrap{display:flex;flex:0 0 17.5%}
+body.felt-mode.game-standard #felt-stage .nb-buy-left,
+body.felt-mode.game-standard #felt-stage .nb-lay,
+body.felt-mode.game-standard #felt-stage .nb-place{flex:1}
+/* the relocated "blank" cell (was Buy's slot) holds the traveled Don't Come chip -- no label of its own */
+body.felt-mode.game-standard #felt-stage .nb-buy-left .nb-lbl,
+body.felt-mode.game-standard #felt-stage .nb-buy-left .nb-stk{display:none}
+body.felt-mode.game-standard #felt-stage #dc-wait-bar{width:100%;height:100%}
+body.felt-mode.game-standard #felt-stage #dc-wait-bar .nb-mid{background:transparent}
+/* Don't Pass Bar mirrors the Pass Line's own transparent skin */
+body.felt-mode.game-standard #felt-stage #dp-bar{display:flex}
+body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;background:transparent;border-color:transparent}
+body.felt-mode.game-standard #felt-stage #dp-main{flex:1;background:transparent;border-color:transparent;position:relative}
+body.felt-mode.game-standard #felt-stage #dp-main:hover,
+body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{background:rgba(255,255,255,.10)}
+body.felt-mode.game-standard #felt-stage .dp-name{display:none}
+body.felt-mode.game-standard #felt-stage #dp-bar12{display:none}
 /* ===== CHIP STACK BET INDICATORS ===== */
 #felt-stage{--chip:32px;--edge:calc(var(--chip)*0.16)}
 body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
@@ -918,17 +949,17 @@ function getRepeatable(){return new Set(['field','any7','horn','aces','ace2','mi
 let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
 // ===================== FELT IMAGE MODE (crapless) =====================
-const FELT_IMG={hw:'Crapless-Felt-with-Horn.gif',hop:'Crapless-Felt-with-HopBets.gif'};
+const FELT_IMG={
+  crapless:{hw:'Crapless-Felt-with-Horn.gif',hop:'Crapless-Felt-with-HopBets.gif'},
+  standard:{hw:'craps-felt-horn.gif',hop:'craps-felt-hopbets.gif'}
+};
 // [selector, leftPct, topPct, widthPct, heightPct, tab or null]
 // '@name' = the .bwrap around #bet-name (or the bet element itself if unwrapped)
+// Items whose position is identical on both felt sheets (measured on the crapless art;
+// the standard sheet's Hard Ways / One Roll Bets / Hop panels line up the same way).
 const FELT_LAYOUT=[
-  // shared right side
   ['.circle-stack',  34.84,52.22, 6.56,34.00,null],
   ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
-  ['#num-zone',      34.25,18.60,61.25,28.90,null],
-  ['#come-bar',      52.97,49.56,42.47, 8.89,null],
-  ['#field-bar',     53.03,60.50,42.47,12.00,null],
-  ['#pass-bar',      53.03,74.50,42.47, 8.89,null],
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
   ['#left-col-header', 0.40, 0.70,12.60,17.00,null],
   ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
@@ -982,6 +1013,25 @@ function lrEl(sel){
   if(sel==='high'){const e=document.getElementById('bbonus-high');return e?e.closest('.lr-bonus-wrap'):null;}
   return document.querySelector(sel);
 }
+// Crapless-specific positions, measured directly on the crapless felt art.
+const CRAPLESS_LAYOUT=[
+  ['#num-zone',      34.25,18.60,61.25,28.90,null],
+  ['#come-bar',      52.97,49.56,42.47, 8.89,null],
+  ['#field-bar',     53.03,60.50,42.47,12.00,null],
+  ['#pass-bar',      53.03,74.50,42.47, 8.89,null]
+];
+// Standard-specific positions, measured directly on the standard felt art -- this sheet has
+// an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
+// these coordinates are shared with crapless.
+const STANDARD_LAYOUT=[
+  ['#num-zone',      35.13,22.22,52.03,25.00,null],
+  ['#dc-wait-wrap',  87.31,22.22, 8.16,25.00,null],
+  ['#come-bar',      53.09,49.50,34.09, 7.11,null],
+  ['#field-bar',     53.03,57.00,36.03,12.00,null],
+  ['#dp-bar',        53.03,69.33,36.03, 7.11,null],
+  ['#pass-bar',      53.12,76.83,35.94, 7.11,null]
+];
+function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 let feltActive=false,feltTab='hw';
 const feltHomes=new Map();
 function feltEl(sel){
@@ -1001,16 +1051,40 @@ function sizeFeltStage(){
 }
 function feltApplyTab(t){
   feltTab=t;
-  const im=document.getElementById('felt-img');if(im)im.src=FELT_IMG[t];
-  FELT_LAYOUT.forEach(([sel,,,,,tab])=>{
+  const mode=activeGame==='standard'?'standard':'crapless';
+  const im=document.getElementById('felt-img');if(im)im.src=FELT_IMG[mode][t];
+  feltLayoutFor(mode).forEach(([sel,,,,,tab])=>{
     if(!tab)return;const el=feltEl(sel);if(!el)return;
     el.style.display=(tab===t)?'':'none';
   });
 }
+function feltSplitStandardNumBox(n){
+  // Standard felt art: top row is [blank (Don't Come travel slot) | LAY], bottom row is [PLACE | BUY].
+  // buildStrip() always creates the legacy layout fresh (top [Buy|Lay], DC chip buried in the middle,
+  // bottom [Place] alone) so every felt entry re-splits it -- there is nothing to restore on exit
+  // because applyGameMode() always calls buildStrip() again before enterFeltMode() runs.
+  const buy=document.getElementById('nb-buy-'+n),lay=document.getElementById('nb-lay-'+n);
+  const place=document.getElementById('nb-place-'+n),dcSlot=document.getElementById('dc-slot-'+n);
+  const mb=document.getElementById('mb-buy'+n),mp=document.getElementById('mb-place'+n);
+  if(!buy||!lay||!place)return;
+  const topWrap=buy.parentNode; // .nb-buy-wrap, already holds [buy,lay]
+  if(dcSlot)topWrap.insertBefore(dcSlot,buy); // dcSlot takes Buy's old visual slot
+  topWrap.removeChild(buy);
+  const wrap=place.closest('.num-box-wrap');
+  const botWrap=document.createElement('div');botWrap.className='nb-buy-wrap nb-place-wrap';
+  place.parentNode.insertBefore(botWrap,place);
+  botWrap.appendChild(place);botWrap.appendChild(buy);
+  if(mb)wrap.appendChild(mb); // keep minus buttons in the wrap so they still overlay correctly
+  if(mp)wrap.appendChild(mp);
+}
 function enterFeltMode(){
+  const mode=activeGame==='standard'?'standard':'crapless';
+  document.body.classList.remove('game-crapless','game-standard');
+  document.body.classList.add('game-'+mode);
+  if(mode==='standard')ALL_NUMS.forEach(feltSplitStandardNumBox);
   if(feltActive)return;
   const st=document.getElementById('felt-stage');if(!st)return;
-  FELT_LAYOUT.forEach(([sel,l,t,w,h])=>{
+  feltLayoutFor(mode).forEach(([sel,l,t,w,h])=>{
     const el=feltEl(sel);if(!el)return;
     if(!feltHomes.has(el))feltHomes.set(el,{parent:el.parentNode,next:el.nextSibling});
     st.appendChild(el);el.classList.add('felt-abs');
@@ -1038,7 +1112,7 @@ function exitFeltMode(){
     if(home.next&&home.next.parentNode===home.parent)home.parent.insertBefore(el,home.next);
     else home.parent.appendChild(el);
   });
-  FELT_LAYOUT.forEach(([sel])=>{
+  feltLayoutFor(activeGame==='standard'?'standard':'crapless').forEach(([sel])=>{
     const el=feltEl(sel);if(!el)return;
     const home=feltHomes.get(el);if(!home)return;
     el.classList.remove('felt-abs');
@@ -1046,7 +1120,7 @@ function exitFeltMode(){
     if(home.next&&home.next.parentNode===home.parent)home.parent.insertBefore(el,home.next);
     else home.parent.appendChild(el);
   });
-  document.body.classList.remove('felt-mode');
+  document.body.classList.remove('felt-mode','game-crapless','game-standard');
   feltActive=false;
 }
 window.addEventListener('resize',sizeFeltStage);
@@ -1095,8 +1169,8 @@ function applyGameMode(mode){
   document.querySelectorAll('.field-info-standard').forEach(el=>el.style.display=mode==='standard'?'block':'none');
   // Rebuild number strip for the new set of box numbers
   buildStrip();
-  // Felt image layout for crapless; classic DOM layout for standard
-  if(mode==='crapless')enterFeltMode();else exitFeltMode();
+  // Both games render on their own felt sheet now
+  enterFeltMode();
 }
 
 function canSwitchMode(){
@@ -1538,7 +1612,7 @@ function chipStackHTML(amt,off){
   h+='</span>';
   return h;
 }
-const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,#stk-pass,#stk-come,#stk-field,.lr-stake';
+const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,.dp-stk,.dp-odds-stk,#stk-pass,#stk-come,#stk-field,#stk-dc-wait,.lr-stake';
 function renderChipStacks(){
   if(!document.body.classList.contains('felt-mode')){
     document.querySelectorAll('.has-stack').forEach(e=>e.classList.remove('has-stack'));
