@@ -176,8 +176,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .come-odds-amt{font-size:11px;color:#ffe066}
 body.felt-mode #felt-stage .come-on-box{background:transparent;border:none;padding:0;gap:0;width:100%;height:100%;position:relative;display:block}
 body.felt-mode #felt-stage .come-half{position:absolute;left:50%;transform:translateX(-50%);width:auto;display:flex;align-items:center;justify-content:center}
-body.felt-mode #felt-stage .come-half.flat-half{top:0}
-body.felt-mode #felt-stage .come-half.odds-half{bottom:0}
+body.felt-mode #felt-stage .come-half.flat-half{bottom:0}
+body.felt-mode #felt-stage .come-half.odds-half{top:0}
 /* .come-half is width:auto (so it can shrink-wrap and center), which breaks the width:100%
    chain .chip-stack normally relies on to size itself off its parent. Give it a definite
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
@@ -457,9 +457,9 @@ body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;paddin
 body.felt-mode.game-standard #puck-row-h{height:17.1%;padding:0;gap:2px}
 body.felt-mode.game-standard #num-strip-h{flex:1;padding:0;gap:2px}
 body.felt-mode.game-standard #felt-stage .num-box{position:relative}
-body.felt-mode.game-standard #felt-stage .nb-buy-wrap{position:absolute;left:0;width:100%;top:17.1%;height:17.9%;display:flex}
-body.felt-mode.game-standard #felt-stage .nb-mid{position:absolute;left:0;width:100%;top:35.0%;height:46.5%}
-body.felt-mode.game-standard #felt-stage .nb-place-wrap{position:absolute;left:0;width:100%;top:81.5%;height:18.5%;display:flex}
+body.felt-mode.game-standard #felt-stage .nb-buy-wrap{position:absolute;left:0;width:100%;top:0%;height:21.59%;display:flex}
+body.felt-mode.game-standard #felt-stage .nb-mid{position:absolute;left:0;width:100%;top:21.59%;height:56.09%}
+body.felt-mode.game-standard #felt-stage .nb-place-wrap{position:absolute;left:0;width:100%;top:77.68%;height:22.32%;display:flex}
 body.felt-mode.game-standard #felt-stage .nb-buy-wrap>*,
 body.felt-mode.game-standard #felt-stage .nb-place-wrap>*{position:relative;width:50%;height:100%;flex:none}
 body.felt-mode.game-standard #felt-stage .nb-buy-left,
@@ -470,23 +470,42 @@ body.felt-mode.game-standard #felt-stage .nb-buy-left .nb-lbl,
 body.felt-mode.game-standard #felt-stage .nb-buy-left .nb-stk{display:none}
 body.felt-mode.game-standard #felt-stage #dc-wait-bar{width:100%;height:100%}
 body.felt-mode.game-standard #felt-stage #dc-wait-bar .nb-mid{background:transparent}
+/* dc-wait-bar's dark-red background is set inline at creation time, which beats any
+   non-!important stylesheet rule regardless of specificity -- needs !important here. */
+body.felt-mode.game-standard #felt-stage #dc-wait-bar{background:transparent!important;border-color:transparent!important}
 /* Don't Pass Bar mirrors the Pass Line's own transparent skin */
-body.felt-mode.game-standard #felt-stage #dp-bar{display:flex}
+body.felt-mode.game-standard #felt-stage #dp-bar{display:flex;background:transparent;border-color:transparent}
 body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;background:transparent;border-color:transparent}
 body.felt-mode.game-standard #felt-stage #dp-main{flex:1;background:transparent;border-color:transparent;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main:hover,
 body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{background:rgba(255,255,255,.10)}
 body.felt-mode.game-standard #felt-stage .dp-name{display:none}
-body.felt-mode.game-standard #felt-stage #dp-bar12{display:none}
+body.felt-mode.game-standard #felt-stage #dp-bar12{display:none!important}
 /* ===== CHIP STACK BET INDICATORS ===== */
 #felt-stage{--chip:32px;--edge:calc(var(--chip)*0.16)}
 body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
 body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{overflow:visible}
 body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
-.chip-stack{position:relative;display:block;width:100%}
+.chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
+.chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
+.chip-stack .chip-amt,.chip-stack .chip-off{user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
 .chip-stack .chip-off{position:absolute;left:50%;transform:translateX(-50%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
+/* ===== WIN/LOSS CHIP SWOOP ===== */
+#swoop-layer{position:fixed;inset:0;pointer-events:none;z-index:260;overflow:hidden}
+.swoop-stack{position:absolute;left:50%;top:-20%;transform:translateX(-50%);transition:top .65s cubic-bezier(.34,1.56,.64,1),opacity .35s;opacity:0;--chip:56px;--edge:9px}
+.swoop-stack.settle{top:45%;opacity:1}
+.swoop-stack.exit-down{top:120%;opacity:1}
+.swoop-stack.exit-up{top:-25%;opacity:0}
+.swoop-label{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:4px;font-size:13px;font-weight:800;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.swoop-stack.win .swoop-label{color:#7eff9a}
+.swoop-stack.lose .swoop-label{color:#ff8a8a}
+
+/* ===== CHIP DRAG GHOST ===== */
+.chip-drag-ghost{position:fixed;width:44px;height:44px;pointer-events:none;z-index:300;transform:translate(-50%,-50%);filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));transition:transform .08s}
+.chip-drag-ghost.over-target{transform:translate(-50%,-50%) scale(1.15)}
+.drop-target-hover{outline:2px dashed rgba(255,215,0,.85)!important;outline-offset:-2px}
 body.felt-mode #felt-stage .off-ov{display:none!important}
 /* ===== FULLSCREEN FELT: top & bottom UI bands ===== */
 body.felt-mode #top-row{display:none!important}
@@ -684,6 +703,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.79</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -695,6 +715,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,
   </div><!-- end top-row -->
 
   <!-- PLAY AREA -->
+  <div id="swoop-layer"></div>
   <div id="play-area">
     <div id="felt-stage">
       <img id="felt-img" src="Crapless-Felt-with-Horn.gif" alt="" draggable="false">
@@ -1187,7 +1208,11 @@ function applyGameMode(mode){
   }
   REPEATABLE=getRepeatable();
   // Update CSS column count for number strip: 6+1 DC box in standard, 10 in crapless
-  document.documentElement.style.setProperty('--num-cols', mode==='standard'?'7':'10');
+  // 6 real number columns for standard, not 7 -- dc-wait-wrap is the 7th grid item at
+  // creation time, but enterFeltMode() immediately pulls it out of #num-strip-h and
+  // repositions it independently via STANDARD_LAYOUT's own absolute coordinates. Leaving
+  // this at 7 left a dead empty column eating into the 6 real number boxes' width.
+  document.documentElement.style.setProperty('--num-cols', mode==='standard'?'6':'10');
   // Wire bar-12 die images in DP bar (uses DIE_B64 — only available after it's defined)
   if(typeof DIE_B64!=='undefined'){
     const b12d1=document.getElementById('dp-bar12-d1'),b12d2=document.getElementById('dp-bar12-d2');
@@ -1596,13 +1621,13 @@ function buildStrip(){
     const box=document.createElement('div');box.className='num-box';box.id='numbox-'+n;
     if(isStd){
       const bwrap=document.createElement('div');bwrap.className='nb-buy-wrap';
-      const bd=document.createElement('div');bd.className='nb-buy-left';bd.id='nb-buy-'+n;bd.onclick=()=>placeBet('buy'+n);bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
+      const bd=document.createElement('div');bd.className='nb-buy-left';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBet('buy'+n);bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
       bd.innerHTML='<span class="nb-lbl">BUY</span><span class="nb-stk" id="stk-buy'+n+'"></span><div class="off-ov" id="off-buy-'+n+'" style="display:none"><span>OFF</span></div>';
-      const ld=document.createElement('div');ld.className='nb-lay';ld.id='nb-lay-'+n;ld.onclick=()=>placeLay(n);ld.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeLay(n);};
+      const ld=document.createElement('div');ld.className='nb-lay';ld.id='nb-lay-'+n;ld.dataset.betLay=n;ld.onclick=()=>placeLay(n);ld.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeLay(n);};
       ld.innerHTML='<span class="nb-lbl">LAY</span><span class="nb-stk" id="stk-lay'+n+'"></span>';
       bwrap.appendChild(bd);bwrap.appendChild(ld);box.appendChild(bwrap);
     }else{
-      const bd=document.createElement('div');bd.className='nb-buy';bd.id='nb-buy-'+n;bd.onclick=()=>placeBet('buy'+n);bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
+      const bd=document.createElement('div');bd.className='nb-buy';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBet('buy'+n);bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
       bd.innerHTML='<span class="nb-lbl">BUY</span><span class="nb-stk" id="stk-buy'+n+'"></span><div class="off-ov" id="off-buy-'+n+'" style="display:none"><span>OFF</span></div>';
       box.appendChild(bd);
     }
@@ -1611,7 +1636,7 @@ function buildStrip(){
     const cs=document.createElement('div');cs.id='come-slot-'+n;cs.style.cssText='width:100%;margin-top:1px';
     const dcs=document.createElement('div');dcs.id='dc-slot-'+n;dcs.className='dc-chip-box';
     md.appendChild(nl);md.appendChild(cs);md.appendChild(dcs);
-    const pd=document.createElement('div');pd.className='nb-place';pd.id='nb-place-'+n;pd.onclick=()=>placeBet('place'+n);pd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('place'+n);};
+    const pd=document.createElement('div');pd.className='nb-place';pd.id='nb-place-'+n;pd.dataset.betKey='place'+n;pd.onclick=()=>placeBet('place'+n);pd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('place'+n);};
     pd.innerHTML='<span class="nb-lbl">PLACE</span><span class="nb-stk" id="stk-place'+n+'"></span><div class="off-ov" id="off-place-'+n+'" style="display:none"><span>OFF</span></div><span class="nb-pay">'+w+':'+d+'</span>';
     box.appendChild(md);box.appendChild(pd);wrap.appendChild(box);
     strip.appendChild(wrap);
@@ -1626,7 +1651,7 @@ function buildStrip(){
     const psp=document.createElement('div');psp.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';pr.appendChild(psp);
     const dcWrap=document.createElement('div');dcWrap.className='num-box-wrap';dcWrap.id='dc-wait-wrap';
     const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:rgba(60,0,0,.25);border-color:rgba(255,80,80,.3);cursor:pointer';
-    dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
+    dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:23px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
@@ -1641,6 +1666,176 @@ function buildStrip(){
 }
 // applyGameMode calls buildStrip internally; set initial state to crapless
 // (will be overridden by startSession/applyServerGameState on login)
+// ===================== WIN / LOSS CHIP SWOOP =====================
+// NOTE ON SCOPE: the server only reports a total returned amount for the whole roll, not a
+// per-bet breakdown of which specific bet won or lost. That means this animation works with
+// the AGGREGATE roll result, not a stack that literally flies to-and-from the exact table
+// position of the one bet that won. "returned" swoops down from the house and off toward the
+// player; whatever portion of this roll's total wager was NOT returned swoops up and off
+// toward the house as a loss. Both can fire on the same roll (e.g. a Pass Line win alongside
+// a Field bet loss nets both a win swoop and a loss swoop).
+function spawnSwoopStack(amt,kind){
+  if(!(amt>0))return null;
+  const layer=document.getElementById('swoop-layer');if(!layer)return null;
+  const el=document.createElement('div');
+  el.className='swoop-stack '+kind;
+  el.innerHTML=chipStackHTML(amt,false)+'<div class="swoop-label">'+(kind==='win'?'+':'-')+fmt(amt)+'</div>';
+  layer.appendChild(el);
+  return el;
+}
+function runWinLossSwoop(returned,wagered){
+  const lossAmt=r2(Math.max(0,wagered-returned));
+  const winAmt=r2(returned);
+  const winEl=spawnSwoopStack(winAmt,'win');
+  const loseEl=spawnSwoopStack(lossAmt,'lose');
+  if(winEl){
+    requestAnimationFrame(()=>{winEl.classList.add('settle');});
+    setTimeout(()=>{winEl.classList.remove('settle');winEl.classList.add('exit-down');},1400);
+    setTimeout(()=>{winEl.remove();},2100);
+  }
+  if(loseEl){
+    // Losses start already "settled" on the felt (bottom/player side) and swoop straight up
+    // and off toward the house -- there's no incoming swoop for a loss, it's already there.
+    loseEl.classList.add('settle');
+    requestAnimationFrame(()=>{
+      setTimeout(()=>{loseEl.classList.remove('settle');loseEl.classList.add('exit-up');},900);
+      setTimeout(()=>{loseEl.remove();},1550);
+    });
+  }
+}
+
+// ===================== CHIP DRAG AND DROP =====================
+// Generic system: works off whatever bet key an element's onclick="placeBet('KEY')" or
+// onclick="bonusBet('KEY')" attribute names, so it does not need a separate hand-wired path
+// per bet type. A press-and-hold-then-move on any chip (selector or an existing stake) picks
+// up a chip; dropping it on another legal bet area moves that bet there; dropping it anywhere
+// else removes that chip's value from wherever it was picked up.
+// SIMPLIFICATION, stated plainly: picking a chip up "off a stack" does not grab that exact
+// rendered chip layer (that would need a separate pointer target per stacked chip image, which
+// the current chip-stack rendering does not expose). Instead, pressing on a bet that already
+// has money on it picks up one chip of whatever denomination is currently selected in the chip
+// tray. Visually it looks the same; the distinction only matters if you are trying to grab a
+// specific chip buried inside a mixed-denomination stack rather than the top/selected one.
+let chipDrag=null,chipDragMoved=false,dragJustHappened=false;
+const DRAG_THRESHOLD=6;
+
+function betKeyFromElement(el){
+  let n=el;
+  while(n&&n!==document.body){
+    // Explicit data attributes are exact and can't drift out of sync the way string-parsing
+    // a stringified function can. JS-created cells (per-number Buy/Place/Lay, the Don't Come
+    // Bar) build their bet key by CONCATENATION at creation time, e.g. ()=>placeBet('buy'+n),
+    // so calling .toString() on that function returns the literal source text "'buy'+n", not
+    // the resolved value "buy10" -- no regex can recover the real key from that. These cells
+    // set data-bet-key (or data-bet-lay, since Lay bets go through placeLay/removeLay, not
+    // placeBet/removeBet, a different function entirely) at creation time instead.
+    if(n.dataset){
+      if(n.dataset.betKey)return{kind:'bet',key:n.dataset.betKey};
+      if(n.dataset.betLay!==undefined)return{kind:'lay',n:+n.dataset.betLay};
+    }
+    const oc=(n.getAttribute&&n.getAttribute('onclick'))||(n.onclick?n.onclick.toString():'');
+    if(oc){
+      let m=oc.match(/placeBet\('([^']+)'\)/);if(m)return{kind:'bet',key:m[1]};
+      m=oc.match(/bonusBet\('([^']+)'\)/);if(m)return{kind:'bonus',key:m[1]};
+    }
+    n=n.parentElement;
+  }
+  return null;
+}
+function betAmountForSource(src){
+  if(!src)return 0;
+  if(src.kind==='bet')return G.bets[src.key]||0;
+  if(src.kind==='bonus')return G.bonus[src.key]||0;
+  if(src.kind==='lay')return G.bets['lay'+src.n]||0;
+  return 0;
+}
+function moveChipGhost(x,y){if(chipDrag)  {chipDrag.ghost.style.left=x+'px';chipDrag.ghost.style.top=y+'px';}}
+function clearDropHighlight(){document.querySelectorAll('.drop-target-hover').forEach(e=>e.classList.remove('drop-target-hover'));}
+
+function chipPointerDown(e,denom,source){
+  if(e.button!==undefined&&e.button!==0)return;
+  // Established bet stacks render real <img> and text nodes, both of which the browser will
+  // natively drag-ghost or text-select on press-and-move unless told not to. The chip row's
+  // buttons never hit this because they're plain divs with a CSS background-image, nothing
+  // native to select. preventDefault here stops that native behavior from winning the race.
+  e.preventDefault();
+  const startX=e.clientX,startY=e.clientY;
+  chipDragMoved=false;
+  const pending={denom,source,startX,startY};
+  function onMove(ev){
+    if(!chipDragMoved){
+      if(Math.abs(ev.clientX-startX)<DRAG_THRESHOLD&&Math.abs(ev.clientY-startY)<DRAG_THRESHOLD)return;
+      chipDragMoved=true;
+      const ghost=document.createElement('img');
+      ghost.src='chip-blank-'+pending.denom+'.png';
+      ghost.className='chip-drag-ghost';
+      document.body.appendChild(ghost);
+      chipDrag={denom:pending.denom,source:pending.source,ghost};
+    }
+    if(!chipDrag)return;
+    moveChipGhost(ev.clientX,ev.clientY);
+    clearDropHighlight();
+    const under=document.elementFromPoint(ev.clientX,ev.clientY);
+    const tgt=under?betKeyFromElement(under):null;
+    chipDrag.ghost.classList.toggle('over-target',!!tgt);
+    if(tgt){
+      let n=under;while(n&&n!==document.body){if(n.getAttribute&&n.getAttribute('onclick')&&/placeBet|bonusBet/.test(n.getAttribute('onclick'))){n.classList.add('drop-target-hover');break;}n=n.parentElement;}
+    }
+  }
+  function onUp(ev){
+    document.removeEventListener('pointermove',onMove);
+    document.removeEventListener('pointerup',onUp);
+    clearDropHighlight();
+    if(chipDragMoved&&chipDrag){
+      const{denom,source,ghost}=chipDrag;
+      ghost.remove();
+      const under=document.elementFromPoint(ev.clientX,ev.clientY);
+      const tgt=under?betKeyFromElement(under):null;
+      const prevChip=G.chip;
+      G.chip=denom;
+      const sameId=(a,b)=>a&&b&&a.kind===b.kind&&(a.kind==='lay'?a.n===b.n:a.key===b.key);
+      const sameTarget=sameId(tgt,source);
+      if(tgt&&!sameTarget){
+        if(tgt.kind==='bet')placeBet(tgt.key);
+        else if(tgt.kind==='bonus')bonusBet(tgt.key);
+        else if(tgt.kind==='lay')placeLay(tgt.n);
+      }
+      if(source&&!sameTarget){
+        if(source.kind==='bet')removeBet(source.key);
+        else if(source.kind==='bonus')bonusRemove(source.key);
+        else if(source.kind==='lay')removeLay(source.n);
+      }
+      G.chip=prevChip;
+      dragJustHappened=true;
+      setTimeout(()=>{dragJustHappened=false;},50);
+    }
+    chipDrag=null;chipDragMoved=false;
+  }
+  document.addEventListener('pointermove',onMove);
+  document.addEventListener('pointerup',onUp);
+}
+// Swallow the click that would otherwise fire on the element under the pointer right after a
+// real drag completes (pointerup still triggers a native click on most browsers regardless of
+// how far the pointer moved in between).
+document.addEventListener('click',function(e){
+  if(dragJustHappened){e.stopPropagation();e.preventDefault();}
+},true);
+
+function initChipDragHandlers(){
+  document.querySelectorAll('.chip[data-val]').forEach(c=>{
+    c.addEventListener('pointerdown',e=>chipPointerDown(e,+c.dataset.val,null));
+  });
+  document.body.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.chip[data-val]'))return; // handled above, avoid double-binding
+    const src=betKeyFromElement(e.target);
+    if(!src)return;
+    if(betAmountForSource(src)<=0)return; // nothing to pick up from an empty bet
+    chipPointerDown(e,G.chip,src);
+  });
+}
+document.addEventListener('DOMContentLoaded',initChipDragHandlers);
+document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
+
 // ===================== CHIP STACK BET INDICATORS =====================
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
@@ -1648,7 +1843,7 @@ function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);
 function chipStackHTML(amt,off){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
-  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" style="bottom:calc(var(--edge)*'+i+')">';});
+  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
   const label=chipLabel(amt);
   const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
@@ -1656,14 +1851,13 @@ function chipStackHTML(amt,off){
   h+='</span>';
   return h;
 }
-const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,.dp-stk,.dp-odds-stk,#stk-pass,#stk-come,#stk-field,#stk-dc-wait,.lr-stake';
+const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,.dp-stk,.dp-odds-stk,#stk-pass,#stk-passodds,#stk-come,#stk-field,#stk-dc-wait,.lr-stake';
 function renderChipStacks(){
   if(!document.body.classList.contains('felt-mode')){
     document.querySelectorAll('.has-stack').forEach(e=>e.classList.remove('has-stack'));
     return;
   }
   document.querySelectorAll(CHIP_STK_SEL).forEach(el=>{
-    if(el.closest('#pass-odds-cell'))return;
     const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
     if(!m){el.classList.remove('has-stack');return;}
     const amt=parseFloat(m[1].replace(/,/g,''));
@@ -1843,9 +2037,9 @@ function placeBet(key){
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
   if(key==='pass'){if(G.passLocked){addLog('Pass Line locked.','info');return;}if(G.phase==='point'){addLog('Pass Line: come-out only.','info');return;}}
-  if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}if(G.bets['come']){addLog('Come waiting.','info');return;}}
+  if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
   if(key==='dp'){if(activeGame!=='standard'){addLog('Don\'t Pass: standard mode only.','info');return;}if(G.phase==='point'){addLog('Don\'t Pass: come-out only.','info');return;}}
-  if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}if(G.bets['dc']){addLog('Don\'t Come waiting.','info');return;}}
+  if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
   const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);updateUI();
 }
 function removeBet(key){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];updateUI();}
@@ -1984,6 +2178,7 @@ async function rollDice(){
     chkRepeat();
     document.getElementById('roll-btn').disabled=false;
     updateUI();checkBroke();
+    runWinLossSwoop(data.returned||0,nm||0);
     // A point was JUST established this roll only if the server tagged this roll that way --
     // without this gate the Pass Line odds prompt would re-fire on every later roll of the
     // same point (as long as no odds were ever added), stealing the slot from a Come bet that
