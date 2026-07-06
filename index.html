@@ -175,6 +175,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .come-odds-btn{font-size:11px;background:rgba(0,90,40,.6);border:0.5px solid rgba(0,200,100,.4);border-radius:2px;color:#7eff9a;padding:1px 2px;cursor:pointer}
 .come-odds-amt{font-size:11px;color:#ffe066}
 body.felt-mode #felt-stage .come-on-box{background:transparent;border:none;padding:0;gap:0;width:100%;height:100%;position:relative;display:block}
+body.felt-mode #felt-stage .dc-on-box{background:transparent;border:none;padding:0;gap:0;width:100%;height:100%;position:relative;display:block}
 body.felt-mode #felt-stage .come-half{position:absolute;left:50%;transform:translateX(-50%);width:auto;display:flex;align-items:center;justify-content:center}
 body.felt-mode #felt-stage .come-half.flat-half{bottom:0}
 body.felt-mode #felt-stage .come-half.odds-half{top:0}
@@ -496,7 +497,7 @@ body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bott
 /* A single lock emoji at the SAME nominal font-size as OFF's bold text still renders visibly
    smaller, since emoji glyphs carry their own internal padding within their em-box. Scaled up
    to compensate rather than matching the number literally. */
-.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.5);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
+.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
 
 /* ===== WIN/LOSS CHIP SWOOP ===== */
 #swoop-layer{position:fixed;inset:0;pointer-events:none;z-index:260;overflow:hidden}
@@ -555,6 +556,11 @@ body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{
   background:transparent!important;outline:none!important;box-shadow:none!important;
 }
 body.felt-mode #felt-stage .odds-lbl{display:none}
+body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{
+  border-color:transparent!important;background:transparent!important;outline:none!important;
+}
+body.felt-mode #felt-stage .odds-pay{display:none}
 </style>
 </head>
 <body>
@@ -601,7 +607,7 @@ body.felt-mode #felt-stage .odds-lbl{display:none}
       <div class="modal-title" id="modal-odds-title">Odds</div>
       <div class="modal-sub" id="modal-odds-sub"></div>
       <div class="modal-grid" id="modal-odds-grid"></div>
-      <button class="modal-btn no-odds" onclick="oddsModalClose()">No Odds</button>
+      <button class="modal-btn no-odds" onclick="clearOddsToZero()">No Odds</button>
     </div>
   </div>
   <div class="modal-overlay hidden" id="modal-move">
@@ -644,7 +650,7 @@ body.felt-mode #felt-stage .odds-lbl{display:none}
     <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column">
       <div class="modal-title" style="margin-bottom:8px">Roll Log</div>
       <div class="log-entries" id="log"></div>
-      <button class="modal-btn cancel" onclick="closeLogModal()" style="margin-top:8px">Close</button>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="modal-btn" onclick="exportShooterCSV()">Export Rolls</button><button class="modal-btn cancel" onclick="closeLogModal()">Close</button></div>
     </div>
   </div>
 
@@ -732,7 +738,7 @@ body.felt-mode #felt-stage .odds-lbl{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.87</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.89</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -881,7 +887,7 @@ body.felt-mode #felt-stage .odds-lbl{display:none}
             <div class="dp-stub-note">Crapless only</div>
           </div>
           <div id="dp-bar">
-            <div id="dp-main" onclick="placeBet('dp')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('dp')" oncontextmenu="event.preventDefault();removeDpFlat()">
+            <div id="dp-main" onclick="placeBet('dp')" oncontextmenu="event.preventDefault();event.stopPropagation();removeDpFlat()">
               <div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap">
                 <div class="dp-name" style="font-size:23px">DON'T PASS</div>
                 <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:23px;color:rgba(255,130,130,.45)">BAR</span><img id="dp-bar12-d1" style="width:18px;height:18px"><img id="dp-bar12-d2" style="width:18px;height:18px"></div>
@@ -1021,7 +1027,7 @@ const HARD_NUMS=new Set([4,6,8,10]);
 const LOW_NUMS=[2,3,4,5,6],HIGH_NUMS=[8,9,10,11,12],ALL_BONUS=[2,3,4,5,6,8,9,10,11,12];
 const CONTRACT=new Set(['pass','passodds']);
 
-function getRepeatable(){return new Set(['field','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
+function getRepeatable(){return new Set(['pass','dp','field','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
 let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
 // ===================== FELT IMAGE MODE (crapless) =====================
@@ -1411,7 +1417,33 @@ function openCapModal(){document.getElementById('modal-cap').classList.remove('h
 function closeCapModal(){document.getElementById('modal-cap').classList.add('hidden');}
 function openLogModal(){document.getElementById('modal-log').classList.remove('hidden');}
 function closeLogModal(){document.getElementById('modal-log').classList.add('hidden');}
-function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.prepend(p);while(el.children.length>80)el.removeChild(el.lastChild);}
+function exportShooterCSV(){
+  const chron=G.rollHistory.slice().reverse(); // rollHistory is newest-first; CSV should read oldest-to-newest
+  const shooters=[];
+  let current=[];
+  chron.forEach(r=>{
+    current.push(r);
+    if(r.tag==='seven-out'){shooters.push(current);current=[];}
+  });
+  if(current.length)shooters.push(current); // current shooter still rolling, no seven-out yet
+  const last10=shooters.slice(-10);
+  const lines=[];
+  last10.forEach(shooter=>{
+    shooter.forEach(r=>{
+      const d1=r.d1||1,d2=r.d2||(r.sum-d1);
+      lines.push(d1+','+d2);
+    });
+  });
+  if(!lines.length){addLog('No rolls to export yet.','info');return;}
+  const csv=lines.join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='last10shooters.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.appendChild(p);while(el.children.length>80)el.removeChild(el.firstChild);el.scrollTop=el.scrollHeight;}
 function openInfoModal(){document.getElementById('modal-info').classList.remove('hidden');}
 function closeInfoModal(){document.getElementById('modal-info').classList.add('hidden');}
 
@@ -1943,7 +1975,6 @@ function openOddsModal(type,cbIdx,flatAmt,num){
     document.getElementById('modal-odds-title').textContent=title;
     document.getElementById('modal-odds-sub').textContent='Pays '+LAY_LABEL[num]+' · Max lay: '+fmt(lim)+' · Playable: '+fmt(G.bankroll);
     const grid=document.getElementById('modal-odds-grid');grid.innerHTML='';
-    if(curOdds>0){const zb=document.createElement('button');zb.className='modal-btn';zb.textContent='Clear (0)';zb.onclick=()=>oddsModalPick(r2(0-curOdds),0);grid.appendChild(zb);}
     // Show multiples of flat win: 1x,2x,3x,4x,5x,6x of flat as desired win
     for(let m=1;m<=6;m++){
       const winDesired=r2(flatAmt*m);
@@ -1961,7 +1992,6 @@ function openOddsModal(type,cbIdx,flatAmt,num){
     document.getElementById('modal-odds-title').textContent=(type==='pass'?'Pass Line':'Come')+' Odds — Point '+num;
     document.getElementById('modal-odds-sub').textContent='Flat: '+fmt(flatAmt)+' · Pays '+ODDS_LABEL[num]+' · Max '+maxMult+'x · Playable: '+fmt(G.bankroll);
     const grid=document.getElementById('modal-odds-grid');grid.innerHTML='';
-    if(curOdds>0){const zb=document.createElement('button');zb.className='modal-btn';zb.textContent='Clear (0)';zb.onclick=()=>oddsModalPick(r2(0-curOdds),0);grid.appendChild(zb);}
     for(let m=1;m<=maxMult;m++){
       const td=r2(flatAmt*m),add=r2(td-curOdds);
       const b=document.createElement('button');b.className='modal-btn'+(add>G.bankroll?' disabled':'');
@@ -1982,6 +2012,16 @@ function oddsModalPick(additional,totalDesired){
   else if(type==='come'&&cbIdx!=null&&G.comeBets[cbIdx]){const cur=G.comeBets[cbIdx].odds||0;G.comeBets[cbIdx].odds=totalDesired;G.bankroll=r2(G.bankroll-r2(totalDesired-cur));}
   else if(type==='dc'&&cbIdx!=null&&G.dcBets[cbIdx]){const cur=G.dcBets[cbIdx].odds||0;G.dcBets[cbIdx].odds=totalDesired;G.bankroll=r2(G.bankroll-r2(totalDesired-cur));}
   oddsCtx=null;updateUI();
+}
+function clearOddsToZero(){
+  if(!oddsCtx)return;
+  const{type,cbIdx}=oddsCtx;
+  let cur=0;
+  if(type==='pass')cur=G.bets['passodds']||0;
+  else if(type==='dp')cur=G.bets['dpodds']||0;
+  else if(type==='come'&&cbIdx!=null&&G.comeBets[cbIdx])cur=G.comeBets[cbIdx].odds||0;
+  else if(type==='dc'&&cbIdx!=null&&G.dcBets[cbIdx])cur=G.dcBets[cbIdx].odds||0;
+  oddsModalPick(r2(0-cur),0);
 }
 function oddsModalClose(){document.getElementById('modal-odds').classList.add('hidden');oddsCtx=null;}
 function addOddsAmt(type,amt){
@@ -2287,10 +2327,15 @@ async function rollDice(){
       if(justEstablishedPoint&&G.phase==='point'&&G.bets['pass']&&!G.bets['passodds']&&G.bankroll>0){
         openOddsModal('pass',null,G.bets['pass'],G.point);return;
       }
+      if(justEstablishedPoint&&G.phase==='point'&&G.bets['dp']&&!G.bets['dpodds']&&G.bankroll>0){
+        openOddsModal('dp',null,G.bets['dp'],G.point);return;
+      }
       // Check for Come bets with no odds (pick the first one) -- these are inherently
       // roll-specific since a Come bet only sits with odds===0 right after it lands on a number.
       const newCome=G.comeBets.findIndex(cb=>cb.num>0&&(!cb.odds||cb.odds===0));
-      if(newCome>=0&&G.bankroll>0)openOddsModal('come',newCome,G.comeBets[newCome].flat,G.comeBets[newCome].num);
+      if(newCome>=0&&G.bankroll>0){openOddsModal('come',newCome,G.comeBets[newCome].flat,G.comeBets[newCome].num);return;}
+      const newDc=G.dcBets.findIndex(dc=>dc.num>0&&(!dc.odds||dc.odds===0));
+      if(newDc>=0&&G.bankroll>0)openOddsModal('dc',newDc,G.dcBets[newDc].flat,G.dcBets[newDc].num);
     }
     // "7 for 1 or better" big win: server reports the best single payout ratio hit this roll.
     const bigWin=(data.bestFor1||0)>=7;
@@ -2375,9 +2420,17 @@ function updateUI(){
     const dcIdx=G.dcBets.findIndex(c=>c.num===n);
     if(dcIdx>=0){
       const dc=G.dcBets[dcIdx],cur=dc.odds||0,lim=dcOddsLim(dc.flat,n),atMax=r2(cur)>=r2(lim),canOdds=!atMax&&G.bankroll>0;
-      let html='<div class="dc-on-box" oncontextmenu="event.preventDefault();event.stopPropagation();'+(cur>0?'removeDcOdds('+dcIdx+')':'removeDcFlat('+dcIdx+')')+'"><span class="dc-flat-amt">'+fmt(dc.flat)+'</span>';
-      if(canOdds)html+='<button class="dc-odds-btn" onclick="event.stopPropagation();openDcLayOdds('+dcIdx+')">+L</button>';
-      if(cur>0)html+='<span class="dc-odds-amt">'+fmt(cur)+'</span>';
+      const feltOn=document.body.classList.contains('felt-mode');
+      let html='<div class="dc-on-box" oncontextmenu="event.preventDefault();event.stopPropagation();'+(cur>0?'removeDcOdds('+dcIdx+')':'removeDcFlat('+dcIdx+')')+'">';
+      if(feltOn){
+        html+='<div class="come-half flat-half">'+chipStackHTML(dc.flat,false)+'</div>';
+        html+='<div class="come-half odds-half">'+(cur>0?chipStackHTML(cur,false):'')+'</div>';
+        if(canOdds)html+='<button class="dc-odds-btn" onclick="event.stopPropagation();openDcLayOdds('+dcIdx+')">+L</button>';
+      }else{
+        html+='<span class="dc-flat-amt">'+fmt(dc.flat)+'</span>';
+        if(canOdds)html+='<button class="dc-odds-btn" onclick="event.stopPropagation();openDcLayOdds('+dcIdx+')">+L</button>';
+        if(cur>0)html+='<span class="dc-odds-amt">'+fmt(cur)+'</span>';
+      }
       html+='</div>';
       dslot.innerHTML=html;
     }else dslot.innerHTML='';
@@ -2434,10 +2487,19 @@ function updateUI(){
     // rollHistory entries don't currently carry a "point-established" tag.
     const chron=G.rollHistory.slice().reverse();
     let phase='comeout',pt=null;const tagFor=[];
+    const isStd=activeGame==='standard';
     chron.forEach(r=>{
       let t=null;
       if(phase==='comeout'){
-        if(r.sum===7){t='win';}else{t='est';pt=r.sum;phase='point';}
+        if(isStd){
+          // Standard: 7 or 11 wins outright, 2/3/12 craps out, anything else sets the point.
+          // 11 can never become a point number.
+          if(r.sum===7||r.sum===11){t='win';}
+          else if(r.sum===2||r.sum===3||r.sum===12){t='out';}
+          else{t='est';pt=r.sum;phase='point';}
+        }else{
+          if(r.sum===7){t='win';}else{t='est';pt=r.sum;phase='point';}
+        }
       }else{
         if(r.sum===pt){t='made';phase='comeout';pt=null;}
         else if(r.sum===7){t='out';phase='comeout';pt=null;}
