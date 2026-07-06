@@ -262,7 +262,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
 #bottom-left{flex:1;display:flex;flex-direction:column;min-width:0}
 #history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.35);border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
-#roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
+#roll-history{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
 #roll-history::-webkit-scrollbar{display:none}
 .roll-pip{display:flex;flex-direction:column;flex-shrink:0;gap:2px}
 .roll-pip .rp-dice-row{display:flex;gap:2px}
@@ -329,7 +329,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 #modal-log .log-entries p.lose{color:#f08080}
 #modal-log .log-entries p.info{color:#ffe066}
 /* Winner */
-#modal-winner{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+#modal-winner{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:8vh;background:rgba(0,0,0,.5)}
 #modal-winner.hidden{display:none}
 .winner-box{background:linear-gradient(135deg,#7a5c00,#c8a200,#ffe066,#c8a200,#7a5c00);border:3px solid #ffd700;border-radius:16px;padding:20px 36px;text-align:center;box-shadow:0 0 60px rgba(255,215,0,.6);animation:winnerPop .3s cubic-bezier(.34,1.56,.64,1)}
 @keyframes winnerPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
@@ -428,7 +428,7 @@ body.felt-mode #felt-stage .circle-stack{justify-content:space-between;gap:0;wid
 body.felt-mode #felt-stage .circle-stack .circle-wrap{width:100%;height:28%}
 body.felt-mode #felt-stage .sc-stack{gap:6%;justify-content:center}
 body.felt-mode #felt-stage #pass-bar{display:flex}
-body.felt-mode #felt-stage #pass-odds-cell{flex:0 0 17.4%}
+body.felt-mode #felt-stage #pass-odds-cell{flex:0 0 17.4%;position:relative}
 body.felt-mode #felt-stage #pass-main{flex:1}
 /* ===== STANDARD CRAPS FELT (separate image + layout from crapless) ===== */
 /* Crapless-only proportions, scoped so they don't leak onto the standard felt */
@@ -475,7 +475,7 @@ body.felt-mode.game-standard #felt-stage #dc-wait-bar .nb-mid{background:transpa
 body.felt-mode.game-standard #felt-stage #dc-wait-bar{background:transparent!important;border-color:transparent!important}
 /* Don't Pass Bar mirrors the Pass Line's own transparent skin */
 body.felt-mode.game-standard #felt-stage #dp-bar{display:flex;background:transparent;border-color:transparent}
-body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;background:transparent;border-color:transparent}
+body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;background:transparent;border-color:transparent;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main{flex:1;background:transparent;border-color:transparent;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main:hover,
 body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{background:rgba(255,255,255,.10)}
@@ -526,6 +526,29 @@ body.felt-mode #felt-stage #lucky-roller .lr-nums{display:flex;height:100%;width
 body.felt-mode #felt-stage #lucky-roller .lr-num{flex:1;width:auto;height:auto;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0}
 body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,.30);box-shadow:0 0 10px rgba(60,255,140,.9),inset 0 0 6px rgba(60,255,140,.5);color:transparent}
 
+/* ===== CLEAN UI: no hover or placed-bet shading anywhere on the felt =====
+   Deck wants no visual highlighting of legal betting areas, on hover or once a bet is placed.
+   This neutralizes every hover/.active/.active-bar background and the gold outline glow added
+   earlier, rather than deleting the base (non-felt) rules those classes still legitimately use
+   outside felt mode. State tracking via .active/.active-bar in JS is untouched, only its look. */
+body.felt-mode #felt-stage .bb:hover,body.felt-mode #felt-stage .bb.active,
+body.felt-mode #felt-stage .nb-buy:hover,body.felt-mode #felt-stage .nb-buy.active,
+body.felt-mode #felt-stage .nb-place:hover,body.felt-mode #felt-stage .nb-place.active,
+body.felt-mode #felt-stage .nb-buy-left:hover,body.felt-mode #felt-stage .nb-buy-left.active,
+body.felt-mode #felt-stage .nb-lay:hover,body.felt-mode #felt-stage .nb-lay.active,
+body.felt-mode #felt-stage .horn-cell:hover,body.felt-mode #felt-stage .horn-cell.active,
+body.felt-mode #felt-stage .prop-circle:hover,body.felt-mode #felt-stage .prop-circle.active,
+body.felt-mode #felt-stage .prop-bar:hover,body.felt-mode #felt-stage .prop-bar.active,
+body.felt-mode #felt-stage .zone-bar:hover,body.felt-mode #felt-stage .zone-bar.active-bar,
+body.felt-mode #felt-stage #pass-main:hover,body.felt-mode #felt-stage #pass-main.active-bar,
+body.felt-mode #felt-stage #pass-odds-cell:hover,body.felt-mode #felt-stage #pass-odds-cell.active,
+body.felt-mode #felt-stage #dp-main:hover,body.felt-mode #felt-stage #dp-main.active-bar,
+body.felt-mode #felt-stage #dp-odds-cell:hover,body.felt-mode #felt-stage #dp-odds-cell.active,
+body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{
+  background:transparent!important;outline:none!important;box-shadow:none!important;
+}
+body.felt-mode #felt-stage .odds-lbl{display:none}
 </style>
 </head>
 <body>
@@ -703,7 +726,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.79</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.82</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -869,7 +892,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,
           </div>
           <div id="pass-bar">
             <div id="pass-odds-cell" data-odds-type="pass" onclick="openPassOddsManual()">
-              <span class="odds-lbl">ODDS</span>
+              
               <span class="odds-stk" id="stk-passodds"></span>
               <span class="odds-pay" id="po-limit">—</span>
             </div>
@@ -1876,6 +1899,9 @@ function renderChipStacks(){
     let off=false;
     const cell=el.closest('.nb-buy,.nb-place');
     if(cell){const ov=cell.querySelector('.off-ov');off=!!(ov&&ov.style.display&&ov.style.display!=='none');}
+    // Come Odds specifically aren't working during a come-out roll -- same "off" concept as
+    // Buy/Place, just a different trigger (main phase, not a per-cell toggle).
+    else if(el.closest('.odds-half')&&G.phase==='comeout')off=true;
     el.innerHTML=chipStackHTML(amt,off);
     el.classList.add('has-stack');
   });
@@ -2152,12 +2178,27 @@ function showFinalDice(v1,v2){
   tumbling=false;animating=false;
   if(renderer){die1.quaternion.copy(tQ(v1));die2.quaternion.copy(tQ(v2));}
 }
+function totalActiveBetValue(){
+  let t=0;
+  for(const k in G.bets)t+=G.bets[k]||0;
+  G.comeBets.forEach(cb=>{t+=(cb.flat||0)+(cb.odds||0);});
+  G.dcBets.forEach(dc=>{t+=(dc.flat||0)+(dc.odds||0);});
+  t+=(G.bonus.low||0)+(G.bonus.all||0)+(G.bonus.high||0);
+  return r2(t);
+}
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
   if(!hasWorkingBets()){addLog('Place an active bet before rolling.','info');return;}
   G.bonus.gracePeriod=false;
   document.getElementById('roll-btn').disabled=true;
   const nm=r2(G.bankrollAfterLastRoll-G.bankroll);G._lastBetDisplay=nm>0?nm:null;
+  // Snapshot total active bet value before this roll resolves. "Wagered minus returned" is
+  // NOT the same as "lost" -- a bet that just establishes a point, or a Come bet that moves to
+  // a number, still has its money sitting in play, it hasn't gone anywhere. The only way to
+  // tell a genuine loss (money vanishes, nothing comes back) apart from a bet that's simply
+  // still active is to compare total active bet value before and after: what persists unchanged
+  // is still in play, what disappears without being reflected in "returned" was actually lost.
+  const activeBetsBefore=totalActiveBetValue();
   snap();
   document.getElementById('dice-sum-overlay').style.opacity='0';
   // Cloche overlay roll: the dice agitate in the bell jar until the server
@@ -2210,7 +2251,16 @@ async function rollDice(){
     chkRepeat();
     document.getElementById('roll-btn').disabled=false;
     updateUI();checkBroke();
-    runWinLossSwoop(data.returned||0,nm||0);
+    // True loss = money that was in play and simply vanished without being paid back --
+    // NOT "wagered minus returned". A bet that's still sitting active after this roll (a point
+    // just got established, a Come bet just moved to a number) is not a loss, its value is
+    // still counted in activeBetsAfter and correctly cancels out of this formula.
+    const activeBetsAfter=totalActiveBetValue();
+    const trueLoss=r2(Math.max(0,activeBetsBefore-activeBetsAfter-(data.returned||0)));
+    // Disabled per Deck's request until bet positions are actually tracked -- an untargeted
+    // aggregate swoop was more distracting than useful. runWinLossSwoop() itself is untouched
+    // below, so re-enabling this later is a one-line change.
+    // runWinLossSwoop(data.returned||0,r2((data.returned||0)+trueLoss));
     // A point was JUST established this roll only if the server tagged this roll that way --
     // without this gate the Pass Line odds prompt would re-fire on every later roll of the
     // same point (as long as no odds were ever added), stealing the slot from a Come bet that
