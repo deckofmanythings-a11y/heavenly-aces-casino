@@ -182,7 +182,7 @@ body.felt-mode #felt-stage .come-half.odds-half{top:0}
    chain .chip-stack normally relies on to size itself off its parent. Give it a definite
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
 body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
-body.felt-mode #felt-stage .come-lock-ico{position:absolute;top:1px;right:-11px;font-size:9px;opacity:.75;pointer-events:none}
+body.felt-mode #felt-stage .come-lock-ico{position:absolute;top:1px;right:2px;font-size:9px;opacity:.75;pointer-events:none;z-index:8}
 body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
 .come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:#ff9a9a;font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
 
@@ -193,7 +193,7 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 .zone-bar.active-bar{background:rgba(255,215,0,.12)}
 .zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;color:#fff}
 .zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
-.zone-note{font-size:15px;color:rgba(255,100,100,.8)}
+.zone-note{font-size:15px;color:rgba(255,100,100,.8);position:relative;z-index:8}
 #come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;background:rgba(0,80,180,.15);border:0.5px solid rgba(100,160,255,.3)}
 #field-bar{flex:2;min-height:0;background:rgba(60,40,0,.3);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;border:0.5px solid rgba(255,200,0,.2)}
 .field-info{font-size:15px;color:rgba(255,255,255,.45);margin-top:1px}
@@ -491,7 +491,7 @@ body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bott
 .chip-stack .chip-amt,.chip-stack .chip-off{user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
-.chip-stack .chip-off{position:absolute;left:50%;transform:translateX(-50%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
+.chip-stack .chip-off{position:absolute;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
 /* ===== WIN/LOSS CHIP SWOOP ===== */
 #swoop-layer{position:fixed;inset:0;pointer-events:none;z-index:260;overflow:hidden}
 .swoop-stack{position:absolute;left:50%;top:-20%;width:var(--chip);transform:translateX(-50%);transition:top .8s cubic-bezier(.34,1.56,.64,1),opacity .4s;opacity:0;--chip:56px;--edge:9px}
@@ -726,7 +726,7 @@ body.felt-mode #felt-stage .odds-lbl{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.83</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.85</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1881,7 +1881,7 @@ function chipStackHTML(amt,off){
   const label=chipLabel(amt);
   const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
-  if(off)h+='<span class="chip-off" style="bottom:calc(var(--edge)*'+(n-1)+' + var(--chip)*0.82)">OFF</span>';
+  if(off)h+='<span class="chip-off" style="bottom:0">OFF</span>';
   h+='</span>';
   return h;
 }
