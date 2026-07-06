@@ -182,7 +182,6 @@ body.felt-mode #felt-stage .come-half.odds-half{top:0}
    chain .chip-stack normally relies on to size itself off its parent. Give it a definite
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
 body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
-body.felt-mode #felt-stage .come-lock-ico{position:absolute;bottom:0;right:0;transform:translateX(35%);top:auto;background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1;pointer-events:none}
 body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
 .come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:#ff9a9a;font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
 
@@ -195,7 +194,6 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 .zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
-.lr-num-lock{position:absolute;bottom:0;right:0;transform:translate(35%,15%);background:#b02020;color:#fff;font-weight:800;font-size:11px;line-height:1;padding:2px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;pointer-events:none}
 
 #come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;background:rgba(0,80,180,.15);border:0.5px solid rgba(100,160,255,.3)}
 #field-bar{flex:2;min-height:0;background:rgba(60,40,0,.3);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;border:0.5px solid rgba(255,200,0,.2)}
@@ -495,6 +493,11 @@ body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bott
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
 .chip-stack .chip-off{position:absolute;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
+/* A single lock emoji at the SAME nominal font-size as OFF's bold text still renders visibly
+   smaller, since emoji glyphs carry their own internal padding within their em-box. Scaled up
+   to compensate rather than matching the number literally. */
+.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.5);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
+
 /* ===== WIN/LOSS CHIP SWOOP ===== */
 #swoop-layer{position:fixed;inset:0;pointer-events:none;z-index:260;overflow:hidden}
 .swoop-stack{position:absolute;left:50%;top:-20%;width:var(--chip);transform:translateX(-50%);transition:top .8s cubic-bezier(.34,1.56,.64,1),opacity .4s;opacity:0;--chip:56px;--edge:9px}
@@ -729,7 +732,7 @@ body.felt-mode #felt-stage .odds-lbl{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.86</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.87</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1877,7 +1880,7 @@ document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.p
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
 function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
-function chipStackHTML(amt,off){
+function chipStackHTML(amt,off,locked){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
@@ -1885,6 +1888,12 @@ function chipStackHTML(amt,off){
   const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
   if(off)h+='<span class="chip-off" style="bottom:0">OFF</span>';
+  // Built exactly like the OFF badge, same anchor point, same reasoning: a separate floating
+  // element positioned relative to whatever ancestor happens to have position:relative was
+  // landing on the wrong box entirely (the whole Pass Line bar, not the chip stack) and its
+  // emoji glyph read as much smaller than OFF's bold text at the same nominal font-size.
+  // Building it into the stack itself fixes both the anchor and gives it real chip-relative size.
+  if(locked)h+='<span class="chip-lock" style="bottom:0">\uD83D\uDD12</span>';
   h+='</span>';
   return h;
 }
@@ -1902,7 +1911,12 @@ function renderChipStacks(){
     let off=false;
     const cell=el.closest('.nb-buy,.nb-place');
     if(cell){const ov=cell.querySelector('.off-ov');off=!!(ov&&ov.style.display&&ov.style.display!=='none');}
-    el.innerHTML=chipStackHTML(amt,off);
+    // Pass Line's own contract lock, and the Lucky Roller bonus bets' lock once they become
+    // a contract at roll start -- same integrated badge everything else uses, on the chip
+    // stack itself, not on individual number cells or a separately positioned element that
+    // was anchoring to the wrong box entirely.
+    const locked=(el.id==='stk-pass'&&G.passLocked)||(el.classList.contains('lr-stake')&&G.bonus.locked);
+    el.innerHTML=chipStackHTML(amt,off,locked);
     el.classList.add('has-stack');
   });
 }
@@ -2345,7 +2359,7 @@ function updateUI(){
         // felt (Pass Line included) -- Come is pinned to the box's top edge, Come Odds to its
         // bottom edge, via the .flat-half/.odds-half CSS above.
         html+='<div class="come-on-box">';
-        html+='<div class="come-half flat-half">'+chipStackHTML(cb.flat,false)+'<span class="come-lock-ico">\uD83D\uDD12</span></div>';
+        html+='<div class="come-half flat-half">'+chipStackHTML(cb.flat,false,true)+'</div>';
         html+='<div class="come-half odds-half" oncontextmenu="event.preventDefault();event.stopPropagation();removeComeOdds('+cbIdx+')">'+(cur>0?chipStackHTML(cur,G.phase==='comeout'):'')+'</div>';
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
         }else{
@@ -2400,7 +2414,7 @@ function updateUI(){
   const bO=G.bonus.open,bL=G.bonus.locked,bG=G.bonus.gracePeriod;
   [{type:'low',nums:LOW_NUMS,hit:G.bonus.lowHit},{type:'high',nums:HIGH_NUMS,hit:G.bonus.highHit}].forEach(({type,nums,hit})=>{
     const a=G.bonus[type];const stk=document.getElementById('bstk-'+type);if(stk)stk.textContent=a>0?fmt(a):'';
-    const numsEl=document.getElementById('bnums-'+type);if(numsEl){numsEl.innerHTML='';nums.forEach(n=>{const d=document.createElement('div');d.className='lr-num'+(hit.has(n)?' hit':'');d.textContent=n;if(hit.has(n)){const lk=document.createElement('span');lk.className='lr-num-lock';lk.textContent='\uD83D\uDD12';d.appendChild(lk);}numsEl.appendChild(d);});}
+    const numsEl=document.getElementById('bnums-'+type);if(numsEl){numsEl.innerHTML='';nums.forEach(n=>{const d=document.createElement('div');d.className='lr-num'+(hit.has(n)?' hit':'');d.textContent=n;numsEl.appendChild(d);});}
     const note=document.getElementById('bnote-'+type);if(note)note.textContent=bG?'Re-bet!':bL?(a>0?'Reduce only':'Cleared'):(bO?'Bet after 7':'Bet after 7');
     const bx=document.getElementById('bbonus-'+type);if(bx){bx.classList.toggle('has-bet',a>0);bx.classList.remove('closed');if(!bO&&!bG&&!a)bx.classList.add('closed');}
     const bl=document.getElementById('bonus-lock-'+type);if(bl)bl.style.display=bL?'flex':'none';
