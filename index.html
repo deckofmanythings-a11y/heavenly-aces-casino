@@ -494,7 +494,7 @@ body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bott
 .chip-stack .chip-off{position:absolute;left:50%;transform:translateX(-50%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
 /* ===== WIN/LOSS CHIP SWOOP ===== */
 #swoop-layer{position:fixed;inset:0;pointer-events:none;z-index:260;overflow:hidden}
-.swoop-stack{position:absolute;left:50%;top:-20%;transform:translateX(-50%);transition:top .65s cubic-bezier(.34,1.56,.64,1),opacity .35s;opacity:0;--chip:56px;--edge:9px}
+.swoop-stack{position:absolute;left:50%;top:-20%;width:var(--chip);transform:translateX(-50%);transition:top .8s cubic-bezier(.34,1.56,.64,1),opacity .4s;opacity:0;--chip:56px;--edge:9px}
 .swoop-stack.settle{top:45%;opacity:1}
 .swoop-stack.exit-down{top:120%;opacity:1}
 .swoop-stack.exit-up{top:-25%;opacity:0}
@@ -861,14 +861,14 @@ body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,
               <div class="dp-note" id="note-dp"></div>
               
             </div>
-            <div id="dp-odds-cell" onclick="openDpLayOdds()">
+            <div id="dp-odds-cell" data-odds-type="dp" onclick="openDpLayOdds()">
               <span class="dp-odds-lbl">LAY ODDS</span>
               <span class="dp-odds-stk" id="stk-dpodds"></span>
               <span class="dp-odds-pay" id="dp-odds-pay">—</span>
             </div>
           </div>
           <div id="pass-bar">
-            <div id="pass-odds-cell" onclick="openPassOddsManual()">
+            <div id="pass-odds-cell" data-odds-type="pass" onclick="openPassOddsManual()">
               <span class="odds-lbl">ODDS</span>
               <span class="odds-stk" id="stk-passodds"></span>
               <span class="odds-pay" id="po-limit">—</span>
@@ -1690,16 +1690,18 @@ function runWinLossSwoop(returned,wagered){
   const loseEl=spawnSwoopStack(lossAmt,'lose');
   if(winEl){
     requestAnimationFrame(()=>{winEl.classList.add('settle');});
-    setTimeout(()=>{winEl.classList.remove('settle');winEl.classList.add('exit-down');},1400);
-    setTimeout(()=>{winEl.remove();},2100);
+    // .8s swoop in, ~1.8s visible hold (roughly matching how long the Winner modal itself
+    // stays up), .8s swoop out, small buffer before removal so the exit transition finishes.
+    setTimeout(()=>{winEl.classList.remove('settle');winEl.classList.add('exit-down');},2600);
+    setTimeout(()=>{winEl.remove();},3500);
   }
   if(loseEl){
     // Losses start already "settled" on the felt (bottom/player side) and swoop straight up
     // and off toward the house -- there's no incoming swoop for a loss, it's already there.
     loseEl.classList.add('settle');
     requestAnimationFrame(()=>{
-      setTimeout(()=>{loseEl.classList.remove('settle');loseEl.classList.add('exit-up');},900);
-      setTimeout(()=>{loseEl.remove();},1550);
+      setTimeout(()=>{loseEl.classList.remove('settle');loseEl.classList.add('exit-up');},1800);
+      setTimeout(()=>{loseEl.remove();},2700);
     });
   }
 }
@@ -1732,6 +1734,7 @@ function betKeyFromElement(el){
     if(n.dataset){
       if(n.dataset.betKey)return{kind:'bet',key:n.dataset.betKey};
       if(n.dataset.betLay!==undefined)return{kind:'lay',n:+n.dataset.betLay};
+      if(n.dataset.oddsType)return{kind:'odds',type:n.dataset.oddsType};
     }
     const oc=(n.getAttribute&&n.getAttribute('onclick'))||(n.onclick?n.onclick.toString():'');
     if(oc){
@@ -1747,6 +1750,7 @@ function betAmountForSource(src){
   if(src.kind==='bet')return G.bets[src.key]||0;
   if(src.kind==='bonus')return G.bonus[src.key]||0;
   if(src.kind==='lay')return G.bets['lay'+src.n]||0;
+  if(src.kind==='odds')return G.bets[src.type+'odds']||0;
   return 0;
 }
 function moveChipGhost(x,y){if(chipDrag)  {chipDrag.ghost.style.left=x+'px';chipDrag.ghost.style.top=y+'px';}}
@@ -1793,17 +1797,24 @@ function chipPointerDown(e,denom,source){
       const tgt=under?betKeyFromElement(under):null;
       const prevChip=G.chip;
       G.chip=denom;
-      const sameId=(a,b)=>a&&b&&a.kind===b.kind&&(a.kind==='lay'?a.n===b.n:a.key===b.key);
+      const sameId=(a,b)=>{
+        if(!a||!b||a.kind!==b.kind)return false;
+        if(a.kind==='lay')return a.n===b.n;
+        if(a.kind==='odds')return a.type===b.type;
+        return a.key===b.key;
+      };
       const sameTarget=sameId(tgt,source);
       if(tgt&&!sameTarget){
         if(tgt.kind==='bet')placeBet(tgt.key);
         else if(tgt.kind==='bonus')bonusBet(tgt.key);
         else if(tgt.kind==='lay')placeLay(tgt.n);
+        else if(tgt.kind==='odds')addOddsAmt(tgt.type,denom);
       }
       if(source&&!sameTarget){
         if(source.kind==='bet')removeBet(source.key);
         else if(source.kind==='bonus')bonusRemove(source.key);
         else if(source.kind==='lay')removeLay(source.n);
+        else if(source.kind==='odds')removeOddsAmt(source.type,denom);
       }
       G.chip=prevChip;
       dragJustHappened=true;
@@ -1933,6 +1944,27 @@ function oddsModalPick(additional,totalDesired){
   oddsCtx=null;updateUI();
 }
 function oddsModalClose(){document.getElementById('modal-odds').classList.add('hidden');oddsCtx=null;}
+function addOddsAmt(type,amt){
+  if(!G.point){addLog('No point.','info');return;}
+  if(type==='pass'){
+    if(!G.bets['pass']){addLog('Need Pass Line first.','info');return;}
+    const cur=G.bets['passodds']||0,lim=oddsLim(G.bets['pass'],G.point);
+    const room=r2(lim-cur);if(room<=0){addLog('Pass Odds at max.','info');return;}
+    const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
+    G.bets['passodds']=r2(cur+add);G.bankroll=r2(G.bankroll-add);updateUI();
+  }else if(type==='dp'){
+    if(!G.bets['dp']){addLog('Need Don\'t Pass first.','info');return;}
+    const cur=G.bets['dpodds']||0,lim=dcOddsLim(G.bets['dp'],G.point);
+    const room=r2(lim-cur);if(room<=0){addLog('Lay Odds at max.','info');return;}
+    const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
+    G.bets['dpodds']=r2(cur+add);G.bankroll=r2(G.bankroll-add);updateUI();
+  }
+}
+function removeOddsAmt(type,amt){
+  const key=type+'odds',cur=G.bets[key]||0;if(!cur)return;
+  const rv=r2(Math.min(amt,cur));G.bets[key]=r2(cur-rv);G.bankroll=r2(G.bankroll+rv);
+  if(G.bets[key]<=0)delete G.bets[key];updateUI();
+}
 function openPassOddsManual(){if(!G.bets['pass']){addLog('Need Pass Line first.','info');return;}if(!G.point){addLog('No point.','info');return;}const flat=G.bets['pass'],cur=G.bets['passodds']||0,lim=oddsLim(flat,G.point);if(r2(cur)>=r2(lim)){addLog('Pass Odds at max.','info');return;}openOddsModal('pass',null,flat,G.point);}
 function openComeOddsModal(idx){const cb=G.comeBets[idx];if(!cb)return;const cur=cb.odds||0,lim=oddsLim(cb.flat,cb.num);if(r2(cur)>=r2(lim)){addLog('Come Odds at max.','info');return;}openOddsModal('come',idx,cb.flat,cb.num);}
 function removeComeOdds(idx){pushUndo();const cb=G.comeBets[idx];if(!cb||!cb.odds)return;const red=r2(Math.min(G.chip,cb.odds));cb.odds=r2(cb.odds-red);G.bankroll=r2(G.bankroll+red);updateUI();}
