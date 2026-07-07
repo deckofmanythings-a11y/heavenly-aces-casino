@@ -760,7 +760,7 @@ body.game-crapless .std-only{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.97</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.99</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1701,7 +1701,7 @@ function buildStrip(){
   ALL_NUMS.forEach(n=>{
     const def=NUM_DEFS[n],[w,d]=def.place;
     const ps=document.createElement('div');ps.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';
-    const pk=document.createElement('img');pk.id='puck-'+n;pk.className='puck-img';pk.src='Puck_On.png';pk.alt='';pk.draggable=false;pk.style.cssText='display:none;width:24px;height:24px;object-fit:contain';ps.appendChild(pk);pr.appendChild(ps);
+    const pk=document.createElement('img');pk.id='puck-'+n;pk.className='puck-img';pk.src='Puck_On.png';pk.alt='';pk.draggable=false;pk.style.cssText='display:none;width:72px;height:72px;object-fit:contain';ps.appendChild(pk);pr.appendChild(ps);
     const wrap=document.createElement('div');wrap.className='num-box-wrap';
     const box=document.createElement('div');box.className='num-box';box.id='numbox-'+n;
     if(isStd){
@@ -1736,7 +1736,7 @@ function buildStrip(){
     const psp=document.createElement('div');psp.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';pr.appendChild(psp);
     const dcWrap=document.createElement('div');dcWrap.className='num-box-wrap';dcWrap.id='dc-wait-wrap';
     const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:rgba(60,0,0,.25);border-color:rgba(255,80,80,.3);cursor:pointer;position:relative';
-    const dcOffPuck=document.createElement('img');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-img';dcOffPuck.src='Puck_Off.png';dcOffPuck.alt='';dcOffPuck.draggable=false;dcOffPuck.style.cssText='display:none;position:absolute;top:4px;left:4px;width:22px;height:22px;object-fit:contain;pointer-events:none;z-index:5';dcBox.appendChild(dcOffPuck);
+    const dcOffPuck=document.createElement('img');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-img';dcOffPuck.src='Puck_Off.png';dcOffPuck.alt='';dcOffPuck.draggable=false;dcOffPuck.style.cssText='display:none;position:absolute;top:4px;left:4px;width:66px;height:66px;object-fit:contain;pointer-events:none;z-index:5';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:23px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
@@ -2212,10 +2212,42 @@ function placeBet(key){
   const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);updateUI();
 }
 function removeBet(key){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];updateUI();}
-function pressAll(){ALL_NUMS.forEach(n=>{['place','buy'].forEach(t=>{const k=t+n,c=G.bets[k]||0;if(!c||c>G.bankroll)return;G.bets[k]=r2(c*2);G.bankroll=r2(G.bankroll-c);});});updateUI();}
-function insideAll(){[5,6,8,9].filter(n=>n!==G.point).forEach(n=>{const k='place'+n;if(!G.bets[k]&&G.bankroll>0){const a=r2(Math.min(G.chip,G.bankroll));G.bets[k]=a;G.bankroll=r2(G.bankroll-a);}});updateUI();}
-function outsideAll(){[4,10].filter(n=>n!==G.point).forEach(n=>{const k='place'+n;if(!G.bets[k]&&G.bankroll>0){const a=r2(Math.min(G.chip,G.bankroll));G.bets[k]=a;G.bankroll=r2(G.bankroll-a);}});updateUI();}
-function acrossAll(){ALL_BOX_NUMS.filter(n=>n!==G.point).forEach(n=>{const k='place'+n;if(!G.bets[k]&&G.bankroll>0){const a=r2(Math.min(G.chip,G.bankroll));G.bets[k]=a;G.bankroll=r2(G.bankroll-a);}});updateUI();}
+// Place bets on 6 or 8 must land in multiples of $6 for the 7-for-6 payout to resolve cleanly.
+// If the current chip denom isn't already a multiple of 6, the player pays the rounded-up cost,
+// same denom selected, slightly more taken from the bankroll, regardless of what that denom is.
+function place68Amount(chip){return Math.ceil(chip/6)*6;}
+
+// Press: increases every EXISTING Place or Buy bet on the board by the current chip denom.
+// Only touches bets that are already there -- it doesn't create new ones. Repeated presses
+// keep adding on top, they don't just double the prior amount.
+function pressAll(){
+  ALL_NUMS.forEach(n=>{
+    ['place','buy'].forEach(t=>{
+      const k=t+n;
+      if(!(G.bets[k]>0))return;
+      const add=(t==='place'&&(n===6||n===8))?place68Amount(G.chip):G.chip;
+      if(add>G.bankroll)return;
+      G.bets[k]=r2(G.bets[k]+add);G.bankroll=r2(G.bankroll-add);
+    });
+  });
+  updateUI();
+}
+
+// Across / Inside / Outside all share the same behavior: bet the current chip denom on Place
+// for their number set, skipping whichever number is the current point (can't Place your own
+// point). Pressing again ADDS another chip denom on top, not just filling empty slots.
+function placeChipOnSet(nums){
+  nums.filter(n=>n!==G.point).forEach(n=>{
+    const k='place'+n;
+    const add=(n===6||n===8)?place68Amount(G.chip):G.chip;
+    if(add>G.bankroll)return;
+    G.bets[k]=r2((G.bets[k]||0)+add);G.bankroll=r2(G.bankroll-add);
+  });
+  updateUI();
+}
+function acrossAll(){placeChipOnSet([4,5,6,8,9,10]);}
+function insideAll(){placeChipOnSet([5,6,8,9]);}
+function outsideAll(){placeChipOnSet([4,5,9,10]);}
 function doubleBet(){const c=dblCost();if(!c||c>G.bankroll){addLog(c?'Not enough.':'No place/buy bets.','info');return;}for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy')))G.bets[k]=r2(G.bets[k]*2);G.bankroll=r2(G.bankroll-c);addLog('Doubled.','info');updateUI();}
 function repeatLastBet(){
   if(!G.snapshot||!G.canRepeat)return;
