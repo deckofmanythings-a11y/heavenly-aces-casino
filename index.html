@@ -738,7 +738,7 @@ body.felt-mode #felt-stage .odds-pay{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.89</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.90</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1910,6 +1910,33 @@ document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.p
 
 // ===================== CHIP STACK BET INDICATORS =====================
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
+const SFX_CHIP={
+  1:['1_chip.ogg'],
+  2:['2chips.ogg'],
+  3:['couple_chips_1.ogg','couple_chips_2.ogg','couple_chips_3.ogg','couple_chips_4.ogg'],
+  4:['few_chips_1.ogg','few_chips_2.ogg','few_chips_3.ogg','few_chips_4.ogg'],
+  5:['bunch_chips_1.ogg','bunch_chips_2.ogg','bunch_chips_3.ogg']
+};
+const SFX_CHIP_MANY='lots_of_chips.ogg';
+const _sfxCache={};
+function playChipSound(count){
+  if(!(count>0))return;
+  const bucket=count>=6?[SFX_CHIP_MANY]:SFX_CHIP[count];
+  if(!bucket)return;
+  const file=bucket[Math.floor(Math.random()*bucket.length)];
+  if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
+  _sfxCache[file].cloneNode().play().catch(()=>{});
+}
+const _chipSoundState=new Map();
+function maybeTriggerChipSound(key,amt){
+  if(!key)return;
+  const newCount=amt>0?chipBreakdown(amt).length:0;
+  const prevCount=_chipSoundState.get(key)||0;
+  if(newCount!==prevCount){
+    if(newCount>0)playChipSound(newCount);
+    _chipSoundState.set(key,newCount);
+  }
+}
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
 function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
 function chipStackHTML(amt,off,locked){
@@ -1937,9 +1964,10 @@ function renderChipStacks(){
   }
   document.querySelectorAll(CHIP_STK_SEL).forEach(el=>{
     const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
-    if(!m){el.classList.remove('has-stack');return;}
+    if(!m){maybeTriggerChipSound(el.id,0);el.classList.remove('has-stack');return;}
     const amt=parseFloat(m[1].replace(/,/g,''));
-    if(!(amt>0)){el.classList.remove('has-stack');return;}
+    if(!(amt>0)){maybeTriggerChipSound(el.id,0);el.classList.remove('has-stack');return;}
+    maybeTriggerChipSound(el.id,amt);
     let off=false;
     const cell=el.closest('.nb-buy,.nb-place');
     if(cell){const ov=cell.querySelector('.off-ov');off=!!(ov&&ov.style.display&&ov.style.display!=='none');}
@@ -2404,6 +2432,8 @@ function updateUI(){
         // felt (Pass Line included) -- Come is pinned to the box's top edge, Come Odds to its
         // bottom edge, via the .flat-half/.odds-half CSS above.
         html+='<div class="come-on-box">';
+        maybeTriggerChipSound('come-flat-'+cb.num,cb.flat);
+        maybeTriggerChipSound('come-odds-'+cb.num,cur);
         html+='<div class="come-half flat-half">'+chipStackHTML(cb.flat,false,true)+'</div>';
         html+='<div class="come-half odds-half" oncontextmenu="event.preventDefault();event.stopPropagation();removeComeOdds('+cbIdx+')">'+(cur>0?chipStackHTML(cur,G.phase==='comeout'):'')+'</div>';
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
@@ -2423,6 +2453,8 @@ function updateUI(){
       const feltOn=document.body.classList.contains('felt-mode');
       let html='<div class="dc-on-box" oncontextmenu="event.preventDefault();event.stopPropagation();'+(cur>0?'removeDcOdds('+dcIdx+')':'removeDcFlat('+dcIdx+')')+'">';
       if(feltOn){
+        maybeTriggerChipSound('dc-flat-'+dc.num,dc.flat);
+        maybeTriggerChipSound('dc-odds-'+dc.num,cur);
         html+='<div class="come-half flat-half">'+chipStackHTML(dc.flat,false)+'</div>';
         html+='<div class="come-half odds-half">'+(cur>0?chipStackHTML(cur,false):'')+'</div>';
         if(canOdds)html+='<button class="dc-odds-btn" onclick="event.stopPropagation();openDcLayOdds('+dcIdx+')">+L</button>';
