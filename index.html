@@ -583,6 +583,7 @@ body.felt-mode.game-crapless #felt-stage .horn-cell.active{
   background:transparent!important;outline:none!important;box-shadow:none!important;border-color:transparent!important;
 }
 body.game-crapless .std-only{display:none}
+body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-align:center;letter-spacing:.03em;pointer-events:none}
 </style>
 </head>
 <body>
@@ -760,7 +761,7 @@ body.game-crapless .std-only{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.99</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.01</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -921,14 +922,14 @@ body.game-crapless .std-only{display:none}
               
             </div>
             <div id="dp-odds-cell" data-odds-type="dp" onclick="openDpLayOdds()">
-              <span class="dp-odds-lbl">LAY ODDS</span>
+              <span class="dp-odds-lbl">Lay Odds</span>
               <span class="dp-odds-stk" id="stk-dpodds"></span>
               <span class="dp-odds-pay" id="dp-odds-pay">—</span>
             </div>
           </div>
           <div id="pass-bar">
             <div id="pass-odds-cell" data-odds-type="pass" onclick="openPassOddsManual()">
-              
+              <span class="odds-lbl-new">Place Odds</span>
               <span class="odds-stk" id="stk-passodds"></span>
               <span class="odds-pay" id="po-limit">—</span>
             </div>
@@ -1701,7 +1702,7 @@ function buildStrip(){
   ALL_NUMS.forEach(n=>{
     const def=NUM_DEFS[n],[w,d]=def.place;
     const ps=document.createElement('div');ps.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';
-    const pk=document.createElement('img');pk.id='puck-'+n;pk.className='puck-img';pk.src='Puck_On.png';pk.alt='';pk.draggable=false;pk.style.cssText='display:none;width:72px;height:72px;object-fit:contain';ps.appendChild(pk);pr.appendChild(ps);
+    const pk=document.createElement('img');pk.id='puck-'+n;pk.className='puck-img';pk.src='Puck_On.png';pk.alt='';pk.draggable=false;pk.style.cssText='display:none;width:72px;height:72px;object-fit:contain;transform:translateY(-15%)';ps.appendChild(pk);pr.appendChild(ps);
     const wrap=document.createElement('div');wrap.className='num-box-wrap';
     const box=document.createElement('div');box.className='num-box';box.id='numbox-'+n;
     if(isStd){
@@ -1736,7 +1737,7 @@ function buildStrip(){
     const psp=document.createElement('div');psp.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';pr.appendChild(psp);
     const dcWrap=document.createElement('div');dcWrap.className='num-box-wrap';dcWrap.id='dc-wait-wrap';
     const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:rgba(60,0,0,.25);border-color:rgba(255,80,80,.3);cursor:pointer;position:relative';
-    const dcOffPuck=document.createElement('img');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-img';dcOffPuck.src='Puck_Off.png';dcOffPuck.alt='';dcOffPuck.draggable=false;dcOffPuck.style.cssText='display:none;position:absolute;top:4px;left:4px;width:66px;height:66px;object-fit:contain;pointer-events:none;z-index:5';dcBox.appendChild(dcOffPuck);
+    const dcOffPuck=document.createElement('img');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-img';dcOffPuck.src='Puck_Off.png';dcOffPuck.alt='';dcOffPuck.draggable=false;dcOffPuck.style.cssText='display:none;position:absolute;top:4px;left:4px;width:66px;height:66px;object-fit:contain;pointer-events:none;z-index:5;transform:translateY(-15%)';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:23px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
