@@ -474,9 +474,6 @@ body.felt-mode.game-standard #felt-stage .nb-place-wrap>*{position:relative;widt
 body.felt-mode.game-standard #felt-stage .nb-buy-left,
 body.felt-mode.game-standard #felt-stage .nb-lay,
 body.felt-mode.game-standard #felt-stage .nb-place{flex:1}
-/* the relocated "blank" cell (was Buy's slot) holds the traveled Don't Come chip -- no label of its own */
-body.felt-mode.game-standard #felt-stage .nb-buy-left .nb-lbl,
-body.felt-mode.game-standard #felt-stage .nb-buy-left .nb-stk{display:none}
 body.felt-mode.game-standard #felt-stage #dc-wait-bar{width:100%;height:100%}
 body.felt-mode.game-standard #felt-stage #dc-wait-bar .nb-mid{background:transparent}
 /* dc-wait-bar's dark-red background is set inline at creation time, which beats any
@@ -761,7 +758,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.01</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.02</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
