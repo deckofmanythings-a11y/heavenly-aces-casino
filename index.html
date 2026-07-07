@@ -179,6 +179,9 @@ body.felt-mode #felt-stage .dc-on-box{background:transparent;border:none;padding
 body.felt-mode #felt-stage .come-half{position:absolute;left:50%;transform:translateX(-50%);width:auto;display:flex;align-items:center;justify-content:center}
 body.felt-mode #felt-stage .come-half.flat-half{bottom:0}
 body.felt-mode #felt-stage .come-half.odds-half{top:0}
+body.felt-mode #felt-stage .dc-on-box{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px}
+body.felt-mode #felt-stage .dc-on-box .come-half{position:static;left:auto;transform:none;width:auto}
+
 /* .come-half is width:auto (so it can shrink-wrap and center), which breaks the width:100%
    chain .chip-stack normally relies on to size itself off its parent. Give it a definite
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
@@ -476,7 +479,7 @@ body.felt-mode.game-standard #felt-stage #dc-wait-bar .nb-mid{background:transpa
    non-!important stylesheet rule regardless of specificity -- needs !important here. */
 body.felt-mode.game-standard #felt-stage #dc-wait-bar{background:transparent!important;border-color:transparent!important}
 /* Don't Pass Bar mirrors the Pass Line's own transparent skin */
-body.felt-mode.game-standard #felt-stage #dp-bar{display:flex;background:transparent;border-color:transparent}
+body.felt-mode.game-standard #felt-stage #dp-bar{display:flex;flex-direction:row;background:transparent;border-color:transparent}
 body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;background:transparent;border-color:transparent;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main{flex:1;background:transparent;border-color:transparent;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main:hover,
@@ -488,6 +491,11 @@ body.felt-mode.game-standard #felt-stage #dp-bar12{display:none!important}
 body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
 body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{overflow:visible}
 body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
+/* Come's own "COME" label is hidden in felt mode since the art draws it directly, so this is
+   an estimate of where that painted text sits vertically within the box, not a measured value.
+   Every other zone (Pass, Field, DP) keeps the default 6% anchor -- only Come is overridden. */
+body.felt-mode #felt-stage #come-bar .has-stack{bottom:35%}
+
 .chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
 .chip-stack .chip-amt,.chip-stack .chip-off{user-select:none;-webkit-user-select:none}
@@ -738,7 +746,7 @@ body.felt-mode #felt-stage .odds-pay{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.90</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.92</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1930,11 +1938,15 @@ function playChipSound(count){
 const _chipSoundState=new Map();
 function maybeTriggerChipSound(key,amt){
   if(!key)return;
-  const newCount=amt>0?chipBreakdown(amt).length:0;
-  const prevCount=_chipSoundState.get(key)||0;
-  if(newCount!==prevCount){
+  // Tracks the actual DOLLAR AMOUNT, not the resulting chip count -- $55 and $60 both break
+  // down to 2 chips, but going from one to the other is still a real change and should still
+  // play the "2 chips" sound, not stay silent just because the count happened to match.
+  const newAmt=amt>0?r2(amt):0;
+  const prevAmt=_chipSoundState.get(key)||0;
+  if(newAmt!==prevAmt){
+    const newCount=newAmt>0?chipBreakdown(newAmt).length:0;
     if(newCount>0)playChipSound(newCount);
-    _chipSoundState.set(key,newCount);
+    _chipSoundState.set(key,newAmt);
   }
 }
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
