@@ -437,6 +437,7 @@ body.felt-mode #felt-stage .sc-stack{gap:6%;justify-content:center}
 body.felt-mode #felt-stage #pass-bar{display:flex}
 body.felt-mode #felt-stage #pass-odds-cell{flex:0 0 17.4%;position:relative}
 body.felt-mode.game-crapless #felt-stage #pass-odds-cell{background:transparent;border-color:transparent}
+body.felt-mode.game-standard #felt-stage #pass-odds-cell{background:transparent;border-color:transparent}
 body.felt-mode #felt-stage #pass-main{flex:1}
 /* ===== STANDARD CRAPS FELT (separate image + layout from crapless) ===== */
 /* Crapless-only proportions, scoped so they don't leak onto the standard felt */
@@ -581,6 +582,7 @@ body.felt-mode.game-crapless #felt-stage .horn-cell:hover,
 body.felt-mode.game-crapless #felt-stage .horn-cell.active{
   background:transparent!important;outline:none!important;box-shadow:none!important;border-color:transparent!important;
 }
+body.game-crapless .std-only{display:none}
 </style>
 </head>
 <body>
@@ -758,7 +760,7 @@ body.felt-mode.game-crapless #felt-stage .horn-cell.active{
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.93</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.96</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -876,6 +878,8 @@ body.felt-mode.game-crapless #felt-stage .horn-cell.active{
             <button class="sc-btn" id="beton-btn" onclick="toggleBetsOn()">Bets Off</button>
             <button class="sc-btn" onclick="pressAll()">Press</button>
             <button class="sc-btn" onclick="acrossAll()">Across</button>
+            <button class="sc-btn std-only" onclick="insideAll()">Inside</button>
+            <button class="sc-btn std-only" onclick="outsideAll()">Outside</button>
           </div>
         </div>
       </div>
@@ -1697,7 +1701,7 @@ function buildStrip(){
   ALL_NUMS.forEach(n=>{
     const def=NUM_DEFS[n],[w,d]=def.place;
     const ps=document.createElement('div');ps.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';
-    const pk=document.createElement('div');pk.id='puck-'+n;pk.style.cssText='display:none;width:12px;height:12px;border-radius:50%;background:#fff;color:#0f5c28;font-size:11px;font-weight:700;align-items:center;justify-content:center;box-shadow:0 0 3px rgba(255,255,255,.5)';pk.textContent='ON';ps.appendChild(pk);pr.appendChild(ps);
+    const pk=document.createElement('img');pk.id='puck-'+n;pk.src='Puck_On.png';pk.alt='';pk.draggable=false;pk.style.cssText='display:none;width:24px;height:24px;object-fit:contain';ps.appendChild(pk);pr.appendChild(ps);
     const wrap=document.createElement('div');wrap.className='num-box-wrap';
     const box=document.createElement('div');box.className='num-box';box.id='numbox-'+n;
     if(isStd){
@@ -1731,7 +1735,8 @@ function buildStrip(){
   if(isStd){
     const psp=document.createElement('div');psp.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';pr.appendChild(psp);
     const dcWrap=document.createElement('div');dcWrap.className='num-box-wrap';dcWrap.id='dc-wait-wrap';
-    const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:rgba(60,0,0,.25);border-color:rgba(255,80,80,.3);cursor:pointer';
+    const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:rgba(60,0,0,.25);border-color:rgba(255,80,80,.3);cursor:pointer;position:relative';
+    const dcOffPuck=document.createElement('img');dcOffPuck.id='puck-off-dc';dcOffPuck.src='Puck_Off.png';dcOffPuck.alt='';dcOffPuck.draggable=false;dcOffPuck.style.cssText='display:none;position:absolute;top:4px;left:4px;width:22px;height:22px;object-fit:contain;pointer-events:none;z-index:5';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:23px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
@@ -2208,6 +2213,8 @@ function placeBet(key){
 }
 function removeBet(key){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];updateUI();}
 function pressAll(){ALL_NUMS.forEach(n=>{['place','buy'].forEach(t=>{const k=t+n,c=G.bets[k]||0;if(!c||c>G.bankroll)return;G.bets[k]=r2(c*2);G.bankroll=r2(G.bankroll-c);});});updateUI();}
+function insideAll(){[5,6,8,9].filter(n=>n!==G.point).forEach(n=>{const k='place'+n;if(!G.bets[k]&&G.bankroll>0){const a=r2(Math.min(G.chip,G.bankroll));G.bets[k]=a;G.bankroll=r2(G.bankroll-a);}});updateUI();}
+function outsideAll(){[4,10].filter(n=>n!==G.point).forEach(n=>{const k='place'+n;if(!G.bets[k]&&G.bankroll>0){const a=r2(Math.min(G.chip,G.bankroll));G.bets[k]=a;G.bankroll=r2(G.bankroll-a);}});updateUI();}
 function acrossAll(){ALL_BOX_NUMS.filter(n=>n!==G.point).forEach(n=>{const k='place'+n;if(!G.bets[k]&&G.bankroll>0){const a=r2(Math.min(G.chip,G.bankroll));G.bets[k]=a;G.bankroll=r2(G.bankroll-a);}});updateUI();}
 function doubleBet(){const c=dblCost();if(!c||c>G.bankroll){addLog(c?'Not enough.':'No place/buy bets.','info');return;}for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy')))G.bets[k]=r2(G.bets[k]*2);G.bankroll=r2(G.bankroll-c);addLog('Doubled.','info');updateUI();}
 function repeatLastBet(){
@@ -2444,7 +2451,15 @@ function updateUI(){
     const mb=document.getElementById('mb-buy'+n),mp=document.getElementById('mb-place'+n),ml=document.getElementById('mb-lay'+n);
     if(mb)mb.classList.toggle('vis',ba>0);if(mp)mp.classList.toggle('vis',pa>0);if(ml)ml.classList.toggle('vis',la>0);
     const box=document.getElementById('numbox-'+n),ip=G.phase==='point'&&G.point===n;
-    if(box)box.classList.toggle('is-point',ip);const pk=document.getElementById('puck-'+n);if(pk)pk.style.display=ip?'flex':'none';
+    if(box)box.classList.toggle('is-point',ip);
+    const pk=document.getElementById('puck-'+n);
+    if(pk){
+      if(ip){pk.src='Puck_On.png';pk.style.display='block';}
+      // Crapless has no Don't Come box to park the OFF puck on (that's standard-only), so by
+      // Deck's instruction it sits on 9 specifically during a come-out roll instead.
+      else if(activeGame==='crapless'&&n===9&&G.phase==='comeout'){pk.src='Puck_Off.png';pk.style.display='block';}
+      else{pk.style.display='none';}
+    }
     // Come slot
     const slot=document.getElementById('come-slot-'+n);if(!slot)return;
     const cbIdx=G.comeBets.findIndex(c=>c.num===n);
@@ -2502,7 +2517,7 @@ function updateUI(){
   // Come
   {const ca=G.bets['come']||0;const st=document.getElementById('stk-come');if(st)st.textContent=ca?fmt(ca):'';const cb=document.getElementById('come-bar');if(cb)cb.classList.toggle('active-bar',!!ca);}
   // Don't Come waiting zone
-  {const dca=G.bets['dc']||0;const st=document.getElementById('stk-dc-wait');if(st)st.textContent=dca?fmt(dca):'';const dcb=document.getElementById('dc-wait-bar');if(dcb)dcb.classList.toggle('active-bar',!!dca);}
+  {const dca=G.bets['dc']||0;const st=document.getElementById('stk-dc-wait');if(st)st.textContent=dca?fmt(dca):'';const dcb=document.getElementById('dc-wait-bar');if(dcb)dcb.classList.toggle('active-bar',!!dca);const dcOffP=document.getElementById('puck-off-dc');if(dcOffP)dcOffP.style.display=(G.phase==='comeout')?'block':'none';}
   // Don't Pass bar
   {
     const dpA=G.bets['dp']||0,dpO=G.bets['dpodds']||0;
