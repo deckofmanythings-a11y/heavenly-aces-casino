@@ -764,7 +764,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.11</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.12</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1100,11 +1100,11 @@ const FELT_LAYOUT=[
 ];
 // Lucky Roller art interior (percent of the art box)
 const LR_LAYOUT=[
-  // Height taken to 90%, bottom edge held in place, all the added room goes to the top so
-  // the click area extends upward rather than growing from its center.
-  ['low',    5.80,-0.40,27.00,90],
-  ['all',   37.30,-0.60,25.40,90],
-  ['high',  66.90,-0.40,27.10,90],
+  // Measured directly from Deck's marked reference image, exact percentages of the Lucky
+  // Roller region itself, not a computed/estimated value.
+  ['low',    5.47,50.99,27.79,39.63],
+  ['all',   36.01,51.07,27.79,39.63],
+  ['high',  66.58,51.07,27.79,39.63],
   ['#bnums-low',  6.20,31.50,27.70,13.00],
   ['#bnums-high',65.30,31.60,28.50,12.80],
   ['#dice-zone', 34.50, 1.00,31.00,49.00]
