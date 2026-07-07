@@ -418,6 +418,8 @@ body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:none!
 body.felt-mode #felt-stage .nb-mid>span{visibility:hidden}
 body.felt-mode #felt-stage .prop-circle{color:transparent;width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
+body.felt-mode.game-crapless #felt-stage .circle-wrap .has-stack{bottom:22%}
+
 /* readable stakes over the art */
 body.felt-mode #felt-stage .stk,body.felt-mode #felt-stage .nb-stk,body.felt-mode #felt-stage .hc-stk,
 body.felt-mode #felt-stage .prop-bar-stk,body.felt-mode #felt-stage .circle-stk,body.felt-mode #felt-stage .zone-stk{color:#ffd700;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.5)}
@@ -434,6 +436,7 @@ body.felt-mode #felt-stage .circle-stack .circle-wrap{width:100%;height:28%}
 body.felt-mode #felt-stage .sc-stack{gap:6%;justify-content:center}
 body.felt-mode #felt-stage #pass-bar{display:flex}
 body.felt-mode #felt-stage #pass-odds-cell{flex:0 0 17.4%;position:relative}
+body.felt-mode.game-crapless #felt-stage #pass-odds-cell{background:transparent;border-color:transparent}
 body.felt-mode #felt-stage #pass-main{flex:1}
 /* ===== STANDARD CRAPS FELT (separate image + layout from crapless) ===== */
 /* Crapless-only proportions, scoped so they don't leak onto the standard felt */
@@ -494,7 +497,8 @@ body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bott
 /* Come's own "COME" label is hidden in felt mode since the art draws it directly, so this is
    an estimate of where that painted text sits vertically within the box, not a measured value.
    Every other zone (Pass, Field, DP) keeps the default 6% anchor -- only Come is overridden. */
-body.felt-mode #felt-stage #come-bar .has-stack{bottom:35%}
+body.felt-mode.game-standard #felt-stage #come-bar .has-stack{bottom:35%}
+body.felt-mode.game-crapless #felt-stage #come-bar .has-stack{bottom:22%}
 
 .chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
@@ -569,6 +573,14 @@ body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{
   border-color:transparent!important;background:transparent!important;outline:none!important;
 }
 body.felt-mode #felt-stage .odds-pay{display:none}
+/* Crapless-only reinforcement: Horn cell highlighting was still showing despite two earlier
+   neutralization passes that should already cover it by source order. Could not find the exact
+   conflicting rule by reading the stylesheet, so this forces the issue shut rather than leaving
+   a mystery unresolved. */
+body.felt-mode.game-crapless #felt-stage .horn-cell:hover,
+body.felt-mode.game-crapless #felt-stage .horn-cell.active{
+  background:transparent!important;outline:none!important;box-shadow:none!important;border-color:transparent!important;
+}
 </style>
 </head>
 <body>
@@ -746,7 +758,7 @@ body.felt-mode #felt-stage .odds-pay{display:none}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.92</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.1.93</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1108,7 +1120,7 @@ const CRAPLESS_LAYOUT=[
   ['#num-zone',      34.25,18.60,61.25,28.90,null],
   ['#come-bar',      52.97,49.56,42.47, 8.89,null],
   ['#field-bar',     53.03,60.50,42.47,12.00,null],
-  ['#pass-bar',      53.03,74.50,42.47, 8.89,null]
+  ['#pass-bar',      53.03,73.00,42.47,10.50,null]
 ];
 // Standard-specific positions, measured directly on the standard felt art -- this sheet has
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
