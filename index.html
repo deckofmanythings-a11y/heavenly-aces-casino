@@ -544,7 +544,9 @@ body.felt-mode #felt-stage #lucky-roller .lr-header,body.felt-mode #felt-stage #
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{display:none!important}
 body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:0}
 body.felt-mode #felt-stage #lucky-roller .lr-nums{display:flex;height:100%;width:100%;gap:2%;flex-wrap:nowrap;align-items:stretch;padding:0}
-body.felt-mode #felt-stage #lucky-roller .lr-num{position:relative;flex:1;width:auto;height:auto;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0}
+body.felt-mode #felt-stage #lucky-roller .lr-num{position:relative;flex:1;width:auto;height:auto;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0;pointer-events:none}
+body.felt-mode #felt-stage #lucky-roller .lr-nums{pointer-events:none}
+body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
 body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,.30);box-shadow:0 0 10px rgba(60,255,140,.9),inset 0 0 6px rgba(60,255,140,.5);color:transparent}
 
 /* ===== CLEAN UI: no hover or placed-bet shading anywhere on the felt =====
@@ -762,7 +764,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.09</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.11</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
