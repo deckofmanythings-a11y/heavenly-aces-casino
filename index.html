@@ -764,7 +764,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.14</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.15</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2287,7 +2287,20 @@ function repeatLastBet(){
   for(const t in bonusR){G.bonus[t]=r2(G.bonus[t]+bonusR[t]);G.bonus[t+'Max']=G.bonus[t];G.bankroll=r2(G.bankroll-bonusR[t]);}
   addLog('Last bets restored ('+fmt(cost)+').','info');updateUI();
 }
-function toggleBetsOn(){if(G.phase==='comeout'){G.betsOn=!G.betsOn;updateUI();}else{G.betsOffThisRoll=!G.betsOffThisRoll;updateUI();}}
+function toggleBetsOn(){
+  if(G.phase==='comeout'){G.betsOn=!G.betsOn;}
+  else{
+    // Point phase only ever toggles betsOffThisRoll -- it was never meant to also manage
+    // betsOn, since that's supposed to already be true (auto-set server-side the moment a
+    // point is established). Forcing it true here too is a safety net: if that server-side
+    // assignment is ever missing or not yet deployed, betsOn getting permanently stuck false
+    // would make the Off tag unremovable by anything the player does, since nothing in this
+    // branch used to touch it at all.
+    G.betsOn=true;
+    G.betsOffThisRoll=!G.betsOffThisRoll;
+  }
+  updateUI();
+}
 function clearRemovable(){
   let ret=0;const keep={};
   for(const k in G.bets){
