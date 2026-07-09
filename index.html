@@ -351,6 +351,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 /* The number itself: metallic gold gradient text, not a solid color, giving it the shiny
    engraved-coin look from the reference image rather than flat gold. */
 .winner-amount{position:relative;z-index:2;font-size:124px;font-weight:900;margin-top:5px;isolation:isolate;
+  display:inline-flex;align-items:center;justify-content:center;line-height:1;
   background:linear-gradient(180deg,#fff6cf 0%,#ffd700 20%,#a8720a 48%,#ffe680 55%,#c8930a 75%,#7a5000 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
   -webkit-text-stroke:1.5px #5c3d00;
@@ -788,7 +789,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.21</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.22</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
