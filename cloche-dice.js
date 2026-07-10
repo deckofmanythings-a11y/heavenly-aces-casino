@@ -93,7 +93,7 @@
   let inited = false;
   let overlayEl, stageEl, labelEl;
   let scene, camera, renderer, world, platformMesh;
-  let matDie, matSurface;
+  let matDie, matSurface, matGlass;
   let dice = [];
   let rafId = null;
   let lastTime = 0;
@@ -253,9 +253,13 @@
     world.solver.iterations = 14;
 
     matDie = new CANNON.Material('die');
-    matSurface = new CANNON.Material('surface');
+    matSurface = new CANNON.Material('surface'); // felt floor only -- unchanged, dice still settle normally here
+    matGlass = new CANNON.Material('glass'); // cloche walls + ceiling -- lower friction so dice don't stick to the glass
     world.addContactMaterial(new CANNON.ContactMaterial(matDie, matSurface, {
       friction: 0.22, restitution: 0.42
+    }));
+    world.addContactMaterial(new CANNON.ContactMaterial(matDie, matGlass, {
+      friction: 0.04, restitution: 0.45
     }));
     world.addContactMaterial(new CANNON.ContactMaterial(matDie, matDie, {
       friction: 0.01, restitution: 0.48
@@ -288,14 +292,14 @@
     const segs = CFG.wallSegments;
     for (let i = 0; i < segs; i++) {
       const a = (i / segs) * Math.PI * 2;
-      const wall = new CANNON.Body({ mass: 0, material: matSurface });
+      const wall = new CANNON.Body({ mass: 0, material: matGlass });
       const halfW = (Math.PI * R / segs) * 1.25;
       wall.addShape(new CANNON.Box(new CANNON.Vec3(halfW, H / 2 + 2, 0.35)));
       wall.position.set(Math.sin(a) * (R + 0.33), H / 2, Math.cos(a) * (R + 0.33));
       wall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), a);
       world.addBody(wall);
     }
-    const ceiling = new CANNON.Body({ mass: 0, material: matSurface });
+    const ceiling = new CANNON.Body({ mass: 0, material: matGlass });
     ceiling.addShape(new CANNON.Plane());
     ceiling.position.set(0, H + 1.2, 0);
     ceiling.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
