@@ -883,7 +883,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.42</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.43</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1588,7 +1588,7 @@ function spawnCoinWaterfall(n){
     const dx=Math.cos(angleRad),dy=Math.sin(angleRad);
     const burst=90+Math.random()*180; // explosion distance along the launch angle
     const gravityFall=280+Math.random()*320; // extra straight-down fall once the burst spends itself
-    const dur=(1100+Math.random()*900)*1.5; // shower lasts ~50% longer
+    const dur=1100+Math.random()*900; // fall speed +50% vs. the original 1650-3000ms range (shorter travel time over the same distance); delay stagger below still keeps the overall shower spread out
     const delay=Math.random()*700*1.5;
     const p1x=dx*burst*0.45,p1y=dy*burst*0.45;
     const p2x=dx*burst,p2y=dy*burst+gravityFall*0.4;
