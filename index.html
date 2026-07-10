@@ -379,6 +379,17 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
   100%{transform:translateY(110vh) rotate(720deg);opacity:.9}
 }
 
+/* Losing bet chip ghosts: a frozen copy of the chip stack, positioned exactly over where the
+   real bet used to sit, that dims immediately (so it visually reads as "no longer live") then
+   sweeps off the top of the screen. The real cell underneath is already cleared and fully
+   interactive the instant the roll response lands -- this ghost is purely a visual leftover,
+   pointer-events:none, it cannot be clicked, dragged, or otherwise interacted with. */
+.chip-ghost{position:fixed;z-index:150;pointer-events:none;filter:none;opacity:1;
+  transition:filter .35s ease-out,opacity .35s ease-out}
+.chip-ghost.dim{filter:grayscale(1) brightness(.55);opacity:.7}
+.chip-ghost.sweep{transform:translateY(-130vh);opacity:0;
+  transition:transform .55s ease-in,opacity .55s ease-in}
+
 /* ── CASHOUT VOUCHER MODAL ── */
 @import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
 #modal-cashout{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:12px}
@@ -617,6 +628,14 @@ body.felt-mode.game-crapless #felt-stage .horn-cell.active{
 }
 body.game-crapless .std-only{display:none}
 body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-align:center;letter-spacing:.03em;pointer-events:none}
+#loss-ghost-layer{position:fixed;inset:0;z-index:150;pointer-events:none;overflow:visible}
+.loss-ghost{position:fixed;pointer-events:none;animation:lossGhostSweep 1s ease-in forwards}
+.loss-ghost .chip-stack{pointer-events:none}
+@keyframes lossGhostSweep{
+  0%{filter:brightness(1) saturate(1);opacity:1;transform:translateY(0)}
+  25%{filter:brightness(0.35) saturate(0.4);opacity:0.9;transform:translateY(0)}
+  100%{filter:brightness(0.3) saturate(0.3);opacity:0;transform:translateY(-180px)}
+}
 </style>
 </head>
 <body>
@@ -641,6 +660,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 <div id="game-screen">
 
   <!-- MODALS -->
+  <div id="loss-ghost-layer"></div>
   <div id="winner-backdrop"></div>
   <div id="winner-rays"></div>
   <div id="winner-glow"></div>
@@ -703,6 +723,20 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <p><strong style="color:#ffe066">Crapless Craps:</strong> Only a 7 wins on the come-out. Every other number (2–12) becomes the Point. Place or Buy all 10 numbers. No dark side.<br><br><strong style="color:#ffe066">Standard Craps:</strong> 7 or 11 wins on the come-out; 2, 3, or 12 loses. Box numbers are 4,5,6,8,9,10. Includes Don't Pass, Don't Come, and Lay bets.<br><br><strong style="color:#ffe066">Dark Side:</strong> Don't Pass wins when 2 or 3 rolls on come-out (12 is a push), and wins when the shooter sevens out. Don't Come works the same way after the point. Lay bets win when 7 comes before the number. Back DP/DC with Lay Odds for no-vig true odds.<br><br>DP and DC are not contract bets — you can remove them at any time, but Lay Odds will be wiped if you reduce the flat bet.</p>
       </div>
       <button class="modal-btn cancel" onclick="closeInfoModal()">Close</button>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="modal-commission">
+    <div class="modal-box" style="max-width:340px">
+      <div class="modal-title" style="margin-bottom:12px">Commission Notice</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">I understand that I will be paying a 5% commission on this bet if it wins.</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:16px;cursor:pointer">
+        <input type="checkbox" id="commission-dont-ask" style="width:16px;height:16px">
+        Don't ask me again
+      </label>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn cancel" onclick="cancelCommission()">Cancel</button>
+        <button class="modal-btn" onclick="confirmCommission()">OK</button>
+      </div>
     </div>
   </div>
   <div class="modal-overlay hidden" id="modal-log">
@@ -797,7 +831,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.23</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.26</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1475,6 +1509,47 @@ function spawnGoldCoins(n){
     setTimeout(()=>c.remove(),(dur+delay)*1000+200);
   }
 }
+function spawnChipGhost(el){
+  if(!el)return;
+  const rect=el.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const html=el.innerHTML;
+  if(!html||!html.trim())return;
+  const ghost=document.createElement('div');
+  ghost.className='chip-ghost';
+  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
+  ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
+  ghost.innerHTML=html;
+  document.body.appendChild(ghost);
+  requestAnimationFrame(()=>{ghost.classList.add('dim');});
+  setTimeout(()=>{ghost.classList.add('sweep');},400);
+  setTimeout(()=>{ghost.remove();},1000);
+}
+// Static bet-key -> [log-line-prefix-regex, stake-element-id] pairs. Covers Pass Line, Don't
+// Pass, their Odds, and every Buy/Place/Lay number -- the bet types with one fixed, always-
+// addressable DOM id. Established Come and Don't Come bets are NOT covered here: they render
+// through a dynamic per-instance loop with no stable per-bet id to snapshot against, so a
+// losing Come/DC bet still disappears instantly rather than getting the dim-and-sweep
+// treatment. Closing that gap would mean giving each rendered Come/DC box a stable id first.
+function staticGhostChecks(){
+  const checks=[
+    [/^Pass Line: lost/,'stk-pass'],
+    [/^Don't Pass: lost/,'stk-dp'],
+    [/^Pass Odds: lost/,'stk-passodds'],
+    [/^DP Lay Odds: lost/,'stk-dpodds'],
+  ];
+  ALL_NUMS.forEach(n=>{
+    checks.push([new RegExp('^Buy '+n+': lost'),'stk-buy'+n]);
+    checks.push([new RegExp('^Place '+n+': lost'),'stk-place'+n]);
+    checks.push([new RegExp('^Lay '+n+': lost'),'stk-lay'+n]);
+  });
+  return checks;
+}
+function spawnLossGhosts(rawLog){
+  staticGhostChecks().forEach(([re,id])=>{
+    if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id));
+  });
+}
 function positionWinnerRays(){
   const amtEl=document.getElementById('winner-amount');
   const rays=document.getElementById('winner-rays'),glow=document.getElementById('winner-glow');
@@ -1788,13 +1863,13 @@ function buildStrip(){
     const box=document.createElement('div');box.className='num-box';box.id='numbox-'+n;
     if(isStd){
       const bwrap=document.createElement('div');bwrap.className='nb-buy-wrap';
-      const bd=document.createElement('div');bd.className='nb-buy-left';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBet('buy'+n);bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
+      const bd=document.createElement('div');bd.className='nb-buy-left';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBetWithCommissionCheck(()=>placeBet('buy'+n));bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
       bd.innerHTML='<span class="nb-lbl">BUY</span><span class="nb-stk" id="stk-buy'+n+'"></span><div class="off-ov" id="off-buy-'+n+'" style="display:none"><span>OFF</span></div>';
-      const ld=document.createElement('div');ld.className='nb-lay';ld.id='nb-lay-'+n;ld.dataset.betLay=n;ld.onclick=()=>placeLay(n);ld.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeLay(n);};
+      const ld=document.createElement('div');ld.className='nb-lay';ld.id='nb-lay-'+n;ld.dataset.betLay=n;ld.onclick=()=>placeBetWithCommissionCheck(()=>placeLay(n));ld.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeLay(n);};
       ld.innerHTML='<span class="nb-lbl">LAY</span><span class="nb-stk" id="stk-lay'+n+'"></span>';
       bwrap.appendChild(bd);bwrap.appendChild(ld);box.appendChild(bwrap);
     }else{
-      const bd=document.createElement('div');bd.className='nb-buy';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBet('buy'+n);bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
+      const bd=document.createElement('div');bd.className='nb-buy';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBetWithCommissionCheck(()=>placeBet('buy'+n));bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
       bd.innerHTML='<span class="nb-lbl">BUY</span><span class="nb-stk" id="stk-buy'+n+'"></span><div class="off-ov" id="off-buy-'+n+'" style="display:none"><span>OFF</span></div>';
       box.appendChild(bd);
     }
@@ -1963,8 +2038,6 @@ function chipPointerDown(e,denom,source){
       ghost.remove();
       const under=document.elementFromPoint(ev.clientX,ev.clientY);
       const tgt=under?betKeyFromElement(under):null;
-      const prevChip=G.chip;
-      G.chip=denom;
       const sameId=(a,b)=>{
         if(!a||!b||a.kind!==b.kind)return false;
         if(a.kind==='lay')return a.n===b.n;
@@ -1972,19 +2045,29 @@ function chipPointerDown(e,denom,source){
         return a.key===b.key;
       };
       const sameTarget=sameId(tgt,source);
-      if(tgt&&!sameTarget){
-        if(tgt.kind==='bet')placeBet(tgt.key);
-        else if(tgt.kind==='bonus')bonusBet(tgt.key);
-        else if(tgt.kind==='lay')placeLay(tgt.n);
-        else if(tgt.kind==='odds')addOddsAmt(tgt.type,denom);
+      // Placement and any accompanying source-removal are bundled into one function so a
+      // commission-gated drop is all-or-nothing: cancelling the modal must not still pull the
+      // chip off wherever it started, and confirming must place AND remove together, not place
+      // now with the removal having already silently happened moments earlier.
+      function doPlacement(){
+        const prevChip=G.chip;G.chip=denom;
+        if(tgt&&!sameTarget){
+          if(tgt.kind==='bet')placeBet(tgt.key);
+          else if(tgt.kind==='bonus')bonusBet(tgt.key);
+          else if(tgt.kind==='lay')placeLay(tgt.n);
+          else if(tgt.kind==='odds')addOddsAmt(tgt.type,denom);
+        }
+        if(source&&!sameTarget){
+          if(source.kind==='bet')removeBet(source.key);
+          else if(source.kind==='bonus')bonusRemove(source.key);
+          else if(source.kind==='lay')removeLay(source.n);
+          else if(source.kind==='odds')removeOddsAmt(source.type,denom);
+        }
+        G.chip=prevChip;
       }
-      if(source&&!sameTarget){
-        if(source.kind==='bet')removeBet(source.key);
-        else if(source.kind==='bonus')bonusRemove(source.key);
-        else if(source.kind==='lay')removeLay(source.n);
-        else if(source.kind==='odds')removeOddsAmt(source.type,denom);
-      }
-      G.chip=prevChip;
+      const targetIsCommissionBearing=tgt&&!sameTarget&&(tgt.kind==='lay'||(tgt.kind==='bet'&&/^buy\d+$/.test(tgt.key)));
+      if(targetIsCommissionBearing)placeBetWithCommissionCheck(doPlacement);
+      else doPlacement();
       dragJustHappened=true;
       setTimeout(()=>{dragJustHappened=false;},50);
     }
@@ -2307,6 +2390,27 @@ function clearLastBet(){
 }
 let dualBetLoc={anyCraps:'bar',eleven:'circle'};
 function setDualLoc(key,loc){if(loc&&dualBetLoc.hasOwnProperty(key))dualBetLoc[key]=loc;}
+const COMMISSION_ACK_KEY='rh_commission_ack';
+function needsCommissionAck(){return localStorage.getItem(COMMISSION_ACK_KEY)!=='1';}
+let pendingCommissionAction=null;
+function placeBetWithCommissionCheck(fn){
+  if(needsCommissionAck()){
+    pendingCommissionAction=fn;
+    document.getElementById('commission-dont-ask').checked=false;
+    document.getElementById('modal-commission').classList.remove('hidden');
+  }else{
+    fn();
+  }
+}
+function confirmCommission(){
+  document.getElementById('modal-commission').classList.add('hidden');
+  if(document.getElementById('commission-dont-ask').checked)localStorage.setItem(COMMISSION_ACK_KEY,'1');
+  if(pendingCommissionAction){const fn=pendingCommissionAction;pendingCommissionAction=null;fn();}
+}
+function cancelCommission(){
+  document.getElementById('modal-commission').classList.add('hidden');
+  pendingCommissionAction=null;
+}
 function placeBet(key,loc){setDualLoc(key,loc);
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
@@ -2524,6 +2628,7 @@ async function rollDice(){
       const cls=/wins?[!:]|WON|made!|returned/i.test(line)?'win':/lost|loses/i.test(line)?'lose':'info';
       addLog(line,cls);
     });
+    spawnLossGhosts(rawLog);
     restoreFromServerState(data.newState);
     if(data.returned>0)G.lastWin=data.returned;
     G.rollHistory=data.newState.rollHistory||G.rollHistory;
