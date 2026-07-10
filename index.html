@@ -345,9 +345,6 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
    from the amount text's actual rendered center, sidestepping whatever pseudo-element/percentage
    interaction kept landing the old version in the wrong spot twice in a row. Hidden by default,
    shown and positioned only while the Winner modal is actually up. */
-#winner-rays{display:none;position:fixed;z-index:199;width:38vmin;height:38vmin;transform:translate(-50%,-50%);
-  background:conic-gradient(from 0deg,rgba(255,235,150,.55) 0deg,transparent 12deg,transparent 18deg,rgba(255,235,150,.55) 30deg,transparent 42deg,transparent 48deg,rgba(255,235,150,.55) 60deg,transparent 72deg,transparent 78deg,rgba(255,235,150,.55) 90deg,transparent 102deg,transparent 108deg,rgba(255,235,150,.55) 120deg,transparent 132deg,transparent 138deg,rgba(255,235,150,.55) 150deg,transparent 162deg,transparent 168deg,rgba(255,235,150,.55) 180deg,transparent 192deg,transparent 198deg,rgba(255,235,150,.55) 210deg,transparent 222deg,transparent 228deg,rgba(255,235,150,.55) 240deg,transparent 252deg,transparent 258deg,rgba(255,235,150,.55) 270deg,transparent 282deg,transparent 288deg,rgba(255,235,150,.55) 300deg,transparent 312deg,transparent 318deg,rgba(255,235,150,.55) 330deg,transparent 342deg,transparent 348deg,rgba(255,235,150,.55) 360deg);
-  border-radius:50%;filter:blur(2px);animation:rayspin 40s linear infinite;pointer-events:none}
 #winner-glow{display:none;position:fixed;z-index:199;width:20vmin;height:20vmin;transform:translate(-50%,-50%);
   background:radial-gradient(circle,rgba(255,250,220,.85) 0%,rgba(255,215,100,.35) 35%,transparent 70%);
   pointer-events:none}
@@ -662,7 +659,6 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   <!-- MODALS -->
   <div id="loss-ghost-layer"></div>
   <div id="winner-backdrop"></div>
-  <div id="winner-rays"></div>
   <div id="winner-glow"></div>
   <div id="modal-winner" class="hidden">
     <div class="winner-box">
@@ -831,7 +827,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.26</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.28</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1522,8 +1518,8 @@ function spawnChipGhost(el){
   ghost.innerHTML=html;
   document.body.appendChild(ghost);
   requestAnimationFrame(()=>{ghost.classList.add('dim');});
-  setTimeout(()=>{ghost.classList.add('sweep');},400);
-  setTimeout(()=>{ghost.remove();},1000);
+  setTimeout(()=>{ghost.classList.add('sweep');},900);
+  setTimeout(()=>{ghost.remove();},1450);
 }
 // Static bet-key -> [log-line-prefix-regex, stake-element-id] pairs. Covers Pass Line, Don't
 // Pass, their Odds, and every Buy/Place/Lay number -- the bet types with one fixed, always-
@@ -1552,11 +1548,10 @@ function spawnLossGhosts(rawLog){
 }
 function positionWinnerRays(){
   const amtEl=document.getElementById('winner-amount');
-  const rays=document.getElementById('winner-rays'),glow=document.getElementById('winner-glow');
-  if(!amtEl||!rays||!glow)return;
+  const glow=document.getElementById('winner-glow');
+  if(!amtEl||!glow)return;
   const r=amtEl.getBoundingClientRect();
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  rays.style.left=cx+'px';rays.style.top=cy+'px';
   glow.style.left=cx+'px';glow.style.top=cy+'px';
 }
 function showWinnerModal(amount,big){
@@ -1565,11 +1560,11 @@ function showWinnerModal(amount,big){
   _winnerAmount=amount;_winnerAnimating=true;
   const el=document.getElementById('modal-winner');
   const amtEl=document.getElementById('winner-amount');
-  const rays=document.getElementById('winner-rays'),glow=document.getElementById('winner-glow');
+  const glow=document.getElementById('winner-glow');
   el.classList.toggle('big',!!big);
   el.classList.remove('hidden');el.onclick=tapWinnerModal;
   amtEl.textContent='$0.00';
-  rays.style.display='block';glow.style.display='block';document.getElementById('winner-backdrop').style.display='block';
+  glow.style.display='block';document.getElementById('winner-backdrop').style.display='block';
   spawnGoldCoins(big?36:20);
   const start=performance.now();
   function tick(now){
@@ -1591,7 +1586,7 @@ function tapWinnerModal(){
   else closeWinnerModal();
 }
 let winnerCloseCB=null;
-function closeWinnerModal(){document.getElementById('modal-winner').classList.add('hidden');document.getElementById('modal-winner').classList.remove('big');document.getElementById('modal-winner').onclick=null;const rays=document.getElementById('winner-rays'),glow=document.getElementById('winner-glow'),bd=document.getElementById('winner-backdrop');if(rays)rays.style.display='none';if(glow)glow.style.display='none';if(bd)bd.style.display='none';if(winnerTimer){clearTimeout(winnerTimer);winnerTimer=null;}const cb=winnerCloseCB;winnerCloseCB=null;if(cb)cb();}
+function closeWinnerModal(){document.getElementById('modal-winner').classList.add('hidden');document.getElementById('modal-winner').classList.remove('big');document.getElementById('modal-winner').onclick=null;const glow=document.getElementById('winner-glow'),bd=document.getElementById('winner-backdrop');if(glow)glow.style.display='none';if(bd)bd.style.display='none';if(winnerTimer){clearTimeout(winnerTimer);winnerTimer=null;}const cb=winnerCloseCB;winnerCloseCB=null;if(cb)cb();}
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function openCapModal(){document.getElementById('modal-cap').classList.remove('hidden');}
