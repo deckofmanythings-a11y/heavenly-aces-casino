@@ -309,6 +309,12 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 
 /* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
+/* Move Bet modal specifically: the generic centered position sits directly over the number
+   strip and Place/Buy area, exactly the part of the felt the player needs to see while
+   deciding where to move a bet. Pushed down toward the bottom of the screen instead, clear of
+   that area, without touching the shared .modal-overlay positioning every other modal uses. */
+#modal-move{align-items:flex-end;padding-bottom:6vh}
+
 .modal-overlay.hidden{display:none}
 .modal-box{background:#1a3a28;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:14px 16px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
 .modal-box.dark{background:#1a1a2e;border-color:rgba(255,215,0,.2)}
@@ -380,11 +386,6 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .chip-ghost.dim{filter:grayscale(1) brightness(.55)}
 .chip-ghost.sweep{transform:translateY(-130vh);opacity:0;
   transition:transform .55s ease-in,opacity .55s ease-in}
-/* Ghost-only override: the live chip stack anchors its amount label to the top chip via
-   bottom:calc(...) as an inline style, but for the dying/sweeping copy the total should sit
-   centered on the stack instead. !important is required here specifically to beat that inline
-   style, since inline styles otherwise outrank any class-based rule regardless of source order. */
-.chip-ghost .chip-amt{top:50%!important;bottom:auto!important;transform:translateY(-50%)!important}
 
 /* ── CASHOUT VOUCHER MODAL ── */
 @import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
@@ -823,7 +824,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.31</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.33</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1512,6 +1513,13 @@ function spawnChipGhost(el){
   ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
   ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
   ghost.innerHTML=html;
+  // Direct inline-style override on the actual cloned span, not a stylesheet rule -- the live
+  // element sets its amount label's position with an inline style too (bottom:calc(...), to
+  // anchor it to the top chip), and a CSS class rule fighting an inline style via !important
+  // wasn't taking effect. Setting it here in JS, after the clone exists, wins unconditionally,
+  // no specificity or cascade ambiguity possible.
+  const amtSpan=ghost.querySelector('.chip-amt');
+  if(amtSpan){amtSpan.style.top='50%';amtSpan.style.bottom='auto';amtSpan.style.transform='translateY(-50%)';}
   document.body.appendChild(ghost);
   requestAnimationFrame(()=>{ghost.classList.add('dim');});
   setTimeout(()=>{ghost.classList.add('sweep');},900);
