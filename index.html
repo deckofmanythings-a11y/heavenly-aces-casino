@@ -364,20 +364,30 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
   -webkit-text-stroke:1.5px #5c3d00;
   filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(255,215,0,.8));
   letter-spacing:.02em}
-/* Golden god rays: a translucent rotating/pulsing sunburst sitting only behind the currency
-   amount. This has to be a real sibling element (not a ::before on .winner-amount) -- a
-   pseudo-element's own background/text always paints before its negative-z-index children per
-   the CSS stacking spec, so a ::before with z-index:-1 there rendered ON TOP of the amount's
-   text instead of behind it. As a sibling in the shared .winner-amount-wrap, plain z-index
-   comparison applies and it correctly sits behind. Faded to transparent at the edges via a
-   radial mask so it blooms outward rather than showing a hard-edged disc. */
+/* Golden god rays: a translucent rotating sunburst sitting only behind the currency amount.
+   This has to be a real sibling element (not a ::before on .winner-amount) -- a pseudo-
+   element's own background/text always paints before its negative-z-index children per the
+   CSS stacking spec, so a ::before with z-index:-1 there rendered ON TOP of the amount's text
+   instead of behind it. As a sibling in the shared .winner-amount-wrap, plain z-index
+   comparison applies and it correctly sits behind.
+   Two layers: .winner-rays is a FIXED oval (sized in JS to match the actual rendered payout
+   text, see sizeWinnerRays()) that never itself rotates or resizes -- it just clips content to
+   an ellipse via overflow:hidden. .winner-rays-spin is an oversized square nested inside it
+   that freely rotates/pulses; since the oval is wider than it is tall, a ray reads as long
+   when it sweeps through the horizontal axis and short when it sweeps through the vertical
+   axis, purely because the fixed oval boundary cuts it off sooner in that direction -- that's
+   what makes the rays look like they're growing and shrinking as they turn. */
 .winner-rays{
-  position:absolute;top:50%;left:50%;width:480px;height:480px;z-index:1;
-  transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
-  background:repeating-conic-gradient(from 0deg,rgba(255,224,130,.72) 0deg 9deg,rgba(255,224,130,0) 9deg 20deg);
-  -webkit-mask-image:radial-gradient(circle,#000 0%,#000 35%,transparent 72%);
-  mask-image:radial-gradient(circle,#000 0%,#000 35%,transparent 72%);
-  animation:godRaySpinPulse 18s ease-in-out infinite,godRayOpacityPulse 4.5s ease-in-out infinite;
+  position:absolute;top:50%;left:50%;width:440px;height:180px;z-index:1;
+  transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;pointer-events:none;
+  animation:godRayOpacityPulse 4.5s ease-in-out infinite;
+}
+.winner-rays-spin{
+  position:absolute;top:50%;left:50%;width:640px;height:640px;
+  transform:translate(-50%,-50%);pointer-events:none;
+  /* 6 thick spokes: each solid wedge spans 34deg of every 60deg slice around the circle. */
+  background:repeating-conic-gradient(from 0deg,rgba(255,224,130,.78) 0deg 34deg,rgba(255,224,130,0) 34deg 60deg);
+  animation:godRaySpinPulse 18s ease-in-out infinite;
 }
 /* Zero-size anchor sitting at the exact same center point as the god rays, one layer above
    them (z-index ties with .winner-rays but comes after it in DOM order, so it paints on top)
@@ -386,7 +396,6 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
    (0,0) -- so "spawn point" and "god ray center" are the same point by construction, not two
    separately-computed coordinates that have to be kept in sync. */
 .winner-coins{position:absolute;top:50%;left:50%;width:0;height:0;z-index:1;pointer-events:none;}
-#modal-winner.big .winner-rays{width:620px;height:620px}
 @keyframes godRaySpinPulse{
   0%{transform:translate(-50%,-50%) rotate(0deg) scale(1)}
   50%{transform:translate(-50%,-50%) rotate(180deg) scale(1.22)}
@@ -415,9 +424,9 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .coin3d-front .coin3d-face-img{transform:scale(-1,-1);}
 .coin3d-edge-seg{position:absolute;left:50%;top:50%;background:linear-gradient(90deg,#8a6c1a,#ffe680 50%,#8a6c1a);backface-visibility:hidden;}
 .puck-flash{animation:puckFlashGreen .5s ease-in-out 2}
-#puck3d-wrap{position:fixed;width:72px;height:72px;top:0;left:0;perspective:500px;pointer-events:none;z-index:60;opacity:0;transition:transform .55s cubic-bezier(.34,1.15,.4,1),opacity .2s ease;}
+#puck3d-wrap{position:fixed;width:72px;height:72px;top:0;left:0;perspective:500px;pointer-events:none;z-index:60;opacity:0;transition:transform 1.1s cubic-bezier(.34,1.15,.4,1),opacity .2s ease;}
 #puck3d-wrap.puck3d-visible{opacity:1;}
-#puck3d-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1);transform:rotateX(90deg);}
+#puck3d-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.1s cubic-bezier(.4,0,.2,1);transform:rotateX(90deg);}
 #puck3d-inner.puck3d-flipped{transform:rotateY(180deg) rotateX(90deg);}
 .puck3d-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;box-shadow:inset 0 0 6px rgba(0,0,0,.5);overflow:hidden;}
 .puck3d-face.puck3d-front{transform:rotateX(90deg) translateZ(var(--puck-half-t,8px));}
@@ -439,6 +448,10 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
   transition:filter .35s ease-out}
 .chip-ghost.dim{filter:grayscale(1) brightness(.55)}
 .chip-ghost.sweep{transform:translateY(-130vh);opacity:0;
+  transition:transform .55s ease-in,opacity .55s ease-in}
+/* Winning bets that get returned sweep the opposite direction (down, toward the player/
+   bankroll instead of away) and stay in full color the whole time -- no .dim class applied. */
+.chip-ghost.sweep-down{transform:translateY(130vh);opacity:0;
   transition:transform .55s ease-in,opacity .55s ease-in}
 
 /* ── CASHOUT VOUCHER MODAL ── */
@@ -717,7 +730,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <div class="winner-bigtag" id="winner-bigtag">BIG WIN</div>
       <div class="winner-title">🎉 Congratulations, you win 🎉</div>
       <div class="winner-amount-wrap">
-        <div class="winner-rays"></div>
+        <div class="winner-rays" id="winner-rays"><div class="winner-rays-spin"></div></div>
         <div class="winner-coins" id="winner-coins"></div>
         <div class="winner-amount" id="winner-amount">$0.00</div>
       </div>
@@ -892,7 +905,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.44</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.45</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1621,7 +1634,8 @@ function spawnCoinWaterfall(n){
     setTimeout(()=>wrap.remove(),delay+dur+150);
   }
 }
-function spawnChipGhost(el){
+function spawnChipGhost(el,opts){
+  opts=opts||{};
   if(!el)return;
   const rect=el.getBoundingClientRect();
   if(rect.width<=0&&rect.height<=0)return;
@@ -1665,8 +1679,9 @@ function spawnChipGhost(el){
     ghost.appendChild(span);
   }
   document.body.appendChild(ghost);
-  requestAnimationFrame(()=>{ghost.classList.add('dim');});
-  setTimeout(()=>{ghost.classList.add('sweep');},900);
+  const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
+  if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
+  setTimeout(()=>{ghost.classList.add(sweepClass);},900);
   setTimeout(()=>{ghost.remove();},1450);
 }
 // Static bet-key -> [log-line-prefix-regex, stake-element-id] pairs. Covers Pass Line, Don't
@@ -1675,23 +1690,24 @@ function spawnChipGhost(el){
 // through a dynamic per-instance loop with no stable per-bet id to snapshot against, so a
 // losing Come/DC bet still disappears instantly rather than getting the dim-and-sweep
 // treatment. Closing that gap would mean giving each rendered Come/DC box a stable id first.
-function staticGhostChecks(){
+function staticGhostChecks(verb){
+  verb=verb||'lost';
   const checks=[
-    [/^Pass Line: lost/,'stk-pass'],
-    [/^Don't Pass: lost/,'stk-dp'],
-    [/^Pass Odds: lost/,'stk-passodds'],
-    [/^DP Lay Odds: lost/,'stk-dpodds'],
-    // Hard Ways -- server calls the shared lose() helper with a display name built as
-    // 'hard4' -> 'Hard 4', so the logged prefix is always "Hard <number>: lost".
-    [/^Hard 4: lost/,'stk-hard4'],
-    [/^Hard 6: lost/,'stk-hard6'],
-    [/^Hard 8: lost/,'stk-hard8'],
-    [/^Hard 10: lost/,'stk-hard10'],
+    [new RegExp('^Pass Line: '+verb),'stk-pass'],
+    [new RegExp('^Don\'t Pass: '+verb),'stk-dp'],
+    [new RegExp('^Pass Odds: '+verb),'stk-passodds'],
+    [new RegExp('^DP Lay Odds: '+verb),'stk-dpodds'],
+    // Hard Ways -- server calls the shared lose()/win() helper with a display name built as
+    // 'hard4' -> 'Hard 4', so the logged prefix is always "Hard <number>: <verb>".
+    [new RegExp('^Hard 4: '+verb),'stk-hard4'],
+    [new RegExp('^Hard 6: '+verb),'stk-hard6'],
+    [new RegExp('^Hard 8: '+verb),'stk-hard8'],
+    [new RegExp('^Hard 10: '+verb),'stk-hard10'],
   ];
   ALL_NUMS.forEach(n=>{
-    checks.push([new RegExp('^Buy '+n+': lost'),'stk-buy'+n]);
-    checks.push([new RegExp('^Place '+n+': lost'),'stk-place'+n]);
-    checks.push([new RegExp('^Lay '+n+': lost'),'stk-lay'+n]);
+    checks.push([new RegExp('^Buy '+n+': '+verb),'stk-buy'+n]);
+    checks.push([new RegExp('^Place '+n+': '+verb),'stk-place'+n]);
+    checks.push([new RegExp('^Lay '+n+': '+verb),'stk-lay'+n]);
   });
   return checks;
 }
@@ -1702,20 +1718,50 @@ function staticGhostChecks(){
 // based on the point number itself (combox-flat-N, dcbox-odds-N, etc.), which stays meaningful
 // roll to roll the same way stk-buy6 always means "Buy on 6" regardless of what else is on
 // the board, unlike an array index would.
-function dynamicGhostChecks(){
+function dynamicGhostChecks(verb){
+  verb=verb||'lost';
   const checks=[];
   ALL_NUMS.forEach(n=>{
-    checks.push([new RegExp('^Come \\('+n+'\\): lost'),'combox-flat-'+n]);
-    checks.push([new RegExp('^Come \\('+n+'\\) odds: lost'),'combox-odds-'+n]);
-    checks.push([new RegExp('^Don\'t Come \\('+n+'\\): lost'),'dcbox-flat-'+n]);
-    checks.push([new RegExp('^DC Lay Odds \\('+n+'\\): lost'),'dcbox-odds-'+n]);
+    checks.push([new RegExp('^Come \\('+n+'\\): '+verb),'combox-flat-'+n]);
+    checks.push([new RegExp('^Come \\('+n+'\\) odds: '+verb),'combox-odds-'+n]);
+    checks.push([new RegExp('^Don\'t Come \\('+n+'\\): '+verb),'dcbox-flat-'+n]);
+    checks.push([new RegExp('^DC Lay Odds \\('+n+'\\): '+verb),'dcbox-odds-'+n]);
   });
   return checks;
 }
 function spawnLossGhosts(rawLog){
-  staticGhostChecks().concat(dynamicGhostChecks()).forEach(([re,id])=>{
+  staticGhostChecks('lost').concat(dynamicGhostChecks('lost')).forEach(([re,id])=>{
     if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id));
   });
+}
+// Mirror of spawnLossGhosts for winning bets that get returned (contract ends, chips leave the
+// board) -- same bet-name/element pairs, but matching "<Bet>: won" instead of "<Bet>: lost",
+// swept toward the bottom of the screen and never dimmed. The exact server wording for wins
+// isn't visible from this repo (roll resolution lives in a Supabase Edge Function), but this
+// codebase consistently logs results as "<Bet name>: <verb>" -- "won" is the natural mirror of
+// the "lost" phrasing the loss-ghost regexes already depend on.
+function spawnWinGhosts(rawLog){
+  staticGhostChecks('won').concat(dynamicGhostChecks('won')).forEach(([re,id])=>{
+    if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id),{direction:'down',noDim:true});
+  });
+}
+// The god-ray oval is sized to the actual rendered payout text (not a hardcoded guess) by
+// measuring an offscreen clone with the final amount string -- the visible amount still starts
+// at $0.00 and ticks up, so measuring the live element directly would size the oval far too
+// small. Padded a bit larger than the raw text box so the rays bloom out around the digits
+// rather than hugging them tightly.
+function sizeWinnerRays(amount){
+  const amtEl=document.getElementById('winner-amount'),rays=document.getElementById('winner-rays');
+  if(!amtEl||!rays)return;
+  const clone=amtEl.cloneNode(false);
+  clone.removeAttribute('id'); // avoid a transient duplicate #winner-amount while this clone is attached
+  clone.textContent=fmt(amount);
+  clone.style.cssText+=';position:absolute;visibility:hidden;left:-9999px;top:-9999px;white-space:nowrap';
+  document.body.appendChild(clone);
+  const r=clone.getBoundingClientRect();
+  clone.remove();
+  rays.style.width=Math.max(220,r.width*1.15)+'px';
+  rays.style.height=Math.max(120,r.height*1.55)+'px';
 }
 function showWinnerModal(amount,big){
   if(amount<=0)return;
@@ -1726,6 +1772,7 @@ function showWinnerModal(amount,big){
   el.classList.toggle('big',!!big);
   el.classList.remove('hidden');el.onclick=tapWinnerModal;
   amtEl.textContent='$0.00';
+  sizeWinnerRays(amount);
   spawnCoinWaterfall(big?36:20);
   const start=performance.now();
   function tick(now){
@@ -2844,6 +2891,7 @@ async function rollDice(){
       addLog(line,cls);
     });
     spawnLossGhosts(rawLog);
+    spawnWinGhosts(rawLog);
     restoreFromServerState(data.newState);
     if(data.returned>0)G.lastWin=data.returned;
     G.rollHistory=data.newState.rollHistory||G.rollHistory;
