@@ -334,21 +334,10 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 #modal-log .log-entries p.lose{color:#f08080}
 #modal-log .log-entries p.info{color:#ffe066}
 /* Winner */
-#winner-backdrop{display:none;position:fixed;inset:0;z-index:198;background:rgba(0,0,0,.5);pointer-events:none}
 #modal-winner{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:8vh}
 #modal-winner.hidden{display:none}
 .winner-box{position:relative;background:transparent;border:none;padding:20px 36px;text-align:center;box-shadow:none;animation:winnerPop .3s cubic-bezier(.34,1.56,.64,1)}
 @keyframes winnerPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
-/* Rotating god-ray burst behind the number -- a conic gradient alternating bright/transparent
-   wedges, slowly spinning, sitting behind the text via z-index and negative inset. */
-/* Real elements now, not pseudo-elements -- positioned in JS with measured pixel coordinates
-   from the amount text's actual rendered center, sidestepping whatever pseudo-element/percentage
-   interaction kept landing the old version in the wrong spot twice in a row. Hidden by default,
-   shown and positioned only while the Winner modal is actually up. */
-#winner-glow{display:none;position:fixed;z-index:199;width:20vmin;height:20vmin;transform:translate(-50%,-50%);
-  background:radial-gradient(circle,rgba(255,250,220,.85) 0%,rgba(255,215,100,.35) 35%,transparent 70%);
-  pointer-events:none}
-@keyframes rayspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .winner-title{position:relative;z-index:2;font-size:38px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6);letter-spacing:.05em;line-height:1;margin-bottom:6px}
 /* The number itself: metallic gold gradient text, not a solid color, giving it the shiny
    engraved-coin look from the reference image rather than flat gold. */
@@ -370,6 +359,11 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 /* Gold coin shower */
 .gold-coin{position:fixed;z-index:1;top:-40px;font-size:32px;pointer-events:none;
   filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));animation:coinfall linear forwards}
+.puck-flash{animation:puckFlashGreen .5s ease-in-out 2}
+@keyframes puckFlashGreen{
+  0%,100%{filter:none}
+  50%{filter:drop-shadow(0 0 10px #00ff44) drop-shadow(0 0 20px #00ff44) brightness(1.35) saturate(0) sepia(1) hue-rotate(70deg) saturate(4)}
+}
 @keyframes coinfall{
   0%{transform:translateY(0) rotate(0deg);opacity:0}
   8%{opacity:1}
@@ -658,8 +652,6 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
   <!-- MODALS -->
   <div id="loss-ghost-layer"></div>
-  <div id="winner-backdrop"></div>
-  <div id="winner-glow"></div>
   <div id="modal-winner" class="hidden">
     <div class="winner-box">
       <div class="winner-bigtag" id="winner-bigtag">BIG WIN</div>
@@ -827,7 +819,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.28</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.29</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1546,25 +1538,15 @@ function spawnLossGhosts(rawLog){
     if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id));
   });
 }
-function positionWinnerRays(){
-  const amtEl=document.getElementById('winner-amount');
-  const glow=document.getElementById('winner-glow');
-  if(!amtEl||!glow)return;
-  const r=amtEl.getBoundingClientRect();
-  const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  glow.style.left=cx+'px';glow.style.top=cy+'px';
-}
 function showWinnerModal(amount,big){
   if(amount<=0)return;
   if(winnerTimer)clearTimeout(winnerTimer);
   _winnerAmount=amount;_winnerAnimating=true;
   const el=document.getElementById('modal-winner');
   const amtEl=document.getElementById('winner-amount');
-  const glow=document.getElementById('winner-glow');
   el.classList.toggle('big',!!big);
   el.classList.remove('hidden');el.onclick=tapWinnerModal;
   amtEl.textContent='$0.00';
-  glow.style.display='block';document.getElementById('winner-backdrop').style.display='block';
   spawnGoldCoins(big?36:20);
   const start=performance.now();
   function tick(now){
@@ -1572,13 +1554,10 @@ function showWinnerModal(amount,big){
     const t=Math.min((now-start)/2000,1);
     const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
     amtEl.textContent=fmt(r2(e*amount));
-    positionWinnerRays(); // re-measure every frame -- the text's rendered width (and so its
-    // center point) shifts slightly as the digits count up, this keeps the rays glued to it
-    // exactly rather than settling on wherever "$0.00" happened to measure at the start.
     if(t<1)requestAnimationFrame(tick);
-    else{_winnerAnimating=false;amtEl.textContent=fmt(amount);positionWinnerRays();winnerTimer=setTimeout(closeWinnerModal,2000);}
+    else{_winnerAnimating=false;amtEl.textContent=fmt(amount);winnerTimer=setTimeout(closeWinnerModal,2000);}
   }
-  requestAnimationFrame(()=>{positionWinnerRays();requestAnimationFrame(tick);});
+  requestAnimationFrame(tick);
 }
 function tapWinnerModal(){
   if(winnerTimer)clearTimeout(winnerTimer);
@@ -1586,7 +1565,7 @@ function tapWinnerModal(){
   else closeWinnerModal();
 }
 let winnerCloseCB=null;
-function closeWinnerModal(){document.getElementById('modal-winner').classList.add('hidden');document.getElementById('modal-winner').classList.remove('big');document.getElementById('modal-winner').onclick=null;const glow=document.getElementById('winner-glow'),bd=document.getElementById('winner-backdrop');if(glow)glow.style.display='none';if(bd)bd.style.display='none';if(winnerTimer){clearTimeout(winnerTimer);winnerTimer=null;}const cb=winnerCloseCB;winnerCloseCB=null;if(cb)cb();}
+function closeWinnerModal(){document.getElementById('modal-winner').classList.add('hidden');document.getElementById('modal-winner').classList.remove('big');document.getElementById('modal-winner').onclick=null;if(winnerTimer){clearTimeout(winnerTimer);winnerTimer=null;}const cb=winnerCloseCB;winnerCloseCB=null;if(cb)cb();}
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function openCapModal(){document.getElementById('modal-cap').classList.remove('hidden');}
@@ -2355,10 +2334,20 @@ function switchTab(t){
   });
   if(feltActive)feltApplyTab(t);else feltTab=t;
 }
+function flashPuckGreen(){
+  document.querySelectorAll('.puck-img').forEach(p=>{
+    if(getComputedStyle(p).display!=='none'){
+      p.classList.remove('puck-flash');void p.offsetWidth; // restart the animation if it's already mid-flash
+      p.classList.add('puck-flash');
+      setTimeout(()=>p.classList.remove('puck-flash'),1000);
+    }
+  });
+}
 function bonusBet(t){pushUndo();
   const max=G.bonus[t+'Max']||0;
   if(G.bonus.gracePeriod&&max>0){const room=r2(max-G.bonus[t]);if(room<=0){addLog('Already at max.','info');return;}const a=r2(Math.min(G.chip,room,G.bankroll));if(a<=0)return;G.bonus[t]=r2(G.bonus[t]+a);G.bankroll=r2(G.bankroll-a);updateUI();return;}
-  if(!G.bonus.open||G.bonus.locked){addLog('Bonus only open after a 7.','info');return;}
+  if(G.bonus.locked){addLog('Wagering on this bet is currently not possible.','info');flashPuckGreen();return;}
+  if(!G.bonus.open){addLog('Bonus only open after a 7.','info');return;}
   if(!G.bankroll)return;
   const a=r2(Math.min(G.chip,G.bankroll));G.bonus[t]=r2(G.bonus[t]+a);G.bonus[t+'Max']=G.bonus[t];G.bankroll=r2(G.bankroll-a);updateUI();
 }
