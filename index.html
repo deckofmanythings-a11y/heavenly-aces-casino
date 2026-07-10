@@ -376,10 +376,15 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
    interactive the instant the roll response lands -- this ghost is purely a visual leftover,
    pointer-events:none, it cannot be clicked, dragged, or otherwise interacted with. */
 .chip-ghost{position:fixed;z-index:150;pointer-events:none;filter:none;opacity:1;
-  transition:filter .35s ease-out,opacity .35s ease-out}
-.chip-ghost.dim{filter:grayscale(1) brightness(.55);opacity:.7}
+  transition:filter .35s ease-out}
+.chip-ghost.dim{filter:grayscale(1) brightness(.55)}
 .chip-ghost.sweep{transform:translateY(-130vh);opacity:0;
   transition:transform .55s ease-in,opacity .55s ease-in}
+/* Ghost-only override: the live chip stack anchors its amount label to the top chip via
+   bottom:calc(...) as an inline style, but for the dying/sweeping copy the total should sit
+   centered on the stack instead. !important is required here specifically to beat that inline
+   style, since inline styles otherwise outrank any class-based rule regardless of source order. */
+.chip-ghost .chip-amt{top:50%!important;bottom:auto!important;transform:translateY(-50%)!important}
 
 /* ── CASHOUT VOUCHER MODAL ── */
 @import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
@@ -678,11 +683,10 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     </div>
   </div>
   <div class="modal-overlay hidden" id="modal-move">
-    <div class="modal-box">
-      <div class="modal-title">Move Bet</div>
-      <div class="modal-sub" id="modal-move-sub"></div>
+    <div class="modal-box" style="position:relative">
+      <button onclick="moveModalClose()" aria-label="Leave bets as is" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:16px;line-height:1;cursor:pointer">✕</button>
+      <div class="modal-sub" id="modal-move-sub" style="margin-top:6px;margin-right:24px"></div>
       <div class="modal-grid-5" id="modal-move-grid"></div>
-      <button class="modal-btn cancel" onclick="moveModalClose()">✕ Leave as is</button>
     </div>
   </div>
   <div class="modal-overlay hidden" id="modal-redeem">
@@ -819,7 +823,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.29</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.31</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2313,16 +2317,17 @@ function removeLay(n){
   const rv=r2(Math.min(G.chip,c));G.bets['lay'+n]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);
   if(G.bets['lay'+n]<=0)delete G.bets['lay'+n];updateUI();
 }
-function openMoveModal(fromNum,placeAmt,buyAmt){
+function openMoveModal(fromNum,placeAmt,buyAmt,kind){
   moveCtx={fromNum,placeAmt,buyAmt};
-  const parts=[];if(placeAmt>0)parts.push('Place '+fmt(placeAmt));if(buyAmt>0)parts.push('Buy '+fmt(buyAmt));
-  document.getElementById('modal-move-sub').textContent='Come landed on '+fromNum+' which has '+parts.join(' + ')+'. Move to:';
+  const label=kind==='come'?'The Come roll is '+fromNum+'.':'The Point is '+fromNum+'.';
+  document.getElementById('modal-move-sub').textContent=label+' Would you like to move your bet?';
   const grid=document.getElementById('modal-move-grid');grid.innerHTML='';
   ALL_NUMS.forEach(n=>{const b=document.createElement('button');b.className='modal-btn'+(n===fromNum?' disabled':'');b.textContent=NUM_DEFS[n]?NUM_DEFS[n].label:n;if(n!==fromNum)b.onclick=()=>moveBetTo(n);grid.appendChild(b);});
   document.getElementById('modal-move').classList.remove('hidden');
 }
-function moveBetTo(toNum){document.getElementById('modal-move').classList.add('hidden');if(!moveCtx)return;const{fromNum,placeAmt,buyAmt}=moveCtx;if(placeAmt>0){delete G.bets['place'+fromNum];G.bets['place'+toNum]=r2((G.bets['place'+toNum]||0)+placeAmt);addLog('Place '+fromNum+' → '+toNum,'info');}if(buyAmt>0){delete G.bets['buy'+fromNum];G.bets['buy'+toNum]=r2((G.bets['buy'+toNum]||0)+buyAmt);addLog('Buy '+fromNum+' → '+toNum,'info');}moveCtx=null;updateUI();}
-function moveModalClose(){document.getElementById('modal-move').classList.add('hidden');moveCtx=null;}
+let moveModalCloseCB=null;
+function moveBetTo(toNum){document.getElementById('modal-move').classList.add('hidden');if(!moveCtx){const cb=moveModalCloseCB;moveModalCloseCB=null;if(cb)cb();return;}const{fromNum,placeAmt,buyAmt}=moveCtx;if(placeAmt>0){delete G.bets['place'+fromNum];G.bets['place'+toNum]=r2((G.bets['place'+toNum]||0)+placeAmt);addLog('Place '+fromNum+' → '+toNum,'info');}if(buyAmt>0){delete G.bets['buy'+fromNum];G.bets['buy'+toNum]=r2((G.bets['buy'+toNum]||0)+buyAmt);addLog('Buy '+fromNum+' → '+toNum,'info');}moveCtx=null;updateUI();const cb=moveModalCloseCB;moveModalCloseCB=null;if(cb)cb();}
+function moveModalClose(){document.getElementById('modal-move').classList.add('hidden');moveCtx=null;const cb=moveModalCloseCB;moveModalCloseCB=null;if(cb)cb();}
 
 // ── BET ACTIONS ───────────────────────────────────────────────────────────────
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
@@ -2651,15 +2656,40 @@ async function rollDice(){
       const newDc=G.dcBets.findIndex(dc=>dc.num>0&&(!dc.odds||dc.odds===0));
       if(newDc>=0&&G.bankroll>0)openOddsModal('dc',newDc,G.dcBets[newDc].flat,G.dcBets[newDc].num);
     }
+    // Move Bet: fires when a Place/Buy bet is sitting on a number that a point (main or Come)
+    // JUST landed on this roll -- reuses the exact same "did this just happen" signals the odds
+    // prompt already relies on (justEstablishedPoint, and a Come bet with 0 odds meaning it just
+    // arrived at a number), rather than inventing a separate detection mechanism. On/off status
+    // doesn't matter here, per spec, so no act/betsOn check is applied.
+    function maybeOpenMoveModal(){
+      if(document.getElementById('modal-move')&&!document.getElementById('modal-move').classList.contains('hidden'))return false;
+      if(justEstablishedPoint&&G.phase==='point'&&G.point){
+        const p=G.bets['place'+G.point]||0,b=G.bets['buy'+G.point]||0;
+        if(p>0||b>0){moveModalCloseCB=maybeOpenOddsModal;openMoveModal(G.point,p,b,'point');return true;}
+      }
+      const freshCome=G.comeBets.find(cb=>cb.num>0&&(!cb.odds||cb.odds===0));
+      if(freshCome){
+        const p=G.bets['place'+freshCome.num]||0,b=G.bets['buy'+freshCome.num]||0;
+        if(p>0||b>0){moveModalCloseCB=maybeOpenOddsModal;openMoveModal(freshCome.num,p,b,'come');return true;}
+      }
+      return false;
+    }
     // "7 for 1 or better" big win: server reports the best single payout ratio hit this roll.
     const bigWin=(data.bestFor1||0)>=7;
+    // Move Bet takes priority over the odds prompt when both apply on the same roll -- money
+    // actually at risk on the wrong spot gets addressed before a "would you like odds" prompt.
+    // Whichever one (if either) actually opens chains to the other via its own close callback,
+    // so at most one modal is ever showing at a time.
+    function afterWinnerCloses(){
+      if(!maybeOpenMoveModal())maybeOpenOddsModal();
+    }
     if(data.returned>0){
       // Chain the odds prompt off the winner modal's ACTUAL close (timeout or tap-dismiss),
       // instead of a fixed guessed delay that could fire before or well after it's gone.
-      winnerCloseCB=maybeOpenOddsModal;
+      winnerCloseCB=afterWinnerCloses;
       showWinnerModal(data.returned,bigWin);
     }else{
-      setTimeout(maybeOpenOddsModal,300);
+      setTimeout(afterWinnerCloses,300);
     }
     if(data.capped)setTimeout(openCapModal, data.returned>0?4200:300);
   }
