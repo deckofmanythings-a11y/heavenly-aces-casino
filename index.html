@@ -824,7 +824,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.33</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.34</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1506,20 +1506,41 @@ function spawnChipGhost(el){
   if(!el)return;
   const rect=el.getBoundingClientRect();
   if(rect.width<=0&&rect.height<=0)return;
-  const html=el.innerHTML;
-  if(!html||!html.trim())return;
+  // Not cloning the live markup anymore -- three attempts at repositioning the value WITHIN
+  // that structure (a class rule, then a direct JS style override) both failed to actually
+  // move it. Rebuilding from scratch instead: pull just the two pieces of information that
+  // matter, the label text and one chip image to represent the stack, then place BOTH
+  // independently at the exact same fixed center point of the ghost box. The value can't end
+  // up anywhere but centered this way, since it's not positioned relative to the chip pile's
+  // own layout at all, it's positioned relative to the ghost container directly, same as the
+  // chip image is.
+  const amtSpan=el.querySelector('.chip-amt');
+  const label=amtSpan?amtSpan.textContent:'';
+  const chipImgs=el.querySelectorAll('.chip-img');
+  const topChip=chipImgs.length?chipImgs[chipImgs.length-1]:null;
+  const chipSrc=topChip?topChip.getAttribute('src'):null;
+  if(!label&&!chipSrc)return;
   const ghost=document.createElement('div');
   ghost.className='chip-ghost';
   ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
   ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
-  ghost.innerHTML=html;
-  // Direct inline-style override on the actual cloned span, not a stylesheet rule -- the live
-  // element sets its amount label's position with an inline style too (bottom:calc(...), to
-  // anchor it to the top chip), and a CSS class rule fighting an inline style via !important
-  // wasn't taking effect. Setting it here in JS, after the clone exists, wins unconditionally,
-  // no specificity or cascade ambiguity possible.
-  const amtSpan=ghost.querySelector('.chip-amt');
-  if(amtSpan){amtSpan.style.top='50%';amtSpan.style.bottom='auto';amtSpan.style.transform='translateY(-50%)';}
+  // --chip is only defined on #felt-stage, not globally -- this ghost is appended straight to
+  // document.body, outside that element's subtree, so it would never inherit it. Set explicitly
+  // here rather than relying on inheritance that doesn't reach this element.
+  ghost.style.setProperty('--chip','32px');
+  if(chipSrc){
+    const img=document.createElement('img');
+    img.src=chipSrc;img.draggable=false;
+    img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:var(--chip);height:var(--chip);z-index:1';
+    ghost.appendChild(img);
+  }
+  if(label){
+    const amtFs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
+    const span=document.createElement('span');
+    span.textContent=label;
+    span.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*'+amtFs+');color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap;pointer-events:none';
+    ghost.appendChild(span);
+  }
   document.body.appendChild(ghost);
   requestAnimationFrame(()=>{ghost.classList.add('dim');});
   setTimeout(()=>{ghost.classList.add('sweep');},900);
