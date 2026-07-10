@@ -362,18 +362,33 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 #modal-winner.big .winner-amount{font-size:160px}
 .winner-bigtag{display:none;position:relative;z-index:2;font-size:24px;font-weight:900;letter-spacing:.15em;color:#ffe680;text-shadow:0 2px 6px rgba(0,0,0,.7);margin-bottom:2px}
 #modal-winner.big .winner-bigtag{display:block}
-/* Gold coin shower */
-.gold-coin{position:fixed;z-index:1;top:-40px;font-size:32px;pointer-events:none;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));animation:coinfall linear forwards}
+/* Gold coin waterfall: reusable 3D flipping coins (same front/back-face + rim technique as
+   the puck), spawned from behind the winner amount and tumbling down past it. Many transient
+   instances at once, so these are plain classes (no ids) unlike the single shared puck. */
+.coin3d-wrap{position:fixed;top:0;left:0;z-index:1;pointer-events:none;transform-style:preserve-3d;}
+.coin3d-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;}
+.coin3d-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;overflow:hidden;box-shadow:inset 0 0 4px rgba(0,0,0,.45);}
+.coin3d-face.coin3d-front{transform:rotateX(90deg) translateZ(var(--coin-half-t,3px));}
+.coin3d-face.coin3d-back{transform:rotateX(-90deg) translateZ(var(--coin-half-t,3px));}
+.coin3d-face-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 28%,#fff8d6,#ffd700 42%,#c8930a 78%,#7a5000 100%);
+  color:#7a5000;font-weight:900;text-shadow:0 1px 0 rgba(255,255,255,.5);}
+.coin3d-front .coin3d-face-img{transform:scale(-1,-1);}
+.coin3d-edge-seg{position:absolute;left:50%;top:50%;background:linear-gradient(90deg,#8a6c1a,#ffe680 50%,#8a6c1a);backface-visibility:hidden;}
 .puck-flash{animation:puckFlashGreen .5s ease-in-out 2}
+#puck3d-wrap{position:fixed;width:72px;height:72px;top:0;left:0;perspective:500px;pointer-events:none;z-index:60;opacity:0;transition:transform .55s cubic-bezier(.34,1.15,.4,1),opacity .2s ease;}
+#puck3d-wrap.puck3d-visible{opacity:1;}
+#puck3d-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1);transform:rotateX(90deg);}
+#puck3d-inner.puck3d-flipped{transform:rotateY(180deg) rotateX(90deg);}
+.puck3d-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;box-shadow:inset 0 0 6px rgba(0,0,0,.5);overflow:hidden;}
+.puck3d-face.puck3d-front{transform:rotateX(90deg) translateZ(var(--puck-half-t,8px));}
+.puck3d-face.puck3d-back{transform:rotateX(-90deg) translateZ(var(--puck-half-t,8px));}
+.puck3d-face-img{position:absolute;inset:0;background-size:contain;background-repeat:no-repeat;background-position:center;}
+.puck3d-front .puck3d-face-img{transform:scale(-1,-1);}
+.puck3d-edge-seg{position:absolute;left:50%;top:50%;background:linear-gradient(90deg,#0a0a0a,#2a2a2a 50%,#0a0a0a);backface-visibility:hidden;}
 @keyframes puckFlashGreen{
   0%,100%{filter:none}
   50%{filter:drop-shadow(0 0 10px #00ff44) drop-shadow(0 0 20px #00ff44) brightness(1.35) saturate(0) sepia(1) hue-rotate(70deg) saturate(4)}
-}
-@keyframes coinfall{
-  0%{transform:translateY(0) rotate(0deg);opacity:0}
-  8%{opacity:1}
-  100%{transform:translateY(110vh) rotate(720deg);opacity:.9}
 }
 
 /* Losing bet chip ghosts: a frozen copy of the chip stack, positioned exactly over where the
@@ -1485,21 +1500,68 @@ function hasWorkingBets(){
 }
 
 // ── WINNER MODAL ──────────────────────────────────────────────────────────────
-function spawnGoldCoins(n){
+// One reusable 3D coin builder (front/back faces + a ring of rim segments -- same technique
+// as the craps puck's extrusion) so the winner-amount coin waterfall gets real flipping discs
+// instead of flat spinning emoji.
+function createCoin3D(size){
+  const half=Math.max(2,size*0.11);
+  const wrap=document.createElement('div');wrap.className='coin3d-wrap';
+  wrap.style.width=size+'px';wrap.style.height=size+'px';
+  wrap.style.setProperty('--coin-half-t',half+'px');
+  const inner=document.createElement('div');inner.className='coin3d-inner';
+  const front=document.createElement('div');front.className='coin3d-face coin3d-front';
+  const frontImg=document.createElement('div');frontImg.className='coin3d-face-img';frontImg.textContent='$';frontImg.style.fontSize=(size*0.52)+'px';front.appendChild(frontImg);
+  const back=document.createElement('div');back.className='coin3d-face coin3d-back';
+  const backImg=document.createElement('div');backImg.className='coin3d-face-img';backImg.textContent='$';backImg.style.fontSize=(size*0.52)+'px';back.appendChild(backImg);
+  inner.appendChild(front);inner.appendChild(back);
+  const R=size/2,SEGS=20;
+  const segW=2*R*Math.sin(Math.PI/SEGS)*1.05;
+  for(let i=0;i<SEGS;i++){
+    const seg=document.createElement('div');seg.className='coin3d-edge-seg';
+    const angle=(360/SEGS)*i;
+    seg.style.cssText='width:'+segW.toFixed(2)+'px;height:'+(half*2).toFixed(2)+'px;margin-left:-'+(segW/2).toFixed(2)+'px;margin-top:-'+half.toFixed(2)+'px;transform:rotateY('+angle+'deg) translateZ('+R+'px)';
+    inner.appendChild(seg);
+  }
+  wrap.appendChild(inner);
+  return {wrap,inner};
+}
+// Coins spawn from behind the winner-amount text (z-index below #modal-winner's content, same
+// as the old flat emoji shower) and tumble down past it in a loose waterfall, each with an
+// independently randomized size, drift, fall distance, and spin so they don't read as a single
+// repeating sprite.
+function spawnCoinWaterfall(n){
+  const amtEl=document.getElementById('winner-amount');
+  if(!amtEl)return;
+  const rect=amtEl.getBoundingClientRect();
+  const originX=rect.left+rect.width/2,originY=rect.top+rect.height*0.5;
   for(let i=0;i<n;i++){
-    const c=document.createElement('div');
-    c.className='gold-coin';
-    c.textContent='🪙';
-    const x=10+Math.random()*80; // vw, spread across most of the screen width
-    const dur=1.6+Math.random()*1.1;
-    const delay=Math.random()*0.6;
-    const size=22+Math.random()*20;
-    c.style.left=x+'vw';
-    c.style.fontSize=size+'px';
-    c.style.animationDuration=dur+'s';
-    c.style.animationDelay=delay+'s';
-    document.body.appendChild(c);
-    setTimeout(()=>c.remove(),(dur+delay)*1000+200);
+    const size=16+Math.random()*26;
+    const{wrap,inner}=createCoin3D(size);
+    document.body.appendChild(wrap);
+    const sx=originX+(Math.random()-0.5)*rect.width*0.7-size/2;
+    const sy=originY+(Math.random()-0.5)*16-size/2;
+    const drift=(Math.random()-0.5)*240;
+    const fallDist=Math.min(window.innerHeight-sy+80,window.innerHeight*0.95);
+    const dur=1100+Math.random()*900;
+    const delay=Math.random()*700;
+    wrap.style.transform='translate('+sx+'px,'+sy+'px)';
+    wrap.animate([
+      {transform:'translate('+sx+'px,'+sy+'px)',opacity:0},
+      {transform:'translate('+sx+'px,'+sy+'px)',opacity:1,offset:0.08},
+      {transform:'translate('+(sx+drift*0.5)+'px,'+(sy+fallDist*0.55)+'px)',opacity:1,offset:0.75},
+      {transform:'translate('+(sx+drift)+'px,'+(sy+fallDist)+'px)',opacity:0}
+    ],{duration:dur,delay,easing:'cubic-bezier(.4,0,.7,1)',fill:'forwards'});
+    const spinX=(Math.random()<0.5?-1:1)*(720+Math.random()*720);
+    const spinY=(Math.random()<0.5?-1:1)*(360+Math.random()*720);
+    // rotateX(90deg) is a constant baseline (not part of the tumble) that tilts the disc to
+    // face the camera at rest -- same fix the puck needed. It has to stay the innermost
+    // (rightmost) function in the chain so the tumble rotations apply in world space on top
+    // of that tilt, rather than in the disc's own tilted local frame.
+    inner.animate([
+      {transform:'rotateX(90deg)'},
+      {transform:'rotateY('+spinY+'deg) rotateX('+spinX+'deg) rotateX(90deg)'}
+    ],{duration:dur,delay,easing:'linear',fill:'forwards'});
+    setTimeout(()=>wrap.remove(),delay+dur+150);
   }
 }
 function spawnChipGhost(el){
@@ -1607,7 +1669,7 @@ function showWinnerModal(amount,big){
   el.classList.toggle('big',!!big);
   el.classList.remove('hidden');el.onclick=tapWinnerModal;
   amtEl.textContent='$0.00';
-  spawnGoldCoins(big?36:20);
+  spawnCoinWaterfall(big?36:20);
   const start=performance.now();
   function tick(now){
     if(!_winnerAnimating)return;
@@ -1892,7 +1954,7 @@ function buildStrip(){
   ALL_NUMS.forEach(n=>{
     const def=NUM_DEFS[n],[w,d]=def.place;
     const ps=document.createElement('div');ps.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';
-    const pk=document.createElement('img');pk.id='puck-'+n;pk.className='puck-img';pk.src='Puck_On.png';pk.alt='';pk.draggable=false;pk.style.cssText='display:none;width:72px;height:72px;object-fit:contain;transform:translateY(-15%)';ps.appendChild(pk);pr.appendChild(ps);
+    const pk=document.createElement('div');pk.id='puck-'+n;pk.className='puck-anchor';pk.style.cssText='width:72px;height:72px;visibility:hidden;transform:translateY(-15%)';ps.appendChild(pk);pr.appendChild(ps);
     const wrap=document.createElement('div');wrap.className='num-box-wrap';
     const box=document.createElement('div');box.className='num-box';box.id='numbox-'+n;
     if(isStd){
@@ -1927,7 +1989,7 @@ function buildStrip(){
     const psp=document.createElement('div');psp.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';pr.appendChild(psp);
     const dcWrap=document.createElement('div');dcWrap.className='num-box-wrap';dcWrap.id='dc-wait-wrap';
     const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:rgba(60,0,0,.25);border-color:rgba(255,80,80,.3);cursor:pointer;position:relative';
-    const dcOffPuck=document.createElement('img');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-img';dcOffPuck.src='Puck_Off.png';dcOffPuck.alt='';dcOffPuck.draggable=false;dcOffPuck.style.cssText='display:none;position:absolute;top:4px;left:4px;width:66px;height:66px;object-fit:contain;pointer-events:none;z-index:5;transform:translateY(-15%)';dcBox.appendChild(dcOffPuck);
+    const dcOffPuck=document.createElement('div');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-anchor';dcOffPuck.style.cssText='position:absolute;top:4px;left:4px;width:66px;height:66px;visibility:hidden;pointer-events:none;transform:translateY(-15%)';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:23px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
@@ -2399,13 +2461,55 @@ function switchTab(t){
   if(feltActive)feltApplyTab(t);else feltTab=t;
 }
 function flashPuckGreen(){
-  document.querySelectorAll('.puck-img').forEach(p=>{
-    if(getComputedStyle(p).display!=='none'){
-      p.classList.remove('puck-flash');void p.offsetWidth; // restart the animation if it's already mid-flash
-      p.classList.add('puck-flash');
-      setTimeout(()=>p.classList.remove('puck-flash'),1000);
-    }
-  });
+  const p=document.getElementById('puck3d-wrap');
+  if(p&&p.classList.contains('puck3d-visible')){
+    p.classList.remove('puck-flash');void p.offsetWidth; // restart the animation if it's already mid-flash
+    p.classList.add('puck-flash');
+    setTimeout(()=>p.classList.remove('puck-flash'),1000);
+  }
+}
+// ── 3D PUCK ──────────────────────────────────────────────────────────────────
+// One puck element that slides+flips between anchors instead of two static images
+// (Puck_On.png / Puck_Off.png) toggling visibility in place. The old img elements are kept
+// as invisible '.puck-anchor' markers purely so their live layout position (which already
+// accounts for felt-mode vs list-mode and standard vs crapless) can be read via
+// getBoundingClientRect and used as this puck's travel target.
+let puck3dState=null,puck3dEl=null,puck3dInner=null;
+const PUCK_RADIUS=36,PUCK_THICK=16; // extrusion depth of the puck disc, in px
+function initPuck3D(){
+  if(puck3dEl)return;
+  puck3dEl=document.createElement('div');puck3dEl.id='puck3d-wrap';
+  puck3dEl.style.setProperty('--puck-half-t',(PUCK_THICK/2)+'px');
+  puck3dInner=document.createElement('div');puck3dInner.id='puck3d-inner';
+  const front=document.createElement('div');front.className='puck3d-face puck3d-front';
+  const frontImg=document.createElement('div');frontImg.className='puck3d-face-img';frontImg.style.backgroundImage="url('Puck_Off.png')";front.appendChild(frontImg);
+  const back=document.createElement('div');back.className='puck3d-face puck3d-back';
+  const backImg=document.createElement('div');backImg.className='puck3d-face-img';backImg.style.backgroundImage="url('Puck_On.png')";back.appendChild(backImg);
+  puck3dInner.appendChild(front);puck3dInner.appendChild(back);
+  // Rim: a ring of thin strips standing on end, each rotated a bit further around Y and
+  // pushed out to PUCK_RADIUS, so together they approximate the cylindrical edge connecting
+  // the front/back faces. Classic CSS "cylinder from strips" technique.
+  const SEGS=40;
+  const segW=2*PUCK_RADIUS*Math.sin(Math.PI/SEGS)*1.04; // slight overlap to avoid gaps
+  for(let i=0;i<SEGS;i++){
+    const seg=document.createElement('div');seg.className='puck3d-edge-seg';
+    const angle=(360/SEGS)*i;
+    const shade=0.55+0.45*Math.abs(Math.cos(angle*Math.PI/180)); // cheap fake lighting
+    seg.style.cssText='width:'+segW.toFixed(2)+'px;height:'+PUCK_THICK+'px;margin-left:-'+(segW/2).toFixed(2)+'px;margin-top:-'+(PUCK_THICK/2)+'px;filter:brightness('+shade.toFixed(2)+');transform:rotateY('+angle+'deg) translateZ('+PUCK_RADIUS+'px)';
+    puck3dInner.appendChild(seg);
+  }
+  puck3dEl.appendChild(puck3dInner);
+  document.body.appendChild(puck3dEl);
+}
+function updatePuck3D(anchorEl,state){
+  initPuck3D();
+  if(!anchorEl||!state){puck3dEl.classList.remove('puck3d-visible');puck3dState=null;return;}
+  const r=anchorEl.getBoundingClientRect();
+  const cx=r.left+r.width/2-36,cy=r.top+r.height/2-36; // center the 72x72 puck on the anchor
+  puck3dEl.style.transform='translate('+cx+'px,'+cy+'px)';
+  puck3dEl.classList.add('puck3d-visible');
+  if(state!==puck3dState)puck3dInner.classList.toggle('puck3d-flipped',state==='off');
+  puck3dState=state;
 }
 function bonusBet(t){pushUndo();
   const max=G.bonus[t+'Max']||0;
@@ -2796,14 +2900,6 @@ function updateUI(){
     if(mb)mb.classList.toggle('vis',ba>0);if(mp)mp.classList.toggle('vis',pa>0);if(ml)ml.classList.toggle('vis',la>0);
     const box=document.getElementById('numbox-'+n),ip=G.phase==='point'&&G.point===n;
     if(box)box.classList.toggle('is-point',ip);
-    const pk=document.getElementById('puck-'+n);
-    if(pk){
-      if(ip){pk.src='Puck_On.png';pk.style.display='block';}
-      // Crapless has no Don't Come box to park the OFF puck on (that's standard-only), so by
-      // Deck's instruction it sits on 9 specifically during a come-out roll instead.
-      else if(activeGame==='crapless'&&n===9&&G.phase==='comeout'){pk.src='Puck_Off.png';pk.style.display='block';}
-      else{pk.style.display='none';}
-    }
     // Come slot
     const slot=document.getElementById('come-slot-'+n);if(!slot)return;
     const cbIdx=G.comeBets.findIndex(c=>c.num===n);
@@ -2866,7 +2962,18 @@ function updateUI(){
   // Come
   {const ca=G.bets['come']||0;const st=document.getElementById('stk-come');if(st)st.textContent=ca?fmt(ca):'';const cb=document.getElementById('come-bar');if(cb)cb.classList.toggle('active-bar',!!ca);}
   // Don't Come waiting zone
-  {const dca=G.bets['dc']||0;const st=document.getElementById('stk-dc-wait');if(st)st.textContent=dca?fmt(dca):'';const dcb=document.getElementById('dc-wait-bar');if(dcb)dcb.classList.toggle('active-bar',!!dca);const dcOffP=document.getElementById('puck-off-dc');if(dcOffP)dcOffP.style.display=(G.phase==='comeout')?'block':'none';}
+  {const dca=G.bets['dc']||0;const st=document.getElementById('stk-dc-wait');if(st)st.textContent=dca?fmt(dca):'';const dcb=document.getElementById('dc-wait-bar');if(dcb)dcb.classList.toggle('active-bar',!!dca);}
+  // Puck: single 3D puck that flips/slides to whichever anchor is active, instead of two
+  // static images that used to toggle independently per number box.
+  {
+    let puckAnchor=null,puckState=null;
+    if(G.phase==='point'){puckAnchor=document.getElementById('puck-'+G.point);puckState='on';}
+    // Crapless has no Don't Come box to park the OFF puck on (that's standard-only), so by
+    // Deck's instruction it sits on 9 specifically during a come-out roll instead.
+    else if(activeGame==='crapless'&&G.phase==='comeout'){puckAnchor=document.getElementById('puck-9');puckState='off';}
+    else if(activeGame==='standard'&&G.phase==='comeout'){puckAnchor=document.getElementById('puck-off-dc');puckState='off';}
+    updatePuck3D(puckAnchor,puckState);
+  }
   // Don't Pass bar
   {
     const dpA=G.bets['dp']||0,dpO=G.bets['dpodds']||0;
