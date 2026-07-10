@@ -347,13 +347,43 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .winner-title{position:relative;z-index:2;font-size:38px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6);letter-spacing:.05em;line-height:1;margin-bottom:6px}
 /* The number itself: metallic gold gradient text, not a solid color, giving it the shiny
    engraved-coin look from the reference image rather than flat gold. */
-.winner-amount{position:relative;z-index:2;font-size:124px;font-weight:900;margin-top:5px;isolation:isolate;
+.winner-amount-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;margin-top:5px}
+.winner-amount{position:relative;z-index:2;font-size:124px;font-weight:900;isolation:isolate;
   display:inline-flex;align-items:center;justify-content:center;line-height:1;
   background:linear-gradient(180deg,#fff6cf 0%,#ffd700 20%,#a8720a 48%,#ffe680 55%,#c8930a 75%,#7a5000 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
   -webkit-text-stroke:1.5px #5c3d00;
   filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(255,215,0,.8));
   letter-spacing:.02em}
+/* Golden god rays: a translucent rotating/pulsing sunburst sitting only behind the currency
+   amount. This has to be a real sibling element (not a ::before on .winner-amount) -- a
+   pseudo-element's own background/text always paints before its negative-z-index children per
+   the CSS stacking spec, so a ::before with z-index:-1 there rendered ON TOP of the amount's
+   text instead of behind it. As a sibling in the shared .winner-amount-wrap, plain z-index
+   comparison applies and it correctly sits behind. Faded to transparent at the edges via a
+   radial mask so it blooms outward rather than showing a hard-edged disc. */
+.winner-rays{
+  position:absolute;top:50%;left:50%;width:480px;height:480px;z-index:1;
+  transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,rgba(255,224,130,.72) 0deg 9deg,rgba(255,224,130,0) 9deg 20deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0%,#000 35%,transparent 72%);
+  mask-image:radial-gradient(circle,#000 0%,#000 35%,transparent 72%);
+  animation:godRaySpinPulse 18s ease-in-out infinite,godRayOpacityPulse 4.5s ease-in-out infinite;
+}
+/* Zero-size anchor sitting at the exact same center point as the god rays, one layer above
+   them (z-index ties with .winner-rays but comes after it in DOM order, so it paints on top)
+   and one layer below the currency text (.winner-amount is z-index:2, definitively above both).
+   Each firework coin is an absolutely-positioned child of this anchor, translated outward from
+   (0,0) -- so "spawn point" and "god ray center" are the same point by construction, not two
+   separately-computed coordinates that have to be kept in sync. */
+.winner-coins{position:absolute;top:50%;left:50%;width:0;height:0;z-index:1;pointer-events:none;}
+#modal-winner.big .winner-rays{width:620px;height:620px}
+@keyframes godRaySpinPulse{
+  0%{transform:translate(-50%,-50%) rotate(0deg) scale(1)}
+  50%{transform:translate(-50%,-50%) rotate(180deg) scale(1.22)}
+  100%{transform:translate(-50%,-50%) rotate(360deg) scale(1)}
+}
+@keyframes godRayOpacityPulse{0%,100%{opacity:.55}50%{opacity:1}}
 .winner-tap{position:relative;z-index:2;font-size:18px;color:rgba(255,255,255,.75);margin-top:14px;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 /* Big win: triggered when the server reports a 7-for-1 or better single payout */
 #modal-winner.big .winner-box{animation:winnerPop .35s cubic-bezier(.34,1.56,.64,1),bigWinPulse 1.1s ease-in-out infinite .35s}
@@ -365,7 +395,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 /* Gold coin waterfall: reusable 3D flipping coins (same front/back-face + rim technique as
    the puck), spawned from behind the winner amount and tumbling down past it. Many transient
    instances at once, so these are plain classes (no ids) unlike the single shared puck. */
-.coin3d-wrap{position:fixed;top:0;left:0;z-index:1;pointer-events:none;transform-style:preserve-3d;}
+.coin3d-wrap{position:absolute;top:0;left:0;pointer-events:none;transform-style:preserve-3d;}
 .coin3d-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;}
 .coin3d-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;overflow:hidden;box-shadow:inset 0 0 4px rgba(0,0,0,.45);}
 .coin3d-face.coin3d-front{transform:rotateX(90deg) translateZ(var(--coin-half-t,3px));}
@@ -676,8 +706,12 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   <div id="modal-winner" class="hidden">
     <div class="winner-box">
       <div class="winner-bigtag" id="winner-bigtag">BIG WIN</div>
-      <div class="winner-title">🎉 WINNER!</div>
-      <div class="winner-amount" id="winner-amount">$0.00</div>
+      <div class="winner-title">🎉 Congratulations, you win 🎉</div>
+      <div class="winner-amount-wrap">
+        <div class="winner-rays"></div>
+        <div class="winner-coins" id="winner-coins"></div>
+        <div class="winner-amount" id="winner-amount">$0.00</div>
+      </div>
       <div class="winner-tap">tap to dismiss</div>
     </div>
   </div>
@@ -744,6 +778,16 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <div style="display:flex;gap:8px">
         <button class="modal-btn cancel" onclick="cancelCommission()">Cancel</button>
         <button class="modal-btn" onclick="confirmCommission()">OK</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="modal-payoff">
+    <div class="modal-box" style="max-width:360px">
+      <div class="modal-title" style="margin-bottom:12px">Pay Off Buy-In?</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px" id="payoff-text"></div>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn cancel" onclick="declinePayoff()">No, Cash Out Full Amount</button>
+        <button class="modal-btn" onclick="acceptPayoff()">Pay Off Buy-In</button>
       </div>
     </div>
   </div>
@@ -839,7 +883,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.39</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.42</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1525,32 +1569,36 @@ function createCoin3D(size){
   wrap.appendChild(inner);
   return {wrap,inner};
 }
-// Coins spawn from behind the winner-amount text (z-index below #modal-winner's content, same
-// as the old flat emoji shower) and tumble down past it in a loose waterfall, each with an
-// independently randomized size, drift, fall distance, and spin so they don't read as a single
-// repeating sprite.
+// Real firework physics: every coin launches from the exact same point (the shared center
+// anchor in #winner-coins, which is also the god rays' center) and bursts outward within a
+// 135deg cone facing straight down -- i.e. angles from 22.5deg to 157.5deg in standard
+// screen-angle terms (0deg=right, 90deg=straight down, 180deg=left), never sideways-up or
+// backwards-up. Each coin travels outward along its own angle for the "explosion" phase, then
+// gravity takes over and pulls it further straight down for the "falling to earth" phase.
 function spawnCoinWaterfall(n){
-  const amtEl=document.getElementById('winner-amount');
-  if(!amtEl)return;
-  const rect=amtEl.getBoundingClientRect();
-  const originX=rect.left+rect.width/2,originY=rect.top+rect.height*0.5;
+  const container=document.getElementById('winner-coins');
+  if(!container)return;
   for(let i=0;i<n;i++){
-    const size=16+Math.random()*26;
+    const size=(16+Math.random()*26)*2; // twice as large
     const{wrap,inner}=createCoin3D(size);
-    document.body.appendChild(wrap);
-    const sx=originX+(Math.random()-0.5)*rect.width*0.7-size/2;
-    const sy=originY+(Math.random()-0.5)*16-size/2;
-    const drift=(Math.random()-0.5)*240;
-    const fallDist=Math.min(window.innerHeight-sy+80,window.innerHeight*0.95);
-    const dur=1100+Math.random()*900;
-    const delay=Math.random()*700;
-    wrap.style.transform='translate('+sx+'px,'+sy+'px)';
+    wrap.style.marginLeft=(-size/2)+'px';wrap.style.marginTop=(-size/2)+'px';
+    container.appendChild(wrap);
+    const angleDeg=90+(Math.random()-0.5)*135; // 22.5..157.5, centered on straight down
+    const angleRad=angleDeg*Math.PI/180;
+    const dx=Math.cos(angleRad),dy=Math.sin(angleRad);
+    const burst=90+Math.random()*180; // explosion distance along the launch angle
+    const gravityFall=280+Math.random()*320; // extra straight-down fall once the burst spends itself
+    const dur=(1100+Math.random()*900)*1.5; // shower lasts ~50% longer
+    const delay=Math.random()*700*1.5;
+    const p1x=dx*burst*0.45,p1y=dy*burst*0.45;
+    const p2x=dx*burst,p2y=dy*burst+gravityFall*0.4;
+    const p3x=dx*burst*1.1,p3y=dy*burst+gravityFall;
     wrap.animate([
-      {transform:'translate('+sx+'px,'+sy+'px)',opacity:0},
-      {transform:'translate('+sx+'px,'+sy+'px)',opacity:1,offset:0.08},
-      {transform:'translate('+(sx+drift*0.5)+'px,'+(sy+fallDist*0.55)+'px)',opacity:1,offset:0.75},
-      {transform:'translate('+(sx+drift)+'px,'+(sy+fallDist)+'px)',opacity:0}
-    ],{duration:dur,delay,easing:'cubic-bezier(.4,0,.7,1)',fill:'forwards'});
+      {transform:'translate(0px,0px)',opacity:0},
+      {transform:'translate('+p1x.toFixed(1)+'px,'+p1y.toFixed(1)+'px)',opacity:1,offset:0.12},
+      {transform:'translate('+p2x.toFixed(1)+'px,'+p2y.toFixed(1)+'px)',opacity:1,offset:0.7},
+      {transform:'translate('+p3x.toFixed(1)+'px,'+p3y.toFixed(1)+'px)',opacity:0}
+    ],{duration:dur,delay,easing:'cubic-bezier(.25,.46,.45,.94)',fill:'forwards'});
     const spinX=(Math.random()<0.5?-1:1)*(720+Math.random()*720);
     const spinY=(Math.random()<0.5?-1:1)*(360+Math.random()*720);
     // rotateX(90deg) is a constant baseline (not part of the tumble) that tilts the disc to
@@ -1677,7 +1725,7 @@ function showWinnerModal(amount,big){
     const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
     amtEl.textContent=fmt(r2(e*amount));
     if(t<1)requestAnimationFrame(tick);
-    else{_winnerAnimating=false;amtEl.textContent=fmt(amount);winnerTimer=setTimeout(closeWinnerModal,2000);}
+    else{_winnerAnimating=false;amtEl.textContent=fmt(amount);winnerTimer=setTimeout(closeWinnerModal,3000);} // held long enough for the longer coin shower to finish
   }
   requestAnimationFrame(tick);
 }
@@ -3052,8 +3100,29 @@ selectChip(25);
 tryRestoreSession();
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
+// If the player is cashing out at a loss (net P&L < 0, i.e. they've redeemed more in buy-ins
+// than they're walking away with), offer to settle that loss against this ticket: the ticket
+// pays out abs(net) less, and P&L is zeroed going forward. Skipped entirely for a profitable
+// or break-even cash out. Note this zeroing is client-side/local only -- there's no server
+// endpoint in this repo to persist a forgiven total_redeemed, so it resets to the server's
+// value again on next login.
+let _pendingPayoffLoss=0;
 async function cashOut(){
   if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
+  const net=calcNet();
+  if(net<0){
+    _pendingPayoffLoss=r2(-net);
+    document.getElementById('payoff-text').textContent=
+      'You\'re currently down '+fmt(_pendingPayoffLoss)+' against your buy-in. Pay it off using '+
+      'this cash out? Your ticket will be reduced by '+fmt(_pendingPayoffLoss)+' and your P&L will reset to $0.00.';
+    document.getElementById('modal-payoff').classList.remove('hidden');
+    return;
+  }
+  doCashOut(false);
+}
+function declinePayoff(){document.getElementById('modal-payoff').classList.add('hidden');doCashOut(false);}
+function acceptPayoff(){document.getElementById('modal-payoff').classList.add('hidden');doCashOut(true);}
+async function doCashOut(payoff){
   const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
@@ -3070,7 +3139,13 @@ async function cashOut(){
   G.bankroll=0;
   if(currentPlayer)currentPlayer.bankroll=0;
   const code=data.code;
-  const amount=parseFloat(data.amount);
+  let amount=parseFloat(data.amount);
+  if(payoff){
+    amount=r2(Math.max(0,amount-_pendingPayoffLoss));
+    G.startingBankroll=0;
+    if(currentPlayer)currentPlayer.total_redeemed=0;
+    addLog('Paid off buy-in: ticket reduced by '+fmt(_pendingPayoffLoss)+'.','info');
+  }
   const now=new Date(data.created_at||Date.now());
   const dateStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'
     +now.getDate().toString().padStart(2,'0')+'/'
