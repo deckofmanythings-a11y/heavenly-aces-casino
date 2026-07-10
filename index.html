@@ -824,7 +824,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.36</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.38</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1562,6 +1562,12 @@ function staticGhostChecks(){
     [/^Don't Pass: lost/,'stk-dp'],
     [/^Pass Odds: lost/,'stk-passodds'],
     [/^DP Lay Odds: lost/,'stk-dpodds'],
+    // Hard Ways -- server calls the shared lose() helper with a display name built as
+    // 'hard4' -> 'Hard 4', so the logged prefix is always "Hard <number>: lost".
+    [/^Hard 4: lost/,'stk-hard4'],
+    [/^Hard 6: lost/,'stk-hard6'],
+    [/^Hard 8: lost/,'stk-hard8'],
+    [/^Hard 10: lost/,'stk-hard10'],
   ];
   ALL_NUMS.forEach(n=>{
     checks.push([new RegExp('^Buy '+n+': lost'),'stk-buy'+n]);
@@ -1570,8 +1576,25 @@ function staticGhostChecks(){
   });
   return checks;
 }
+// Come and Don't Come, both flat and odds, per number -- these render dynamically (rebuilt
+// fresh from G.comeBets/G.dcBets on every update, indexed by array position which can shift
+// between rolls) so they never had a stable id to snapshot against before. Fixed at the
+// source: the per-number render loop that builds these boxes now stamps each one with an id
+// based on the point number itself (combox-flat-N, dcbox-odds-N, etc.), which stays meaningful
+// roll to roll the same way stk-buy6 always means "Buy on 6" regardless of what else is on
+// the board, unlike an array index would.
+function dynamicGhostChecks(){
+  const checks=[];
+  ALL_NUMS.forEach(n=>{
+    checks.push([new RegExp('^Come \\('+n+'\\): lost'),'combox-flat-'+n]);
+    checks.push([new RegExp('^Come \\('+n+'\\) odds: lost'),'combox-odds-'+n]);
+    checks.push([new RegExp('^Don\'t Come \\('+n+'\\): lost'),'dcbox-flat-'+n]);
+    checks.push([new RegExp('^DC Lay Odds \\('+n+'\\): lost'),'dcbox-odds-'+n]);
+  });
+  return checks;
+}
 function spawnLossGhosts(rawLog){
-  staticGhostChecks().forEach(([re,id])=>{
+  staticGhostChecks().concat(dynamicGhostChecks()).forEach(([re,id])=>{
     if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id));
   });
 }
@@ -2179,10 +2202,13 @@ function renderChipStacks(){
     // deliberately excluded, they're always at risk once locked in.
     const globalOff=!G.betsOn||G.betsOffThisRoll;
     let off=false;
-    const cell=el.closest('.nb-buy,.nb-place');
+    // .nb-buy-left is standard felt's actual Buy cell class (crapless uses plain .nb-buy) --
+    // missing it here meant Buy's off tag silently never applied on standard specifically.
+    const cell=el.closest('.nb-buy,.nb-buy-left,.nb-place');
     if(cell){off=globalOff;}
     else if(/^stk-lay\d+$/.test(el.id)){off=globalOff;}
     else if(el.id==='stk-dp'||el.id==='stk-dpodds'||el.id==='stk-passodds'){off=globalOff;}
+    else if(/^stk-hard(4|6|8|10)$/.test(el.id)){off=globalOff;}
     // Pass Line's own contract lock, and the Lucky Roller bonus bets' lock once they become
     // a contract at roll start -- same integrated badge everything else uses, on the chip
     // stack itself, not on individual number cells or a separately positioned element that
@@ -2791,8 +2817,8 @@ function updateUI(){
         html+='<div class="come-on-box">';
         maybeTriggerChipSound('come-flat-'+cb.num,cb.flat);
         maybeTriggerChipSound('come-odds-'+cb.num,cur);
-        html+='<div class="come-half flat-half">'+chipStackHTML(cb.flat,false,true)+'</div>';
-        html+='<div class="come-half odds-half" onclick="event.stopPropagation();addComeOddsAmt('+cbIdx+',G.chip)" oncontextmenu="event.preventDefault();event.stopPropagation();removeComeOdds('+cbIdx+')">'+(cur>0?chipStackHTML(cur,G.phase==='comeout'||!G.betsOn||G.betsOffThisRoll):'')+'</div>';
+        html+='<div class="come-half flat-half" id="combox-flat-'+n+'">'+chipStackHTML(cb.flat,false,true)+'</div>';
+        html+='<div class="come-half odds-half" id="combox-odds-'+n+'" onclick="event.stopPropagation();addComeOddsAmt('+cbIdx+',G.chip)" oncontextmenu="event.preventDefault();event.stopPropagation();removeComeOdds('+cbIdx+')">'+(cur>0?chipStackHTML(cur,G.phase==='comeout'||!G.betsOn||G.betsOffThisRoll):'')+'</div>';
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
         }else{
         html+='<div class="come-on-box">';
@@ -2813,8 +2839,8 @@ function updateUI(){
         maybeTriggerChipSound('dc-flat-'+dc.num,dc.flat);
         maybeTriggerChipSound('dc-odds-'+dc.num,cur);
         const dcOff=!G.betsOn||G.betsOffThisRoll;
-        html+='<div class="come-half flat-half">'+chipStackHTML(dc.flat,dcOff)+'</div>';
-        html+='<div class="come-half odds-half" onclick="event.stopPropagation();addDcOddsAmt('+dcIdx+',G.chip)">'+(cur>0?chipStackHTML(cur,dcOff):'')+'</div>';
+        html+='<div class="come-half flat-half" id="dcbox-flat-'+n+'">'+chipStackHTML(dc.flat,dcOff)+'</div>';
+        html+='<div class="come-half odds-half" id="dcbox-odds-'+n+'" onclick="event.stopPropagation();addDcOddsAmt('+dcIdx+',G.chip)">'+(cur>0?chipStackHTML(cur,dcOff):'')+'</div>';
         if(canOdds)html+='<button class="dc-odds-btn" onclick="event.stopPropagation();openDcLayOdds('+dcIdx+')">+L</button>';
       }else{
         html+='<span class="dc-flat-amt">'+fmt(dc.flat)+'</span>';
