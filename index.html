@@ -917,7 +917,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.46</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.48</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1140,7 +1140,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <div class="voucher-header">
         <div class="voucher-property">⬡ Rated Hex</div>
         <div class="voucher-address">Virtual Casino &nbsp;·&nbsp; Rated Hex Gaming Network</div>
-        <div class="voucher-type">Cashout Voucher</div>
+        <div class="voucher-type" id="voucher-type-label">Cashout Voucher</div>
       </div>
       <div class="voucher-barcode" id="voucher-barcode">RH-00000000</div>
       <div class="voucher-validation" id="voucher-validation">
@@ -1747,18 +1747,21 @@ function spawnLossGhosts(rawLog){
   });
 }
 // Mirror of spawnLossGhosts for winning bets that get returned (contract ends, chips leave the
-// board), swept toward the bottom of the screen and never dimmed. The exact server wording for
-// wins isn't visible from this repo (roll resolution lives in a Supabase Edge Function) -- a
-// first attempt assumed the literal mirror "<Bet>: won" and never fired in practice. This casts
-// a wider net, matching the standalone word "win"/"wins" (any punctuation or nothing after it),
-// or "WON"/"made!"/"returned", appearing anywhere after the bet-name prefix, case-insensitive --
-// deliberately broader than the log-line classifier a few hundred lines below (inside
-// rollDice()) that inspired it, since a false-positive sweep animation here is low-stakes
-// compared to that classifier mis-coloring a log line.
-const WIN_VERB_PATTERN='.*(?:\\bwins?\\b|WON|made!|returned)';
+// board), swept toward the bottom of the screen and never dimmed. Two earlier attempts guessed
+// at the server's wording (first "<Bet>: won", then a broad "win/WON/made!/returned" net) and
+// neither actually matched -- fixed for real this time by reading the resolve() source directly
+// (roll-crapless/roll-standard Edge Functions). Every winning per-bet line there is built as
+// pP()/pR(): "<Bet name>: +<amount> (stays)" or "(returned)" -- e.g. "Buy 6: +13.30 (returned)",
+// "Hard 6: +45.00 (stays)", "Don't Come (6): +25.00 (seven-out, returned)". The one exception is
+// a Come flat win, which resolve() logs as "Come (N) wins — ..." with no colon at all -- handled
+// as its own special case below rather than forcing it through the shared "<Bet>: +" checks.
 function spawnWinGhosts(rawLog){
-  staticGhostChecks(WIN_VERB_PATTERN,'i').concat(dynamicGhostChecks(WIN_VERB_PATTERN,'i')).forEach(([re,id])=>{
+  staticGhostChecks('\\+').concat(dynamicGhostChecks('\\+')).forEach(([re,id])=>{
     if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id),{direction:'down',noDim:true});
+  });
+  ALL_NUMS.forEach(n=>{
+    if(rawLog.some(l=>new RegExp('^Come \\('+n+'\\) wins').test(l)))
+      spawnChipGhost(document.getElementById('combox-flat-'+n),{direction:'down',noDim:true});
   });
 }
 // The god-ray oval is sized to the actual rendered payout text (not a hardcoded guess) by
@@ -3179,21 +3182,27 @@ selectChip(25);
 tryRestoreSession();
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
-// If the player is cashing out at a loss (net P&L < 0, i.e. they've redeemed more in buy-ins
-// than they're walking away with), offer to settle that loss against this ticket: the ticket
-// pays out abs(net) less, and P&L is zeroed going forward. Skipped entirely for a profitable
-// or break-even cash out. Note this zeroing is client-side/local only -- there's no server
-// endpoint in this repo to persist a forgiven total_redeemed, so it resets to the server's
-// value again on next login.
-let _pendingPayoffLoss=0;
+// "Debt" here is G.startingBankroll (== total_redeemed: the cumulative buy-in money Deck has
+// fronted via redeem codes). If the player is cashing out MORE than that -- only possible with
+// a genuine profit, i.e. calcNet()>0 -- they can choose to pay that debt off using this ticket:
+// the voucher shrinks to just the profit portion (bankroll - debt) and is flagged as a
+// "Profit-only" voucher. Declining keeps the full ticket (face value = bankroll).
+//
+// The Supabase cashout/redeem Edge Functions are the actual source of truth for all of this
+// (payoffDebt flag -> reduced amount, is_profit_only voucher flag, total_redeemed settlement) --
+// this just sends the intent and displays whatever the server actually decided. amount/
+// isProfitOnly/newTotalRedeemed all fall back to client-side computation if an older,
+// not-yet-updated server response is missing them, so this still degrades gracefully.
 async function cashOut(){
   if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
   const net=calcNet();
-  if(net<0){
-    _pendingPayoffLoss=r2(-net);
+  if(net>0&&G.bankroll>G.startingBankroll){
+    const debt=r2(G.startingBankroll);
+    const profit=r2(G.bankroll-G.startingBankroll);
     document.getElementById('payoff-text').textContent=
-      'You\'re currently down '+fmt(_pendingPayoffLoss)+' against your buy-in. Pay it off using '+
-      'this cash out? Your ticket will be reduced by '+fmt(_pendingPayoffLoss)+' and your P&L will reset to $0.00.';
+      'You have '+fmt(profit)+' in profit. Pay off your '+fmt(debt)+' buy-in debt using '+
+      'this cash out? Your ticket will be reduced to your '+fmt(profit)+' profit (a Profit-only voucher) '+
+      'and your Total Redeemed will reset to $0.00.';
     document.getElementById('modal-payoff').classList.remove('hidden');
     return;
   }
@@ -3204,12 +3213,13 @@ function acceptPayoff(){document.getElementById('modal-payoff').classList.add('h
 async function doCashOut(payoff){
   const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
   const token=localStorage.getItem('craps_session');
+  const oldBankroll=G.bankroll,oldDebt=G.startingBankroll;
   let data;
   try{
     const res=await fetch(FUNCTIONS_URL+'/cashout',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
-      body:JSON.stringify({session_token:token})
+      body:JSON.stringify({session_token:token,payoffDebt:!!payoff})
     });
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error.'};}
@@ -3218,13 +3228,19 @@ async function doCashOut(payoff){
   G.bankroll=0;
   if(currentPlayer)currentPlayer.bankroll=0;
   const code=data.code;
-  let amount=parseFloat(data.amount);
-  if(payoff){
-    amount=r2(Math.max(0,amount-_pendingPayoffLoss));
-    G.startingBankroll=0;
-    if(currentPlayer)currentPlayer.total_redeemed=0;
-    addLog('Paid off buy-in: ticket reduced by '+fmt(_pendingPayoffLoss)+'.','info');
-  }
+  // isProfitOnly/amount/newTotalRedeemed come straight from the server when it's been updated
+  // to know about payoffDebt -- it's authoritative on whether payoff was actually valid (e.g.
+  // in case something changed between opening the modal and confirming). If isProfitOnly is
+  // missing from the response, that means an older server handled this request: it always
+  // returns the FULL bankroll as data.amount with no idea payoff was requested, so the
+  // reduction and debt settlement both have to happen here instead, as a fallback.
+  const serverKnowsPayoff=data.isProfitOnly!==undefined;
+  const isProfitOnly=serverKnowsPayoff?!!data.isProfitOnly:(payoff&&oldBankroll>oldDebt);
+  const amount=serverKnowsPayoff?parseFloat(data.amount):(isProfitOnly?r2(oldBankroll-oldDebt):parseFloat(data.amount));
+  const newDebt=data.newTotalRedeemed!==undefined?r2(data.newTotalRedeemed):r2(Math.max(0,oldDebt-oldBankroll+amount));
+  if(isProfitOnly)addLog('Paid off buy-in debt: ticket reduced to '+fmt(amount)+' profit-only.','info');
+  G.startingBankroll=newDebt;
+  if(currentPlayer)currentPlayer.total_redeemed=newDebt;
   const now=new Date(data.created_at||Date.now());
   const dateStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'
     +now.getDate().toString().padStart(2,'0')+'/'
@@ -3232,9 +3248,10 @@ async function doCashOut(payoff){
   const timeStr=now.getHours().toString().padStart(2,'0')+':'
     +now.getMinutes().toString().padStart(2,'0')+':'
     +now.getSeconds().toString().padStart(2,'0');
-  const voucherNum=Math.floor(Math.random()*9000+1000);
+  const voucherNum=(isProfitOnly?'PR-':'')+Math.floor(Math.random()*9000+1000);
   const assetNum=Math.floor(Math.random()*9000+1000);
   document.getElementById('voucher-barcode').textContent=code;
+  document.getElementById('voucher-type-label').textContent=isProfitOnly?'Profit-Only Cashout Voucher':'Cashout Voucher';
   document.getElementById('voucher-validation').innerHTML=
     'VALIDATION &nbsp;&nbsp; '+code+'<br>'
     +dateStr+' &nbsp; '+timeStr+' &nbsp;&nbsp; VOUCHER # '+voucherNum;
