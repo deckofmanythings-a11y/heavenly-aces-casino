@@ -301,7 +301,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     </div>
     <div class="placement-title">⚓ BATTLE STATIONS</div>
     <div class="placement-sub">Drag ships to move · Click to rotate</div>
-    <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:0 0 2px">Ver. 0.2.63</div>
+    <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:0 0 2px">Ver. 0.2.64</div>
     <div class="bet-row" style="align-items:center;gap:10px">
       <span class="bet-lbl">Bet</span>
       <!-- Left-click adds the selected chip, right-click removes it -- same interaction as
@@ -732,17 +732,13 @@ let _dragShipIdx=null;
 let _dragOffset=null; // offset within the ship where the drag started
 
 function renderPlacementGrid(){
-  const colLabels=document.getElementById('placement-col-labels');
   const rowsEl=document.getElementById('placement-rows');
-  if(!colLabels||!rowsEl)return;
-  colLabels.innerHTML='<div style="width:18px;flex-shrink:0"></div>'+
-    'ABCDEF'.split('').map(l=>'<div class="p-col-label">'+l+'</div>').join('');
+  if(!rowsEl)return;
   rowsEl.innerHTML='';
   rowsEl.style.position='relative';
   const tempGrid=buildGrid(G.ships);
   for(let r=0;r<GRID_SIZE;r++){
     const row=document.createElement('div');row.className='p-row';
-    const rl=document.createElement('div');rl.className='p-row-label';rl.textContent=r+1;row.appendChild(rl);
     for(let c=0;c<GRID_SIZE;c++){
       const cell=document.createElement('div');
       cell.className='p-cell'+(tempGrid[r][c]==='ship'?' ship':'');
@@ -794,7 +790,10 @@ function renderPlacementGrid(){
       document.querySelectorAll('.drag-over,.drag-invalid').forEach(el=>el.classList.remove('drag-over','drag-invalid'));
     }
   },{once:true});
-  requestAnimationFrame(()=>renderShipImagesOnGrid('placement-rows','pr','pc'));
+  requestAnimationFrame(()=>{
+    renderShipImagesOnGrid('placement-rows','pr','pc');
+    renderGridLabels('placement-rows','pr','pc','ABCDEF'.split(''));
+  });
 }
 
 function rotateShip(si){
@@ -1142,15 +1141,11 @@ function playAgain(){
 
 // ── GRID RENDERING ─────────────────────────────────────────────────────────────
 function buildMainGrid(){
-  const colWrap=document.getElementById('col-labels');
   const rowWrap=document.getElementById('grid-rows');
-  if(!colWrap||!rowWrap)return;
-  colWrap.innerHTML='<div style="width:22px;flex-shrink:0"></div>'+
-    'ABCDEF'.split('').map(l=>'<div class="col-label">'+l+'</div>').join('');
+  if(!rowWrap)return;
   rowWrap.innerHTML='';
   for(let r=0;r<GRID_SIZE;r++){
     const row=document.createElement('div');row.className='grid-row';
-    const rl=document.createElement('div');rl.className='row-label';rl.textContent=r+1;row.appendChild(rl);
     for(let c=0;c<GRID_SIZE;c++){
       const cell=document.createElement('div');
       cell.className='grid-cell';
@@ -1158,6 +1153,42 @@ function buildMainGrid(){
       row.appendChild(cell);
     }
     rowWrap.appendChild(row);
+  }
+  requestAnimationFrame(()=>renderGridLabels('grid-rows','r','c','ABCDEF'.split('')));
+}
+
+// Row/column labels are appended as children of the SAME diamond-transformed grid
+// container as the cells (rather than a separate stacked strip), so they inherit
+// the exact same rotate/scale and line up with the grid no matter its size.
+function renderGridLabels(containerId, attrR, attrC, letters){
+  const container=document.getElementById(containerId);
+  if(!container)return;
+  container.querySelectorAll('.grid-edge-label').forEach(el=>el.remove());
+  const counter='scaleY('+(1/DIAMOND_SY)+') rotate(-45deg)';
+  const labelSize=20;
+  for(let r=0;r<GRID_SIZE;r++){
+    const cell=container.querySelector('[data-'+attrR+'="'+r+'"][data-'+attrC+'="0"]');
+    if(!cell)continue;
+    const box=localBox(cell,container);
+    const lbl=document.createElement('div');
+    lbl.className='grid-edge-label';
+    lbl.textContent=r+1;
+    lbl.style.cssText='position:absolute;left:'+(box.left-labelSize-4)+'px;top:'+(box.top+box.height/2-labelSize/2)+'px;'
+      +'width:'+labelSize+'px;height:'+labelSize+'px;display:flex;align-items:center;justify-content:center;'
+      +'font-size:13px;font-weight:700;color:rgba(255,255,255,.5);pointer-events:none;z-index:3;transform:'+counter;
+    container.appendChild(lbl);
+  }
+  for(let c=0;c<GRID_SIZE;c++){
+    const cell=container.querySelector('[data-'+attrR+'="0"][data-'+attrC+'="'+c+'"]');
+    if(!cell)continue;
+    const box=localBox(cell,container);
+    const lbl=document.createElement('div');
+    lbl.className='grid-edge-label';
+    lbl.textContent=letters[c];
+    lbl.style.cssText='position:absolute;left:'+(box.left+box.width/2-labelSize/2)+'px;top:'+(box.top-labelSize-4)+'px;'
+      +'width:'+labelSize+'px;height:'+labelSize+'px;display:flex;align-items:center;justify-content:center;'
+      +'font-size:13px;font-weight:700;color:rgba(255,255,255,.5);pointer-events:none;z-index:3;transform:'+counter;
+    container.appendChild(lbl);
   }
 }
 function renderMainGrid(){
@@ -1277,7 +1308,11 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
         +'left:'+(cx-spanH/2)+'px;top:'+(cy-spanW/2)+'px;'
         +'width:'+spanH+'px;height:'+spanW+'px;'
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
-      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+mirrorX+') rotate(90deg);transform-origin:center center';
+      // Swapping which axis the ship spans is a reflection, not a rotation (the art is a
+      // fixed-camera 3/4 render, so a plain rotate(90deg) puts the light/perspective on
+      // the wrong side) -- always include the base scaleX(-1), with mirrorX layered on
+      // top only to flip bow direction.
+      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+(mirrorX*-1)+') rotate(90deg);transform-origin:center center';
     }
 
     wrap.appendChild(img);
@@ -1288,7 +1323,10 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
 function renderShipImages(){
   if(!G.ships)return;
   // Main battle grid uses data-r / data-c
-  if(G.grid) renderShipImagesOnGrid('grid-rows','r','c');
+  if(G.grid){
+    renderShipImagesOnGrid('grid-rows','r','c');
+    renderGridLabels('grid-rows','r','c','ABCDEF'.split(''));
+  }
 }
 function renderShipStatus(bet,containerId){
   bet=bet===undefined?G.bet:bet;
