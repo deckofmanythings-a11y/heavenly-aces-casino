@@ -74,8 +74,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .grid-cell.ship::after{content:'🚢';font-size:20px;opacity:.6;display:inline-block;transform:rotate(-45deg) scaleY(2)}
 /* z-index above .ship-img-wrap's (2) -- .grid-cell has no z-index of its own, so without
    this the hit/miss marker painted underneath the ship art instead of on top of it. */
-.grid-cell.hit::after{content:'';display:block;width:65%;height:65%;background:url('hit.png') center/contain no-repeat;transform:rotate(-45deg) scaleY(2);position:relative;z-index:3}
-.grid-cell.miss::after{content:'';display:block;width:65%;height:65%;background:url('miss.png') center/contain no-repeat;opacity:.85;transform:rotate(-45deg) scaleY(2);position:relative;z-index:3}
+.grid-cell.hit::after{content:'';display:block;width:130%;height:130%;background:url('hit.png') center/contain no-repeat;transform:rotate(-45deg) scaleY(2);position:relative;z-index:3}
+/* Unlike hit, miss stays BELOW .ship-img-wrap's z-index:2 -- z-index:1 (not just omitting
+   it) since .grid-cell has no stacking context of its own, so this competes directly
+   against the ship layer in the same shared context. */
+.grid-cell.miss::after{content:'';display:block;width:65%;height:65%;background:url('miss.png') center/contain no-repeat;opacity:.85;transform:rotate(-45deg) scaleY(2);position:relative;z-index:1}
 
 /* ── RIGHT PANEL (ship status + controls) ── */
 #right-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
@@ -362,7 +365,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.95</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.96</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
