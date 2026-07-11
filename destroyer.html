@@ -298,7 +298,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.88</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.89</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
@@ -1566,14 +1566,16 @@ function renderFireCenter(){
     }
   }
 
-  // Free missiles pip display (lower left). While buying (out of the initial 4 and
-  // waiting on a purchase decision), only one slot matters: empty if you need to buy,
-  // or holding a single missile if your last shot earned a hit-bonus reload.
+  // Free missiles pip display (lower left). Once at least one missile has been bought,
+  // only a single Extra missile is ever in play at a time (each purchase auto-fires
+  // immediately, so there's never more than one queued from a hit-bonus reload) -- show
+  // just 1 slot from that point on, not just at the exact instant missilesRemaining hits 0.
   if(pips){
     pips.innerHTML='';
     const free=Math.max(0,G.freeMissiles||0);
     const queue=G.missileQueue||[];
-    const slotCount=canBuyNow?1:4;
+    const pastInitial=(G.missilesBought||0)>0;
+    const slotCount=pastInitial?1:4;
     for(let i=0;i<slotCount;i++){
       const pip=document.createElement('div');
       pip.className='fm-pip'+(i<free?'':' empty');
