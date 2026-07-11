@@ -986,7 +986,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.52</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.53</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1744,6 +1744,11 @@ function spawnCoinWaterfall(n){
     ],{duration:dur,delay,easing:'linear',fill:'forwards'});
     setTimeout(()=>wrap.remove(),delay+dur+150);
   }
+  // A handful of staggered clink sounds across the shower's rough lifetime, not one per coin --
+  // 34-56 simultaneous audio instances would be noise, not a "shower" sound. Loosely (not
+  // exactly) synced to individual coin landings, which reads fine for ambiance.
+  const clinkCount=Math.min(7,Math.max(3,Math.round(n/8)));
+  for(let k=0;k<clinkCount;k++)setTimeout(()=>playSfx(SFX_COIN_LAND,true),300+Math.random()*3200);
 }
 function spawnChipGhost(el,opts){
   opts=opts||{};
@@ -2435,6 +2440,22 @@ function playChipSound(count){
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
   _sfxCache[file].cloneNode().play().catch(()=>{});
 }
+// Puck landing + coin-waterfall clinks -- from Kenney's Casino Audio pack (CC0/public domain,
+// https://kenney.nl/assets/casino-audio). Same cache-and-clone playback pattern as
+// playChipSound() above, generalized so both the puck and the coin waterfall can reuse it.
+const SFX_PUCK_LAND=['chip-lay-1.ogg','chip-lay-2.ogg','chip-lay-3.ogg'];
+const SFX_COIN_LAND=['chips-collide-1.ogg','chips-collide-2.ogg','chips-collide-3.ogg','chips-collide-4.ogg'];
+function playSfx(bucket,pitchJitter){
+  if(!bucket||!bucket.length)return;
+  const file=bucket[Math.floor(Math.random()*bucket.length)];
+  if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
+  const inst=_sfxCache[file].cloneNode();
+  // A handful of coin clinks all playing the same 4 samples back-to-back reads as a machine
+  // gun rather than a shower -- a slight random pitch shift per instance is enough to break
+  // that up without needing more source variants.
+  if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
+  inst.play().catch(()=>{});
+}
 const _chipSoundState=new Map();
 function maybeTriggerChipSound(key,amt){
   if(!key)return;
@@ -2729,15 +2750,20 @@ function initPuck3D(){
   puck3dEl.appendChild(puck3dInner);
   document.body.appendChild(puck3dEl);
 }
+let puck3dAnchor=null;
 function updatePuck3D(anchorEl,state){
   initPuck3D();
-  if(!anchorEl||!state){puck3dEl.classList.remove('puck3d-visible');puck3dState=null;return;}
+  if(!anchorEl||!state){puck3dEl.classList.remove('puck3d-visible');puck3dState=null;puck3dAnchor=null;return;}
   const r=anchorEl.getBoundingClientRect();
   const cx=r.left+r.width/2-36,cy=r.top+r.height/2-36; // center the 72x72 puck on the anchor
+  const moved=anchorEl!==puck3dAnchor; // sliding to a new number/off-spot, not just a redundant re-render
   puck3dEl.style.transform='translate('+cx+'px,'+cy+'px)';
   puck3dEl.classList.add('puck3d-visible');
   if(state!==puck3dState)puck3dInner.classList.toggle('puck3d-flipped',state==='off');
-  puck3dState=state;
+  // Delayed to land roughly when the CSS slide/flip transition (1.1s, see #puck3d-wrap) actually
+  // finishes, rather than when it starts.
+  if(moved)setTimeout(()=>playSfx(SFX_PUCK_LAND),1100);
+  puck3dState=state;puck3dAnchor=anchorEl;
 }
 function bonusBet(t){pushUndo();
   const max=G.bonus[t+'Max']||0;
