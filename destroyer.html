@@ -56,13 +56,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    mirrored in JS as DIAMOND_SY). Ship art and labels counter-rotate so their content
    stays upright while their position still follows the diamond layout. */
 #grid-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;position:relative}
-/* Hidden on the compact battle grid: there's no headroom left above the diamond for a
-   second label strip once the grid uses the full available height, and column letters
-   are already communicated via the dice readout and hit/miss history. Still shown on
-   the roomier (scrollable) placement grid via #placement-col-labels. */
+/* Both label strips are unused now -- row/col labels render as overlay children of
+   #grid-rows / #placement-rows instead (see renderGridLabels), so they inherit the
+   exact same diamond transform and can't drift out of alignment. */
 #col-labels{display:none}
 .col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em;transform:scaleY(1.818) rotate(-45deg)}
-#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:200px;transform:rotate(45deg) scaleY(.55);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
+#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:175px;transform:rotate(45deg) scaleY(.7);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
 .grid-row{display:flex;gap:2px;align-items:center}
 .row-label{width:36px;flex-shrink:0;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .grid-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.15);background:rgba(0,20,60,.4);cursor:default;display:flex;align-items:center;justify-content:center;font-size:28px;transition:all .2s;position:relative}
@@ -106,15 +105,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .placement-title{font-size:45px;font-weight:700;color:#4a9eff;letter-spacing:.05em}
 .placement-sub{font-size:27px;color:rgba(255,255,255,.5)}
 #placement-grid-wrap{position:relative}
-#placement-col-labels{display:flex;margin-left:35px;gap:2px;max-width:416px;width:100%;transform:rotate(45deg) scaleY(.55);transform-origin:center center}
-#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:416px;width:100%;transform:rotate(45deg) scaleY(.55);transform-origin:center center;box-shadow:0 22px 40px rgba(0,0,0,.5)}
+#placement-col-labels{display:none}
+#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:340px;width:100%;transform:rotate(45deg) scaleY(.7);transform-origin:center center;box-shadow:0 22px 40px rgba(0,0,0,.5)}
 .p-col-label{flex:1;text-align:center;font-size:18px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .p-row{display:flex;gap:2px;align-items:center}
 .p-row-label{width:29px;text-align:center;font-size:18px;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .p-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.12);background:rgba(0,20,60,.4);display:flex;align-items:center;justify-content:center;font-size:19px}
 .p-cell.ship{background:rgba(40,80,160,.25);border-color:rgba(74,158,255,.3)}
 .placement-btns{display:flex;gap:13px}
-.placement-btn{padding:13px 32px;border-radius:10px;font-size:29px;font-weight:700;cursor:pointer;border:none}
+.placement-btn{padding:9px 14px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;border:none;white-space:nowrap}
 #re-randomize-btn{background:rgba(74,158,255,.2);border:1px solid rgba(74,158,255,.5);color:#4a9eff}
 #start-battle-btn{background:linear-gradient(180deg,#ff6400,#cc4400);color:#fff}
 .bet-row{display:flex;align-items:center;gap:13px}
@@ -145,7 +144,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .nav-btn.active-game{border-color:#4a9eff;color:#4a9eff;background:rgba(74,158,255,.12)}
 /* Same chip artwork as Craps (index.html) -- chip-blank-N.png files already live in this same
    directory, so this is a straight port rather than a new asset. */
-.chip{width:88px;height:88px;border-radius:50%;font-size:32px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#111;transition:transform .1s;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.chip{width:64px;height:64px;border-radius:50%;font-size:20px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#111;transition:transform .1s;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #4a9eff;border-radius:50%}
 .chip[data-val="1"]{background-image:url('chip-blank-1.png')}
@@ -293,42 +292,51 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
   <!-- PLACEMENT OVERLAY -->
   <div id="placement-overlay">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%;max-width:360px">
-      <button class="gmode-btn" onclick="window.location.href='index.html'" style="font-size:13px">CRAPLESS<span class="gmode-sub">No naturals</span></button>
-      <button class="gmode-btn" onclick="window.location.href='index.html'" style="font-size:13px">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
-      <button class="gmode-btn" onclick="window.location.href='sicbo.html'" style="font-size:13px">SIC-BO<span class="gmode-sub">3 dice</span></button>
-      <button class="gmode-btn active" style="font-size:13px">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.65</div>
     </div>
-    <div class="placement-title">⚓ BATTLE STATIONS</div>
-    <div class="placement-sub">Drag ships to move · Click to rotate</div>
-    <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:0 0 2px">Ver. 0.2.64</div>
-    <div class="bet-row" style="align-items:center;gap:10px">
-      <span class="bet-lbl">Bet</span>
-      <!-- Left-click adds the selected chip, right-click removes it -- same interaction as
-           every bet spot in Craps, instead of a separate tiny minus button. -->
-      <div id="bet-display" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:38px;font-weight:700;padding:6px 16px;min-width:100px;text-align:center;cursor:pointer" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">$0</div>
-    </div>
-    <div id="placement-col-labels"></div>
-    <div id="placement-rows"></div>
-    <div class="placement-btns">
-      <button class="placement-btn" id="re-randomize-btn" onclick="reRandomize()">⟳ New Ship Positions</button>
-      <button class="placement-btn" id="start-battle-btn" onclick="startBattle()">⚓ Begin Game</button>
-    </div>
-    <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center">
-      <div class="chip" data-val="1" onclick="selectChip(1);addBetChip()">$1</div>
-      <div class="chip" data-val="2" onclick="selectChip(2);addBetChip()">$2</div>
-      <div class="chip" data-val="3" onclick="selectChip(3);addBetChip()">$3</div>
-      <div class="chip" data-val="5" onclick="selectChip(5);addBetChip()">$5</div>
-      <div class="chip" data-val="10" onclick="selectChip(10);addBetChip()">$10</div>
-      <div class="chip" data-val="25" onclick="selectChip(25);addBetChip()">$25</div>
-      <div class="chip" data-val="50" onclick="selectChip(50);addBetChip()">$50</div>
-      <div class="chip" data-val="100" onclick="selectChip(100);addBetChip()">$100</div>
-    </div>
-    <div id="placement-payout-status" style="display:flex;flex-direction:column;gap:3px;width:100%;max-width:360px;flex-shrink:0"></div>
-    <div style="display:flex;gap:8px">
-      <button class="bar-btn" onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
-      <button class="bar-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
-      <button class="bar-btn" onclick="logout()">Log Out</button>
+    <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
+      <!-- LEFT: grid + placement controls -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0">
+        <div class="placement-sub" style="font-size:16px">Drag ships to move · Click to rotate</div>
+        <div id="placement-rows"></div>
+        <div class="placement-btns">
+          <button class="placement-btn" id="re-randomize-btn" onclick="reRandomize()">⟳ New Ship Positions</button>
+          <button class="placement-btn" id="start-battle-btn" onclick="startBattle()">⚓ Begin Game</button>
+        </div>
+      </div>
+      <!-- RIGHT: bet, chips, payout preview, account -->
+      <div style="display:flex;flex-direction:column;gap:12px;width:320px;flex-shrink:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
+          <button class="gmode-btn" onclick="window.location.href='index.html'" style="font-size:12px">CRAPLESS<span class="gmode-sub">No naturals</span></button>
+          <button class="gmode-btn" onclick="window.location.href='index.html'" style="font-size:12px">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
+          <button class="gmode-btn" onclick="window.location.href='sicbo.html'" style="font-size:12px">SIC-BO<span class="gmode-sub">3 dice</span></button>
+          <button class="gmode-btn active" style="font-size:12px">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
+        </div>
+        <div class="bet-row" style="align-items:center;gap:10px">
+          <span class="bet-lbl">Bet</span>
+          <!-- Left-click adds the selected chip, right-click removes it -- same interaction as
+               every bet spot in Craps, instead of a separate tiny minus button. -->
+          <div id="bet-display" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:38px;font-weight:700;padding:6px 16px;min-width:100px;text-align:center;cursor:pointer" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">$0</div>
+        </div>
+        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+          <div class="chip" data-val="1" onclick="selectChip(1);addBetChip()">$1</div>
+          <div class="chip" data-val="2" onclick="selectChip(2);addBetChip()">$2</div>
+          <div class="chip" data-val="3" onclick="selectChip(3);addBetChip()">$3</div>
+          <div class="chip" data-val="5" onclick="selectChip(5);addBetChip()">$5</div>
+          <div class="chip" data-val="10" onclick="selectChip(10);addBetChip()">$10</div>
+          <div class="chip" data-val="25" onclick="selectChip(25);addBetChip()">$25</div>
+          <div class="chip" data-val="50" onclick="selectChip(50);addBetChip()">$50</div>
+          <div class="chip" data-val="100" onclick="selectChip(100);addBetChip()">$100</div>
+        </div>
+        <div id="placement-payout-status" style="display:flex;flex-direction:column;gap:3px;width:100%;flex-shrink:0;max-height:150px;overflow-y:auto"></div>
+        <div style="display:flex;gap:8px">
+          <button class="bar-btn" onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
+          <button class="bar-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
+          <button class="bar-btn" onclick="logout()">Log Out</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -372,6 +380,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <div id="top-left">
       <div class="tl-lbl">Bet</div>
       <div class="tl-val" id="hud-bet-top">$0</div>
+      <div class="tl-sub" id="hud-winning-top" style="color:#7ee87e;font-weight:700"></div>
       <div class="tl-sub" id="hud-bankroll">Playable: $0</div>
     </div>
     <div id="top-center">
@@ -497,9 +506,9 @@ const SHIP_IMG = {
 // Ship index -> image key (SHIP_LENGTHS = [2,3,3,4])
 const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
 
-// Vertical squash applied to the diamond board (must match the scaleY(.55) in the CSS
-// for #grid-rows / #placement-rows / #col-labels / #placement-col-labels).
-const DIAMOND_SY = 0.55;
+// Vertical squash applied to the diamond board (must match the scaleY(.7) in the CSS
+// for #grid-rows / #placement-rows).
+const DIAMOND_SY = 0.7;
 
 // ── DICE IMAGES ───────────────────────────────────────────────────────────────
 const DIE_LETTER_IMG = {A:'DieA.png',B:'DieB.png',C:'DieC.png',D:'DieD.png',E:'DieE.png',F:'DieF.png'};
@@ -1287,7 +1296,7 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
     const img=document.createElement('img');
     img.src=SHIP_IMG[SHIP_IMG_KEY[i]];
     img.draggable=false;
-    const mirrorX=mirrored?-1:1;
+    const mirrorX=mirrored?1:-1;
     // Container is rendered as a diamond via rotate(45deg) scaleY(DIAMOND_SY); counter-rotate
     // the ship art so it stays upright and correctly proportioned on top of the tilted board.
     const diamondCounter='scaleY('+(1/DIAMOND_SY)+') rotate(-45deg) ';
@@ -1299,20 +1308,18 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
       img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+mirrorX+')';
     }else{
-      // Vertical: the ship image is horizontal by nature; rotate 90deg
-      // The rotated image's visual width = spanH, visual height = spanW
-      // We centre it over the occupied cells
+      // Vertical: the ship image is horizontal by nature. Swapping which axis a ship
+      // spans is a reflection (mirror), not a rotation -- the art is a fixed-camera
+      // 3/4 render, so physically rotating it puts the perspective/lighting on the
+      // wrong side. rotate(-90deg) + scaleX only composes into a pure diagonal
+      // reflection (no net rotation), never a plain quarter/half turn.
       const cx=left+spanW/2;
       const cy=top+spanH/2;
       wrap.style.cssText='position:absolute;'
         +'left:'+(cx-spanH/2)+'px;top:'+(cy-spanW/2)+'px;'
         +'width:'+spanH+'px;height:'+spanW+'px;'
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
-      // Swapping which axis the ship spans is a reflection, not a rotation (the art is a
-      // fixed-camera 3/4 render, so a plain rotate(90deg) puts the light/perspective on
-      // the wrong side) -- always include the base scaleX(-1), with mirrorX layered on
-      // top only to flip bow direction.
-      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+(mirrorX*-1)+') rotate(90deg);transform-origin:center center';
+      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+mirrorX+') rotate(-90deg);transform-origin:center center';
     }
 
     wrap.appendChild(img);
@@ -1351,6 +1358,21 @@ function renderShipStatus(bet,containerId){
   });
 }
 
+// Sum of payout tiers already locked in by hits/sinks so far this round, using the
+// same per-ship payout table as the pre-bet preview panel. Informational only -- the
+// server is the source of truth for actual payout -- but lets the player judge whether
+// buying another missile risks giving back money already "won".
+function computeCurrentWinnings(){
+  if(!G.shipHits||!G.bet)return 0;
+  let total=0;
+  for(let i=0;i<SHIP_PAYOUTS.length;i++){
+    const hits=G.shipHits[i]||0;
+    total+=(SHIP_PAYOUTS[i][hits]||0)*G.bet;
+  }
+  total+=(JACKPOT[G.sunkenCount||0]||0)*G.bet;
+  return r2(total);
+}
+
 // ── UPDATE UI ────────────────────────────────────────────────────────────────
 function updateUI(){
   const net=r2(G.bankroll-G.startingBankroll);
@@ -1358,6 +1380,11 @@ function updateUI(){
   const e=id=>document.getElementById(id);
   if(e('hud-bankroll'))e('hud-bankroll').textContent='Playable: '+fmtS(G.bankroll);
   if(e('hud-bet-top'))e('hud-bet-top').textContent=G.phase!=='placement'?fmt(G.totalSpent||G.bet):'—';
+  const winEl=e('hud-winning-top');
+  if(winEl){
+    const winning=G.phase==='firing'||G.phase==='done'?computeCurrentWinnings():0;
+    winEl.textContent=winning>0?'Winning: '+fmt(winning):'';
+  }
   if(e('hud-missiles'))e('hud-missiles').textContent=G.missilesRemaining;
   if(e('hud-lastwin'))e('hud-lastwin').textContent=G.lastWin>0?fmt(G.lastWin):'—';
   const pnlTop=e('hud-pnl-top');if(pnlTop){pnlTop.textContent=(net>=0?'+':'-')+fmtS(Math.abs(net));pnlTop.style.color=pnlColor;}
