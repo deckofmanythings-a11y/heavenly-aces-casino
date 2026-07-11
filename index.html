@@ -979,6 +979,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     <div id="info-panel">
       <div class="info-row">
         <span id="top-bar-username" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button class="info-btn" id="mute-voices-btn" onclick="toggleMuteVoices()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0" title="Mute Voices">🔊</button>
         <button class="info-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
       </div>
       <div class="info-row">
@@ -986,7 +987,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.58</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.59</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2465,6 +2466,22 @@ function playSfx(bucket,pitchJitter){
   if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
   inst.play().catch(()=>{});
 }
+// "Voice" sounds (spoken/dealer-call clips like seven-out.ogg) are muted separately from the
+// rest of the game's SFX (chip sounds, the bell chime) -- toggled via the speaker button next
+// to the (i) info icon. Persisted across sessions via localStorage.
+let voicesMuted=localStorage.getItem('voicesMuted')==='1';
+function playVoiceSfx(bucket){if(!voicesMuted)playSfx(bucket);}
+function toggleMuteVoices(){
+  voicesMuted=!voicesMuted;
+  localStorage.setItem('voicesMuted',voicesMuted?'1':'0');
+  updateMuteVoicesBtn();
+}
+function updateMuteVoicesBtn(){
+  const b=document.getElementById('mute-voices-btn');if(!b)return;
+  b.textContent=voicesMuted?'🔇':'🔊';
+  b.title=voicesMuted?'Unmute Voices':'Mute Voices';
+  b.classList.toggle('gold',voicesMuted);
+}
 const _chipSoundState=new Map();
 function maybeTriggerChipSound(key,amt){
   if(!key)return;
@@ -3067,7 +3084,7 @@ async function rollDice(){
     // lands on a number mid-point. Requires the 'point-established' tag added server-side.
     const thisRoll=(data.newState.rollHistory&&data.newState.rollHistory[0])||null;
     const justEstablishedPoint=!!(thisRoll&&thisRoll.tag==='point-established');
-    if(thisRoll&&thisRoll.tag==='seven-out')playSfx(SFX_SEVEN_OUT);
+    if(thisRoll&&thisRoll.tag==='seven-out')playVoiceSfx(SFX_SEVEN_OUT);
     function maybeOpenOddsModal(){
       if(document.getElementById('modal-odds')&&!document.getElementById('modal-odds').classList.contains('hidden'))return;
       // Pass Line odds prompt only on the roll that set the point, not on every later roll of it
@@ -3314,6 +3331,7 @@ function updateUI(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth-screen').style.display!=='none')handleAuth();});
 selectChip(25);
+updateMuteVoicesBtn();
 tryRestoreSession();
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
