@@ -294,7 +294,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.69</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.70</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
@@ -518,7 +518,8 @@ const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
 // (positive x = right, positive y = down, in final on-screen terms); scale shrinks/grows
 // the art in place. "horiz" = normal/base-art orientation, "vert" = Alt-art orientation.
 const SHIP_ADJUST = {
-  destroyer: { horiz: {dxPct:-13, dyPct:-15, scale:0.75} }
+  destroyer: { horiz: {dxPct:-13, dyPct:-15, scale:0.75} },
+  battleship: { horiz: {dxPct:0, dyPct:0, scale:0.666}, vert: {dxPct:0, dyPct:0, scale:0.666} }
 };
 function getShipAdjust(key,horiz){
   const entry=SHIP_ADJUST[key];
