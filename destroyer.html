@@ -372,7 +372,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.1</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1479,8 +1479,19 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
   container.querySelectorAll('.ship-img-wrap').forEach(el=>el.remove());
   container.style.position='relative';
 
-  G.ships.forEach((ship,i)=>{
-    if(!ship||ship.length===0)return;
+  // Paint order (not z-index -- ships all share z-index:2, which must stay below the
+  // hit-marker's z-index:3) determines stacking here: elements appended later paint on
+  // top of earlier ones at the same z-index. row+col of a ship's furthest cell is the
+  // standard isometric depth proxy (both axes move toward the bottom of the diamond as
+  // they increase), so sorting shallowest-first before appending makes ships lower on
+  // screen naturally stack over ships higher up.
+  const shipDepth=ship=>Math.max(...ship.map(([r,c])=>r+c));
+  const order=G.ships
+    .map((ship,i)=>({ship,i}))
+    .filter(o=>o.ship&&o.ship.length>0)
+    .sort((a,b)=>shipDepth(a.ship)-shipDepth(b.ship));
+
+  order.forEach(({ship,i})=>{
     const rowCoords=ship.map(s=>s[0]);
     const colCoords=ship.map(s=>s[1]);
     const horiz=rowCoords.every(r=>r===rowCoords[0]);
