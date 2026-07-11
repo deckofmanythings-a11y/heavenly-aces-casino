@@ -986,7 +986,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.51</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.52</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1490,7 +1490,18 @@ function exitFeltMode(){
   document.body.classList.remove('felt-mode','game-crapless','game-standard');
   feltActive=false;
 }
-window.addEventListener('resize',sizeFeltStage);
+// Everything felt-mode positions (numbers, DC box, the puck's own anchor markers) is placed via
+// genuine CSS percentages in enterFeltMode(), so it reflows automatically whenever felt-stage
+// resizes -- no JS needed. The 3D puck itself is the one exception: it's a position:fixed
+// element whose coordinates are computed once in JS (updatePuck3D(), called from updateUI())
+// from its anchor's getBoundingClientRect() at that moment. Resizing only ever called
+// sizeFeltStage(), never updateUI() -- so on a real device resize/rotation (Safari's URL bar
+// collapsing being the classic trigger), the felt and its anchors would correctly reflow via
+// CSS, but the puck's cached position would not follow, leaving it visually stranded at its old
+// coordinates outside the felt. updateUI() re-derives the puck's target from current game state
+// every time, so re-running it here keeps the puck in sync with wherever the felt actually is.
+function handleWindowResize(){sizeFeltStage();updateUI();}
+window.addEventListener('resize',handleWindowResize);
 if(window.ResizeObserver){
   document.addEventListener('DOMContentLoaded',()=>{
     const pa=document.getElementById('play-area');
