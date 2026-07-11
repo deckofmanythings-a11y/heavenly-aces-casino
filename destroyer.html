@@ -36,6 +36,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .tl-val{font-size:38px;font-weight:700;color:#4a9eff;line-height:1.1}
 .tl-sub{font-size:13px;color:rgba(255,255,255,.4)}
 #top-center{flex:1;display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 16px;background:rgba(0,0,0,.2)}
+#dest-dice-canvas-wrap{width:220px;height:100px;flex-shrink:0}
 .dice-display{display:flex;gap:8px;align-items:center}
 .die-box{width:144px;height:72px;border-radius:10px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:#fff;transition:all .3s}
 .die-box.hit{background:rgba(255,100,0,.3);border-color:#ff6400;color:#ff9944}
@@ -60,18 +61,18 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    #grid-rows / #placement-rows instead (see renderGridLabels), so they inherit the
    exact same diamond transform and can't drift out of alignment. */
 #col-labels{display:none}
-.col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em;transform:scaleY(1.818) rotate(-45deg)}
+.col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em;transform:rotate(-45deg) scaleY(2)}
 #grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:975px;transform:scaleY(.5) rotate(45deg);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
 .grid-row{display:flex;gap:2px;align-items:center}
-.row-label{width:36px;flex-shrink:0;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
+.row-label{width:36px;flex-shrink:0;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);transform:rotate(-45deg) scaleY(2)}
 .grid-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.15);background:rgba(0,20,60,.4);cursor:default;display:flex;align-items:center;justify-content:center;font-size:28px;transition:all .2s;position:relative}
 .grid-cell.ship{background:rgba(40,80,160,.5);border-color:rgba(74,158,255,.5)}
 .grid-cell.hit{background:rgba(255,80,0,.5);border-color:#ff6400}
 .grid-cell.miss{background:rgba(0,40,100,.3);border-color:rgba(74,158,255,.3)}
 .grid-cell.targeted{box-shadow:0 0 0 2px #fff;z-index:1}
-.grid-cell.ship::after{content:'🚢';font-size:20px;opacity:.6;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
-.grid-cell.hit::after{content:'💥';font-size:24px;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
-.grid-cell.miss::after{content:'💧';font-size:20px;opacity:.6;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
+.grid-cell.ship::after{content:'🚢';font-size:20px;opacity:.6;display:inline-block;transform:rotate(-45deg) scaleY(2)}
+.grid-cell.hit::after{content:'💥';font-size:24px;display:inline-block;transform:rotate(-45deg) scaleY(2)}
+.grid-cell.miss::after{content:'💧';font-size:20px;opacity:.6;display:inline-block;transform:rotate(-45deg) scaleY(2)}
 
 /* ── RIGHT PANEL (ship status + controls) ── */
 #right-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
@@ -107,9 +108,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #placement-grid-wrap{position:relative}
 #placement-col-labels{display:none}
 #placement-rows{display:flex;flex-direction:column;gap:2px;max-width:340px;width:100%;transform:scaleY(.5) rotate(45deg);transform-origin:center center;box-shadow:0 22px 40px rgba(0,0,0,.5)}
-.p-col-label{flex:1;text-align:center;font-size:18px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
+.p-col-label{flex:1;text-align:center;font-size:18px;font-weight:700;color:rgba(255,255,255,.4);transform:rotate(-45deg) scaleY(2)}
 .p-row{display:flex;gap:2px;align-items:center}
-.p-row-label{width:29px;text-align:center;font-size:18px;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
+.p-row-label{width:29px;text-align:center;font-size:18px;color:rgba(255,255,255,.4);transform:rotate(-45deg) scaleY(2)}
 .p-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.12);background:rgba(0,20,60,.4);display:flex;align-items:center;justify-content:center;font-size:19px}
 .p-cell.ship{background:rgba(40,80,160,.25);border-color:rgba(74,158,255,.3)}
 .placement-btns{display:flex;gap:13px}
@@ -216,7 +217,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .cell-next-pay{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:18px;font-weight:900;color:#ffd700;text-shadow:0 1px 4px rgba(0,0,0,.9);
-  pointer-events:none;z-index:3;letter-spacing:.02em
+  pointer-events:none;z-index:3;letter-spacing:.02em;
+  transform:rotate(-45deg) scaleY(2)
 }
 
 /* ── HISTORY STRIP ── */
@@ -296,7 +298,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.86</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.87</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
@@ -386,9 +388,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="tl-sub" id="hud-bankroll">Playable: $0</div>
     </div>
     <div id="top-center">
-      <div class="dice-display">
-        <div class="die-box" id="die-letter"><img id="die-letter-img" style="width:100%;height:100%;object-fit:contain;display:none"><span id="die-letter-txt">—</span></div>
-        <div class="die-box" id="die-number"><img id="die-number-img" style="width:100%;height:100%;object-fit:contain;display:none"><span id="die-number-txt">—</span></div>
+      <div id="dest-dice-canvas-wrap">
+        <canvas id="dest-dice-canvas" width="320" height="140" style="width:100%;height:100%;object-fit:contain"></canvas>
       </div>
       <div id="last-result-text"></div>
     </div>
@@ -523,6 +524,59 @@ const DIAMOND_SY = 0.5;
 // ── DICE IMAGES ───────────────────────────────────────────────────────────────
 const DIE_LETTER_IMG = {A:'DieA.png',B:'DieB.png',C:'DieC.png',D:'DieD.png',E:'DieE.png',F:'DieF.png'};
 const DIE_NUMBER_IMG = {1:'DieRed1.png',2:'DieRed2.png',3:'DieRed3.png',4:'DieRed4.png',5:'DieRed5.png',6:'DieRed6.png'};
+// ClocheDice.roll() only accepts 1-6 integers, so the letter die's faces are driven by
+// this 1-6 mapping under the hood -- DIE_LETTER_IMG_NUM supplies the matching face art
+// (DieA..DieF) via ClocheDice's faceImagesPerDie so the physics die still shows letters.
+const LETTER_TO_NUM = {A:1,B:2,C:3,D:4,E:5,F:6};
+const NUM_TO_LETTER = {1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
+const DIE_LETTER_IMG_NUM = {1:'DieA.png',2:'DieB.png',3:'DieC.png',4:'DieD.png',5:'DieE.png',6:'DieF.png'};
+
+// ── 3D DICE (small inline "settled result" pair in the top HUD, mirrors Craps' initDice) ──
+let destTHREE=null,destRenderer=null,destScene=null,destCamera=null,destDieLetter=null,destDieNumber=null;
+function destMakeDie(x,imgMap){
+  // Material order for BoxGeometry: [+x,-x,+y,-y,+z,-z]. Any face can be "up" when the
+  // die settles, so all 6 faces get a texture from imgMap even though only 1-6 map to it.
+  const mats=[1,2,3,4,5,6].map(v=>new destTHREE.MeshPhongMaterial({
+    map:new destTHREE.TextureLoader().load(imgMap[v]), shininess:40
+  }));
+  const d=new destTHREE.Mesh(new destTHREE.BoxGeometry(1.5,1.5,1.5),mats);
+  d.position.x=x;destScene.add(d);return d;
+}
+function destTQ(v){
+  const Q=new destTHREE.Quaternion(),PI=Math.PI,H=PI/2;
+  const m={1:new destTHREE.Euler(0,0,0),6:new destTHREE.Euler(0,PI,0),2:new destTHREE.Euler(0,-H,0),
+    5:new destTHREE.Euler(0,H,0),3:new destTHREE.Euler(H,0,0),4:new destTHREE.Euler(-H,0,0)};
+  Q.setFromEuler(m[v]||new destTHREE.Euler(0,0,0));return Q;
+}
+function initDestDice(){
+  if(destRenderer)return;
+  destTHREE=window.THREE;if(!destTHREE)return;
+  const W=320,H=140,cvs=document.getElementById('dest-dice-canvas');
+  if(!cvs)return;
+  destRenderer=new destTHREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
+  destRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  destRenderer.setSize(W,H);destRenderer.setClearColor(0,0);
+  destScene=new destTHREE.Scene();
+  destCamera=new destTHREE.PerspectiveCamera(40,W/H,.1,100);
+  destCamera.position.set(0,-1.8,6.5);destCamera.lookAt(0,0,0);
+  destScene.add(new destTHREE.AmbientLight(0xffffff,.5));
+  const dl1=new destTHREE.DirectionalLight(0xffffff,.9);dl1.position.set(3,-5,4);destScene.add(dl1);
+  destDieLetter=destMakeDie(-0.85,DIE_LETTER_IMG_NUM);
+  destDieNumber=destMakeDie(0.85,DIE_NUMBER_IMG);
+  requestAnimationFrame(destRenderLoop);
+}
+function destRenderLoop(){
+  requestAnimationFrame(destRenderLoop);
+  if(!destRenderer)return;
+  destRenderer.render(destScene,destCamera);
+}
+// Snap the inline dice straight to their final faces -- the 3D roll already played out
+// in the ClocheDice cloche overlay, so no second animation is needed here.
+function landDestDice(letter,number){
+  if(!destRenderer)return;
+  destDieLetter.quaternion.copy(destTQ(LETTER_TO_NUM[letter]||1));
+  destDieNumber.quaternion.copy(destTQ(number));
+}
 
 // ── MISSILE FLAVOR IMAGES ────────────────────────────────────────────────────
 const MISSILE_IMG = {initial:'InitialMissile.png',extra:'ExtraMissile.png'};
@@ -891,12 +945,15 @@ async function fireMissile(){
   G.firing=true;
   document.getElementById('fire-btn').disabled=true;
   document.getElementById('buy-btn').disabled=true;
-  const dL=document.getElementById('die-letter'),dN=document.getElementById('die-number');
-  dL.className='die-box rolling';dN.className='die-box rolling';
-  const dLi=document.getElementById('die-letter-img');const dLt=document.getElementById('die-letter-txt');
-  const dNi=document.getElementById('die-number-img');const dNt=document.getElementById('die-number-txt');
-  if(dLi){dLi.style.display='none';}if(dLt)dLt.textContent='?';
-  if(dNi){dNi.style.display='none';}if(dNt)dNt.textContent='?';
+  document.getElementById('last-result-text').textContent='';
+  // Cloche overlay roll, same contract as Craps: dice agitate in the bell jar until the
+  // server responds, then land guaranteed on the server's true values.
+  let feedValues=null,failRoll=null;
+  const haveCloche=window.ClocheDice&&!ClocheDice.isRolling();
+  const clochePromise=haveCloche
+    ?ClocheDice.roll(new Promise((res,rej)=>{feedValues=res;failRoll=rej;}))
+    :Promise.resolve(null);
+  if(haveCloche)clochePromise.catch(e=>console.warn('[cloche] overlay skipped:',e&&e.message?e.message:e));
   const token=localStorage.getItem('craps_session');
   let data;
   try{
@@ -909,28 +966,17 @@ async function fireMissile(){
   }catch(e){data={ok:false,message:'Network error.'};}
   G.firing=false;
   if(!data.ok){
-    dL.className='die-box';dN.className='die-box';
-  const rli=document.getElementById('die-letter-img');const rlt=document.getElementById('die-letter-txt');
-  const rni=document.getElementById('die-number-img');const rnt=document.getElementById('die-number-txt');
-  if(rli)rli.style.display='none';if(rlt)rlt.textContent='—';
-  if(rni)rni.style.display='none';if(rnt)rnt.textContent='—';
+    if(failRoll)failRoll(new Error(data.message||'roll failed'));
     addLog(data.message||'Error.','info');
     updateUI();return;
   }
   const{roll,hit,done,finalPayout,newBankroll,state,buyPrice,canBuy,capped}=data;
-  // Land dice
-  setTimeout(()=>{
-    dL.className='die-box '+(hit?'hit':'miss');
-    dN.className='die-box '+(hit?'hit':'miss');
-    // Show real die images
-    const li=document.getElementById('die-letter-img');const lt=document.getElementById('die-letter-txt');
-    const ni=document.getElementById('die-number-img');const nt=document.getElementById('die-number-txt');
-    if(li&&DIE_LETTER_IMG[roll.letter]){li.src=DIE_LETTER_IMG[roll.letter];li.style.display='block';if(lt)lt.textContent='';}
-    else if(lt)lt.textContent=roll.letter;
-    if(ni&&DIE_NUMBER_IMG[roll.number]){ni.src=DIE_NUMBER_IMG[roll.number];ni.style.display='block';if(nt)nt.textContent='';}
-    else if(nt)nt.textContent=roll.number;
-    document.getElementById('last-result-text').textContent=(hit?'💥 HIT!':'💧 Miss')+' '+roll.letter+roll.number;
-    // Flash target cell
+  if(feedValues)feedValues([LETTER_TO_NUM[roll.letter]||1,roll.number]);
+  try{await clochePromise;}catch(e){}
+  landDestDice(roll.letter,roll.number);
+  document.getElementById('last-result-text').textContent=(hit?'💥 HIT!':'💧 Miss')+' '+roll.letter+roll.number;
+  // Flash target cell
+  {
     const cellEl=document.querySelector('[data-r="'+roll.row+'"][data-c="'+roll.col+'"]');
     if(cellEl){
       cellEl.classList.add('targeted');
@@ -939,7 +985,7 @@ async function fireMissile(){
         cellEl.className='grid-cell '+(hit?'hit':'miss');
       },350);
     }
-  },200);
+  }
   // Track free missiles: decrement one for the fired missile, add back if free earned
   if(!G.missileQueue)G.missileQueue=[];
   const firedType=G.missileQueue.length?G.missileQueue.shift():'initial';
@@ -1144,12 +1190,6 @@ function skipDoneTick(){
 function playAgain(){
   document.getElementById('done-overlay').classList.add('hidden');
   resetGameState();
-  const dL=document.getElementById('die-letter'),dN=document.getElementById('die-number');
-  dL.className='die-box';dN.className='die-box';
-  const rli=document.getElementById('die-letter-img');const rlt=document.getElementById('die-letter-txt');
-  const rni=document.getElementById('die-number-img');const rnt=document.getElementById('die-number-txt');
-  if(rli)rli.style.display='none';if(rlt)rlt.textContent='—';
-  if(rni)rni.style.display='none';if(rnt)rnt.textContent='—';
   document.getElementById('last-result-text').textContent='';
   G.ships=randomizeLocal();
   buildMainGrid();
@@ -1184,7 +1224,8 @@ function renderGridLabels(containerId, attrR, attrC, letters){
   if(!container)return;
   container.querySelectorAll('.grid-edge-label').forEach(el=>el.remove());
   const counter='rotate(-45deg) scaleY('+(1/DIAMOND_SY)+')';
-  const labelSize=22;
+  const labelSize=88;
+  const gap=28;
   const lastRow=GRID_SIZE-1;
   const lastCol=GRID_SIZE-1;
 
@@ -1197,7 +1238,7 @@ function renderGridLabels(containerId, attrR, attrC, letters){
     const num=GRID_SIZE-r;
     const lbl=document.createElement('div');
     lbl.className='grid-edge-label';
-    lbl.style.cssText='position:absolute;left:'+(box.left+box.width+4)+'px;top:'+(box.top+box.height/2-labelSize/2)+'px;'
+    lbl.style.cssText='position:absolute;left:'+(box.left+box.width+gap)+'px;top:'+(box.top+box.height/2-labelSize/2)+'px;'
       +'width:'+labelSize+'px;height:'+labelSize+'px;pointer-events:none;z-index:3;transform:'+counter;
     if(DIE_NUMBER_IMG[num]){
       const img=document.createElement('img');
@@ -1216,7 +1257,7 @@ function renderGridLabels(containerId, attrR, attrC, letters){
     const box=localBox(cell,container);
     const lbl=document.createElement('div');
     lbl.className='grid-edge-label';
-    lbl.style.cssText='position:absolute;left:'+(box.left+box.width/2-labelSize/2)+'px;top:'+(box.top+box.height+4)+'px;'
+    lbl.style.cssText='position:absolute;left:'+(box.left+box.width/2-labelSize/2)+'px;top:'+(box.top+box.height+gap)+'px;'
       +'width:'+labelSize+'px;height:'+labelSize+'px;pointer-events:none;z-index:3;transform:'+counter;
     if(DIE_LETTER_IMG[letters[c]]){
       const img=document.createElement('img');
@@ -1403,6 +1444,8 @@ function computeCurrentWinnings(){
     total+=(SHIP_PAYOUTS[i][hits]||0)*G.bet;
   }
   total+=(JACKPOT[G.sunkenCount||0]||0)*G.bet;
+  // Once there's an actual payout, the player's original bet comes back with it.
+  if(total>0)total+=G.bet;
   return r2(total);
 }
 
@@ -1513,12 +1556,15 @@ function renderFireCenter(){
     }
   }
 
-  // Free missiles pip display (lower left)
+  // Free missiles pip display (lower left). While buying (out of the initial 4 and
+  // waiting on a purchase decision), only one slot matters: empty if you need to buy,
+  // or holding a single missile if your last shot earned a hit-bonus reload.
   if(pips){
     pips.innerHTML='';
     const free=Math.max(0,G.freeMissiles||0);
     const queue=G.missileQueue||[];
-    for(let i=0;i<4;i++){
+    const slotCount=canBuyNow?1:4;
+    for(let i=0;i<slotCount;i++){
       const pip=document.createElement('div');
       pip.className='fm-pip'+(i<free?'':' empty');
       if(i<free){
@@ -1614,6 +1660,16 @@ async function redeemVoucher(code){
   await redeemCode();
   loadVoucherList();
 }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script src="cloche-dice.js"></script>
+<script>
+// Cloche dice overlay: shared module, configured for destroyer (letter die A-F + number
+// die 1-6, driven through ClocheDice's 1-6 physics via faceImagesPerDie).
+ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM,DIE_NUMBER_IMG]});
+initDestDice();
 </script>
 </body>
 </html>

@@ -72,7 +72,9 @@
     maxResolveSteps: 120 * 25,
     presimAttempts: 5,
     revealHoldMs: 1000,     // overlay lingers on the settled dice
-    faceImages: null,       // optional {1: dataURL, ... 6: dataURL} custom faces
+    faceImages: null,       // optional {1: dataURL, ... 6: dataURL} custom faces, all dice
+    faceImagesPerDie: null, // optional [{1:url,...6:url}, ...] -- distinct faces per die index
+                             // (e.g. destroyer's letter die vs number die), overrides faceImages
     wallSegments: 14,
     zIndex: 9999
   };
@@ -220,16 +222,23 @@
   }
 
   // ---------- textures ----------
+  // Cache key is the actual image URL (or 'proc:<value>' for the generated pip faces),
+  // not the raw value -- two dice can show the same numeric value with entirely
+  // different art (e.g. destroyer's letter die vs number die), so keying on value
+  // alone would let one die's texture leak onto the other.
   const TEX_CACHE = {};
-  function faceTexture(value) {
-    if (TEX_CACHE[value]) return TEX_CACHE[value];
-    // custom face art (e.g. the tables' DIE_B64 PNGs) takes priority
-    if (CFG.faceImages && CFG.faceImages[value]) {
-      const tex = new THREE.TextureLoader().load(CFG.faceImages[value]);
+  function faceTexture(value, imgMapOverride) {
+    const imgMap = imgMapOverride || CFG.faceImages;
+    if (imgMap && imgMap[value]) {
+      const url = imgMap[value];
+      if (TEX_CACHE[url]) return TEX_CACHE[url];
+      const tex = new THREE.TextureLoader().load(url);
       tex.anisotropy = 4;
-      TEX_CACHE[value] = tex;
+      TEX_CACHE[url] = tex;
       return tex;
     }
+    const cacheKey = 'proc:' + value;
+    if (TEX_CACHE[cacheKey]) return TEX_CACHE[cacheKey];
     const S = 256, c = document.createElement('canvas');
     c.width = c.height = S;
     const g = c.getContext('2d');
@@ -256,7 +265,7 @@
     }
     const tex = new THREE.CanvasTexture(c);
     tex.anisotropy = 4;
-    TEX_CACHE[value] = tex;
+    TEX_CACHE[cacheKey] = tex;
     return tex;
   }
 
@@ -440,9 +449,10 @@
     const edgeR = s * 0.12;
 
     for (let i = 0; i < n; i++) {
+      const imgMap = (CFG.faceImagesPerDie && CFG.faceImagesPerDie[i]) || CFG.faceImages;
       const faceValues = DEFAULT_FACE_VALUES.slice();
       const mats = faceValues.map(v => new THREE.MeshStandardMaterial({
-        map: faceTexture(v), roughness: 0.4, metalness: 0.05
+        map: faceTexture(v, imgMap), roughness: 0.4, metalness: 0.05
       }));
       const mesh = new THREE.Mesh(roundedBoxGeometry(s, edgeR, 4), mats);
       mesh.castShadow = true;
@@ -457,7 +467,7 @@
       body.allowSleep = false;
       world.addBody(body);
 
-      dice.push({ mesh, body, faceValues, nextPopStep: 0 });
+      dice.push({ mesh, body, faceValues, imgMap, nextPopStep: 0 });
     }
     resetDicePositions();
   }
@@ -504,7 +514,7 @@
     }
     d.faceValues = values;
     for (let i = 0; i < 6; i++) {
-      d.mesh.material[i].map = faceTexture(values[i]);
+      d.mesh.material[i].map = faceTexture(values[i], d.imgMap);
       d.mesh.material[i].needsUpdate = true;
     }
   }
