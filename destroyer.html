@@ -81,7 +81,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* translate is outermost in this chain (applied after rotate/scaleY), so it operates in
    real screen-space, not the tilted local space -- -65% instead of -50% raises the marker
    ~15% of its own height toward the top of the screen. */
-.grid-cell.hit::after{content:'';position:absolute;top:50%;left:50%;width:130%;height:130%;background:url('hit.png') center/contain no-repeat;transform:translate(-50%,-65%) rotate(-45deg) scaleY(2);z-index:3;pointer-events:none}
+.grid-cell.hit::after{content:'';position:absolute;top:50%;left:50%;width:130%;height:130%;background:url('hit.png') center/contain no-repeat;transform:translate(-50%,-50%) rotate(-45deg) scaleY(2) translateY(-22px);z-index:3;pointer-events:none}
 /* Unlike hit, miss stays BELOW .ship-img-wrap's z-index:2 -- z-index:1 (not just omitting
    it) since .grid-cell has no stacking context of its own, so this competes directly
    against the ship layer in the same shared context. */
@@ -503,7 +503,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 const SUPABASE_URL='https://qgiksiauptrqmxsupwqe.supabase.co';
 const FUNCTIONS_URL='https://qgiksiauptrqmxsupwqe.supabase.co/functions/v1';
 const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{fetch:(url,options)=>fetch(url,{...options,cache:'no-store'})}});
 
 const r2=n=>Math.round(n*100)/100;
 const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});

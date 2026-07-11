@@ -987,7 +987,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.3.1</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.3.2</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1236,7 +1236,7 @@ const SUPABASE_URL='https://qgiksiauptrqmxsupwqe.supabase.co';
 const FUNCTIONS_URL='https://qgiksiauptrqmxsupwqe.supabase.co/functions/v1';
 const EDGE_FN_AUTH_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaWtzaWF1cHRycW14c3Vwd3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NTI0MzMsImV4cCI6MjA5ODIyODQzM30.2OwzCxAWok82ak7bEXMmCuZe1qVAeH42220Ncs1MprQ';
 const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{fetch:(url,options)=>fetch(url,{...options,cache:'no-store'})}});
 
 const HOP_MAP={hop11:[1,1],hop12:[1,2],hop13:[1,3],hop14:[1,4],hop15:[1,5],hop16:[1,6],hop22:[2,2],hop23:[2,3],hop24:[2,4],hop25:[2,5],hop26:[2,6],hop33:[3,3],hop34:[3,4],hop35:[3,5],hop36:[3,6],hop44:[4,4],hop45:[4,5],hop46:[4,6],hop55:[5,5],hop56:[5,6],hop66:[6,6]};
 
