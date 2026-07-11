@@ -251,14 +251,22 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* BET -- bottom-right corner of #main-area, persists through placement + battle */
 /* right offset clears #right-panel's 280px width so the circle sits just to its left,
    not overlapping it, while staying bottom-anchored within #main-area. */
-#bet-circle-wrap{position:absolute;right:296px;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:4}
+/* z-index above #grid-panel's (5) -- the 500%-scaled diamond grid's cells extend well
+   beyond its own visual diamond shape and were physically intercepting clicks/right-clicks
+   meant for this circle wherever the two overlapped. */
+#bet-circle-wrap{position:absolute;right:296px;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10}
 /* Same right offset as the bet circle, mirrored to the top instead of bottom. */
-#re-randomize-wrap{position:absolute;right:296px;top:16px;z-index:4;display:none}
-#bet-circle{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(20,45,80,.92),rgba(4,8,16,.96));border:5px solid rgba(74,158,255,.65);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 26px rgba(74,158,255,.35)}
+#re-randomize-wrap{position:absolute;right:296px;top:16px;z-index:10;display:none}
+/* Shrunk from 150px -- #main-area is only ~240px tall here, and a 150px circle anchored
+   bottom:16px overlapped #re-randomize-wrap anchored top:16px. */
+#bet-circle{position:relative;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(20,45,80,.92),rgba(4,8,16,.96));border:4px solid rgba(74,158,255,.65);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(74,158,255,.35)}
 #bet-circle:hover{border-color:rgba(74,158,255,.9)}
-#bet-circle-chips{position:relative;width:96px;height:96px}
-#bet-circle-chips img{position:absolute;left:0;top:0;width:100%;height:100%;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
-#bet-circle-amt{position:absolute;color:#fff;font-weight:800;font-size:24px;text-shadow:0 0 4px #000,0 0 9px #000;pointer-events:none}
+#bet-circle-chips{position:relative;width:64px;height:64px}
+/* pointer-events:none so left/right clicks always land on #bet-circle itself instead of
+   triggering the browser's native image context menu (Save Image As etc.) on real
+   right-clicks, which can swallow the click before our contextmenu handler runs. */
+#bet-circle-chips img{position:absolute;left:0;top:0;width:100%;height:100%;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));pointer-events:none;-webkit-user-drag:none;user-select:none}
+#bet-circle-amt{position:absolute;color:#fff;font-weight:800;font-size:18px;text-shadow:0 0 4px #000,0 0 9px #000;pointer-events:none}
 #bet-circle-info{text-align:center;background:rgba(0,0,0,.55);padding:6px 14px;border-radius:8px;min-width:150px}
 #bet-circle-info>div{font-size:14px;color:rgba(255,255,255,.6);line-height:1.5}
 
@@ -352,7 +360,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.92</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.93</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -827,6 +835,7 @@ function renderBetCircle(amt){
   chipBreakdownDest(amt).forEach((d,i)=>{
     const img=document.createElement('img');
     img.src='chip-blank-'+d+'.png';
+    img.draggable=false;
     img.style.bottom=(i*5)+'px';
     chipsEl.appendChild(img);
   });
