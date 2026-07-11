@@ -649,6 +649,38 @@ body.felt-mode #felt-stage .off-ov{display:none!important}
 body.felt-mode #top-row{display:none!important}
 body.felt-mode #felt-stage #left-col-header{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;flex-direction:column;gap:0;display:flex}
 body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px}
+/* #left-col-header and #info-panel are both pinned to a FIXED PERCENTAGE of felt-stage's own
+   size (see FELT_LAYOUT), not the viewport -- on a short landscape phone felt-stage itself can
+   shrink to just a few hundred px, so a fixed 12.6% width box becomes far too narrow for its
+   content at the DESKTOP font sizes .info-btn/.hud-lbl/.hud-val/.mode-btn use everywhere else,
+   causing "Redeem"/"Cash Out"/etc to visibly clip. Scaling these off --chip (already computed
+   by sizeFeltStage() proportional to the felt's actual rendered height, same mechanism chip
+   stacks already use) instead of a fixed px value keeps them readable and non-overflowing at
+   any felt size instead of only working by coincidence at desktop dimensions. */
+body.felt-mode #felt-stage #info-panel .info-btn{font-size:calc(var(--chip)*0.36);padding:calc(var(--chip)*0.08) calc(var(--chip)*0.14);white-space:nowrap}
+body.felt-mode #felt-stage #info-panel .hud-lbl{font-size:calc(var(--chip)*0.26)}
+body.felt-mode #felt-stage #info-panel .hud-val{font-size:calc(var(--chip)*0.32)}
+body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--chip)*0.34)!important}
+body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.34);padding:calc(var(--chip)*0.1) calc(var(--chip)*0.12)}
+body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.26)}
+/* On a genuinely cramped felt (short landscape phone, felt-stage width below ~520px -- see the
+   felt-compact toggle in sizeFeltStage()), "Cash Out" and "Log Out" don't fit as text no matter
+   how far the font shrinks. Below that threshold, swap the three account buttons to icons only,
+   the same way the (i) info button already works -- rather than fighting for space with three
+   words in a box that's sometimes under 90px wide. Left alone above the threshold, so normal
+   desktop/tablet felt-mode keeps the existing readable text labels. */
+body.felt-compact #felt-stage #info-panel .info-row:nth-child(2) .info-btn{font-size:0;padding:calc(var(--chip)*0.12) 0}
+body.felt-compact #felt-stage #info-panel .info-row:nth-child(2) .info-btn::before{font-size:calc(var(--chip)*0.44);font-family:system-ui,sans-serif}
+body.felt-compact #felt-stage #info-panel #redeem-btn-top::before{content:"🎟️"}
+body.felt-compact #felt-stage #info-panel #cashout-btn::before{content:"💵"}
+body.felt-compact #felt-stage #info-panel #logout-btn::before{content:"⏻"}
+/* Same cramped-box problem as the info-panel buttons, different element: .gmode-btn (the
+   Crapless/Standard/Sic-Bo/Destroyer 2x2 grid) wasn't touched by the .mode-btn rules above --
+   that's a different class entirely (.mode-btn is the Hardways/Hop Bets tab toggle in the left
+   column, not this game-switcher grid). Dropping the subtitle frees vertical room for the main
+   label to wrap onto two lines instead of clipping "DESTROYER" to "DESTROY". */
+body.felt-compact #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--chip)*0.3);padding:1px 2px;line-height:1.05}
+body.felt-compact #felt-stage #left-col-header .gmode-sub{display:none}
 body.felt-mode #felt-stage #bottom-section{height:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
 /* Lucky Roller art */
 body.felt-mode #felt-stage #lucky-roller{background:url('lucky-roller.png') center/100% 100% no-repeat;border:none;padding:0}
@@ -711,6 +743,43 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   0%{filter:brightness(1) saturate(1);opacity:1;transform:translateY(0)}
   25%{filter:brightness(0.35) saturate(0.4);opacity:0.9;transform:translateY(0)}
   100%{filter:brightness(0.3) saturate(0.3);opacity:0;transform:translateY(-180px)}
+}
+
+/* ── MOBILE: the three chrome columns (left-col, info-panel, circles-col) were sized as a
+   vw-percentage WITH a fixed min-width floor -- on a phone those three floors alone
+   (160+200+70=430px) already exceed a typical ~390-430px viewport width, before the Lucky
+   Roller strip's three non-shrinking (flex-shrink:0) bonus boxes and their oversized number
+   chips (34px font in a 32px circle) even get counted. Net effect on a real phone: the info
+   panel and bottom bet bar get clipped off the right edge instead of shrinking to fit, since
+   overflow is hidden everywhere rather than scrolled. This block relaxes every one of those
+   fixed floors and the oversized fixed sizing so the existing vw-based layout can actually
+   shrink the whole way down instead of hitting a wall partway there. */
+@media (max-width:900px){
+  #left-col-header,#left-col{min-width:78px}
+  #info-panel{min-width:128px;padding:2px 4px}
+  #circles-col{min-width:40px}
+  .info-btn{font-size:13px;padding:2px 4px}
+  .hud-lbl{font-size:11px}
+  .hud-val{font-size:13px}
+  .mode-btn{font-size:13px;padding:2px 3px}
+  .mode-btn-amt{font-size:11px}
+
+  .lr-bonus-wrap{flex-shrink:1;min-width:0}
+  .lr-bonus{min-width:0}
+  .lr-header{padding:2px 3px}
+  .lr-body{padding:2px 3px;gap:1px}
+  .lr-title{font-size:20px}
+  .lr-pay{font-size:16px}
+  .lr-num{width:18px;height:18px;font-size:15px}
+  .lr-nums{gap:2px}
+  .lr-stake{font-size:20px;min-height:9px}
+  .lr-note{font-size:11px}
+  #lucky-roller{gap:2px;padding:2px 3px}
+  #dice-zone{min-width:50px}
+
+  #bottom-bar{gap:1px;padding:1px 2px}
+  .chip{width:24px;height:24px;font-size:10px}
+  #roll-btn{font-size:20px;padding:6px 10px}
 }
 </style>
 </head>
@@ -913,11 +982,11 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
       </div>
       <div class="info-row">
-        <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
+        <button class="info-btn gold" id="redeem-btn-top" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
-        <button class="info-btn" onclick="logout()">Log Out</button>
+        <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.50</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.51</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1328,6 +1397,9 @@ function sizeFeltStage(){
   const W=pa.clientWidth,H=pa.clientHeight;if(!W||!H)return;
   let w=W,h=W*9/16;if(h>H){h=H;w=H*16/9;}
   st.style.width=w+'px';st.style.height=h+'px';st.style.setProperty('--chip',Math.max(20,Math.round(h*0.052))+'px');
+  // Below this width, #info-panel's fixed-percentage box (see FELT_LAYOUT) gets too narrow for
+  // "Cash Out"/"Log Out" as text at any readable size -- see the body.felt-compact CSS rules.
+  document.body.classList.toggle('felt-compact',w<520);
 }
 function feltApplyTab(t){
   feltTab=t;
