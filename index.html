@@ -986,7 +986,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.57</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.58</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2452,6 +2452,8 @@ function playChipSound(count){
 // https://kenney.nl/assets/casino-audio). Same cache-and-clone playback pattern as
 // playChipSound() above, generalized so other one-off sounds can reuse it.
 const SFX_PUCK_LAND=['chip-lay-1.ogg','chip-lay-2.ogg','chip-lay-3.ogg'];
+// Audio extracted from Deck's own 7-out.mp4 (ffmpeg -vn, video track dropped).
+const SFX_SEVEN_OUT=['seven-out.ogg'];
 function playSfx(bucket,pitchJitter){
   if(!bucket||!bucket.length)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];
@@ -3065,6 +3067,7 @@ async function rollDice(){
     // lands on a number mid-point. Requires the 'point-established' tag added server-side.
     const thisRoll=(data.newState.rollHistory&&data.newState.rollHistory[0])||null;
     const justEstablishedPoint=!!(thisRoll&&thisRoll.tag==='point-established');
+    if(thisRoll&&thisRoll.tag==='seven-out')playSfx(SFX_SEVEN_OUT);
     function maybeOpenOddsModal(){
       if(document.getElementById('modal-odds')&&!document.getElementById('modal-odds').classList.contains('hidden'))return;
       // Pass Line odds prompt only on the roll that set the point, not on every later roll of it
