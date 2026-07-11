@@ -30,7 +30,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #game-screen{display:none;height:100vh;height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a0a18}
 
 /* ── TOP ROW ── */
-#top-row{display:flex;flex-shrink:0;height:calc(100dvh*3/16);border-bottom:1px solid rgba(255,255,255,.12);min-height:60px;max-height:80px}
+#top-row{display:flex;flex-shrink:0;height:calc(100dvh*3/8);border-bottom:1px solid rgba(255,255,255,.12);min-height:120px;max-height:160px}
 #top-left{width:144px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px}
 .tl-lbl{font-size:16px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em}
 .tl-val{font-size:38px;font-weight:700;color:#4a9eff;line-height:1.1}
@@ -43,13 +43,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .die-box.rolling{animation:dieRoll .4s infinite}
 @keyframes dieRoll{0%{transform:rotate(0deg)}25%{transform:rotate(5deg)}75%{transform:rotate(-5deg)}100%{transform:rotate(0deg)}}
 #last-result-text{font-size:24px;color:rgba(255,255,255,.5);text-align:center;min-width:160px}
-#top-right{width:200px;flex-shrink:0;background:rgba(0,0,0,.3);border-left:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:space-around;padding:8px 14px}
-.hud-item{display:flex;flex-direction:column;min-width:0}
-.hud-lbl{font-size:13px;color:rgba(255,255,255,.38);text-transform:uppercase;line-height:1}
-.hud-val{font-size:20px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#top-right{width:200px;flex-shrink:0;background:rgba(0,0,0,.3);border-left:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 14px}
+.hud-item{display:flex;flex-direction:column;min-width:0;align-items:center}
+.hud-lbl{font-size:16px;color:rgba(255,255,255,.38);text-transform:uppercase;line-height:1}
+.hud-val{font-size:38px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── MAIN AREA ── */
-#main-area{flex:1;display:flex;min-height:0;overflow:visible}
+#main-area{flex:1;display:flex;min-height:0;overflow:visible;position:relative}
 
 /* ── GRID (diamond 3/4 view) ── */
 /* The board is rotated into a diamond with rotate(45deg) scaleY(DIAMOND_SY) (DIAMOND_SY
@@ -74,7 +74,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .grid-cell.miss::after{content:'💧';font-size:20px;opacity:.6;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
 
 /* ── RIGHT PANEL (ship status + controls) ── */
-#right-panel{width:140px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
+#right-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
 #missiles-display{text-align:center;padding:8px;background:rgba(0,20,60,.4);border-radius:8px;border:0.5px solid rgba(74,158,255,.3)}
 .missiles-count{font-size:64px;font-weight:700;color:#4a9eff;line-height:1}
 .missiles-lbl{font-size:18px;color:rgba(74,158,255,.5);text-transform:uppercase;letter-spacing:.05em}
@@ -82,14 +82,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .missile-slot{width:28px;height:44px;border-radius:4px;border:2px solid rgba(74,158,255,.5);background:rgba(74,158,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .3s}
 .missile-slot.bought{background:rgba(180,40,0,.4);border-color:rgba(255,80,0,.6)}
 .missile-slot.bought::after{content:'✕';color:rgba(255,100,0,.8);font-weight:900}
-#ship-status{display:flex;flex-direction:column;gap:3px}
-.ship-card{background:rgba(0,20,60,.4);border:0.5px solid rgba(74,158,255,.2);border-radius:3px;padding:5px 10px}
+#ship-status{display:flex;flex-direction:column;gap:6px}
+.ship-card{background:rgba(0,20,60,.4);border:0.5px solid rgba(74,158,255,.2);border-radius:5px;padding:8px 14px}
 .ship-card.sunk{background:rgba(180,40,0,.25);border-color:rgba(255,100,0,.4);opacity:.7}
-.ship-name{font-size:20px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em}
-.ship-hp{display:flex;gap:2px;margin-top:2px}
-.hp-sq{width:24px;height:24px;border-radius:1px;background:rgba(74,158,255,.4);border:0.5px solid rgba(74,158,255,.6)}
+.ship-name{font-size:26px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em}
+.ship-hp{display:flex;gap:3px;margin-top:3px}
+.hp-sq{width:32px;height:32px;border-radius:2px;background:rgba(74,158,255,.4);border:0.5px solid rgba(74,158,255,.6)}
 .hp-sq.hit{background:rgba(255,80,0,.7);border-color:#ff6400}
-.ship-payout{font-size:18px;color:rgba(255,215,0,.5);margin-top:1px}
+.ship-payout{font-size:22px;color:rgba(255,215,0,.5);margin-top:2px}
 #controls{display:flex;flex-direction:column;gap:3px;margin-top:auto}
 #fire-btn{background:linear-gradient(180deg,#ff6400,#cc4400);border:none;border-radius:10px;color:#fff;font-size:32px;font-weight:900;padding:16px 8px;cursor:pointer;letter-spacing:.05em;width:100%}
 #fire-btn:disabled{opacity:.4;cursor:not-allowed}
@@ -220,38 +220,40 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 }
 
 /* ── HISTORY STRIP ── */
-#history-strip{display:flex;align-items:center;padding:1px 6px;gap:3px;background:rgba(0,0,0,.35);border-top:0.5px solid rgba(255,255,255,.1);flex-shrink:0;height:20px}
+#history-strip{display:flex;align-items:center;padding:4px 6px;gap:6px;background:rgba(0,0,0,.35);border-top:0.5px solid rgba(255,255,255,.1);flex-shrink:0;height:80px}
 #roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
 #roll-history::-webkit-scrollbar{display:none}
-.roll-pip{min-width:36px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:1px 3px;background:rgba(255,255,255,.1)}
-.roll-pip .rp-coord{font-size:13px;color:#fff;line-height:1}
+.roll-pip{min-width:64px;height:64px;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 6px;background:rgba(255,255,255,.1)}
+.roll-pip .rp-coord{font-size:20px;color:#fff;line-height:1}
 .roll-pip.hit-pip{background:rgba(255,80,0,.35)}
 .roll-pip.hit-pip .rp-coord{color:#ff9944}
 .roll-pip.miss-pip{background:rgba(0,40,100,.3)}
 .roll-pip.miss-pip .rp-coord{color:#88bbff}
 
 /* ── JACKPOT STRIP ── */
-#jackpot-strip{display:flex;align-items:center;gap:6px;padding:1px 8px;background:rgba(0,0,0,.3);border-top:0.5px solid rgba(255,255,255,.08);flex-shrink:0;height:20px}
-.jackpot-lbl{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
-.jackpot-tier{font-size:10px;color:rgba(255,215,0,.4);padding:1px 6px;border-radius:3px;border:0.5px solid rgba(255,215,0,.15);transition:all .3s}
+#jackpot-strip{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:10px 14px;background:rgba(0,0,0,.55);border-right:0.5px solid rgba(255,255,255,.08);border-bottom-right-radius:8px;z-index:4}
+.jackpot-lbl{font-size:16px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
+.jackpot-tier{font-size:20px;color:rgba(255,215,0,.5);padding:4px 10px;border-radius:5px;border:0.5px solid rgba(255,215,0,.2);transition:all .3s}
 .jackpot-tier.earned{color:#ffd700;background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.5);font-weight:700}
 
 /* ── BOTTOM ACTION ROW ── */
-#fire-center{display:flex;flex-direction:row;align-items:stretch;flex-shrink:0;height:120px;background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.12)}
+#fire-center{display:flex;flex-direction:row;align-items:stretch;flex-shrink:0;height:240px;background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.12)}
 /* LEFT: free missile indicator */
-#free-missiles-display{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 10px;gap:3px;border-right:0.5px solid rgba(255,255,255,.1);min-width:150px}
-.fm-label{font-size:12px;color:rgba(74,158,255,.5);letter-spacing:.08em;text-transform:uppercase}
-#free-missiles-pips{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:150px}
-.fm-pip{width:32px;height:48px;border-radius:3px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;font-size:12px}
+#free-missiles-display{position:absolute;left:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;gap:6px;background:rgba(0,0,0,.55);border-right:0.5px solid rgba(255,255,255,.1);border-top-right-radius:8px;z-index:4}
+.fm-label{font-size:16px;color:rgba(74,158,255,.6);letter-spacing:.08em;text-transform:uppercase}
+#free-missiles-pips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:440px}
+.fm-pip{width:96px;height:144px;border-radius:6px;background:rgba(74,158,255,.3);border:2px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;font-size:12px}
 .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
 /* CENTER: buy missile */
-#buy-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 8px}
-#buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:2px solid rgba(74,158,255,.5);border-radius:8px;color:#fff;font-size:21px;font-weight:900;padding:12px 16px;cursor:pointer;text-align:center;width:100%;display:none}
+#buy-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px 16px}
+#buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:2px solid rgba(74,158,255,.5);border-radius:10px;color:#fff;font-size:26px;font-weight:900;padding:16px 20px;cursor:pointer;text-align:center;width:100%;display:none}
 #buy-btn:disabled{opacity:.3;cursor:not-allowed}
 #buy-btn:not(:disabled):hover{background:linear-gradient(180deg,#2270cc,#1050aa)}
-#missiles-remaining-lbl{font-size:14px;color:rgba(255,255,255,.55);text-align:center;font-weight:600}
+#missiles-remaining-lbl{display:flex;gap:5px;align-items:center;justify-content:center}
+.missile-remaining-icon{width:28px;height:28px;object-fit:contain}
+.missile-remaining-icon.used{opacity:.25}
 /* RIGHT: fire circle */
-#fire-btn{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,#ff5500,#aa2200);border:4px solid rgba(255,120,0,.6);color:#fff;font-size:17px;font-weight:900;cursor:pointer;letter-spacing:.04em;text-align:center;line-height:1.2;box-shadow:0 0 24px rgba(255,80,0,.5);flex-shrink:0;margin:5px 10px 5px 0;align-self:center}
+#fire-btn{width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,#ff5500,#aa2200);border:6px solid rgba(255,120,0,.6);color:#fff;font-size:32px;font-weight:900;cursor:pointer;letter-spacing:.04em;text-align:center;line-height:1.2;box-shadow:0 0 24px rgba(255,80,0,.5);flex-shrink:0;margin:8px 16px 8px 0;align-self:center}
 #fire-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
 #fire-btn:not(:disabled):hover{background:radial-gradient(circle,#ff7722,#cc3300);box-shadow:0 0 30px rgba(255,80,0,.6)}
 
@@ -294,7 +296,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.85</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.86</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
@@ -388,11 +390,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <div class="die-box" id="die-letter"><img id="die-letter-img" style="width:100%;height:100%;object-fit:contain;display:none"><span id="die-letter-txt">—</span></div>
         <div class="die-box" id="die-number"><img id="die-number-img" style="width:100%;height:100%;object-fit:contain;display:none"><span id="die-number-txt">—</span></div>
       </div>
-      <div id="last-result-text">Place ships<br>to begin</div>
+      <div id="last-result-text"></div>
     </div>
     <div id="top-right">
-      <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
-      <div class="hud-item"><div class="hud-lbl">Missiles</div><div class="hud-val" id="hud-missiles" style="color:#4a9eff">4</div></div>
       <div class="hud-item"><div class="hud-lbl">P&L</div><div class="hud-val" id="hud-pnl-top" style="color:#7ee87e">+$0</div></div>
     </div>
   </div>
@@ -406,14 +406,21 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     </div>
     <!-- RIGHT PANEL -->
     <div id="right-panel">
-      <div id="missiles-display">
-        <div class="missiles-count" id="missiles-count">4</div>
-        <div class="missiles-lbl">Missiles</div>
-      </div>
       <div id="ship-status"></div>
-      <div id="controls">
-        <div id="pnl-display">+$0.00</div>
-      </div>
+    </div>
+
+    <!-- JACKPOT / EXTRA WINS PANEL -- flush left edge, stacked -->
+    <div id="jackpot-strip">
+      <span class="jackpot-lbl">Extra Wins</span>
+      <span class="jackpot-tier" id="jt-2">2 sunk: <strong>+$<span id="jv-2">0</span></strong></span>
+      <span class="jackpot-tier" id="jt-3">3 sunk: <strong>+$<span id="jv-3">0</span></strong></span>
+      <span class="jackpot-tier" id="jt-4">4 sunk: <strong>+$<span id="jv-4">0</span></strong></span>
+    </div>
+
+    <!-- FREE MISSILES -- lower-left corner -->
+    <div id="free-missiles-display">
+      <div class="fm-label">FREE</div>
+      <div id="free-missiles-pips"></div>
     </div>
   </div>
 
@@ -422,40 +429,18 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <div id="roll-history"></div>
   </div>
 
-  <!-- JACKPOT / EXTRA WINS PANEL -->
-  <div id="jackpot-strip">
-    <span class="jackpot-lbl">Extra Wins:</span>
-    <span class="jackpot-tier" id="jt-2">2 sunk: <strong>+$<span id="jv-2">0</span></strong></span>
-    <span class="jackpot-tier" id="jt-3">3 sunk: <strong>+$<span id="jv-3">0</span></strong></span>
-    <span class="jackpot-tier" id="jt-4">4 sunk: <strong>+$<span id="jv-4">0</span></strong></span>
-  </div>
-
-  <!-- BOTTOM ACTION BAR -->
-  <div id="bottom-action">
-    <div id="bottom-section">
-      <div id="bottom-left">
-        <div id="bottom-bar">
-        <span id="hud-pnl-bottom" style="font-size:13px;font-weight:700;color:#7ee87e;padding:0 6px">+$0.00</span>
-      </div>
-    </div>
-  </div>
-    <!-- BOTTOM ACTION ROW: free missiles left | buy btn center | fire circle right -->
+    <!-- BOTTOM ACTION ROW: buy btn center | fire circle right -->
   <div id="fire-center">
-    <div id="free-missiles-display">
-      <div class="fm-label">FREE</div>
-      <div id="free-missiles-pips"></div>
-    </div>
     <div id="buy-area">
       <button id="buy-btn" onclick="buyMissile()" disabled style="display:none"></button>
-      <div id="buy-timer-row" style="display:none;align-items:center;gap:10px;justify-content:center">
-        <span id="buy-offer-timer" style="font-size:30px;font-weight:900;color:#4a9eff;min-width:32px;text-align:center">10</span>
-        <button id="end-game-btn" onclick="declineBuyOffer()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:6px;color:rgba(255,255,255,.75);font-size:16px;font-weight:700;padding:6px 14px;cursor:pointer">End Game</button>
+      <div id="buy-timer-row" style="display:none;align-items:center;gap:20px;justify-content:center">
+        <span id="buy-offer-timer" style="font-size:60px;font-weight:900;color:#4a9eff;min-width:64px;text-align:center">10</span>
+        <button id="end-game-btn" onclick="declineBuyOffer()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:8px;color:rgba(255,255,255,.75);font-size:22px;font-weight:700;padding:10px 22px;cursor:pointer">End Game</button>
       </div>
       <div id="missiles-remaining-lbl"></div>
     </div>
     <button id="fire-btn" onclick="fireMissile()" disabled>FIRE<br>MISSILE</button>
   </div>
-  </div><!-- end bottom-action -->
 
   <!-- CASHOUT VOUCHER MODAL -->
   <div id="modal-cashout" class="hidden">
@@ -1165,7 +1150,7 @@ function playAgain(){
   const rni=document.getElementById('die-number-img');const rnt=document.getElementById('die-number-txt');
   if(rli)rli.style.display='none';if(rlt)rlt.textContent='—';
   if(rni)rni.style.display='none';if(rnt)rnt.textContent='—';
-  document.getElementById('last-result-text').textContent='Place ships to begin';
+  document.getElementById('last-result-text').textContent='';
   G.ships=randomizeLocal();
   buildMainGrid();
   renderPlacementGrid();
@@ -1201,17 +1186,18 @@ function renderGridLabels(containerId, attrR, attrC, letters){
   const counter='rotate(-45deg) scaleY('+(1/DIAMOND_SY)+')';
   const labelSize=22;
   const lastRow=GRID_SIZE-1;
+  const lastCol=GRID_SIZE-1;
 
-  // Row (number) labels: anchored to col=0 cells, on the NW edge. Numbering runs
-  // 6 (top) -> 1 (bottom) -- reversed from the row index itself.
+  // Row (number) labels: anchored to the LAST column's cells, on the SE edge.
+  // Numbering runs 6 (top) -> 1 (bottom) -- reversed from the row index itself.
   for(let r=0;r<GRID_SIZE;r++){
-    const cell=container.querySelector('[data-'+attrR+'="'+r+'"][data-'+attrC+'="0"]');
+    const cell=container.querySelector('[data-'+attrR+'="'+r+'"][data-'+attrC+'="'+lastCol+'"]');
     if(!cell)continue;
     const box=localBox(cell,container);
     const num=GRID_SIZE-r;
     const lbl=document.createElement('div');
     lbl.className='grid-edge-label';
-    lbl.style.cssText='position:absolute;left:'+(box.left-labelSize-4)+'px;top:'+(box.top+box.height/2-labelSize/2)+'px;'
+    lbl.style.cssText='position:absolute;left:'+(box.left+box.width+4)+'px;top:'+(box.top+box.height/2-labelSize/2)+'px;'
       +'width:'+labelSize+'px;height:'+labelSize+'px;pointer-events:none;z-index:3;transform:'+counter;
     if(DIE_NUMBER_IMG[num]){
       const img=document.createElement('img');
@@ -1430,7 +1416,7 @@ function updateUI(){
   const winEl=e('hud-winning-top');
   if(winEl){
     const winning=G.phase==='firing'||G.phase==='done'?computeCurrentWinnings():0;
-    winEl.textContent=winning>0?'Winning: '+fmt(winning):'';
+    winEl.textContent='Winning: '+fmt(winning);
   }
   if(e('hud-missiles'))e('hud-missiles').textContent=G.missilesRemaining;
   if(e('hud-lastwin'))e('hud-lastwin').textContent=G.lastWin>0?fmt(G.lastWin):'—';
@@ -1465,7 +1451,7 @@ function renderRollHistory(){
   G.rollHistory.forEach(r=>{
     const pip=document.createElement('div');
     pip.className='roll-pip '+(r.hit?'hit-pip':'miss-pip');
-    const sz='18px';
+    const sz='36px';
     const lImg=DIE_LETTER_IMG[r.letter]?`<img src="${DIE_LETTER_IMG[r.letter]}" style="width:${sz};height:${sz};vertical-align:middle">`:`<span>${r.letter}</span>`;
     const nImg=DIE_NUMBER_IMG[r.number]?`<img src="${DIE_NUMBER_IMG[r.number]}" style="width:${sz};height:${sz};vertical-align:middle">`:`<span>${r.number}</span>`;
     pip.innerHTML='<span class="rp-coord">'+lImg+nImg+'</span>';
@@ -1512,20 +1498,18 @@ function renderFireCenter(){
   const timerRow=document.getElementById('buy-timer-row');
   if(timerRow&&!offerLive)timerRow.style.display='none';
 
-  // Missiles remaining label
+  // Missiles remaining: MAX_BUY icons, dimmed for ones already bought, bright for
+  // ones still available (e.g. 5 of 6 bought -> 5 dimmed + 1 bright).
   if(lbl){
-    if(inFiring){
+    lbl.innerHTML='';
+    if(inFiring&&(canBuyNow||outOfMissiles)){
       const bought=G.missilesBought||0;
-      const buysLeft=6-bought;
-      if(canBuyNow){
-        lbl.textContent=buysLeft+' purchase'+(buysLeft!==1?'s':'')+' remaining';
-      }else if(outOfMissiles){
-        lbl.textContent='No purchases remaining';
-      }else{
-        lbl.textContent='';
+      for(let i=0;i<MAX_BUY;i++){
+        const img=document.createElement('img');
+        img.src=MISSILE_IMG.extra;
+        img.className='missile-remaining-icon'+(i<bought?' used':'');
+        lbl.appendChild(img);
       }
-    }else{
-      lbl.textContent='';
     }
   }
 
