@@ -451,8 +451,13 @@
     for (let i = 0; i < n; i++) {
       const imgMap = (CFG.faceImagesPerDie && CFG.faceImagesPerDie[i]) || CFG.faceImages;
       const faceValues = DEFAULT_FACE_VALUES.slice();
+      // alphaTest (not a plain color tint -- that multiplies the whole texture including
+      // the visible icon, which would blacken it out entirely) discards fully-transparent
+      // pixels in the face art instead of rendering their raw, un-premultiplied RGB as
+      // opaque white. Those discarded corner pixels then show whatever's behind the die
+      // (the dark backdrop), instead of a stray white bleed on the curved/beveled edges.
       const mats = faceValues.map(v => new THREE.MeshStandardMaterial({
-        map: faceTexture(v, imgMap), roughness: 0.4, metalness: 0.05
+        map: faceTexture(v, imgMap), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
       }));
       const mesh = new THREE.Mesh(roundedBoxGeometry(s, edgeR, 4), mats);
       mesh.castShadow = true;

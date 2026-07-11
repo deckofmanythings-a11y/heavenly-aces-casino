@@ -369,7 +369,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.98</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.99</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -564,8 +564,12 @@ let destTHREE=null,destRenderer=null,destScene=null,destCamera=null,destDieLette
 const DEST_FMAT=[2,5,3,4,1,6];
 function destMakeDie(x,imgMap){
   // Material order for BoxGeometry: [+x,-x,+y,-y,+z,-z].
+  // alphaTest discards fully-transparent pixels in the face art instead of rendering their
+  // raw RGB as opaque white -- fixes white bleeding through on the die's curved/beveled
+  // corners. Discarded pixels reveal the canvas backdrop, which initDestDice sets to solid
+  // black (see setClearColor below) so that backdrop reads as a clean black edge.
   const mats=DEST_FMAT.map(v=>new destTHREE.MeshPhongMaterial({
-    map:new destTHREE.TextureLoader().load(imgMap[v]), shininess:40
+    map:new destTHREE.TextureLoader().load(imgMap[v]), alphaTest:0.5, shininess:40
   }));
   const d=new destTHREE.Mesh(new destTHREE.BoxGeometry(1.5,1.5,1.5),mats);
   d.position.x=x;destScene.add(d);return d;
@@ -583,7 +587,10 @@ function initDestDice(){
   if(!cvs)return;
   destRenderer=new destTHREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   destRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  destRenderer.setSize(W,H);destRenderer.setClearColor(0,0);
+  // Opaque near-black clear color (matches the page's own #0a0a12 background) instead of a
+  // transparent canvas -- gives alphaTest-discarded pixels on the die corners a solid dark
+  // backdrop to reveal instead of whatever happened to be behind a transparent canvas.
+  destRenderer.setSize(W,H);destRenderer.setClearColor(0x0a0a12,1);
   destScene=new destTHREE.Scene();
   destCamera=new destTHREE.PerspectiveCamera(40,W/H,.1,100);
   destCamera.position.set(0,-1.8,6.5);destCamera.lookAt(0,0,0);
