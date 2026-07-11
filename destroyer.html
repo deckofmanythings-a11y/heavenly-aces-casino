@@ -30,7 +30,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #game-screen{display:none;height:100vh;height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a0a18}
 
 /* ── TOP ROW ── */
-#top-row{display:flex;flex-shrink:0;height:calc(100dvh*3/16);border-bottom:1px solid rgba(255,255,255,.12);min-height:96px;max-height:144px}
+#top-row{display:flex;flex-shrink:0;height:calc(100dvh*3/16);border-bottom:1px solid rgba(255,255,255,.12);min-height:60px;max-height:80px}
 #top-left{width:144px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px}
 .tl-lbl{font-size:16px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em}
 .tl-val{font-size:38px;font-weight:700;color:#4a9eff;line-height:1.1}
@@ -49,19 +49,19 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .hud-val{font-size:20px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── MAIN AREA ── */
-#main-area{flex:1;display:flex;min-height:0;overflow:hidden}
+#main-area{flex:1;display:flex;min-height:0;overflow:visible}
 
 /* ── GRID (diamond 3/4 view) ── */
 /* The board is rotated into a diamond with rotate(45deg) scaleY(DIAMOND_SY) (DIAMOND_SY
    mirrored in JS as DIAMOND_SY). Ship art and labels counter-rotate so their content
    stays upright while their position still follows the diamond layout. */
-#grid-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;position:relative}
+#grid-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;position:relative;z-index:5}
 /* Both label strips are unused now -- row/col labels render as overlay children of
    #grid-rows / #placement-rows instead (see renderGridLabels), so they inherit the
    exact same diamond transform and can't drift out of alignment. */
 #col-labels{display:none}
 .col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em;transform:scaleY(1.818) rotate(-45deg)}
-#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:195px;transform:scaleY(.5) rotate(45deg);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
+#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:975px;transform:scaleY(.5) rotate(45deg);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
 .grid-row{display:flex;gap:2px;align-items:center}
 .row-label{width:36px;flex-shrink:0;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .grid-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.15);background:rgba(0,20,60,.4);cursor:default;display:flex;align-items:center;justify-content:center;font-size:28px;transition:all .2s;position:relative}
@@ -74,7 +74,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .grid-cell.miss::after{content:'💧';font-size:20px;opacity:.6;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
 
 /* ── RIGHT PANEL (ship status + controls) ── */
-#right-panel{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
+#right-panel{width:140px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
 #missiles-display{text-align:center;padding:8px;background:rgba(0,20,60,.4);border-radius:8px;border:0.5px solid rgba(74,158,255,.3)}
 .missiles-count{font-size:56px;font-weight:700;color:#4a9eff;line-height:1}
 .missiles-lbl{font-size:18px;color:rgba(74,158,255,.5);text-transform:uppercase;letter-spacing:.05em}
@@ -136,7 +136,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .log-line.info{color:#4a9eff}
 
 /* ── BOTTOM BAR ── */
-#bottom-section{display:flex;flex-shrink:0;height:calc(100dvh*2/16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1);min-height:176px;max-height:272px}
+#bottom-section{display:flex;flex-shrink:0;height:calc(100dvh*2/16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1);min-height:90px;max-height:120px}
 #bottom-left{flex:1;display:flex;flex-direction:column;min-width:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 16px;flex:1}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:40px;font-weight:700;padding:2px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;line-height:1.2;text-align:center}
@@ -237,7 +237,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .jackpot-tier.earned{color:#ffd700;background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.5);font-weight:700}
 
 /* ── BOTTOM ACTION ROW ── */
-#fire-center{display:flex;flex-direction:row;align-items:stretch;flex-shrink:0;height:132px;background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.12)}
+#fire-center{display:flex;flex-direction:row;align-items:stretch;flex-shrink:0;height:100px;background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.12)}
 /* LEFT: free missile indicator */
 #free-missiles-display{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 10px;gap:3px;border-right:0.5px solid rgba(255,255,255,.1);min-width:80px}
 .fm-label{font-size:11px;color:rgba(74,158,255,.5);letter-spacing:.08em;text-transform:uppercase}
@@ -251,7 +251,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #buy-btn:not(:disabled):hover{background:linear-gradient(180deg,#2270cc,#1050aa)}
 #missiles-remaining-lbl{font-size:14px;color:rgba(255,255,255,.55);text-align:center;font-weight:600}
 /* RIGHT: fire circle */
-#fire-btn{width:118px;height:118px;border-radius:50%;background:radial-gradient(circle,#ff5500,#aa2200);border:4px solid rgba(255,120,0,.6);color:#fff;font-size:19px;font-weight:900;cursor:pointer;letter-spacing:.04em;text-align:center;line-height:1.2;box-shadow:0 0 24px rgba(255,80,0,.5);flex-shrink:0;margin:4px 10px 4px 0;align-self:center}
+#fire-btn{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#ff5500,#aa2200);border:3px solid rgba(255,120,0,.6);color:#fff;font-size:15px;font-weight:900;cursor:pointer;letter-spacing:.04em;text-align:center;line-height:1.2;box-shadow:0 0 24px rgba(255,80,0,.5);flex-shrink:0;margin:4px 10px 4px 0;align-self:center}
 #fire-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
 #fire-btn:not(:disabled):hover{background:radial-gradient(circle,#ff7722,#cc3300);box-shadow:0 0 30px rgba(255,80,0,.6)}
 
@@ -294,7 +294,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.82</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.83</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
