@@ -108,6 +108,56 @@
   let rollT0 = 0;
   let resultCallbacks = [];
 
+  // ---------- jovial random-note tumble sound ----------
+  // Synthesized rather than sampled -- the real thing to match here (InterBlock/Easy
+  // Craps/Crapless Craps electronic tables' cloche sound) is proprietary casino equipment
+  // audio, not something legally available to source or reuse. A tiny Web Audio synth gets the
+  // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
+  // exactly to however long a given roll's preroll+resolving phases actually last.
+  let _actx = null, _noteTimer = null;
+  // C major pentatonic across two octaves -- no "wrong" notes in this scale, so hitting random
+  // ones back to back still sounds jovial rather than dissonant.
+  const NOTE_SCALE = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+  function _ensureAudio() {
+    if (!_actx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      _actx = new AC();
+    }
+    if (_actx.state === 'suspended') _actx.resume().catch(() => {});
+    return _actx;
+  }
+  function _playNote() {
+    const ctx = _ensureAudio(); if (!ctx) return;
+    const freq = NOTE_SCALE[Math.floor(Math.random() * NOTE_SCALE.length)];
+    const t = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0, t);
+    master.gain.linearRampToValueAtTime(0.22, t + 0.006);
+    master.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+    master.connect(ctx.destination);
+    // Fundamental + a quiet, slightly-sharp octave overtone gives a bell/marimba-ish timbre
+    // instead of a flat, plain sine beep.
+    [[1, 1], [2.01, 0.28]].forEach(([mult, vol]) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      g.gain.value = vol;
+      osc.type = 'sine';
+      osc.frequency.value = freq * mult;
+      osc.connect(g); g.connect(master);
+      osc.start(t); osc.stop(t + 0.28);
+    });
+  }
+  function startTumbleNotes() {
+    stopTumbleNotes();
+    (function tick() {
+      _playNote();
+      _noteTimer = setTimeout(tick, 80 + Math.random() * 100);
+    })();
+  }
+  function stopTumbleNotes() {
+    if (_noteTimer) { clearTimeout(_noteTimer); _noteTimer = null; }
+  }
+
   // ---------- seeded RNG (mulberry32) ----------
   function mulberry32(seed) {
     let a = seed >>> 0;
@@ -566,6 +616,7 @@
       timeMs: Math.round(now - rollT0)
     };
     phase = 'reveal';
+    stopTumbleNotes();
     setTimeout(() => {
       hideOverlay();
       phase = 'idle';
@@ -689,6 +740,7 @@
         phase = 'preroll';
         labelEl.textContent = 'rolling';
         showOverlay();
+        startTumbleNotes();
 
         Promise.resolve(valuesOrPromise).then(values => {
           if (!Array.isArray(values) || values.length !== dice.length ||
@@ -699,6 +751,7 @@
         }).catch(err => {
           phase = 'idle';
           hideOverlay();
+          stopTumbleNotes();
           const rej = activeReject; activeResolve = null; activeReject = null;
           if (rej) rej(err);
         });
