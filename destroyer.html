@@ -369,7 +369,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.97</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.98</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -616,6 +616,43 @@ const JACKPOT=[0,0,51,251,501];
 const GRID_SIZE=6;
 const MAX_BUY=6;
 
+// Client-side port of the server's buyMissilePrice (roll-destroyer/index.ts) -- deterministic
+// from (shipHits, sunkenCount, bet), so a page reload can recompute the exact buy-offer price
+// without a server round trip. This is purely for restoring the buy-offer UI after a refresh;
+// the actual purchase is still fully priced and charged server-side at buy time regardless.
+const BUY_PRICE_MULTIPLIER=25/22; // 12% house edge, must match the server exactly
+function marginalPayout(shipIdx,hitsBefore,sunkenBefore){
+  const hitsAfter=hitsBefore+1;
+  const shipPay=SHIP_PAYOUTS[shipIdx][hitsAfter]-SHIP_PAYOUTS[shipIdx][hitsBefore];
+  const justSunk=hitsAfter===SHIP_LENGTHS[shipIdx];
+  const jackpotDelta=justSunk?JACKPOT[sunkenBefore+1]-JACKPOT[sunkenBefore]:0;
+  return shipPay+jackpotDelta;
+}
+const _evCache=new Map();
+function computeEV(shipHits,sunkenCount){
+  const key=shipHits.join(',')+'|'+sunkenCount;
+  if(_evCache.has(key))return _evCache.get(key);
+  let totalUnhit=0;
+  for(let i=0;i<4;i++)totalUnhit+=SHIP_LENGTHS[i]-shipHits[i];
+  if(totalUnhit===0){_evCache.set(key,0);return 0;}
+  let ev=0;
+  for(let i=0;i<4;i++){
+    const unhit=SHIP_LENGTHS[i]-shipHits[i];
+    if(unhit===0)continue;
+    const p=unhit/36;
+    const mp=marginalPayout(i,shipHits[i],sunkenCount);
+    const justSunk=(shipHits[i]+1)===SHIP_LENGTHS[i];
+    const newHits=shipHits.slice();newHits[i]++;
+    const newSunken=sunkenCount+(justSunk?1:0);
+    ev+=p*(mp+computeEV(newHits,newSunken));
+  }
+  _evCache.set(key,ev);
+  return ev;
+}
+function buyMissilePrice(shipHits,sunkenCount){
+  return r2(computeEV(shipHits,sunkenCount)*BUY_PRICE_MULTIPLIER);
+}
+
 // ── STATE ────────────────────────────────────────────────────────────────────
 let G={
   bankroll:0,startingBankroll:0,chip:5,
@@ -734,12 +771,28 @@ function startSession(player){
   if(gs&&gs.phase==='firing'){
     applyState(gs,G.bankroll);
     G.canBuy=G.missilesRemaining===0&&G.missilesBought<MAX_BUY;
-    G.buyPrice=0; // will be fetched on next buy attempt
+    // freeMissiles/missileQueue are client-only cosmetic trackers (never round-tripped
+    // through the server), so a reload left them stuck at the G object's initial defaults
+    // (4 free missiles, all "initial") no matter what the real, server-tracked
+    // missilesRemaining actually was -- resync them here instead of trusting the defaults.
+    G.freeMissiles=G.missilesRemaining;
+    G.missileQueue=Array(G.missilesRemaining).fill(G.missilesBought>0?'extra':'initial');
     buildMainGrid();
     renderMainGrid();
     renderShipImages();
     hidePlacementScreen();
-    addLog('Battle restored — continue firing!','info');
+    if(G.canBuy){
+      // Was out of missiles and mid buy-decision when the page reloaded -- buyPrice is a
+      // pure function of (shipHits, sunkenCount, bet), so it can be recomputed exactly
+      // without a server call, and used to properly reopen the buy offer (button + timer)
+      // instead of leaving the player stuck with no way to fire or buy.
+      G.buyPrice=buyMissilePrice(G.shipHits,G.sunkenCount)*G.bet;
+      showBuyOffer(G.buyPrice,0,gs,false);
+      addLog('Battle restored — you were out of missiles, buy offer reopened.','info');
+    }else{
+      G.buyPrice=0;
+      addLog('Battle restored — continue firing!','info');
+    }
   }else{
     G.ships=randomizeLocal();
     buildMainGrid();
