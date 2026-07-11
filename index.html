@@ -917,7 +917,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.49</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.50</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1484,6 +1484,16 @@ function canSwitchMode(){
 
 // Saves a clean come-out state for the current mode to Supabase,
 // clearing props and resetting point/phase/bonus. Called before navigating away.
+//
+// IMPORTANT: this must NEVER write bankroll/net_pnl -- those columns are only ever
+// authoritative when written by the roll-*/cashout/redeem Edge Functions, which compute them
+// server-side from the real stored value. This function used to also push G.bankroll (the
+// client's local, optimistically-updated copy) directly into the database here. Under normal
+// play G.bankroll stays in sync since clearRemovable() below refunds every removable bet before
+// this runs, but if a prior roll's response was ever lost (network hiccup) without the client
+// re-syncing G.bankroll from the server's real result, switching tables would have silently and
+// permanently overwritten the server's correct bankroll with the client's stale one -- causing
+// the two tables' balances to drift out of sync with each other exactly like Deck reported.
 async function saveCleanState(mode){
   clearRemovable();
   G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
@@ -1499,11 +1509,7 @@ async function saveCleanState(mode){
              open:true,locked:false,gracePeriod:false},
     }};
     currentPlayer.game_state=cleanGs;
-    currentPlayer.bankroll=G.bankroll;
-    const netPnl=r2(G.bankroll-(parseFloat(currentPlayer.total_redeemed)||0));
     await sb.from('players').update({
-      bankroll:G.bankroll,
-      net_pnl:netPnl,
       game_state:cleanGs,
     }).eq('id',currentPlayer.id);
   }
@@ -1528,6 +1534,16 @@ async function switchGameMode(mode){
     const newGs={...existingGs,activeGame:mode};
     currentPlayer.game_state=newGs;
     await sb.from('players').update({game_state:newGs}).eq('id',currentPlayer.id);
+    // Re-sync bankroll from the server's real value rather than trusting whatever the client
+    // currently has -- defense in depth against the two tables' balances ever drifting apart
+    // again (see the big comment on saveCleanState for how that happened before).
+    const{data:fresh}=await sb.from('players').select('bankroll,total_redeemed,net_pnl').eq('id',currentPlayer.id).maybeSingle();
+    if(fresh){
+      G.bankroll=parseFloat(fresh.bankroll)||0;
+      G.startingBankroll=parseFloat(fresh.total_redeemed)||0;
+      currentPlayer.bankroll=G.bankroll;
+      currentPlayer.total_redeemed=G.startingBankroll;
+    }
   }
   updateUI();
 }
