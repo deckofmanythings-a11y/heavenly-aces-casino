@@ -249,7 +249,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
 
 /* BET -- bottom-right corner of #main-area, persists through placement + battle */
-#bet-circle-wrap{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:4}
+/* right offset clears #right-panel's 280px width so the circle sits just to its left,
+   not overlapping it, while staying bottom-anchored within #main-area. */
+#bet-circle-wrap{position:absolute;right:296px;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:4}
 #bet-circle{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(20,45,80,.92),rgba(4,8,16,.96));border:5px solid rgba(74,158,255,.65);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 26px rgba(74,158,255,.35)}
 #bet-circle:hover{border-color:rgba(74,158,255,.9)}
 #bet-circle-chips{position:relative;width:96px;height:96px}
@@ -348,7 +350,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.90</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.91</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
