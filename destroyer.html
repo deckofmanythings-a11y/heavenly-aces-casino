@@ -294,7 +294,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.83</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.84</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
@@ -1199,29 +1199,45 @@ function renderGridLabels(containerId, attrR, attrC, letters){
   if(!container)return;
   container.querySelectorAll('.grid-edge-label').forEach(el=>el.remove());
   const counter='rotate(-45deg) scaleY('+(1/DIAMOND_SY)+')';
-  const labelSize=20;
+  const labelSize=22;
+  const lastRow=GRID_SIZE-1;
+
+  // Row (number) labels: anchored to col=0 cells, on the NW edge. Numbering runs
+  // 6 (top) -> 1 (bottom) -- reversed from the row index itself.
   for(let r=0;r<GRID_SIZE;r++){
     const cell=container.querySelector('[data-'+attrR+'="'+r+'"][data-'+attrC+'="0"]');
     if(!cell)continue;
     const box=localBox(cell,container);
+    const num=GRID_SIZE-r;
     const lbl=document.createElement('div');
     lbl.className='grid-edge-label';
-    lbl.textContent=r+1;
     lbl.style.cssText='position:absolute;left:'+(box.left-labelSize-4)+'px;top:'+(box.top+box.height/2-labelSize/2)+'px;'
-      +'width:'+labelSize+'px;height:'+labelSize+'px;display:flex;align-items:center;justify-content:center;'
-      +'font-size:13px;font-weight:700;color:rgba(255,255,255,.5);pointer-events:none;z-index:3;transform:'+counter;
+      +'width:'+labelSize+'px;height:'+labelSize+'px;pointer-events:none;z-index:3;transform:'+counter;
+    if(DIE_NUMBER_IMG[num]){
+      const img=document.createElement('img');
+      img.src=DIE_NUMBER_IMG[num];
+      img.style.cssText='width:100%;height:100%;object-fit:contain';
+      lbl.appendChild(img);
+    }else lbl.textContent=num;
     container.appendChild(lbl);
   }
+
+  // Column (letter) labels: anchored to the LAST row's cells instead of the first,
+  // and positioned below rather than above -- traces the SW edge instead of NE.
   for(let c=0;c<GRID_SIZE;c++){
-    const cell=container.querySelector('[data-'+attrR+'="0"][data-'+attrC+'="'+c+'"]');
+    const cell=container.querySelector('[data-'+attrR+'="'+lastRow+'"][data-'+attrC+'="'+c+'"]');
     if(!cell)continue;
     const box=localBox(cell,container);
     const lbl=document.createElement('div');
     lbl.className='grid-edge-label';
-    lbl.textContent=letters[c];
-    lbl.style.cssText='position:absolute;left:'+(box.left+box.width/2-labelSize/2)+'px;top:'+(box.top-labelSize-4)+'px;'
-      +'width:'+labelSize+'px;height:'+labelSize+'px;display:flex;align-items:center;justify-content:center;'
-      +'font-size:13px;font-weight:700;color:rgba(255,255,255,.5);pointer-events:none;z-index:3;transform:'+counter;
+    lbl.style.cssText='position:absolute;left:'+(box.left+box.width/2-labelSize/2)+'px;top:'+(box.top+box.height+4)+'px;'
+      +'width:'+labelSize+'px;height:'+labelSize+'px;pointer-events:none;z-index:3;transform:'+counter;
+    if(DIE_LETTER_IMG[letters[c]]){
+      const img=document.createElement('img');
+      img.src=DIE_LETTER_IMG[letters[c]];
+      img.style.cssText='width:100%;height:100%;object-fit:contain';
+      lbl.appendChild(img);
+    }else lbl.textContent=letters[c];
     container.appendChild(lbl);
   }
 }
