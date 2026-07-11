@@ -51,21 +51,28 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* ── MAIN AREA ── */
 #main-area{flex:1;display:flex;min-height:0;overflow:hidden}
 
-/* ── GRID (3/4 view) ── */
-#grid-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:3px;perspective:1200px}
-#col-labels{display:flex;margin-left:44px;gap:2px;width:100%;max-width:600px}
-.col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em}
-#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:600px;transform:rotateX(42deg);transform-origin:50% 100%;box-shadow:0 40px 70px rgba(0,0,0,.55)}
+/* ── GRID (diamond 3/4 view) ── */
+/* The board is rotated into a diamond with rotate(45deg) scaleY(DIAMOND_SY) (DIAMOND_SY
+   mirrored in JS as DIAMOND_SY). Ship art and labels counter-rotate so their content
+   stays upright while their position still follows the diamond layout. */
+#grid-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;position:relative}
+/* Hidden on the compact battle grid: there's no headroom left above the diamond for a
+   second label strip once the grid uses the full available height, and column letters
+   are already communicated via the dice readout and hit/miss history. Still shown on
+   the roomier (scrollable) placement grid via #placement-col-labels. */
+#col-labels{display:none}
+.col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em;transform:scaleY(1.818) rotate(-45deg)}
+#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:200px;transform:rotate(45deg) scaleY(.55);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
 .grid-row{display:flex;gap:2px;align-items:center}
-.row-label{width:36px;flex-shrink:0;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4)}
+.row-label{width:36px;flex-shrink:0;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .grid-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.15);background:rgba(0,20,60,.4);cursor:default;display:flex;align-items:center;justify-content:center;font-size:28px;transition:all .2s;position:relative}
 .grid-cell.ship{background:rgba(40,80,160,.5);border-color:rgba(74,158,255,.5)}
 .grid-cell.hit{background:rgba(255,80,0,.5);border-color:#ff6400}
 .grid-cell.miss{background:rgba(0,40,100,.3);border-color:rgba(74,158,255,.3)}
 .grid-cell.targeted{box-shadow:0 0 0 2px #fff;z-index:1}
-.grid-cell.ship::after{content:'🚢';font-size:20px;opacity:.6}
-.grid-cell.hit::after{content:'💥';font-size:24px}
-.grid-cell.miss::after{content:'💧';font-size:20px;opacity:.6}
+.grid-cell.ship::after{content:'🚢';font-size:20px;opacity:.6;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
+.grid-cell.hit::after{content:'💥';font-size:24px;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
+.grid-cell.miss::after{content:'💧';font-size:20px;opacity:.6;display:inline-block;transform:scaleY(1.818) rotate(-45deg)}
 
 /* ── RIGHT PANEL (ship status + controls) ── */
 #right-panel{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
@@ -98,12 +105,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #placement-overlay.hidden{display:none}
 .placement-title{font-size:45px;font-weight:700;color:#4a9eff;letter-spacing:.05em}
 .placement-sub{font-size:27px;color:rgba(255,255,255,.5)}
-#placement-grid-wrap{position:relative;perspective:1000px}
-#placement-col-labels{display:flex;margin-left:35px;gap:2px;max-width:416px;width:100%}
-#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:416px;width:100%;transform:rotateX(42deg);transform-origin:50% 100%;box-shadow:0 30px 55px rgba(0,0,0,.5)}
-.p-col-label{flex:1;text-align:center;font-size:18px;font-weight:700;color:rgba(255,255,255,.4)}
+#placement-grid-wrap{position:relative}
+#placement-col-labels{display:flex;margin-left:35px;gap:2px;max-width:416px;width:100%;transform:rotate(45deg) scaleY(.55);transform-origin:center center}
+#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:416px;width:100%;transform:rotate(45deg) scaleY(.55);transform-origin:center center;box-shadow:0 22px 40px rgba(0,0,0,.5)}
+.p-col-label{flex:1;text-align:center;font-size:18px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .p-row{display:flex;gap:2px;align-items:center}
-.p-row-label{width:29px;text-align:center;font-size:18px;color:rgba(255,255,255,.4)}
+.p-row-label{width:29px;text-align:center;font-size:18px;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .p-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.12);background:rgba(0,20,60,.4);display:flex;align-items:center;justify-content:center;font-size:19px}
 .p-cell.ship{background:rgba(40,80,160,.25);border-color:rgba(74,158,255,.3)}
 .placement-btns{display:flex;gap:13px}
@@ -123,8 +130,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #play-again-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);color:#fff;font-size:88px;font-weight:700;padding:40px 120px;border-radius:28px;cursor:pointer;margin-top:16px}
 
 /* ── LOG STRIP ── */
-#log-strip{display:flex;align-items:center;padding:2px 16px;gap:16px;background:rgba(0,0,0,.4);border-bottom:0.5px solid rgba(255,255,255,.1);flex-shrink:0;height:88px}
-.log-line{font-size:44px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#log-strip{display:flex;align-items:center;padding:2px 16px;gap:16px;background:rgba(0,0,0,.4);border-bottom:0.5px solid rgba(255,255,255,.1);flex-shrink:0;height:30px}
+.log-line{font-size:16px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .log-line.hit{color:#ff9944}
 .log-line.miss{color:#88bbff}
 .log-line.info{color:#4a9eff}
@@ -214,7 +221,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 }
 
 /* ── HISTORY STRIP ── */
-#history-strip{display:flex;align-items:center;padding:2px 6px;gap:4px;background:rgba(0,0,0,.35);border-top:0.5px solid rgba(255,255,255,.1);flex-shrink:0;height:28px}
+#history-strip{display:flex;align-items:center;padding:1px 6px;gap:3px;background:rgba(0,0,0,.35);border-top:0.5px solid rgba(255,255,255,.1);flex-shrink:0;height:20px}
 #roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
 #roll-history::-webkit-scrollbar{display:none}
 .roll-pip{min-width:36px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:1px 3px;background:rgba(255,255,255,.1)}
@@ -225,9 +232,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .roll-pip.miss-pip .rp-coord{color:#88bbff}
 
 /* ── JACKPOT STRIP ── */
-#jackpot-strip{display:flex;align-items:center;gap:8px;padding:3px 8px;background:rgba(0,0,0,.3);border-top:0.5px solid rgba(255,255,255,.08);flex-shrink:0}
-.jackpot-lbl{font-size:13px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
-.jackpot-tier{font-size:14px;color:rgba(255,215,0,.4);padding:2px 8px;border-radius:3px;border:0.5px solid rgba(255,215,0,.15);transition:all .3s}
+#jackpot-strip{display:flex;align-items:center;gap:6px;padding:1px 8px;background:rgba(0,0,0,.3);border-top:0.5px solid rgba(255,255,255,.08);flex-shrink:0;height:20px}
+.jackpot-lbl{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
+.jackpot-tier{font-size:10px;color:rgba(255,215,0,.4);padding:1px 6px;border-radius:3px;border:0.5px solid rgba(255,215,0,.15);transition:all .3s}
 .jackpot-tier.earned{color:#ffd700;background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.5);font-weight:700}
 
 /* ── BOTTOM ACTION ROW ── */
@@ -294,7 +301,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     </div>
     <div class="placement-title">⚓ BATTLE STATIONS</div>
     <div class="placement-sub">Drag ships to move · Click to rotate</div>
-    <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:0 0 2px">Ver. 0.2.61</div>
+    <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:0 0 2px">Ver. 0.2.63</div>
     <div class="bet-row" style="align-items:center;gap:10px">
       <span class="bet-lbl">Bet</span>
       <!-- Left-click adds the selected chip, right-click removes it -- same interaction as
@@ -304,7 +311,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <div id="placement-col-labels"></div>
     <div id="placement-rows"></div>
     <div class="placement-btns">
-      <button class="placement-btn" id="re-randomize-btn" onclick="reRandomize()">🎲 Re-randomize</button>
+      <button class="placement-btn" id="re-randomize-btn" onclick="reRandomize()">⟳ New Ship Positions</button>
       <button class="placement-btn" id="start-battle-btn" onclick="startBattle()">⚓ Begin Game</button>
     </div>
     <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center">
@@ -489,6 +496,10 @@ const SHIP_IMG = {
 };
 // Ship index -> image key (SHIP_LENGTHS = [2,3,3,4])
 const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
+
+// Vertical squash applied to the diamond board (must match the scaleY(.55) in the CSS
+// for #grid-rows / #placement-rows / #col-labels / #placement-col-labels).
+const DIAMOND_SY = 0.55;
 
 // ── DICE IMAGES ───────────────────────────────────────────────────────────────
 const DIE_LETTER_IMG = {A:'DieA.png',B:'DieB.png',C:'DieC.png',D:'DieD.png',E:'DieE.png',F:'DieF.png'};
@@ -1246,13 +1257,16 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
     img.src=SHIP_IMG[SHIP_IMG_KEY[i]];
     img.draggable=false;
     const mirrorX=mirrored?-1:1;
+    // Container is rendered as a diamond via rotate(45deg) scaleY(DIAMOND_SY); counter-rotate
+    // the ship art so it stays upright and correctly proportioned on top of the tilted board.
+    const diamondCounter='scaleY('+(1/DIAMOND_SY)+') rotate(-45deg) ';
 
     if(horiz){
       // Horizontal: image fits the span directly
       wrap.style.cssText='position:absolute;left:'+left+'px;top:'+top+'px;'
         +'width:'+spanW+'px;height:'+spanH+'px;'
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
-      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:scaleX('+mirrorX+')';
+      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+mirrorX+')';
     }else{
       // Vertical: the ship image is horizontal by nature; rotate 90deg
       // The rotated image's visual width = spanH, visual height = spanW
@@ -1263,7 +1277,7 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
         +'left:'+(cx-spanH/2)+'px;top:'+(cy-spanW/2)+'px;'
         +'width:'+spanH+'px;height:'+spanW+'px;'
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
-      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:scaleX('+mirrorX+') rotate(90deg);transform-origin:center center';
+      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+mirrorX+') rotate(90deg);transform-origin:center center';
     }
 
     wrap.appendChild(img);
