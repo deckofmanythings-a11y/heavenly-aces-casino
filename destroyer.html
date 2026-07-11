@@ -61,7 +61,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    exact same diamond transform and can't drift out of alignment. */
 #col-labels{display:none}
 .col-label{flex:1;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.1em;transform:scaleY(1.818) rotate(-45deg)}
-#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:195px;transform:rotate(45deg) scaleY(.5);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
+#grid-rows{display:flex;flex-direction:column;gap:2px;width:100%;max-width:195px;transform:scaleY(.5) rotate(45deg);transform-origin:center center;box-shadow:0 30px 50px rgba(0,0,0,.5)}
 .grid-row{display:flex;gap:2px;align-items:center}
 .row-label{width:36px;flex-shrink:0;text-align:center;font-size:22px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .grid-cell{flex:1;aspect-ratio:1;border-radius:3px;border:0.5px solid rgba(255,255,255,.15);background:rgba(0,20,60,.4);cursor:default;display:flex;align-items:center;justify-content:center;font-size:28px;transition:all .2s;position:relative}
@@ -106,7 +106,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .placement-sub{font-size:27px;color:rgba(255,255,255,.5)}
 #placement-grid-wrap{position:relative}
 #placement-col-labels{display:none}
-#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:340px;width:100%;transform:rotate(45deg) scaleY(.5);transform-origin:center center;box-shadow:0 22px 40px rgba(0,0,0,.5)}
+#placement-rows{display:flex;flex-direction:column;gap:2px;max-width:340px;width:100%;transform:scaleY(.5) rotate(45deg);transform-origin:center center;box-shadow:0 22px 40px rgba(0,0,0,.5)}
 .p-col-label{flex:1;text-align:center;font-size:18px;font-weight:700;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
 .p-row{display:flex;gap:2px;align-items:center}
 .p-row-label{width:29px;text-align:center;font-size:18px;color:rgba(255,255,255,.4);transform:scaleY(1.818) rotate(-45deg)}
@@ -294,7 +294,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.66</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.67</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
@@ -1183,7 +1183,7 @@ function renderGridLabels(containerId, attrR, attrC, letters){
   const container=document.getElementById(containerId);
   if(!container)return;
   container.querySelectorAll('.grid-edge-label').forEach(el=>el.remove());
-  const counter='scaleY('+(1/DIAMOND_SY)+') rotate(-45deg)';
+  const counter='rotate(-45deg) scaleY('+(1/DIAMOND_SY)+')';
   const labelSize=20;
   for(let r=0;r<GRID_SIZE;r++){
     const cell=container.querySelector('[data-'+attrR+'="'+r+'"][data-'+attrC+'="0"]');
@@ -1309,9 +1309,11 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
     img.src=horiz?SHIP_IMG[SHIP_IMG_KEY[i]]:SHIP_IMG_ALT[SHIP_IMG_KEY[i]];
     img.draggable=false;
     const mirrorX=mirrored?1:-1;
-    // Container is rendered as a diamond via rotate(45deg) scaleY(DIAMOND_SY); counter-rotate
+    // Container is rendered as a diamond via scaleY(DIAMOND_SY) rotate(45deg); counter-rotate
     // the ship art so it stays upright and correctly proportioned on top of the tilted board.
-    const diamondCounter='scaleY('+(1/DIAMOND_SY)+') rotate(-45deg) ';
+    // Order matters here: it must exactly reverse the parent's composition (rotate inner,
+    // scaleY outer -> counter is rotate outer, scaleY inner) or it won't actually cancel.
+    const diamondCounter='rotate(-45deg) scaleY('+(1/DIAMOND_SY)+') ';
 
     if(horiz){
       // Horizontal: image fits the span directly
