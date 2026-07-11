@@ -94,7 +94,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #pnl-display{font-size:22px;font-weight:700;text-align:center;color:#7ee87e;padding:2px}
 
 /* ── PLACEMENT SCREEN ── */
-#placement-overlay{position:absolute;inset:0;background:rgba(0,0,10,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:19px;padding:26px}
+#placement-overlay{position:absolute;inset:0;background:rgba(0,0,10,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:19px;padding:26px;overflow-y:auto}
 #placement-overlay.hidden{display:none}
 .placement-title{font-size:45px;font-weight:700;color:#4a9eff;letter-spacing:.05em}
 .placement-sub{font-size:27px;color:rgba(255,255,255,.5)}
@@ -112,8 +112,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #start-battle-btn{background:linear-gradient(180deg,#ff6400,#cc4400);color:#fff}
 .bet-row{display:flex;align-items:center;gap:13px}
 .bet-lbl{font-size:27px;color:rgba(255,255,255,.5)}
-#bet-input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:38px;font-weight:700;padding:8px 16px;width:160px;text-align:center;outline:none}
-#bet-input:focus{border-color:rgba(74,158,255,.5)}
 
 /* ── DONE OVERLAY ── */
 #done-overlay,#buy-offer-overlay{position:absolute;inset:0;background:rgba(0,0,10,.9);z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;padding:80px}
@@ -138,9 +136,19 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:40px;font-weight:700;padding:2px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;line-height:1.2;text-align:center}
 .nav-btn:hover{background:rgba(255,255,255,.14)}
 .nav-btn.active-game{border-color:#4a9eff;color:#4a9eff;background:rgba(74,158,255,.12)}
-.chip{width:88px;height:88px;border-radius:50%;font-size:32px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:transform .1s}
+/* Same chip artwork as Craps (index.html) -- chip-blank-N.png files already live in this same
+   directory, so this is a straight port rather than a new asset. */
+.chip{width:88px;height:88px;border-radius:50%;font-size:32px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#111;transition:transform .1s;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip:hover{transform:scale(1.1)}
-.chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #4a9eff}
+.chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #4a9eff;border-radius:50%}
+.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:26px}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.22);border-radius:3px;color:#fff;font-size:44px;padding:3px 24px;cursor:pointer;flex-shrink:0;height:96px}
 #hud-pnl-bottom{font-size:52px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 3px}
 
@@ -286,11 +294,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     </div>
     <div class="placement-title">⚓ BATTLE STATIONS</div>
     <div class="placement-sub">Drag ships to move · Click to rotate</div>
+    <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:0 0 2px">Ver. 0.2.60</div>
     <div class="bet-row" style="align-items:center;gap:10px">
       <span class="bet-lbl">Bet</span>
-      <div id="bet-display" style="position:relative;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:38px;font-weight:700;padding:6px 16px;min-width:100px;text-align:center;cursor:pointer" onclick="addBetChip()">$0
-        <button id="bet-minus" onclick="event.stopPropagation();removeBetChip()" style="display:none;position:absolute;top:2px;right:4px;background:rgba(180,0,0,.3);border:0.5px solid rgba(255,80,80,.5);border-radius:3px;color:#ff9a9a;font-size:14px;font-weight:700;cursor:pointer;padding:1px 4px;line-height:1">−</button>
-      </div>
+      <!-- Left-click adds the selected chip, right-click removes it -- same interaction as
+           every bet spot in Craps, instead of a separate tiny minus button. -->
+      <div id="bet-display" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:38px;font-weight:700;padding:6px 16px;min-width:100px;text-align:center;cursor:pointer" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">$0</div>
     </div>
     <div id="placement-col-labels"></div>
     <div id="placement-rows"></div>
@@ -299,15 +308,16 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <button class="placement-btn" id="start-battle-btn" onclick="startBattle()">⚓ Begin Game</button>
     </div>
     <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center">
-      <div class="chip" style="background:#b0b0b0;color:#222;border-color:#888" data-val="1" onclick="selectChip(1);addBetChip()">$1</div>
-      <div class="chip" style="background:#2471a3;border-color:#1a5276" data-val="2" onclick="selectChip(2);addBetChip()">$2</div>
-      <div class="chip" style="background:#d4ac0d;border-color:#b7950b;color:#111" data-val="3" onclick="selectChip(3);addBetChip()">$3</div>
-      <div class="chip" style="background:#c0392b;border-color:#922b21" data-val="5" onclick="selectChip(5);addBetChip()">$5</div>
-      <div class="chip" style="background:#f39c12;border-color:#d68910;color:#111" data-val="10" onclick="selectChip(10);addBetChip()">$10</div>
-      <div class="chip" style="background:#27ae60;border-color:#1e8449" data-val="25" onclick="selectChip(25);addBetChip()">$25</div>
-      <div class="chip" style="background:#7d4f30;border-color:#5d3a22" data-val="50" onclick="selectChip(50);addBetChip()">$50</div>
-      <div class="chip" style="background:#2c2c2c;border-color:#111" data-val="100" onclick="selectChip(100);addBetChip()">$100</div>
+      <div class="chip" data-val="1" onclick="selectChip(1);addBetChip()">$1</div>
+      <div class="chip" data-val="2" onclick="selectChip(2);addBetChip()">$2</div>
+      <div class="chip" data-val="3" onclick="selectChip(3);addBetChip()">$3</div>
+      <div class="chip" data-val="5" onclick="selectChip(5);addBetChip()">$5</div>
+      <div class="chip" data-val="10" onclick="selectChip(10);addBetChip()">$10</div>
+      <div class="chip" data-val="25" onclick="selectChip(25);addBetChip()">$25</div>
+      <div class="chip" data-val="50" onclick="selectChip(50);addBetChip()">$50</div>
+      <div class="chip" data-val="100" onclick="selectChip(100);addBetChip()">$100</div>
     </div>
+    <div id="placement-payout-status" style="display:flex;flex-direction:column;gap:3px;width:100%;max-width:360px;flex-shrink:0"></div>
     <div style="display:flex;gap:8px">
       <button class="bar-btn" onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
       <button class="bar-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
@@ -674,19 +684,15 @@ function buildGrid(ships){
 }
 
 // ── PLACEMENT SCREEN ──────────────────────────────────────────────────────────
-function showPlacementScreen(){document.getElementById('placement-overlay').classList.remove('hidden');}
+function showPlacementScreen(){document.getElementById('placement-overlay').classList.remove('hidden');renderShipStatus(G.placementBet||0,'placement-payout-status');}
 function hidePlacementScreen(){document.getElementById('placement-overlay').classList.add('hidden');}
 function reRandomize(){G.ships=randomizeLocal();renderPlacementGrid();}
 // ── BET MANAGEMENT ────────────────────────────────────────────────────────────
 function updateBetDisplay(){
   const bet=G.placementBet||0;
   const el=document.getElementById('bet-display');
-  const mb=document.getElementById('bet-minus');
-  if(el){
-    // Update text node (not the button)
-    el.childNodes[0].textContent='$'+bet.toFixed(2);
-  }
-  if(mb)mb.style.display=bet>0?'block':'none';
+  if(el)el.textContent='$'+bet.toFixed(2);
+  renderShipStatus(bet,'placement-payout-status');
 }
 function addBetChip(){
   const chip=G.chip||5;
@@ -1236,8 +1242,9 @@ function renderShipImages(){
   // Main battle grid uses data-r / data-c
   if(G.grid) renderShipImagesOnGrid('grid-rows','r','c');
 }
-function renderShipStatus(){
-  const panel=document.getElementById('ship-status');
+function renderShipStatus(bet,containerId){
+  bet=bet===undefined?G.bet:bet;
+  const panel=document.getElementById(containerId||'ship-status');
   if(!panel)return;
   panel.innerHTML='';
   SHIP_DISPLAY_NAMES.forEach((name,i)=>{
@@ -1249,7 +1256,7 @@ function renderShipStatus(){
     const payLine=SHIP_PAYOUTS[i].map((p,h)=>{
       if(h===0||p===0)return'';
       const jackpot=h===SHIP_LENGTHS[i]?(JACKPOT[Math.min(G.sunkenCount+1,4)]||0)-(JACKPOT[G.sunkenCount||0]||0):0;
-      return h+'hit: '+fmt(r2((p+jackpot)*G.bet));
+      return h+'hit: '+fmt(r2((p+jackpot)*bet));
     }).filter(Boolean).join(' · ');
     card.innerHTML='<div class="ship-name">'+name+(sunk?' ✓':'')+'</div>'+
       '<div class="ship-hp">'+Array.from({length:len},(_,j)=>'<div class="hp-sq'+(j<hits?' hit':'')+'"></div>').join('')+'</div>'+
