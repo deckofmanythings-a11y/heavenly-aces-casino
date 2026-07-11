@@ -294,7 +294,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="placement-overlay">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="placement-title" style="font-size:28px">⚓ BATTLE STATIONS</div>
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.67</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.68</div>
     </div>
     <div style="display:flex;gap:24px;width:100%;max-width:920px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
       <!-- LEFT: grid + placement controls -->
@@ -512,6 +512,19 @@ const SHIP_IMG_ALT = {
 };
 // Ship index -> image key (SHIP_LENGTHS = [2,3,3,4])
 const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
+
+// Per-ship, per-orientation fine-tuning against the live isometric board (found by eye,
+// not derivable from the art alone). dxPct/dyPct are % of the ship's own rendered box
+// (positive x = right, positive y = down, in final on-screen terms); scale shrinks/grows
+// the art in place. "horiz" = normal/base-art orientation, "vert" = Alt-art orientation.
+const SHIP_ADJUST = {
+  destroyer: { horiz: {dxPct:-3, dyPct:-15, scale:0.75} }
+};
+function getShipAdjust(key,horiz){
+  const entry=SHIP_ADJUST[key];
+  const a=entry&&entry[horiz?'horiz':'vert'];
+  return a||{dxPct:0,dyPct:0,scale:1};
+}
 
 // Vertical squash applied to the diamond board (must match the scaleY(.5) in the CSS
 // for #grid-rows / #placement-rows). 0.5 gives a true 2:1 isometric diamond (tiles
@@ -1314,13 +1327,18 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
     // Order matters here: it must exactly reverse the parent's composition (rotate inner,
     // scaleY outer -> counter is rotate outer, scaleY inner) or it won't actually cancel.
     const diamondCounter='rotate(-45deg) scaleY('+(1/DIAMOND_SY)+') ';
+    // Fine-tune adjustment applied in final on-screen space (outermost in the transform
+    // chain), so dxPct/dyPct/scale read as plain "move right/down, grow" regardless of
+    // mirroring or the diamond tilt underneath.
+    const adj=getShipAdjust(SHIP_IMG_KEY[i],horiz);
+    const adjust='translate('+adj.dxPct+'%,'+adj.dyPct+'%) scale('+adj.scale+') ';
 
     if(horiz){
       // Horizontal: image fits the span directly
       wrap.style.cssText='position:absolute;left:'+left+'px;top:'+top+'px;'
         +'width:'+spanW+'px;height:'+spanH+'px;'
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
-      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+mirrorX+')';
+      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+adjust+diamondCounter+'scaleX('+mirrorX+')';
     }else{
       // Vertical: bounding box is the transpose of the horizontal case (tall/narrow
       // instead of wide/short) -- the Alt art itself is already drawn for this axis.
@@ -1330,7 +1348,7 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
         +'left:'+(cx-spanH/2)+'px;top:'+(cy-spanW/2)+'px;'
         +'width:'+spanH+'px;height:'+spanW+'px;'
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
-      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+diamondCounter+'scaleX('+mirrorX+')';
+      img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+adjust+diamondCounter+'scaleX('+mirrorX+')';
     }
 
     wrap.appendChild(img);
