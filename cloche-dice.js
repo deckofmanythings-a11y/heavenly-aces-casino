@@ -115,9 +115,10 @@
   // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
   // exactly to however long a given roll's preroll+resolving phases actually last.
   let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null;
-  // C major pentatonic across two octaves -- no "wrong" notes in this scale, so hitting random
-  // ones back to back still sounds jovial rather than dissonant.
-  const NOTE_SCALE = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+  // C major pentatonic across two octaves (C5-A6, one octave up from the original C4-A5) -- no
+  // "wrong" notes in this scale, so hitting random ones back to back still sounds jovial rather
+  // than dissonant.
+  const NOTE_SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
   // Real bells ring with several INHARMONIC partials (not clean integer multiples of the
   // fundamental, unlike a plucked string or the earlier fundamental+octave version this
   // replaces), and the higher partials decay noticeably faster than the fundamental -- that's
