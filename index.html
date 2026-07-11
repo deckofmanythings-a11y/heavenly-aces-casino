@@ -986,7 +986,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.54</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.2.55</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1744,11 +1744,19 @@ function spawnCoinWaterfall(n){
     ],{duration:dur,delay,easing:'linear',fill:'forwards'});
     setTimeout(()=>wrap.remove(),delay+dur+150);
   }
-  // A handful of staggered clink sounds across the shower's rough lifetime, not one per coin --
-  // 34-56 simultaneous audio instances would be noise, not a "shower" sound. Loosely (not
-  // exactly) synced to individual coin landings, which reads fine for ambiance.
-  const clinkCount=Math.min(7,Math.max(3,Math.round(n/8)));
-  for(let k=0;k<clinkCount;k++)setTimeout(()=>playSfx(SFX_COIN_LAND,true),300+Math.random()*3200);
+  // Reuses the exact same bell-chime instrument as the dice tumble (cloche-dice.js), just an
+  // "excited" version of it: faster note cadence and louder, rather than a separate coin-clink
+  // sample set. Duration scales with coin count so a bigger win rings a bit longer.
+  playCoinChimeShower(Math.min(3200,900+n*35));
+}
+function playCoinChimeShower(durationMs){
+  if(!window.ClocheDice||!ClocheDice.playChimeNote)return;
+  const start=performance.now();
+  (function tick(){
+    if(performance.now()-start>=durationMs)return;
+    ClocheDice.playChimeNote(1.3);
+    setTimeout(tick,30+Math.random()*45);
+  })();
 }
 function spawnChipGhost(el,opts){
   opts=opts||{};
@@ -2440,11 +2448,10 @@ function playChipSound(count){
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
   _sfxCache[file].cloneNode().play().catch(()=>{});
 }
-// Puck landing + coin-waterfall clinks -- from Kenney's Casino Audio pack (CC0/public domain,
+// Puck landing -- from Kenney's Casino Audio pack (CC0/public domain,
 // https://kenney.nl/assets/casino-audio). Same cache-and-clone playback pattern as
-// playChipSound() above, generalized so both the puck and the coin waterfall can reuse it.
+// playChipSound() above, generalized so other one-off sounds can reuse it.
 const SFX_PUCK_LAND=['chip-lay-1.ogg','chip-lay-2.ogg','chip-lay-3.ogg'];
-const SFX_COIN_LAND=['chips-collide-1.ogg','chips-collide-2.ogg','chips-collide-3.ogg','chips-collide-4.ogg'];
 function playSfx(bucket,pitchJitter){
   if(!bucket||!bucket.length)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];

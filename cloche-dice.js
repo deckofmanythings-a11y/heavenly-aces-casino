@@ -108,7 +108,7 @@
   let rollT0 = 0;
   let resultCallbacks = [];
 
-  // ---------- jovial random-note tumble sound ----------
+  // ---------- jovial random-note bell chime (dice tumble + coin waterfall both use this) ----------
   // Synthesized rather than sampled -- the real thing to match here (InterBlock/Easy
   // Craps/Crapless Craps electronic tables' cloche sound) is proprietary casino equipment
   // audio, not something legally available to source or reuse. A tiny Web Audio synth gets the
@@ -118,6 +118,17 @@
   // C major pentatonic across two octaves -- no "wrong" notes in this scale, so hitting random
   // ones back to back still sounds jovial rather than dissonant.
   const NOTE_SCALE = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+  // Real bells ring with several INHARMONIC partials (not clean integer multiples of the
+  // fundamental, unlike a plucked string or the earlier fundamental+octave version this
+  // replaces), and the higher partials decay noticeably faster than the fundamental -- that's
+  // what gives a bell its characteristic bright "strike" that quickly settles into a longer,
+  // duller hum. Ratios here are loosely modeled on classic bell FM-synthesis partial sets.
+  const BELL_PARTIALS = [
+    { mult: 1.00, vol: 1.00, decay: 0.85 },
+    { mult: 2.76, vol: 0.50, decay: 0.45 },
+    { mult: 5.40, vol: 0.24, decay: 0.28 },
+    { mult: 8.93, vol: 0.12, decay: 0.16 }
+  ];
   function _ensureAudio() {
     if (!_actx) {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -127,30 +138,31 @@
     if (_actx.state === 'suspended') _actx.resume().catch(() => {});
     return _actx;
   }
-  function _playNote() {
+  // volume scales the overall level -- used by the coin waterfall to read as louder/more
+  // excited than the dice tumble without actually being a different instrument.
+  function playChimeNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
+    volume = volume == null ? 1 : volume;
     const freq = NOTE_SCALE[Math.floor(Math.random() * NOTE_SCALE.length)];
     const t = ctx.currentTime;
     const master = ctx.createGain();
-    master.gain.setValueAtTime(0, t);
-    master.gain.linearRampToValueAtTime(0.22, t + 0.006);
-    master.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+    master.gain.value = 0.2 * volume;
     master.connect(ctx.destination);
-    // Fundamental + a quiet, slightly-sharp octave overtone gives a bell/marimba-ish timbre
-    // instead of a flat, plain sine beep.
-    [[1, 1], [2.01, 0.28]].forEach(([mult, vol]) => {
+    BELL_PARTIALS.forEach(p => {
       const osc = ctx.createOscillator(), g = ctx.createGain();
-      g.gain.value = vol;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(p.vol, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + p.decay);
       osc.type = 'sine';
-      osc.frequency.value = freq * mult;
+      osc.frequency.value = freq * p.mult;
       osc.connect(g); g.connect(master);
-      osc.start(t); osc.stop(t + 0.28);
+      osc.start(t); osc.stop(t + p.decay + 0.02);
     });
   }
   function startTumbleNotes() {
     stopTumbleNotes();
     (function tick() {
-      _playNote();
+      playChimeNote();
       _noteTimer = setTimeout(tick, 80 + Math.random() * 100);
     })();
   }
@@ -759,7 +771,10 @@
     },
 
     isRolling: () => phase !== 'idle',
-    onResult: (fn) => resultCallbacks.push(fn)
+    onResult: (fn) => resultCallbacks.push(fn),
+    // Exposed so other UI (the winner-modal coin waterfall) can reuse the exact same bell-chime
+    // instrument as the dice tumble instead of duplicating the synth or using a different sound.
+    playChimeNote: (volume) => playChimeNote(volume)
   };
 
   global.ClocheDice = ClocheDice;
