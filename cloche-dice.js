@@ -114,7 +114,7 @@
   // audio, not something legally available to source or reuse. A tiny Web Audio synth gets the
   // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
   // exactly to however long a given roll's preroll+resolving phases actually last.
-  let _actx = null, _noteTimer = null;
+  let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null;
   // C major pentatonic across two octaves -- no "wrong" notes in this scale, so hitting random
   // ones back to back still sounds jovial rather than dissonant.
   const NOTE_SCALE = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
@@ -129,11 +129,44 @@
     { mult: 5.40, vol: 0.24, decay: 0.28 },
     { mult: 8.93, vol: 0.12, decay: 0.16 }
   ];
+  // Builds a synthetic impulse response for ConvolverNode -- decaying filtered noise, the
+  // standard way to get a smooth algorithmic reverb tail without needing to source/license an
+  // actual recorded impulse response file.
+  function _makeImpulseResponse(ctx, duration, decayPower) {
+    const rate = ctx.sampleRate, length = Math.floor(rate * duration);
+    const impulse = ctx.createBuffer(2, length, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decayPower);
+    }
+    return impulse;
+  }
+  // One shared reverb (smooth wash) + echo (discrete repeats) bus that every note's dry signal
+  // gets sent into, rather than building a convolver/delay chain per note -- notes fire every
+  // 30-180ms, so overlapping tails from a shared bus is exactly what makes it sound like one
+  // continuous chime-y space instead of each note being cut off dry.
+  function _buildEffects(ctx) {
+    const convolver = ctx.createConvolver();
+    convolver.buffer = _makeImpulseResponse(ctx, 2.0, 2.3);
+    const reverbOut = ctx.createGain(); reverbOut.gain.value = 0.6;
+    convolver.connect(reverbOut); reverbOut.connect(ctx.destination);
+    _reverbSend = ctx.createGain(); _reverbSend.gain.value = 1;
+    _reverbSend.connect(convolver);
+
+    const delay = ctx.createDelay(1.0); delay.delayTime.value = 0.22;
+    const feedback = ctx.createGain(); feedback.gain.value = 0.4;
+    const echoOut = ctx.createGain(); echoOut.gain.value = 0.5;
+    delay.connect(feedback); feedback.connect(delay); // feedback loop -> repeating echoes
+    delay.connect(echoOut); echoOut.connect(ctx.destination);
+    _echoSend = ctx.createGain(); _echoSend.gain.value = 1;
+    _echoSend.connect(delay);
+  }
   function _ensureAudio() {
     if (!_actx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
       _actx = new AC();
+      _buildEffects(_actx);
     }
     if (_actx.state === 'suspended') _actx.resume().catch(() => {});
     return _actx;
@@ -146,8 +179,12 @@
     const freq = NOTE_SCALE[Math.floor(Math.random() * NOTE_SCALE.length)];
     const t = ctx.currentTime;
     const master = ctx.createGain();
-    master.gain.value = 0.2 * volume;
-    master.connect(ctx.destination);
+    // Trimmed slightly vs. the pre-reverb version (was 0.2) to leave headroom now that the
+    // reverb/echo sends add their own audible energy on top of the dry signal.
+    master.gain.value = 0.16 * volume;
+    master.connect(ctx.destination); // dry
+    master.connect(_reverbSend);     // smooth chime-y tail
+    master.connect(_echoSend);       // discrete repeats
     BELL_PARTIALS.forEach(p => {
       const osc = ctx.createOscillator(), g = ctx.createGain();
       g.gain.setValueAtTime(0, t);
