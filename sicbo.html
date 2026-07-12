@@ -276,10 +276,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    centers on the box instead, per Deck's request). --chip is scoped per cell-type since
    sic-bo's bet boxes vary wildly in size (the totals row is tiny, big/small is huge) --
    craps only ever had one uniformly-scaled felt so it needed just one global value. */
-body{--chip:44px;--edge:calc(var(--chip)*0.16)}
-.bs-btn{--chip:68px}
-.tot-cell{--chip:40px}
-.any-cell{--chip:30px}
+body{--chip:88px;--edge:calc(var(--chip)*0.16)}
+.bs-btn{--chip:136px}
+.tot-cell{--chip:80px}
+.any-cell{--chip:60px}
 /* Overrides whichever corner-anchored position the base -stk class set (bottom/right) --
    .has-stack is added alongside the original class and, being later in source order at equal
    specificity, wins per-property for position/left/top/transform/bottom/right. */
@@ -404,7 +404,7 @@ body{--chip:44px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.9</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.10</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
