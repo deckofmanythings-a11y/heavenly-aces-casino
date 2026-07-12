@@ -37,7 +37,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    the baked labels/artwork -- see PANEL_W/PANEL_H and the FIRING_REGIONS table in the JS. ── */
 #firing-screen{display:none;flex:1;min-height:0;align-items:center;justify-content:center}
 #firing-screen.active{display:flex}
-#firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg.png');background-size:100% 100%;background-repeat:no-repeat;font-size:1.6vh}
+#firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
 #firing-panel .fp-region{position:absolute;overflow:hidden}
 #fp-game-select{display:flex;align-items:center;justify-content:center;cursor:pointer}
 #fp-game-select-menu{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#141420;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;z-index:20;min-width:100%}
@@ -56,8 +56,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .fp-ship-card .fp-ship-name{font-size:.95em;font-weight:700}
 .fp-ship-card.sunk .fp-ship-name{color:#ff6a6a}
 .fp-ship-card .fp-ship-hp{display:flex;gap:.15em}
-.fp-ship-card .fp-ship-hp .fp-hp-sq{width:.7em;height:.7em;border-radius:2px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3)}
-.fp-ship-card .fp-ship-hp .fp-hp-sq.hit{background:#ff6400;border-color:#ff9944}
+.fp-ship-card .fp-ship-hp{position:relative}
+.fp-ship-card .fp-ship-hp .fp-hp-sq{width:1.4em;height:1.4em;border-radius:2px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);opacity:.65}
+.fp-ship-card .fp-ship-hp .fp-hp-sq.hit{background:rgba(255,100,0,.65);border-color:rgba(255,153,68,.8)}
 .fp-ship-card .fp-ship-payout{font-size:.7em;color:rgba(255,255,255,.6)}
 #fp-extra-wins{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;padding:.2em;color:#fff;text-align:center}
 #fp-extra-wins .fp-jackpot-lbl{font-size:.85em;color:rgba(255,255,255,.6);text-transform:uppercase}
@@ -65,26 +66,32 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-extra-wins .fp-jackpot-tier.earned{color:#ffd700;font-weight:700}
 #fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center}
 #fp-bet-circle .fp-bet-lbl{font-size:.8em;color:rgba(255,255,255,.6);text-transform:uppercase}
-#fp-bet-circle .fp-bet-amt{font-size:1.3em;font-weight:900;color:#ffd700}
+#fp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em}
+#fp-bet-circle .fp-bet-chips img{position:absolute;left:0;bottom:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+#fp-bet-circle .fp-bet-amt{font-size:.95em;font-weight:900;color:#ffd700;text-shadow:0 0 3px #000,0 0 4px #000}
 #fp-roll-history{display:flex;gap:.3em;overflow-x:auto;align-items:center;padding:0 .5em;scrollbar-width:none}
 #fp-roll-history::-webkit-scrollbar{display:none}
 #fp-roll-history .fp-roll-pip{min-width:2.2em;height:2.2em;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.75em;background:rgba(255,255,255,.12)}
 #fp-roll-history .fp-roll-pip.hit-pip{background:rgba(255,80,0,.4);color:#ff9944}
 #fp-roll-history .fp-roll-pip.miss-pip{background:rgba(0,40,100,.4);color:#88bbff}
 #fp-buy-area{display:flex;align-items:center;justify-content:center;gap:.4em;padding:0 .6em}
-#fp-buy-area #fp-fm-label{font-size:.75em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0}
-#fp-buy-area #fp-free-missiles-pips{display:flex;gap:.3em;flex-wrap:nowrap}
-#fp-buy-area .fm-pip{width:2.4em;height:3.2em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#fp-buy-area .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
-#fp-buy-area .fm-pip.used{opacity:.35;filter:grayscale(1)}
+#fp-strikes-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4em;padding:.4em}
+#fp-strikes-area #fp-fm-label{font-size:.7em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0;text-align:center}
+#fp-strikes-area #fp-free-missiles-pips{display:flex;gap:.25em;flex-wrap:wrap;justify-content:center}
+#fp-strikes-area .fm-pip{width:2.1em;height:2.8em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#fp-strikes-area .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
+#fp-strikes-area .fm-pip.used{opacity:.35;filter:grayscale(1)}
 #fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:.9em;font-weight:900;padding:.4em .8em;cursor:pointer;display:none;flex-shrink:0}
 #fp-buy-area #buy-timer-row{display:none;align-items:center;gap:.6em;flex-shrink:0}
 #fp-buy-area #buy-offer-timer{font-size:1.1em;font-weight:900;color:#4a9eff;min-width:1.3em;text-align:center}
 #fp-buy-area #end-game-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:rgba(255,255,255,.75);font-size:.75em;font-weight:700;padding:.35em .7em;cursor:pointer}
 #fp-fire-btn{cursor:pointer;background:transparent;border:none}
 #fp-fire-btn:disabled{cursor:not-allowed}
-#fp-grid-cells{position:absolute;inset:0;z-index:2}
-.fp-cell{position:absolute;cursor:default}
+#fp-grid-cells{position:absolute;inset:0;z-index:2;pointer-events:none}
+.fp-cell{position:absolute;cursor:default;background:rgba(0,20,60,.4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.fp-cell.ship{background:rgba(40,80,160,.35)}
+.fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400}
+.fp-cell.miss{background:rgba(0,40,100,.35);box-shadow:inset 0 0 0 1px rgba(74,158,255,.35)}
 .fp-cell .fp-cell-marker{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70%;height:70%;pointer-events:none;z-index:3}
 .fp-cell.hit .fp-cell-marker{background:url('hit.png') center/contain no-repeat}
 .fp-cell.miss .fp-cell-marker{background:url('miss.png') center/contain no-repeat;opacity:.85}
@@ -431,13 +438,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="fp-region" id="fp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
       <div class="fp-region" id="fp-bet-circle" style="left:79.545%;top:60.106%;width:5.742%;height:11.596%">
         <span class="fp-bet-lbl">Bet</span>
+        <div class="fp-bet-chips" id="fp-bet-chips"></div>
         <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
       </div>
       <div class="fp-region" id="fp-roll-history" style="left:1.794%;top:74.362%;width:96.651%;height:5%"></div>
-      <div class="fp-region" id="fp-buy-area" style="left:1.794%;top:83.617%;width:84.928%;height:13.298%">
+      <div class="fp-region" id="fp-strikes-area" style="left:1.794%;top:26%;width:12%;height:46%">
         <span id="fp-fm-label">Initial Strikes</span>
         <div id="fp-free-missiles-pips"></div>
       </div>
+      <div class="fp-region" id="fp-buy-area" style="left:14.5%;top:83.617%;width:72%;height:13.298%"></div>
       <button class="fp-region" id="fp-fire-btn" onclick="fireMissile()" disabled
               style="left:90.431%;top:82.872%;width:7.297%;height:10.319%"></button>
       <div id="fp-grid-cells"></div>
@@ -477,7 +486,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.17</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.18</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -695,10 +704,13 @@ function initDestDice(){
   if(!cvs)return;
   destRenderer=new destTHREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   destRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  // Opaque near-black clear color (matches the page's own #0a0a12 background) instead of a
-  // transparent canvas -- gives alphaTest-discarded pixels on the die corners a solid dark
-  // backdrop to reveal instead of whatever happened to be behind a transparent canvas.
-  destRenderer.setSize(W,H);destRenderer.setClearColor(0x0a0a12,1);
+  // Transparent clear color -- the dice-result window now sits on top of the baked panel
+  // art (DestroyerPanel_bg.png) instead of the old solid #0a0a12 page background, so an
+  // opaque backdrop would show as a visible black box.
+  // updateStyle=false -- three.js's setSize() otherwise overwrites the canvas's inline CSS
+  // width/height with fixed px values matching the drawing-buffer resolution, clobbering the
+  // percentage-based responsive sizing the new baked-art panel needs.
+  destRenderer.setSize(W,H,false);destRenderer.setClearColor(0x000000,0);
   destScene=new destTHREE.Scene();
   destCamera=new destTHREE.PerspectiveCamera(40,W/H,.1,100);
   destCamera.position.set(0,-1.8,6.5);destCamera.lookAt(0,0,0);
@@ -1942,8 +1954,20 @@ function renderFiringFireCenter(){
   }
 }
 function renderFiringBetCircle(){
+  const amt=G.totalSpent||G.bet||0;
   const el=document.getElementById('fp-bet-amt');
-  if(el)el.textContent=fmt(G.totalSpent||G.bet||0);
+  if(el)el.textContent=fmt(amt);
+  const chipsEl=document.getElementById('fp-bet-chips');
+  if(!chipsEl)return;
+  chipsEl.innerHTML='';
+  if(amt<=0)return;
+  chipBreakdownDest(amt).forEach((d,i)=>{
+    const img=document.createElement('img');
+    img.src='chip-blank-'+d+'.png';
+    img.draggable=false;
+    img.style.bottom=(i*15)+'%';
+    chipsEl.appendChild(img);
+  });
 }
 
 // ── UPDATE UI ────────────────────────────────────────────────────────────────
