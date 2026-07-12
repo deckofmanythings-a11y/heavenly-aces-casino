@@ -76,7 +76,9 @@
     faceImagesPerDie: null, // optional [{1:url,...6:url}, ...] -- distinct faces per die index
                              // (e.g. destroyer's letter die vs number die), overrides faceImages
     wallSegments: 14,
-    zIndex: 9999
+    zIndex: 9999,
+    soundTheme: 'bell'      // 'bell' (default jovial chime) or 'action' (dramatic low drums +
+                             // rising brass-stab tension for destroyer's missile-strike rolls)
   };
 
   const PLATFORM_Y = 0.35;
@@ -199,8 +201,105 @@
       osc.start(t); osc.stop(t + p.decay + 0.02);
     });
   }
+  // ---------- action-movie dramatic drums + brass (destroyer's missile-strike theme) ----------
+  // Low taiko-style sub-bass thumps with a noise-crack attack, a bass brass stab on every 4th
+  // (accent) hit, and a sustained detuned-sawtooth low drone underneath -- all synthesized for
+  // the same licensing reason as the bell chime above. Tempo quickens the longer the roll
+  // agitates, so tension visibly rises the longer the dice tumble.
+  let _actionTimer = null, _actionT0 = 0, _actionHitCount = 0;
+  let _droneOsc1 = null, _droneOsc2 = null, _droneGain = null, _droneFilter = null;
+
+  function _playDrumHit(volume, accent) {
+    const ctx = _ensureAudio(); if (!ctx) return;
+    volume = volume == null ? 1 : volume;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(accent ? 150 : 110, t);
+    osc.frequency.exponentialRampToValueAtTime(accent ? 45 : 38, t + 0.16);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.9 * volume, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.001, t + (accent ? 0.5 : 0.32));
+    osc.connect(g); g.connect(ctx.destination); g.connect(_reverbSend);
+    osc.start(t); osc.stop(t + 0.55);
+
+    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.05), ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
+    const noise = ctx.createBufferSource(); noise.buffer = noiseBuf;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass'; noiseFilter.frequency.value = accent ? 1400 : 900;
+    const noiseGain = ctx.createGain(); noiseGain.gain.value = 0.25 * volume;
+    noise.connect(noiseFilter); noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination); noiseGain.connect(_reverbSend);
+    noise.start(t);
+
+    if (accent) {
+      [0, 4, -3].forEach(cents => {
+        const bo = ctx.createOscillator(), bg = ctx.createGain();
+        bo.type = 'sawtooth';
+        bo.frequency.value = 98;
+        bo.detune.value = cents;
+        bg.gain.setValueAtTime(0, t);
+        bg.gain.linearRampToValueAtTime(0.14 * volume, t + 0.05);
+        bg.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+        bo.connect(lp); lp.connect(bg);
+        bg.connect(ctx.destination); bg.connect(_reverbSend); bg.connect(_echoSend);
+        bo.start(t); bo.stop(t + 1.0);
+      });
+    }
+  }
+
+  function _startActionDrone() {
+    const ctx = _ensureAudio(); if (!ctx) return;
+    const t = ctx.currentTime;
+    _droneFilter = ctx.createBiquadFilter(); _droneFilter.type = 'lowpass'; _droneFilter.frequency.value = 500;
+    _droneGain = ctx.createGain();
+    _droneGain.gain.setValueAtTime(0, t);
+    _droneGain.gain.linearRampToValueAtTime(0.05, t + 0.6);
+    _droneFilter.connect(_droneGain);
+    _droneGain.connect(ctx.destination); _droneGain.connect(_reverbSend);
+    _droneOsc1 = ctx.createOscillator(); _droneOsc1.type = 'sawtooth'; _droneOsc1.frequency.value = 49;
+    _droneOsc2 = ctx.createOscillator(); _droneOsc2.type = 'sawtooth'; _droneOsc2.frequency.value = 49.4;
+    _droneOsc1.connect(_droneFilter); _droneOsc2.connect(_droneFilter);
+    _droneOsc1.start(t); _droneOsc2.start(t);
+  }
+
+  function _stopActionDrone() {
+    if (!_droneGain || !_actx) return;
+    const t = _actx.currentTime;
+    _droneGain.gain.cancelScheduledValues(t);
+    _droneGain.gain.setValueAtTime(_droneGain.gain.value, t);
+    _droneGain.gain.linearRampToValueAtTime(0, t + 0.4);
+    const o1 = _droneOsc1, o2 = _droneOsc2;
+    setTimeout(() => { try { o1.stop(); o2.stop(); } catch (e) {} }, 450);
+    _droneOsc1 = _droneOsc2 = _droneGain = _droneFilter = null;
+  }
+
+  function startActionHits() {
+    stopActionHits();
+    _actionT0 = performance.now();
+    _actionHitCount = 0;
+    _startActionDrone();
+    (function tick() {
+      const elapsed = (performance.now() - _actionT0) / 1000;
+      const interval = Math.max(190, 420 - elapsed * 60); // tempo quickens as tension rises
+      _actionHitCount++;
+      const accent = _actionHitCount % 4 === 0;
+      _playDrumHit(accent ? 1 : 0.7, accent);
+      _actionTimer = setTimeout(tick, interval);
+    })();
+  }
+
+  function stopActionHits() {
+    if (_actionTimer) { clearTimeout(_actionTimer); _actionTimer = null; }
+    _stopActionDrone();
+  }
+
   function startTumbleNotes() {
     stopTumbleNotes();
+    if (CFG.soundTheme === 'action') { startActionHits(); return; }
     (function tick() {
       playChimeNote();
       _noteTimer = setTimeout(tick, 80 + Math.random() * 100);
@@ -208,6 +307,7 @@
   }
   function stopTumbleNotes() {
     if (_noteTimer) { clearTimeout(_noteTimer); _noteTimer = null; }
+    stopActionHits();
   }
 
   // ---------- seeded RNG (mulberry32) ----------
