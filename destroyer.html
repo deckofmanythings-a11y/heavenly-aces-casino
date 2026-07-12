@@ -373,7 +373,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.11</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.12</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -427,7 +427,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
     <!-- FREE MISSILES -- lower-left corner -->
     <div id="free-missiles-display">
-      <div class="fm-label">FREE</div>
+      <div class="fm-label" id="fm-label">INITIAL STRIKES</div>
       <div id="free-missiles-pips"></div>
     </div>
 
@@ -1686,11 +1686,18 @@ function renderFireCenter(){
   const fireBtn=document.getElementById('fire-btn');
   const buyBtn=document.getElementById('buy-btn');
   const lbl=document.getElementById('missiles-remaining-lbl');
+  const fmLabel=document.getElementById('fm-label');
   const pips=document.getElementById('free-missiles-pips');
   if(!fireBtn)return;
   const inFiring=G.phase==='firing';
   const outOfMissiles=inFiring&&G.missilesRemaining===0;
   const canBuyNow=outOfMissiles&&G.canBuy;
+  // Once the player has ever run out of initial missiles (whether or not they've bought yet)
+  // or has bought at least one, the round has moved into the buy-missile phase for good --
+  // buying bumps missilesRemaining back above 0, so pastInitial has to stick even after that
+  // instantaneous "out of missiles" moment passes.
+  const pastInitial=(G.missilesBought||0)>0;
+  const inBuyPhase=pastInitial||outOfMissiles;
 
   // Fire button (right circle): enabled when there are free missiles to fire
   fireBtn.disabled=!inFiring||G.missilesRemaining<=0||G.firing;
@@ -1721,16 +1728,17 @@ function renderFireCenter(){
     }
   }
 
-  // Free missiles pip display (lower left). Before any purchase: the original 4 starting-
-  // missile pips. Once at least one missile has been bought: MAX_BUY pip boxes, one per
-  // possible purchase, each showing the extra-missile icon greyed out once that purchase's
-  // hit-streak has actually ended in a miss -- a hit grants a free reload (see the
-  // firedType==='extra'&&!hit tracking in the roll handler above), so the box stays lit
-  // through any number of hits and only grays on the miss that finally ends the streak.
+  // Free missiles pip display (lower left). Swaps from Initial Strikes (the 4 starting
+  // missiles) to Follow-Up Strikes the moment the round moves into buy-missile territory --
+  // the follow-up view shows all MAX_BUY boxes right away (not just after the first purchase)
+  // so the player can see how many buys they have left, greying each one out only once that
+  // purchase's hit-streak has actually ended in a miss (a hit grants a free reload -- see the
+  // firedType==='extra'&&!hit tracking in the roll handler above -- so the box stays lit
+  // through any number of hits).
+  if(fmLabel)fmLabel.textContent=inBuyPhase?'FOLLOW-UP STRIKES':'INITIAL STRIKES';
   if(pips){
     pips.innerHTML='';
-    const pastInitial=(G.missilesBought||0)>0;
-    if(!pastInitial){
+    if(!inBuyPhase){
       const free=Math.max(0,G.freeMissiles||0);
       const queue=G.missileQueue||[];
       for(let i=0;i<4;i++){
