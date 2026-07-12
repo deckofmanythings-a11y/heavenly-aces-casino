@@ -170,7 +170,17 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .nav-btn:hover{background:rgba(255,255,255,.15)}
 .nav-btn.active-game{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.12)}
-.chip{width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#fff}
+/* Chip row -- ported wholesale from craps (index.html): real chip-face images instead of
+   flat colored discs, keyed off data-val. */
+.chip{width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:10px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -260,6 +270,34 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   color:#7a5000;font-weight:900;text-shadow:0 1px 0 rgba(255,255,255,.5);}
 .coin3d-front .coin3d-face-img{transform:scale(-1,-1);}
 .coin3d-edge-seg{position:absolute;left:50%;top:50%;background:linear-gradient(90deg,#8a6c1a,#ffe680 50%,#8a6c1a);backface-visibility:hidden;}
+
+/* Bet-box chip stacks -- ported wholesale from craps (index.html), adapted to center on the
+   bet box (craps anchors to the bottom of a felt cell; sic-bo's cells have no felt, so this
+   centers on the box instead, per Deck's request). --chip is scoped per cell-type since
+   sic-bo's bet boxes vary wildly in size (the totals row is tiny, big/small is huge) --
+   craps only ever had one uniformly-scaled felt so it needed just one global value. */
+body{--chip:22px;--edge:calc(var(--chip)*0.16)}
+.bs-btn{--chip:34px}
+.tot-cell{--chip:20px}
+.any-cell{--chip:15px}
+/* Overrides whichever corner-anchored position the base -stk class set (bottom/right) --
+   .has-stack is added alongside the original class and, being later in source order at equal
+   specificity, wins per-property for position/left/top/transform/bottom/right. */
+.has-stack{position:absolute;left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block}
+.chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
+.chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
+.chip-stack .chip-amt{user-select:none;-webkit-user-select:none}
+.chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
+
+/* Win/loss chip-ghost sweep -- ported wholesale from craps (index.html). */
+.chip-ghost{position:fixed;z-index:150;pointer-events:none;filter:none;opacity:1;
+  transition:filter .35s ease-out}
+.chip-ghost.dim{filter:grayscale(1) brightness(.55)}
+.chip-ghost.sweep{transform:translateY(-130vh);opacity:0;
+  transition:transform .55s ease-in,opacity .55s ease-in}
+.chip-ghost.sweep-down{transform:translateY(130vh);opacity:0;
+  transition:transform .55s ease-in,opacity .55s ease-in}
 #modal-cap .modal-box{text-align:center}
 
 /* ── CASHOUT VOUCHER MODAL ── */
@@ -366,7 +404,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.7</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.8</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -457,14 +495,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <button id="log-btn-sb" onclick="openLogModal()">?</button>
       </div>
       <div id="bottom-bar">
-        <div class="chip" style="background:#b0b0b0;color:#222;border-color:#888" data-val="1" onclick="selectChip(1)">$1</div>
-        <div class="chip" style="background:#2471a3;border-color:#1a5276" data-val="2" onclick="selectChip(2)">$2</div>
-        <div class="chip" style="background:#d4ac0d;border-color:#b7950b;color:#111" data-val="3" onclick="selectChip(3)">$3</div>
-        <div class="chip" style="background:#c0392b;border-color:#922b21" data-val="5" onclick="selectChip(5)">$5</div>
-        <div class="chip" style="background:#f39c12;border-color:#d68910;color:#111" data-val="10" onclick="selectChip(10)">$10</div>
-        <div class="chip" style="background:#27ae60;border-color:#1e8449" data-val="25" onclick="selectChip(25)">$25</div>
-        <div class="chip" style="background:#7d4f30;border-color:#5d3a22" data-val="50" onclick="selectChip(50)">$50</div>
-        <div class="chip" style="background:#2c2c2c;border-color:#111" data-val="100" onclick="selectChip(100)">$100</div>
+        <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
+        <div class="chip" data-val="2" onclick="selectChip(2)">$2</div>
+        <div class="chip" data-val="3" onclick="selectChip(3)">$3</div>
+        <div class="chip" data-val="5" onclick="selectChip(5)">$5</div>
+        <div class="chip" data-val="10" onclick="selectChip(10)">$10</div>
+        <div class="chip" data-val="25" onclick="selectChip(25)">$25</div>
+        <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
+        <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1"></div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -932,6 +970,10 @@ async function rollDice(){
       const cls=/wins?[!:]|WON|returned/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
       addLog(line,cls);
     });
+    // Ghosts must spawn before G.bets is cleared below -- they snapshot the still-live
+    // pre-roll chip stacks off the DOM (getBoundingClientRect + chip-img src), same ordering
+    // requirement as craps' spawnLossGhosts/spawnWinGhosts.
+    spawnSicboGhosts(data.log||[]);
     // Bets resolved — clear them client-side (server already deducted stake, returned winnings)
     G.lastBetSnapshot={...G.bets};
     G.bets={};
@@ -1040,6 +1082,101 @@ function updateUI(){
     const cEl=document.getElementById('cell-any'+v);if(cEl)cEl.classList.toggle('active',stk>0);
     const mb=document.getElementById('m-any'+v);if(mb)mb.classList.toggle('vis',stk>0);
   }
+}
+
+// ── CHIP STACKS ON BET BOXES ─────────────────────────────────────────────────
+// Ported wholesale from craps (index.html): every -stk span already gets plain "$N" text
+// from updateUI() above; this wrapper reads that text back off and replaces it with a
+// stacked chip-image rendering, so the digit-writing logic above stays untouched.
+const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
+function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
+function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
+function chipStackHTML(amt){
+  const chips=chipBreakdown(amt),n=chips.length;
+  let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
+  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
+  const label=chipLabel(amt);
+  const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
+  h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
+  h+='</span>';
+  return h;
+}
+const SICBO_CHIP_STK_SEL='.bs-stk,.tot-stk,.trip-stk,.dbl-stk,.dom-stk,.any-stk';
+function renderChipStacks(){
+  document.querySelectorAll(SICBO_CHIP_STK_SEL).forEach(el=>{
+    const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
+    if(!m){el.classList.remove('has-stack');return;}
+    const amt=parseFloat(m[1].replace(/,/g,''));
+    if(!(amt>0)){el.classList.remove('has-stack');return;}
+    el.innerHTML=chipStackHTML(amt);
+    el.classList.add('has-stack');
+  });
+}
+const _updateUI_orig=updateUI;
+updateUI=function(){_updateUI_orig();renderChipStacks();};
+document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
+
+// ── WIN/LOSS CHIP-GHOST SWEEP ────────────────────────────────────────────────
+// Ported wholesale from craps (index.html).
+function spawnChipGhost(el,opts){
+  opts=opts||{};
+  if(!el)return;
+  const rect=el.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const amtSpan=el.querySelector('.chip-amt');
+  const label=amtSpan?amtSpan.textContent:'';
+  const chipImgs=el.querySelectorAll('.chip-img');
+  const topChip=chipImgs.length?chipImgs[chipImgs.length-1]:null;
+  const chipSrc=topChip?topChip.getAttribute('src'):null;
+  if(!label&&!chipSrc)return;
+  const ghost=document.createElement('div');
+  ghost.className='chip-ghost';
+  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
+  ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
+  // Sic-bo scopes --chip per cell-type (unlike craps' one uniform felt value), so read it
+  // live off the source element itself rather than a single shared stage element.
+  const liveChipVar=getComputedStyle(el).getPropertyValue('--chip').trim();
+  ghost.style.setProperty('--chip',liveChipVar||'22px');
+  if(chipSrc){
+    const img=document.createElement('img');
+    img.src=chipSrc;img.draggable=false;
+    img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:auto;z-index:1';
+    ghost.appendChild(img);
+  }
+  if(label){
+    const amtFs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
+    const span=document.createElement('span');
+    span.textContent=label;
+    span.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*'+amtFs+');color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap;pointer-events:none';
+    ghost.appendChild(span);
+  }
+  document.body.appendChild(ghost);
+  const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
+  if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
+  setTimeout(()=>{ghost.classList.add(sweepClass);},900);
+  setTimeout(()=>{ghost.remove();},1450);
+}
+// Bet-key -> [log-line-prefix-regex, stake-element-id] table, keyed off the exact label
+// strings roll-sicbo's pP()/pL() helpers log (see supabase/functions/roll-sicbo/index.ts).
+// Any-number bets get a loose [:( ] terminator since the win line has a "(N matches)"
+// suffix the loss line doesn't ("Any 3: lost" vs "Any 3 (2 matches): +50.00 (returned)").
+function sicboGhostChecks(){
+  const checks=[[/^Small:/,'small'],[/^Big:/,'big'],[/^Any Triple:/,'anyTriple']];
+  for(let t=4;t<=17;t++)checks.push([new RegExp('^Total '+t+':'),'total'+t]);
+  for(let v=1;v<=6;v++){
+    checks.push([new RegExp('^Triple '+v+'s:'),'triple'+v]);
+    checks.push([new RegExp('^Double '+v+'s:'),'double'+v]);
+    checks.push([new RegExp('^Any '+v+'[:( ]'),'any'+v]);
+  }
+  COMBO_PAIRS.forEach(([a,b])=>checks.push([new RegExp('^Combo '+a+'&'+b+':'),'combo'+a+'-'+b]));
+  return checks;
+}
+function spawnSicboGhosts(rawLog){
+  sicboGhostChecks().forEach(([re,key])=>{
+    const el=document.getElementById('stk-'+key);
+    if(rawLog.some(l=>re.test(l)&&/: lost/.test(l)))spawnChipGhost(el);
+    else if(rawLog.some(l=>re.test(l)&&/: \+/.test(l)))spawnChipGhost(el,{direction:'down',noDim:true});
+  });
 }
 
 // ── BUILD TABLE ───────────────────────────────────────────────────────────────
