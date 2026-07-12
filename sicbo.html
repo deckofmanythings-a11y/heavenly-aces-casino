@@ -726,6 +726,26 @@ function showFinalDice(v1,v2,v3){
   tumbling=false;animating=false;
   if(renderer){die1.quaternion.copy(tQ(v1));die2.quaternion.copy(tQ(v2));die3.quaternion.copy(tQ(v3));}
 }
+// Winning-combination voice announcement: "the winning combination is" + each die value
+// low-to-high, stitched from separate recorded clips by chaining playback off each clip's
+// 'ended' event, with a beat of silence held between clips so it doesn't run together.
+const SICBO_NUM_SOUND={1:'one.ogg',2:'two.ogg',3:'three.ogg',4:'four.ogg',5:'five.ogg',6:'six.ogg'};
+const ANNOUNCEMENT_GAP_MS=400;
+function playAnnouncementSequence(urls){
+  const audio=new Audio();
+  let i=0;
+  audio.addEventListener('ended',()=>setTimeout(playNext,ANNOUNCEMENT_GAP_MS));
+  playNext();
+  function playNext(){
+    if(i>=urls.length)return;
+    audio.src=urls[i++];
+    audio.play().catch(()=>{});
+  }
+}
+function announceSicboResult(d1,d2,d3){
+  const sorted=[d1,d2,d3].sort((a,b)=>a-b);
+  playAnnouncementSequence(['the_winning_combination_is.ogg',...sorted.map(n=>SICBO_NUM_SOUND[n])]);
+}
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
   if(tBets()===0){addLog('Place at least one bet before rolling.','info');return;}
@@ -759,6 +779,7 @@ async function rollDice(){
   feedValues([d1,d2,d3]);         // cloche now pre-simulates and lands on d1,d2,d3
   try{await clochePromise;}catch(e){}
   showFinalDice(d1,d2,d3);
+  announceSicboResult(d1,d2,d3);
   {
     document.getElementById('dice-sum-overlay').textContent=sum;
     document.getElementById('dice-sum-overlay').style.opacity='1';
