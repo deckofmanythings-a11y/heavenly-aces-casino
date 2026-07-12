@@ -500,7 +500,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.19</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.20</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1892,7 +1892,6 @@ function renderFiringGrid(){
 // Ship art overlay -- same bow-mirroring/depth-stacking logic as the old renderShipImagesOnGrid,
 // but positioned via the flat rhombus math above instead of a CSS-rotated container, so no
 // counter-rotation transform is needed: the art renders upright directly.
-const SHIP_ART_SCALE=1.9;
 function renderFiringShipImages(){
   if(!G.ships)return;
   const container=document.getElementById('fp-grid-cells');
@@ -1928,13 +1927,13 @@ function renderFiringShipImages(){
       wrap.style.left=fpPct(cx-spanH/2,FP_W)+'%';wrap.style.top=fpPct(cy-spanW/2,FP_H)+'%';
       wrap.style.width=fpPct(spanH,FP_W)+'%';wrap.style.height=fpPct(spanW,FP_H)+'%';
     }
-    // The ship art PNGs carry generous transparent padding around the hull (so they can be
-    // mirrored/rotated without clipping), so a raw 100%-of-bounding-box fill renders roughly
-    // half the intended visual size. The old rotated-grid renderer had its own empirical
-    // per-ship scale tuned for that setup; SHIP_ART_SCALE is a fresh flat estimate for the
-    // new flat/unrotated renderer -- grows outward from the wrap's own center (flex-centered,
-    // overflow:visible), so it doesn't disturb the already-correct centering.
-    img.style.transform='scale('+SHIP_ART_SCALE+') scaleX('+mirrorX+')';
+    // Reuse the same per-ship scale tuning as the placement screen (SHIP_ADJUST) -- measured
+    // directly against the placement screen's known-correct rendering: ship img width / wrap
+    // width there is ~0.71 for the destroyer, matching its adj.scale of 0.75 closely. An
+    // earlier attempt here guessed 1.9x (enlarging) when the art actually needs to shrink
+    // slightly relative to the raw cell-span bounding box, same as placement already does.
+    const adj=getShipAdjust(SHIP_IMG_KEY[i],horiz);
+    img.style.transform='scale('+adj.scale+') scaleX('+mirrorX+')';
     wrap.appendChild(img);
     container.appendChild(wrap);
   });
