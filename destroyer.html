@@ -39,7 +39,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #firing-screen.active{display:flex}
 #firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
 #firing-panel .fp-region{position:absolute;overflow:hidden}
-#fp-game-select{display:flex;align-items:center;justify-content:center;cursor:pointer}
+#fp-game-select{display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:visible!important}
 #fp-game-select-menu{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#141420;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;z-index:20;min-width:100%}
 #fp-game-select-menu.open{display:block}
 #fp-game-select-menu button{display:block;width:100%;background:rgba(255,255,255,.06);border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff;font-size:1.1em;padding:.5em .8em;cursor:pointer;text-align:left;white-space:nowrap}
@@ -64,39 +64,51 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-extra-wins .fp-jackpot-lbl{font-size:.85em;color:rgba(255,255,255,.6);text-transform:uppercase}
 #fp-extra-wins .fp-jackpot-tier{font-size:.75em;color:rgba(255,215,0,.5)}
 #fp-extra-wins .fp-jackpot-tier.earned{color:#ffd700;font-weight:700}
-#fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center}
+#fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;color:#fff;text-align:center}
 #fp-bet-circle .fp-bet-lbl{font-size:.8em;color:rgba(255,255,255,.6);text-transform:uppercase}
 #fp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em}
 #fp-bet-circle .fp-bet-chips img{position:absolute;left:0;bottom:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
-#fp-bet-circle .fp-bet-amt{font-size:.95em;font-weight:900;color:#ffd700;text-shadow:0 0 3px #000,0 0 4px #000}
+#fp-bet-circle .fp-bet-amt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;font-size:.8em;font-weight:900;color:#ffd700;text-shadow:0 0 3px #000,0 0 4px #000;white-space:nowrap}
+#fp-bet-circle .fp-winning-lbl{font-size:.7em;font-weight:700;color:#7ee87e;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 #fp-roll-history{display:flex;gap:.3em;overflow-x:auto;align-items:center;padding:0 .5em;scrollbar-width:none}
 #fp-roll-history::-webkit-scrollbar{display:none}
 #fp-roll-history .fp-roll-pip{min-width:2.2em;height:2.2em;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.75em;background:rgba(255,255,255,.12)}
 #fp-roll-history .fp-roll-pip.hit-pip{background:rgba(255,80,0,.4);color:#ff9944}
 #fp-roll-history .fp-roll-pip.miss-pip{background:rgba(0,40,100,.4);color:#88bbff}
-#fp-buy-area{display:flex;align-items:center;justify-content:center;gap:.4em;padding:0 .6em}
+#fp-buy-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3em;padding:.2em .6em}
 #fp-strikes-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4em;padding:.4em}
 #fp-strikes-area #fp-fm-label{font-size:.7em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0;text-align:center}
 #fp-strikes-area #fp-free-missiles-pips{display:flex;gap:.25em;flex-wrap:wrap;justify-content:center}
 #fp-strikes-area .fm-pip{width:2.1em;height:2.8em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #fp-strikes-area .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
 #fp-strikes-area .fm-pip.used{opacity:.35;filter:grayscale(1)}
-#fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:.9em;font-weight:900;padding:.4em .8em;cursor:pointer;display:none;flex-shrink:0}
-#fp-buy-area #buy-timer-row{display:none;align-items:center;gap:.6em;flex-shrink:0}
-#fp-buy-area #buy-offer-timer{font-size:1.1em;font-weight:900;color:#4a9eff;min-width:1.3em;text-align:center}
-#fp-buy-area #end-game-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:rgba(255,255,255,.75);font-size:.75em;font-weight:700;padding:.35em .7em;cursor:pointer}
+#fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:.9em;font-weight:900;padding:.4em .8em;cursor:pointer;display:none;flex-shrink:0;width:auto!important}
+#fp-buy-area #buy-timer-row{display:none;flex-direction:row;align-items:center;gap:.5em;flex-shrink:0}
+/* !important needed on the sizing props -- these elements carry inline style="font-size:
+   60px..." etc. from the original bottom-bar markup (reparented here, not rebuilt), and
+   inline styles beat any external stylesheet rule regardless of selector specificity. */
+#fp-buy-area #buy-offer-timer{font-size:1.1em!important;font-weight:900;color:#4a9eff;min-width:1.3em!important;text-align:center}
+#fp-buy-area #end-game-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:rgba(255,255,255,.75);font-size:.75em!important;font-weight:700;padding:.35em .7em!important;cursor:pointer}
 #fp-fire-btn{cursor:pointer;background:transparent;border:none}
 #fp-fire-btn:disabled{cursor:not-allowed}
 #fp-grid-cells{position:absolute;inset:0;z-index:2;pointer-events:none}
-.fp-cell{position:absolute;cursor:default;background:rgba(0,20,60,.4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.fp-cell{position:absolute;cursor:default;background:rgba(0,20,60,.4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);z-index:1}
 .fp-cell.ship{background:rgba(40,80,160,.35)}
-.fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400}
+/* Explosions paint over the ship layer, misses paint under it (z-index:1 on the plain/miss
+   cell is below .fp-ship-img-wrap's z-index:2; hit bumps to z-index:3 to go above it). */
+.fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400;z-index:3}
 .fp-cell.miss{background:rgba(0,40,100,.35);box-shadow:inset 0 0 0 1px rgba(74,158,255,.35)}
-.fp-cell .fp-cell-marker{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70%;height:70%;pointer-events:none;z-index:3}
-.fp-cell.hit .fp-cell-marker{background:url('hit.png') center/contain no-repeat}
-.fp-cell.miss .fp-cell-marker{background:url('miss.png') center/contain no-repeat;opacity:.85}
+/* Markers are siblings of .fp-cell (not children) -- .fp-cell's clip-path would otherwise
+   clip an enlarged marker down to the tiny rhombus shape, same reason ship art is a separate
+   top-level overlay rather than a cell child. Positioned/sized to match their cell exactly
+   via inline style (set in buildFiringGrid), then enlarged via transform:scale so it grows
+   from its own center without disturbing that positioning. */
+.fp-cell-marker{position:absolute;transform:translate(-50%,-50%) scale(1.5);pointer-events:none;display:none}
+.fp-cell-marker.hit{display:block;background:url('hit.png') center/contain no-repeat;z-index:4}
+.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1}
+.fp-cell-next-pay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65em;font-weight:900;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;z-index:4;letter-spacing:.02em}
 .fp-cell.targeted{outline:2px solid #fff;outline-offset:-2px;z-index:1}
-.fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:1;display:flex;align-items:center;justify-content:center;overflow:visible}
+.fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible}
 .fp-ship-img-wrap img{width:100%;height:auto;opacity:.9;display:block}
 
 /* ── TOP ROW ── */
@@ -436,10 +448,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="fp-region" id="fp-ship-1" style="left:89.533%;top:28.191%;width:8.732%;height:9.681%"></div>
       <div class="fp-region" id="fp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
       <div class="fp-region" id="fp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
-      <div class="fp-region" id="fp-bet-circle" style="left:79.545%;top:60.106%;width:5.742%;height:11.596%">
+      <div class="fp-region" id="fp-bet-circle" style="left:76.5%;top:60.106%;width:9%;height:13%">
         <span class="fp-bet-lbl">Bet</span>
-        <div class="fp-bet-chips" id="fp-bet-chips"></div>
-        <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
+        <div class="fp-bet-chips" id="fp-bet-chips">
+          <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
+        </div>
+        <span class="fp-winning-lbl" id="fp-winning-lbl">Winning: $0.00</span>
       </div>
       <div class="fp-region" id="fp-roll-history" style="left:1.794%;top:74.362%;width:96.651%;height:5%"></div>
       <div class="fp-region" id="fp-strikes-area" style="left:1.794%;top:26%;width:12%;height:46%">
@@ -486,7 +500,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.18</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.19</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -672,6 +686,11 @@ const DIE_NUMBER_IMG = {1:'DieRed1.png',2:'DieRed2.png',3:'DieRed3.png',4:'DieRe
 const LETTER_TO_NUM = {A:1,B:2,C:3,D:4,E:5,F:6};
 const NUM_TO_LETTER = {1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
 const DIE_LETTER_IMG_NUM = {1:'DieA.png',2:'DieB.png',3:'DieC.png',4:'DieD.png',5:'DieE.png',6:'DieF.png'};
+// 3D-die-only face art (cloche overlay + the small inline settled-result pair) -- distinct
+// from DIE_LETTER_IMG/DIE_NUMBER_IMG above, which stay on the old flat icon set since those
+// are also used for 2D contexts (roll history, missile pips) that weren't part of this request.
+const DIE_LETTER_IMG_NUM_3D = {1:'RedDNS_A.png',2:'RedDNS_B.png',3:'RedDNS_C.png',4:'RedDNS_D.png',5:'RedDNS_E.png',6:'RedDNS_F.png'};
+const DIE_NUMBER_IMG_3D = {1:'WhiteDNS_1.png',2:'WhiteDNS_2.png',3:'WhiteDNS_3.png',4:'WhiteDNS_4.png',5:'WhiteDNS_5.png',6:'WhiteDNS_6.png'};
 
 // ── 3D DICE (small inline "settled result" pair in the top HUD, mirrors Craps' initDice) ──
 let destTHREE=null,destRenderer=null,destScene=null,destCamera=null,destDieLetter=null,destDieNumber=null;
@@ -716,8 +735,8 @@ function initDestDice(){
   destCamera.position.set(0,-1.8,6.5);destCamera.lookAt(0,0,0);
   destScene.add(new destTHREE.AmbientLight(0xffffff,.5));
   const dl1=new destTHREE.DirectionalLight(0xffffff,.9);dl1.position.set(3,-5,4);destScene.add(dl1);
-  destDieLetter=destMakeDie(-0.85,DIE_LETTER_IMG_NUM);
-  destDieNumber=destMakeDie(0.85,DIE_NUMBER_IMG);
+  destDieLetter=destMakeDie(-0.85,DIE_LETTER_IMG_NUM_3D);
+  destDieNumber=destMakeDie(0.85,DIE_NUMBER_IMG_3D);
   requestAnimationFrame(destRenderLoop);
 }
 function destRenderLoop(){
@@ -1238,12 +1257,14 @@ async function fireMissile(){
   document.getElementById('last-result-text').textContent=(hit?'💥 HIT!':'💧 Miss')+' '+roll.letter+displayNumber;
   // Flash target cell
   {
-    const cellEl=document.querySelector('#fp-grid-cells [data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
+    const cellEl=document.querySelector('#fp-grid-cells .fp-cell[data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
+    const markerEl=document.querySelector('#fp-grid-cells .fp-cell-marker[data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
     if(cellEl){
       cellEl.classList.add('targeted');
       setTimeout(()=>{
         cellEl.classList.remove('targeted');
         cellEl.className='fp-cell '+(hit?'hit':'miss');
+        if(markerEl)markerEl.className='fp-cell-marker '+(hit?'hit':'miss');
         hit?playHitSound():playMissSound();
       },350);
     }
@@ -1786,9 +1807,13 @@ function buildFiringGrid(){
   const container=document.getElementById('fp-grid-cells');
   if(!container)return;
   container.innerHTML='';
-  for(let c=0;c<GRID_SIZE;c++){ // c = letter index (col)
-    for(let r=0;r<GRID_SIZE;r++){ // r = number index (row) -- matches roll.row/roll.col server convention
-      const corners=fpCellCorners(c,r);
+  for(let c=0;c<GRID_SIZE;c++){ // c = letter index (col), matches roll.col directly
+    for(let r=0;r<GRID_SIZE;r++){ // r = raw server row (roll.row), 0..5
+      // The displayed number label is GRID_SIZE-r (see displayNumber in the roll handler --
+      // row labels count 6 at the top down to 1, but roll.row itself was never flipped), so
+      // the geometry's row axis (j=0 sits at the "1" marker, j=5 at "6") needs the same
+      // reversal here or the hit/miss flash lands on a different label than the dice show.
+      const corners=fpCellCorners(c,GRID_SIZE-1-r);
       const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);
       const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
       const cell=document.createElement('div');
@@ -1800,10 +1825,21 @@ function buildFiringGrid(){
       cell.style.height=fpPct(maxY-minY,FP_H)+'%';
       const poly=corners.map(p=>((p.x-minX)/(maxX-minX)*100).toFixed(2)+'% '+((p.y-minY)/(maxY-minY)*100).toFixed(2)+'%').join(',');
       cell.style.clipPath='polygon('+poly+')';
+      container.appendChild(cell);
+      // Hit/miss marker lives OUTSIDE the cell rather than as its child -- .fp-cell has a
+      // clip-path for its rhombus shape, which would clip the marker to that tiny shape too
+      // and defeat enlarging it past the cell's own footprint (same reason ship art is a
+      // separate top-level overlay, not a cell child). Centered at the same point the cell
+      // itself is centered on.
+      const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
       const marker=document.createElement('div');
       marker.className='fp-cell-marker';
-      cell.appendChild(marker);
-      container.appendChild(cell);
+      marker.dataset.fr=r;marker.dataset.fc=c;
+      marker.style.left=fpPct(cx,FP_W)+'%';
+      marker.style.top=fpPct(cy,FP_H)+'%';
+      marker.style.width=fpPct(maxX-minX,FP_W)+'%';
+      marker.style.height=fpPct(maxY-minY,FP_H)+'%';
+      container.appendChild(marker);
     }
   }
   _fpGridBuilt=true;
@@ -1814,12 +1850,49 @@ function renderFiringGrid(){
     const r=+el.dataset.fr,c=+el.dataset.fc;
     const state=G.grid[r]&&G.grid[r][c];
     el.className='fp-cell'+(state&&state!=='empty'?' '+state:'');
+    const existing=el.querySelector('.fp-cell-next-pay');
+    if(existing)existing.remove();
   });
+  document.querySelectorAll('#fp-grid-cells .fp-cell-marker').forEach(el=>{
+    const r=+el.dataset.fr,c=+el.dataset.fc;
+    const state=G.grid[r]&&G.grid[r][c];
+    el.className='fp-cell-marker'+(state==='hit'||state==='miss'?' '+state:'');
+  });
+  // Overlay total win value on unhit cells of ships that have at least 1 hit -- same logic
+  // as the old renderMainGrid, just re-targeted at the new cells.
+  if(G.ships&&G.shipHits&&G.bet){
+    const currentPayout=r2(
+      G.shipHits.reduce((sum,hits,i)=>sum+(SHIP_PAYOUTS[i][hits]||0),0)
+      +(JACKPOT[G.sunkenCount||0]||0)
+    );
+    G.ships.forEach((ship,i)=>{
+      const hits=G.shipHits[i]||0;
+      if(hits===0||G.shipSunk[i])return;
+      const shipPay=SHIP_PAYOUTS[i];
+      const payNext=shipPay[hits+1]||0;
+      const marginal=payNext-(shipPay[hits]||0);
+      const wouldSink=(hits+1)===SHIP_LENGTHS[i];
+      const jackpotDelta=wouldSink?(JACKPOT[Math.min((G.sunkenCount||0)+1,4)]||0)-(JACKPOT[G.sunkenCount||0]||0):0;
+      const totalIfHit=r2(currentPayout+marginal+jackpotDelta);
+      if(totalIfHit<=currentPayout)return;
+      ship.forEach(([r,c])=>{
+        if(G.grid[r][c]==='ship'){
+          const el=document.querySelector('#fp-grid-cells .fp-cell[data-fr="'+r+'"][data-fc="'+c+'"]');
+          if(!el)return;
+          const lbl=document.createElement('div');
+          lbl.className='fp-cell-next-pay';
+          lbl.textContent=fmt(r2(totalIfHit*G.bet));
+          el.appendChild(lbl);
+        }
+      });
+    });
+  }
   renderFiringShipImages();
 }
 // Ship art overlay -- same bow-mirroring/depth-stacking logic as the old renderShipImagesOnGrid,
 // but positioned via the flat rhombus math above instead of a CSS-rotated container, so no
 // counter-rotation transform is needed: the art renders upright directly.
+const SHIP_ART_SCALE=1.9;
 function renderFiringShipImages(){
   if(!G.ships)return;
   const container=document.getElementById('fp-grid-cells');
@@ -1834,8 +1907,10 @@ function renderFiringShipImages(){
     const minR=Math.min(...rowCoords),maxR=Math.max(...rowCoords);
     const minC=Math.min(...colCoords),maxC=Math.max(...colCoords);
     const mirrored=horiz?(ship[0][1]===maxC&&minC!==maxC):(ship[0][0]===maxR&&minR!==maxR);
-    const firstCorners=fpCellCorners(minC,minR);
-    const lastCorners=fpCellCorners(maxC,maxR);
+    // Same row-axis flip as buildFiringGrid (roll.row 0..5 is unreversed, but the geometry's
+    // row axis and the displayed number label both count the opposite way).
+    const firstCorners=fpCellCorners(minC,GRID_SIZE-1-minR);
+    const lastCorners=fpCellCorners(maxC,GRID_SIZE-1-maxR);
     const allX=[...firstCorners,...lastCorners].map(p=>p.x);
     const allY=[...firstCorners,...lastCorners].map(p=>p.y);
     const minX=Math.min(...allX),maxX=Math.max(...allX),minY=Math.min(...allY),maxY=Math.max(...allY);
@@ -1853,7 +1928,13 @@ function renderFiringShipImages(){
       wrap.style.left=fpPct(cx-spanH/2,FP_W)+'%';wrap.style.top=fpPct(cy-spanW/2,FP_H)+'%';
       wrap.style.width=fpPct(spanH,FP_W)+'%';wrap.style.height=fpPct(spanW,FP_H)+'%';
     }
-    img.style.transform='scaleX('+mirrorX+')';
+    // The ship art PNGs carry generous transparent padding around the hull (so they can be
+    // mirrored/rotated without clipping), so a raw 100%-of-bounding-box fill renders roughly
+    // half the intended visual size. The old rotated-grid renderer had its own empirical
+    // per-ship scale tuned for that setup; SHIP_ART_SCALE is a fresh flat estimate for the
+    // new flat/unrotated renderer -- grows outward from the wrap's own center (flex-centered,
+    // overflow:visible), so it doesn't disturb the already-correct centering.
+    img.style.transform='scale('+SHIP_ART_SCALE+') scaleX('+mirrorX+')';
     wrap.appendChild(img);
     container.appendChild(wrap);
   });
@@ -1958,16 +2039,25 @@ function renderFiringBetCircle(){
   const el=document.getElementById('fp-bet-amt');
   if(el)el.textContent=fmt(amt);
   const chipsEl=document.getElementById('fp-bet-chips');
-  if(!chipsEl)return;
-  chipsEl.innerHTML='';
-  if(amt<=0)return;
-  chipBreakdownDest(amt).forEach((d,i)=>{
-    const img=document.createElement('img');
-    img.src='chip-blank-'+d+'.png';
-    img.draggable=false;
-    img.style.bottom=(i*15)+'%';
-    chipsEl.appendChild(img);
-  });
+  if(chipsEl){
+    // fp-bet-amt lives INSIDE fp-bet-chips now (centered overlay on the stack) -- only clear
+    // the chip images, not the whole container, or the amount label gets wiped too.
+    chipsEl.querySelectorAll('img').forEach(img=>img.remove());
+    if(amt>0){
+      chipBreakdownDest(amt).forEach((d,i)=>{
+        const img=document.createElement('img');
+        img.src='chip-blank-'+d+'.png';
+        img.draggable=false;
+        img.style.bottom=(i*15)+'%';
+        chipsEl.appendChild(img);
+      });
+    }
+  }
+  const winEl=document.getElementById('fp-winning-lbl');
+  if(winEl){
+    const winning=G.phase==='firing'||G.phase==='done'?computeCurrentWinnings():0;
+    winEl.textContent='Winning: '+fmt(winning);
+  }
 }
 
 // ── UPDATE UI ────────────────────────────────────────────────────────────────
@@ -2231,7 +2321,7 @@ function playHitSound(){ const a=HIT_SOUND.cloneNode(); a.volume=0.5; a.play().c
 function playMissSound(){ MISS_SOUND.cloneNode().play().catch(()=>{}); }
 // Cloche dice overlay: shared module, configured for destroyer (letter die A-F + number
 // die 1-6, driven through ClocheDice's 1-6 physics via faceImagesPerDie).
-ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM,DIE_NUMBER_IMG],soundTheme:'action'});
+ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM_3D,DIE_NUMBER_IMG_3D],soundTheme:'action'});
 initDestDice();
 </script>
 </body>
