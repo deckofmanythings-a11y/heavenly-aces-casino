@@ -743,8 +743,9 @@ function playAnnouncementSequence(urls){
   }
 }
 function announceSicboResult(d1,d2,d3){
-  const sorted=[d1,d2,d3].sort((a,b)=>a-b);
-  playAnnouncementSequence(['the_winning_combination_is.ogg',...sorted.map(n=>SICBO_NUM_SOUND[n])]);
+  // Read in the same left-to-right order the three dice display in at the top of the
+  // screen (die1,die2,die3 = d1,d2,d3 raw from the server), not sorted ascending.
+  playAnnouncementSequence(['the_winning_combination_is.ogg',...[d1,d2,d3].map(n=>SICBO_NUM_SOUND[n])]);
 }
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
