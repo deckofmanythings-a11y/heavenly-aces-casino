@@ -92,12 +92,16 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-fire-btn{cursor:pointer;background:transparent;border:none}
 #fp-fire-btn:disabled{cursor:not-allowed}
 #fp-grid-cells{position:absolute;inset:0;z-index:2;pointer-events:none}
-.fp-cell{position:absolute;cursor:default;background:rgba(0,20,60,.4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);z-index:1}
-.fp-cell.ship{background:rgba(40,80,160,.35)}
+/* Blue holographic grid -- faint glowing fill + glowing rhombus outline (matches the game's
+   existing #4a9eff accent), animated with a slow pulse so it reads as "alive" scan-grid
+   rather than a flat tinted overlay. */
+@keyframes fpHoloPulse{0%,100%{opacity:.55}50%{opacity:1}}
+.fp-cell{position:absolute;cursor:default;background:rgba(74,158,255,.07);box-shadow:inset 0 0 0 1px rgba(120,190,255,.55),inset 0 0 10px rgba(74,158,255,.25);z-index:1;animation:fpHoloPulse 3.5s ease-in-out infinite}
+.fp-cell.ship{background:rgba(74,158,255,.1)}
 /* Explosions paint over the ship layer, misses paint under it (z-index:1 on the plain/miss
    cell is below .fp-ship-img-wrap's z-index:2; hit bumps to z-index:3 to go above it). */
-.fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400;z-index:3}
-.fp-cell.miss{background:rgba(0,40,100,.35);box-shadow:inset 0 0 0 1px rgba(74,158,255,.35)}
+.fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400;z-index:3;animation:none}
+.fp-cell.miss{background:rgba(0,40,100,.35);box-shadow:inset 0 0 0 1px rgba(74,158,255,.35);animation:none}
 /* Markers are siblings of .fp-cell (not children) -- .fp-cell's clip-path would otherwise
    clip an enlarged marker down to the tiny rhombus shape, same reason ship art is a separate
    top-level overlay rather than a cell child. Positioned/sized to match their cell exactly
@@ -500,7 +504,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.20</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.21</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1607,13 +1611,22 @@ function localBox(el, container){
   return {left:x,top:y,width:el.offsetWidth,height:el.offsetHeight};
 }
 
-function renderShipImagesOnGrid(containerId, attrR, attrC){
+// flat=true (used by the new firing-screen board) skips the diamond counter-rotation --
+// that container isn't CSS-rotated the way #grid-rows is, so countering a rotation that
+// doesn't exist would incorrectly tilt the art. Everything else (real DOM-measured cell
+// spans via localBox, mirroring, and the dx/dy/scale fine-tuning) is identical, per Deck's
+// request to just reuse the placement screen's exact rendering instead of a hand-derived
+// parallel implementation.
+function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
   if(!G.ships)return;
   const container=document.getElementById(containerId);
   if(!container)return;
   // Remove existing overlays in this container
   container.querySelectorAll('.ship-img-wrap').forEach(el=>el.remove());
-  container.style.position='relative';
+  // #fp-grid-cells already needs position:absolute;inset:0 to fill the new panel -- forcing
+  // position:relative here (fine for #grid-rows, which has no positioning of its own) would
+  // clobber that and collapse it.
+  if(!flat)container.style.position='relative';
 
   // Paint order (not z-index -- ships all share z-index:2, which must stay below the
   // hit-marker's z-index:3) determines stacking here: elements appended later paint on
@@ -1661,7 +1674,7 @@ function renderShipImagesOnGrid(containerId, attrR, attrC){
     // the ship art so it stays upright and correctly proportioned on top of the tilted board.
     // Order matters here: it must exactly reverse the parent's composition (rotate inner,
     // scaleY outer -> counter is rotate outer, scaleY inner) or it won't actually cancel.
-    const diamondCounter='rotate(-45deg) scaleY('+(1/DIAMOND_SY)+') ';
+    const diamondCounter=flat?'':'rotate(-45deg) scaleY('+(1/DIAMOND_SY)+') ';
     // Fine-tune adjustment applied in final on-screen space (outermost in the transform
     // chain), so dxPct/dyPct/scale read as plain "move right/down, grow" regardless of
     // mirroring or the diamond tilt underneath.
@@ -1889,54 +1902,12 @@ function renderFiringGrid(){
   }
   renderFiringShipImages();
 }
-// Ship art overlay -- same bow-mirroring/depth-stacking logic as the old renderShipImagesOnGrid,
-// but positioned via the flat rhombus math above instead of a CSS-rotated container, so no
-// counter-rotation transform is needed: the art renders upright directly.
+// Per Deck's request: just reuse the placement screen's exact rendering (real DOM-measured
+// cell spans via localBox, same mirroring/dx/dy/scale tuning) instead of a hand-derived
+// parallel implementation -- flat=true skips the diamond counter-rotation since #fp-grid-cells
+// isn't a CSS-rotated container the way #grid-rows is.
 function renderFiringShipImages(){
-  if(!G.ships)return;
-  const container=document.getElementById('fp-grid-cells');
-  if(!container)return;
-  container.querySelectorAll('.fp-ship-img-wrap').forEach(el=>el.remove());
-  const shipDepth=ship=>Math.max(...ship.map(([r,c])=>r+c));
-  const order=G.ships.map((ship,i)=>({ship,i})).filter(o=>o.ship&&o.ship.length>0).sort((a,b)=>shipDepth(a.ship)-shipDepth(b.ship));
-  order.forEach(({ship,i})=>{
-    const rowCoords=ship.map(s=>s[0]);
-    const colCoords=ship.map(s=>s[1]);
-    const horiz=rowCoords.every(r=>r===rowCoords[0]);
-    const minR=Math.min(...rowCoords),maxR=Math.max(...rowCoords);
-    const minC=Math.min(...colCoords),maxC=Math.max(...colCoords);
-    const mirrored=horiz?(ship[0][1]===maxC&&minC!==maxC):(ship[0][0]===maxR&&minR!==maxR);
-    // Same row-axis flip as buildFiringGrid (roll.row 0..5 is unreversed, but the geometry's
-    // row axis and the displayed number label both count the opposite way).
-    const firstCorners=fpCellCorners(minC,GRID_SIZE-1-minR);
-    const lastCorners=fpCellCorners(maxC,GRID_SIZE-1-maxR);
-    const allX=[...firstCorners,...lastCorners].map(p=>p.x);
-    const allY=[...firstCorners,...lastCorners].map(p=>p.y);
-    const minX=Math.min(...allX),maxX=Math.max(...allX),minY=Math.min(...allY),maxY=Math.max(...allY);
-    const wrap=document.createElement('div');
-    wrap.className='fp-ship-img-wrap';
-    const img=document.createElement('img');
-    img.src=horiz?SHIP_IMG[SHIP_IMG_KEY[i]]:SHIP_IMG_ALT[SHIP_IMG_KEY[i]];
-    img.draggable=false;
-    const mirrorX=mirrored?1:-1;
-    if(horiz){
-      wrap.style.left=fpPct(minX,FP_W)+'%';wrap.style.top=fpPct(minY,FP_H)+'%';
-      wrap.style.width=fpPct(maxX-minX,FP_W)+'%';wrap.style.height=fpPct(maxY-minY,FP_H)+'%';
-    }else{
-      const cx=(minX+maxX)/2,cy=(minY+maxY)/2,spanW=maxX-minX,spanH=maxY-minY;
-      wrap.style.left=fpPct(cx-spanH/2,FP_W)+'%';wrap.style.top=fpPct(cy-spanW/2,FP_H)+'%';
-      wrap.style.width=fpPct(spanH,FP_W)+'%';wrap.style.height=fpPct(spanW,FP_H)+'%';
-    }
-    // Reuse the same per-ship scale tuning as the placement screen (SHIP_ADJUST) -- measured
-    // directly against the placement screen's known-correct rendering: ship img width / wrap
-    // width there is ~0.71 for the destroyer, matching its adj.scale of 0.75 closely. An
-    // earlier attempt here guessed 1.9x (enlarging) when the art actually needs to shrink
-    // slightly relative to the raw cell-span bounding box, same as placement already does.
-    const adj=getShipAdjust(SHIP_IMG_KEY[i],horiz);
-    img.style.transform='scale('+adj.scale+') scaleX('+mirrorX+')';
-    wrap.appendChild(img);
-    container.appendChild(wrap);
-  });
+  renderShipImagesOnGrid('fp-grid-cells','fr','fc',true);
 }
 function renderFiringShipStatus(){
   const bet=G.bet||0;
