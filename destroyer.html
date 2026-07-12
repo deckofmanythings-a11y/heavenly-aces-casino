@@ -110,8 +110,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    from its own center without disturbing that positioning. */
 .fp-cell-marker{position:absolute;transform:translate(-50%,-50%) scale(1.5);pointer-events:none;display:none}
 .fp-cell-marker.hit{display:block;background:url('hit.png') center/contain no-repeat;z-index:4}
-.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1}
-.fp-cell-next-pay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65em;font-weight:900;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;z-index:4;letter-spacing:.02em}
+.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.75)}
+/* Sibling of .fp-cell now (not a child), same reason as .fp-cell-marker above -- a child's
+   z-index is trapped inside its parent .fp-cell's own stacking level, so it painted under
+   the ship layer (z-index:2) regardless of its own z-index:4. */
+.fp-cell-next-pay{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.65em;font-weight:900;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;z-index:4;letter-spacing:.02em}
 .fp-cell.targeted{outline:2px solid #fff;outline-offset:-2px;z-index:1}
 .fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible}
 .fp-ship-img-wrap img{width:100%;height:auto;opacity:.9;display:block}
@@ -505,7 +508,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.22</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.23</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1879,9 +1882,9 @@ function renderFiringGrid(){
     const r=+el.dataset.fr,c=+el.dataset.fc;
     const state=G.grid[r]&&G.grid[r][c];
     el.className='fp-cell'+(state&&state!=='empty'?' '+state:'');
-    const existing=el.querySelector('.fp-cell-next-pay');
-    if(existing)existing.remove();
   });
+  // fp-cell-next-pay labels are siblings of .fp-cell now (see below), rebuilt fresh each call.
+  document.querySelectorAll('#fp-grid-cells .fp-cell-next-pay').forEach(el=>el.remove());
   document.querySelectorAll('#fp-grid-cells .fp-cell-marker').forEach(el=>{
     const r=+el.dataset.fr,c=+el.dataset.fc;
     const state=G.grid[r]&&G.grid[r][c];
@@ -1906,12 +1909,20 @@ function renderFiringGrid(){
       if(totalIfHit<=currentPayout)return;
       ship.forEach(([r,c])=>{
         if(G.grid[r][c]==='ship'){
+          // Sibling of .fp-cell (in #fp-grid-cells directly), not a child -- a child's
+          // z-index is trapped inside its parent .fp-cell's own stacking level (z-index:1),
+          // so it painted under the ship layer (z-index:2) regardless of its own z-index:4.
           const el=document.querySelector('#fp-grid-cells .fp-cell[data-fr="'+r+'"][data-fc="'+c+'"]');
-          if(!el)return;
+          const container=document.getElementById('fp-grid-cells');
+          if(!el||!container)return;
           const lbl=document.createElement('div');
           lbl.className='fp-cell-next-pay';
           lbl.textContent=fmt(r2(totalIfHit*G.bet));
-          el.appendChild(lbl);
+          lbl.style.left=el.style.left;
+          lbl.style.top=el.style.top;
+          lbl.style.width=el.style.width;
+          lbl.style.height=el.style.height;
+          container.appendChild(lbl);
         }
       });
     });
