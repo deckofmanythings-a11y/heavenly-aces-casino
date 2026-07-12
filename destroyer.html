@@ -92,12 +92,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-fire-btn{cursor:pointer;background:transparent;border:none}
 #fp-fire-btn:disabled{cursor:not-allowed}
 #fp-grid-cells{position:absolute;inset:0;z-index:2;pointer-events:none}
-/* Blue holographic grid -- faint glowing fill + glowing rhombus outline (matches the game's
-   existing #4a9eff accent), animated with a slow pulse so it reads as "alive" scan-grid
-   rather than a flat tinted overlay. */
-@keyframes fpHoloPulse{0%,100%{opacity:.55}50%{opacity:1}}
-.fp-cell{position:absolute;cursor:default;background:rgba(74,158,255,.07);box-shadow:inset 0 0 0 1px rgba(120,190,255,.55),inset 0 0 10px rgba(74,158,255,.25);z-index:1;animation:fpHoloPulse 3.5s ease-in-out infinite}
-.fp-cell.ship{background:rgba(74,158,255,.1)}
+/* Blue holographic grid -- bright glowing fill + thick glowing rhombus outline with outer
+   bloom (matches the game's existing #4a9eff accent, punched up well past the metal bg's own
+   contrast so it actually reads as "holographic" instead of a faint tint), animated with a
+   slow pulse so it reads as "alive" scan-grid. */
+@keyframes fpHoloPulse{0%,100%{opacity:.7}50%{opacity:1}}
+.fp-cell{position:absolute;cursor:default;background:rgba(40,190,255,.22);box-shadow:inset 0 0 0 2px rgba(150,225,255,.95),inset 0 0 20px rgba(40,190,255,.6),0 0 10px rgba(40,190,255,.5);z-index:1;animation:fpHoloPulse 3s ease-in-out infinite}
+.fp-cell.ship{background:rgba(40,190,255,.28)}
 /* Explosions paint over the ship layer, misses paint under it (z-index:1 on the plain/miss
    cell is below .fp-ship-img-wrap's z-index:2; hit bumps to z-index:3 to go above it). */
 .fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400;z-index:3;animation:none}
@@ -504,7 +505,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.21</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.22</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1657,10 +1658,22 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
     const fr=localBox(firstCell,container);
     const lr=localBox(lastCell,container);
 
-    const left=fr.left;
-    const top=fr.top;
-    const spanW=(lr.left+lr.width)-fr.left;   // exact width spanning all occupied cells
-    const spanH=(lr.top+lr.height)-fr.top;    // exact height spanning all occupied cells
+    // flat grids: don't assume firstCell(minR,minC) renders top-left of lastCell(maxR,maxC)
+    // -- the row axis is flipped (GRID_SIZE-1-r, see buildFiringGrid) so a higher raw row can
+    // render to the LEFT of a lower one, which would otherwise produce a negative span. Take
+    // a real min/max bounding box over both cells' actual edges instead.
+    let left,top,spanW,spanH;
+    if(flat){
+      left=Math.min(fr.left,lr.left);
+      top=Math.min(fr.top,lr.top);
+      spanW=Math.max(fr.left+fr.width,lr.left+lr.width)-left;
+      spanH=Math.max(fr.top+fr.height,lr.top+lr.height)-top;
+    }else{
+      left=fr.left;
+      top=fr.top;
+      spanW=(lr.left+lr.width)-fr.left;   // exact width spanning all occupied cells
+      spanH=(lr.top+lr.height)-fr.top;    // exact height spanning all occupied cells
+    }
 
     const wrap=document.createElement('div');
     wrap.className='ship-img-wrap';
@@ -1681,15 +1694,18 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
     const adj=getShipAdjust(SHIP_IMG_KEY[i],horiz);
     const adjust='translate('+adj.dxPct+'%,'+adj.dyPct+'%) scale('+adj.scale+') ';
 
-    if(horiz){
-      // Horizontal: image fits the span directly
+    if(horiz||flat){
+      // Horizontal: image fits the span directly. Flat grids (both orientations): the real
+      // min/max bounding box computed above is already the ship's genuine screen footprint --
+      // no transpose needed, unlike the rotated grid below where a "vertical" (same-column)
+      // span measures wide-and-short in rotated screen space and has to be untransposed.
       wrap.style.cssText='position:absolute;left:'+left+'px;top:'+top+'px;'
         +'width:'+spanW+'px;height:'+spanH+'px;'
         +'pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible';
       img.style.cssText='width:100%;height:auto;opacity:.95;display:block;transform:'+adjust+diamondCounter+'scaleX('+mirrorX+')';
     }else{
-      // Vertical: bounding box is the transpose of the horizontal case (tall/narrow
-      // instead of wide/short) -- the Alt art itself is already drawn for this axis.
+      // Vertical (rotated grid only): bounding box is the transpose of the horizontal case
+      // (tall/narrow instead of wide/short) -- the Alt art itself is already drawn for this axis.
       const cx=left+spanW/2;
       const cy=top+spanH/2;
       wrap.style.cssText='position:absolute;'
