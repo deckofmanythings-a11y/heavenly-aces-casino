@@ -373,7 +373,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.12</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.13</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1754,18 +1754,14 @@ function renderFireCenter(){
         pips.appendChild(pip);
       }
     }else{
-      const bought=G.missilesBought||0;
       const usedUp=G.missilesBoughtUsed||0;
       for(let i=0;i<MAX_BUY;i++){
         const pip=document.createElement('div');
-        const purchased=i<bought;
-        pip.className='fm-pip'+(i<usedUp?' used':(purchased?'':' empty'));
-        if(purchased){
-          const img=document.createElement('img');
-          img.src=MISSILE_IMG.extra;
-          img.style.cssText='width:100%;height:100%;object-fit:contain';
-          pip.appendChild(img);
-        }
+        pip.className='fm-pip'+(i<usedUp?' used':'');
+        const img=document.createElement('img');
+        img.src=MISSILE_IMG.extra;
+        img.style.cssText='width:100%;height:100%;object-fit:contain';
+        pip.appendChild(img);
         pips.appendChild(pip);
       }
     }
