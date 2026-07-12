@@ -508,7 +508,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.23</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.24</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -662,6 +662,10 @@ const SHIP_IMG_ALT = {
 };
 // Ship index -> image key (SHIP_LENGTHS = [2,3,3,4])
 const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
+// See the comment at its use in renderShipImagesOnGrid -- measured by comparing each ship's
+// rendered-width-as-fraction-of-panel between the placement screen (correct) and the new
+// flat firing-screen board (undersized) with Deck's Setup.png/Game.png reference screenshots.
+const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.2745, battleship:1.4412, carrier:1.4906};
 
 // Per-ship, per-orientation fine-tuning against the live isometric board (found by eye,
 // not derivable from the art alone). dxPct/dyPct are % of the ship's own rendered box
@@ -1695,7 +1699,15 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
     // chain), so dxPct/dyPct/scale read as plain "move right/down, grow" regardless of
     // mirroring or the diamond tilt underneath.
     const adj=getShipAdjust(SHIP_IMG_KEY[i],horiz);
-    const adjust='translate('+adj.dxPct+'%,'+adj.dyPct+'%) scale('+adj.scale+') ';
+    // A flat cell-span bounding box is systematically smaller than the equivalent span
+    // measured on the old rotated grid (an axis-aligned bounding box around a 45deg-rotated
+    // shape is inherently larger than a tight box around the same shape unrotated), so
+    // adj.scale alone -- tuned entirely against the rotated grid -- undersizes ships here.
+    // Measured directly: on the placement screen each ship's rendered width, as a fraction of
+    // its own panel, is ~1.27-1.49x larger than the same ship/orientation renders at here with
+    // adj.scale alone. FLAT_SHIP_SIZE_CORRECTION reapplies that measured gap so sizes match.
+    const flatCorrection=flat?(FLAT_SHIP_SIZE_CORRECTION[SHIP_IMG_KEY[i]]||1):1;
+    const adjust='translate('+adj.dxPct+'%,'+adj.dyPct+'%) scale('+(adj.scale*flatCorrection)+') ';
 
     if(horiz||flat){
       // Horizontal: image fits the span directly. Flat grids (both orientations): the real
