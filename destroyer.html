@@ -29,6 +29,69 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* ── GAME SCREEN ── */
 #game-screen{display:none;height:100vh;height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a0a18}
 
+/* ── FIRING SCREEN -- baked background art (DestroyerPanel_bg.png, 1672x940), firing phase
+   only. Placement keeps the old #top-row/#main-area/#history-strip/#fire-center look; those
+   four are hidden while this is shown, and vice versa (see showFiringScreen/hideFiringScreen).
+   All child regions below are positioned as percentages measured directly off the background
+   art's magenta reference overlay (DestroyerPanel_with_Markers.png) so they land exactly on
+   the baked labels/artwork -- see PANEL_W/PANEL_H and the FIRING_REGIONS table in the JS. ── */
+#firing-screen{display:none;flex:1;min-height:0;align-items:center;justify-content:center}
+#firing-screen.active{display:flex}
+#firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg.png');background-size:100% 100%;background-repeat:no-repeat;font-size:1.6vh}
+#firing-panel .fp-region{position:absolute;overflow:hidden}
+#fp-game-select{display:flex;align-items:center;justify-content:center;cursor:pointer}
+#fp-game-select-menu{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#141420;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;z-index:20;min-width:100%}
+#fp-game-select-menu.open{display:block}
+#fp-game-select-menu button{display:block;width:100%;background:rgba(255,255,255,.06);border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff;font-size:1.1em;padding:.5em .8em;cursor:pointer;text-align:left;white-space:nowrap}
+#fp-game-select-menu button:last-child{border-bottom:none}
+#fp-game-select-menu button:hover{background:rgba(74,158,255,.25)}
+#fp-game-select-menu button.active{color:#4a9eff}
+#fp-dice-result{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;color:#fff;text-align:center}
+#fp-dice-result #dest-dice-canvas-wrap{width:5.5em;height:2.4em;flex-shrink:0}
+#fp-last-result-text{font-size:1.3em;font-weight:700;min-height:1.2em}
+#fp-topbtns{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:.35em;padding:.3em}
+#fp-topbtns button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:.85em;font-weight:700;padding:.3em .4em;cursor:pointer}
+#fp-topbtns button#fp-cashout-btn{border-color:rgba(100,200,100,.4);color:#7ee87e}
+.fp-ship-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;padding:.2em;color:#fff;text-align:center}
+.fp-ship-card .fp-ship-name{font-size:.95em;font-weight:700}
+.fp-ship-card.sunk .fp-ship-name{color:#ff6a6a}
+.fp-ship-card .fp-ship-hp{display:flex;gap:.15em}
+.fp-ship-card .fp-ship-hp .fp-hp-sq{width:.7em;height:.7em;border-radius:2px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3)}
+.fp-ship-card .fp-ship-hp .fp-hp-sq.hit{background:#ff6400;border-color:#ff9944}
+.fp-ship-card .fp-ship-payout{font-size:.7em;color:rgba(255,255,255,.6)}
+#fp-extra-wins{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;padding:.2em;color:#fff;text-align:center}
+#fp-extra-wins .fp-jackpot-lbl{font-size:.85em;color:rgba(255,255,255,.6);text-transform:uppercase}
+#fp-extra-wins .fp-jackpot-tier{font-size:.75em;color:rgba(255,215,0,.5)}
+#fp-extra-wins .fp-jackpot-tier.earned{color:#ffd700;font-weight:700}
+#fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center}
+#fp-bet-circle .fp-bet-lbl{font-size:.8em;color:rgba(255,255,255,.6);text-transform:uppercase}
+#fp-bet-circle .fp-bet-amt{font-size:1.3em;font-weight:900;color:#ffd700}
+#fp-roll-history{display:flex;gap:.3em;overflow-x:auto;align-items:center;padding:0 .5em;scrollbar-width:none}
+#fp-roll-history::-webkit-scrollbar{display:none}
+#fp-roll-history .fp-roll-pip{min-width:2.2em;height:2.2em;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.75em;background:rgba(255,255,255,.12)}
+#fp-roll-history .fp-roll-pip.hit-pip{background:rgba(255,80,0,.4);color:#ff9944}
+#fp-roll-history .fp-roll-pip.miss-pip{background:rgba(0,40,100,.4);color:#88bbff}
+#fp-buy-area{display:flex;align-items:center;justify-content:center;gap:.4em;padding:0 .6em}
+#fp-buy-area #fp-fm-label{font-size:.75em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0}
+#fp-buy-area #fp-free-missiles-pips{display:flex;gap:.3em;flex-wrap:nowrap}
+#fp-buy-area .fm-pip{width:2.4em;height:3.2em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#fp-buy-area .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
+#fp-buy-area .fm-pip.used{opacity:.35;filter:grayscale(1)}
+#fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:.9em;font-weight:900;padding:.4em .8em;cursor:pointer;display:none;flex-shrink:0}
+#fp-buy-area #buy-timer-row{display:none;align-items:center;gap:.6em;flex-shrink:0}
+#fp-buy-area #buy-offer-timer{font-size:1.1em;font-weight:900;color:#4a9eff;min-width:1.3em;text-align:center}
+#fp-buy-area #end-game-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:rgba(255,255,255,.75);font-size:.75em;font-weight:700;padding:.35em .7em;cursor:pointer}
+#fp-fire-btn{cursor:pointer;background:transparent;border:none}
+#fp-fire-btn:disabled{cursor:not-allowed}
+#fp-grid-cells{position:absolute;inset:0;z-index:2}
+.fp-cell{position:absolute;cursor:default}
+.fp-cell .fp-cell-marker{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70%;height:70%;pointer-events:none;z-index:3}
+.fp-cell.hit .fp-cell-marker{background:url('hit.png') center/contain no-repeat}
+.fp-cell.miss .fp-cell-marker{background:url('miss.png') center/contain no-repeat;opacity:.85}
+.fp-cell.targeted{outline:2px solid #fff;outline-offset:-2px;z-index:1}
+.fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:1;display:flex;align-items:center;justify-content:center;overflow:visible}
+.fp-ship-img-wrap img{width:100%;height:auto;opacity:.9;display:block}
+
 /* ── TOP ROW ── */
 #top-row{display:flex;flex-shrink:0;height:calc(100dvh*3/8);border-bottom:1px solid rgba(255,255,255,.12);min-height:120px;max-height:160px}
 #top-left{width:240px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px}
@@ -334,6 +397,53 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 <!-- GAME -->
 <div id="game-screen" style="position:relative">
 
+  <!-- FIRING SCREEN -- baked-art board, firing phase only. See showFiringScreen/
+       hideFiringScreen and buildFiringGrid/renderFiringGrid in the script below. -->
+  <div id="firing-screen">
+    <div id="firing-panel">
+      <div class="fp-region" id="fp-game-select" onclick="toggleFiringGameSelect(event)"
+           style="left:1.675%;top:1.17%;width:8.971%;height:9.681%">
+        Game Select
+        <div id="fp-game-select-menu">
+          <button onclick="window.location.href='index.html'">CRAPLESS</button>
+          <button onclick="window.location.href='index.html'">STANDARD</button>
+          <button onclick="window.location.href='sicbo.html'">SIC-BO</button>
+          <button class="active">DESTROYER</button>
+        </div>
+      </div>
+      <div class="fp-region" id="fp-dice-result" style="left:13.816%;top:1.17%;width:72.368%;height:9.681%">
+        <div id="fp-last-result-text"></div>
+      </div>
+      <div class="fp-region" id="fp-topbtns" style="left:89.533%;top:1.17%;width:8.732%;height:9.681%">
+        <button onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
+        <button id="fp-cashout-btn" onclick="cashOut()">Cash Out</button>
+        <button onclick="logout()">Log Out</button>
+      </div>
+      <div class="fp-region" id="fp-extra-wins" style="left:1.794%;top:14.043%;width:6.579%;height:11.596%">
+        <span class="fp-jackpot-lbl">Extra Wins</span>
+        <span class="fp-jackpot-tier" id="fp-jt-2">2 sunk: <strong>+$<span id="fp-jv-2">0</span></strong></span>
+        <span class="fp-jackpot-tier" id="fp-jt-3">3 sunk: <strong>+$<span id="fp-jv-3">0</span></strong></span>
+        <span class="fp-jackpot-tier" id="fp-jt-4">4 sunk: <strong>+$<span id="fp-jv-4">0</span></strong></span>
+      </div>
+      <div class="fp-region" id="fp-ship-0" style="left:89.533%;top:14.255%;width:8.732%;height:9.681%"></div>
+      <div class="fp-region" id="fp-ship-1" style="left:89.533%;top:28.191%;width:8.732%;height:9.681%"></div>
+      <div class="fp-region" id="fp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
+      <div class="fp-region" id="fp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
+      <div class="fp-region" id="fp-bet-circle" style="left:79.545%;top:60.106%;width:5.742%;height:11.596%">
+        <span class="fp-bet-lbl">Bet</span>
+        <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
+      </div>
+      <div class="fp-region" id="fp-roll-history" style="left:1.794%;top:74.362%;width:96.651%;height:5%"></div>
+      <div class="fp-region" id="fp-buy-area" style="left:1.794%;top:83.617%;width:84.928%;height:13.298%">
+        <span id="fp-fm-label">Initial Strikes</span>
+        <div id="fp-free-missiles-pips"></div>
+      </div>
+      <button class="fp-region" id="fp-fire-btn" onclick="fireMissile()" disabled
+              style="left:90.431%;top:82.872%;width:7.297%;height:10.319%"></button>
+      <div id="fp-grid-cells"></div>
+    </div>
+  </div>
+
   <!-- Winner modal now lives in winner-modal.js -- replaces the old BATTLE OVER overlay.
        No button; auto-reverts to the placement screen once it closes. -->
 
@@ -367,7 +477,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.16</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.17</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -789,10 +899,8 @@ function startSession(player){
     // approximate on restore: if a missile is currently loaded, the most recent purchase is
     // still active, so only the ones before it are used up; if none is loaded, they all are.
     G.missilesBoughtUsed=Math.max(0,G.missilesBought-(G.freeMissiles>0?1:0));
-    buildMainGrid();
-    renderMainGrid();
-    renderShipImages();
     hidePlacementScreen();
+    showFiringScreen();
     if(G.canBuy){
       // Was out of missiles and mid buy-decision when the page reloaded -- buyPrice is a
       // pure function of (shipHits, sunkenCount, bet), so it can be recomputed exactly
@@ -1068,11 +1176,7 @@ async function startBattle(){
   applyState(data.state,data.newBankroll);
   G.buyPrice=data.buyPrice||0;G.canBuy=false;
   hidePlacementScreen();
-  // #grid-rows currently holds the placement cells (data-pr/data-pc, drag handlers) --
-  // rebuild it with plain battle cells (data-r/data-c) before renderMainGrid() queries them.
-  buildMainGrid();
-  renderMainGrid();
-  renderShipImages();
+  showFiringScreen();
   addLog('Battle stations! 4 missiles armed. Open fire!','info');
   updateUI();
 }
@@ -1122,12 +1226,12 @@ async function fireMissile(){
   document.getElementById('last-result-text').textContent=(hit?'💥 HIT!':'💧 Miss')+' '+roll.letter+displayNumber;
   // Flash target cell
   {
-    const cellEl=document.querySelector('[data-r="'+roll.row+'"][data-c="'+roll.col+'"]');
+    const cellEl=document.querySelector('#fp-grid-cells [data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
     if(cellEl){
       cellEl.classList.add('targeted');
       setTimeout(()=>{
         cellEl.classList.remove('targeted');
-        cellEl.className='grid-cell '+(hit?'hit':'miss');
+        cellEl.className='fp-cell '+(hit?'hit':'miss');
         hit?playHitSound():playMissSound();
       },350);
     }
@@ -1333,6 +1437,7 @@ function playAgain(){
   resetGameState();
   document.getElementById('last-result-text').textContent='';
   G.ships=randomizeLocal();
+  hideFiringScreen();
   buildMainGrid();
   renderPlacementGrid();
   showPlacementScreen();
@@ -1601,6 +1706,246 @@ function computeCurrentWinnings(){
   return r2(total);
 }
 
+// ── FIRING SCREEN (baked-art board) ───────────────────────────────────────────
+// Background art is DestroyerPanel_bg.png, measured at 1672x940. Every region's position
+// (in the HTML above, as left/top/width/height %) and the grid geometry below were measured
+// directly off Deck's labeled reference images (DestroyerPanel_with_Markers.png for the UI
+// regions, DestroyerPanel_grid.png for the 36-cell rhombus) via pixel-diffing against the
+// plain background, not eyeballed -- see the conversation for the extraction method.
+const FP_W=1672,FP_H=940;
+// Rhombus grid: Left corner + one step vector per axis (measured from the 6 letter/number
+// step deltas in DestroyerPanel_grid.png, averaged -- both axes came out highly linear,
+// confirming this is a flat affine parallelogram grid, same shape as the old CSS
+// rotate(45deg)+scaleY() diamond, just baked into art instead of drawn live).
+const FP_GRID_LEFT={x:249,y:364};
+const FP_GRID_U={x:81.5,y:37};      // one letter-column step, A->F (col index i, 0..5)
+const FP_GRID_V={x:81.5,y:-37.333}; // one number-row step, 1->6 (row index j, 0..5)
+function fpCellCorners(i,j){
+  const L=FP_GRID_LEFT,U=FP_GRID_U,V=FP_GRID_V;
+  const pt=(a,b)=>({x:L.x+a*U.x+b*V.x,y:L.y+a*U.y+b*V.y});
+  return [pt(i,j),pt(i+1,j),pt(i+1,j+1),pt(i,j+1)]; // c00,c10,c11,c01 (parallelogram winding order)
+}
+function fpPct(px,total){return px/total*100;}
+
+let _fpGridBuilt=false,_fpMoved=false;
+// One-time DOM moves: reuse the existing buy-flow elements (buy-btn/buy-timer-row/
+// end-game-btn) and free-missiles pip logic inside the new baked-art buy area instead of
+// duplicating that logic -- their onclick wiring and ids stay exactly as-is, only their
+// parent changes.
+function moveFiringElements(){
+  if(_fpMoved)return;
+  _fpMoved=true;
+  const buyArea=document.getElementById('fp-buy-area');
+  const buyBtn=document.getElementById('buy-btn');
+  const timerRow=document.getElementById('buy-timer-row');
+  if(buyArea&&buyBtn)buyArea.appendChild(buyBtn);
+  if(buyArea&&timerRow)buyArea.appendChild(timerRow);
+  const diceResult=document.getElementById('fp-dice-result');
+  const diceCanvasWrap=document.getElementById('dest-dice-canvas-wrap');
+  const resultText=document.getElementById('last-result-text');
+  if(diceResult&&diceCanvasWrap)diceResult.appendChild(diceCanvasWrap);
+  if(diceResult&&resultText)diceResult.appendChild(resultText);
+  const fpResultTextPlaceholder=document.getElementById('fp-last-result-text');
+  if(fpResultTextPlaceholder)fpResultTextPlaceholder.remove();
+}
+function toggleFiringGameSelect(e){
+  e.stopPropagation();
+  document.getElementById('fp-game-select-menu').classList.toggle('open');
+}
+document.addEventListener('click',()=>{
+  const m=document.getElementById('fp-game-select-menu');
+  if(m)m.classList.remove('open');
+});
+function showFiringScreen(){
+  moveFiringElements();
+  ['top-row','main-area','history-strip','fire-center'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  const fs=document.getElementById('firing-screen');if(fs)fs.classList.add('active');
+  if(!_fpGridBuilt)buildFiringGrid();
+}
+function hideFiringScreen(){
+  const fs=document.getElementById('firing-screen');if(fs)fs.classList.remove('active');
+  ['top-row','main-area','history-strip','fire-center'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='';
+  });
+}
+function buildFiringGrid(){
+  const container=document.getElementById('fp-grid-cells');
+  if(!container)return;
+  container.innerHTML='';
+  for(let c=0;c<GRID_SIZE;c++){ // c = letter index (col)
+    for(let r=0;r<GRID_SIZE;r++){ // r = number index (row) -- matches roll.row/roll.col server convention
+      const corners=fpCellCorners(c,r);
+      const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);
+      const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+      const cell=document.createElement('div');
+      cell.className='fp-cell';
+      cell.dataset.fr=r;cell.dataset.fc=c;
+      cell.style.left=fpPct(minX,FP_W)+'%';
+      cell.style.top=fpPct(minY,FP_H)+'%';
+      cell.style.width=fpPct(maxX-minX,FP_W)+'%';
+      cell.style.height=fpPct(maxY-minY,FP_H)+'%';
+      const poly=corners.map(p=>((p.x-minX)/(maxX-minX)*100).toFixed(2)+'% '+((p.y-minY)/(maxY-minY)*100).toFixed(2)+'%').join(',');
+      cell.style.clipPath='polygon('+poly+')';
+      const marker=document.createElement('div');
+      marker.className='fp-cell-marker';
+      cell.appendChild(marker);
+      container.appendChild(cell);
+    }
+  }
+  _fpGridBuilt=true;
+}
+function renderFiringGrid(){
+  if(!_fpGridBuilt||!G.grid)return;
+  document.querySelectorAll('#fp-grid-cells .fp-cell').forEach(el=>{
+    const r=+el.dataset.fr,c=+el.dataset.fc;
+    const state=G.grid[r]&&G.grid[r][c];
+    el.className='fp-cell'+(state&&state!=='empty'?' '+state:'');
+  });
+  renderFiringShipImages();
+}
+// Ship art overlay -- same bow-mirroring/depth-stacking logic as the old renderShipImagesOnGrid,
+// but positioned via the flat rhombus math above instead of a CSS-rotated container, so no
+// counter-rotation transform is needed: the art renders upright directly.
+function renderFiringShipImages(){
+  if(!G.ships)return;
+  const container=document.getElementById('fp-grid-cells');
+  if(!container)return;
+  container.querySelectorAll('.fp-ship-img-wrap').forEach(el=>el.remove());
+  const shipDepth=ship=>Math.max(...ship.map(([r,c])=>r+c));
+  const order=G.ships.map((ship,i)=>({ship,i})).filter(o=>o.ship&&o.ship.length>0).sort((a,b)=>shipDepth(a.ship)-shipDepth(b.ship));
+  order.forEach(({ship,i})=>{
+    const rowCoords=ship.map(s=>s[0]);
+    const colCoords=ship.map(s=>s[1]);
+    const horiz=rowCoords.every(r=>r===rowCoords[0]);
+    const minR=Math.min(...rowCoords),maxR=Math.max(...rowCoords);
+    const minC=Math.min(...colCoords),maxC=Math.max(...colCoords);
+    const mirrored=horiz?(ship[0][1]===maxC&&minC!==maxC):(ship[0][0]===maxR&&minR!==maxR);
+    const firstCorners=fpCellCorners(minC,minR);
+    const lastCorners=fpCellCorners(maxC,maxR);
+    const allX=[...firstCorners,...lastCorners].map(p=>p.x);
+    const allY=[...firstCorners,...lastCorners].map(p=>p.y);
+    const minX=Math.min(...allX),maxX=Math.max(...allX),minY=Math.min(...allY),maxY=Math.max(...allY);
+    const wrap=document.createElement('div');
+    wrap.className='fp-ship-img-wrap';
+    const img=document.createElement('img');
+    img.src=horiz?SHIP_IMG[SHIP_IMG_KEY[i]]:SHIP_IMG_ALT[SHIP_IMG_KEY[i]];
+    img.draggable=false;
+    const mirrorX=mirrored?1:-1;
+    if(horiz){
+      wrap.style.left=fpPct(minX,FP_W)+'%';wrap.style.top=fpPct(minY,FP_H)+'%';
+      wrap.style.width=fpPct(maxX-minX,FP_W)+'%';wrap.style.height=fpPct(maxY-minY,FP_H)+'%';
+    }else{
+      const cx=(minX+maxX)/2,cy=(minY+maxY)/2,spanW=maxX-minX,spanH=maxY-minY;
+      wrap.style.left=fpPct(cx-spanH/2,FP_W)+'%';wrap.style.top=fpPct(cy-spanW/2,FP_H)+'%';
+      wrap.style.width=fpPct(spanH,FP_W)+'%';wrap.style.height=fpPct(spanW,FP_H)+'%';
+    }
+    img.style.transform='scaleX('+mirrorX+')';
+    wrap.appendChild(img);
+    container.appendChild(wrap);
+  });
+}
+function renderFiringShipStatus(){
+  const bet=G.bet||0;
+  SHIP_DISPLAY_NAMES.forEach((name,i)=>{
+    const box=document.getElementById('fp-ship-'+i);
+    if(!box)return;
+    const hits=G.shipHits?G.shipHits[i]||0:0;
+    const len=SHIP_LENGTHS[i];
+    const sunk=G.shipSunk?G.shipSunk[i]||false:false;
+    box.className='fp-region fp-ship-card'+(sunk?' sunk':'');
+    const payLine=SHIP_PAYOUTS[i].map((p,h)=>{
+      if(h===0||p===0)return'';
+      const jackpot=h===len?(JACKPOT[Math.min(G.sunkenCount+1,4)]||0)-(JACKPOT[G.sunkenCount||0]||0):0;
+      return h+'h: '+fmt(r2((p+jackpot)*bet));
+    }).filter(Boolean).join(' · ');
+    box.innerHTML='<div class="fp-ship-name">'+name+(sunk?' ✓':'')+'</div>'
+      +'<div class="fp-ship-hp">'+Array.from({length:len},(_,j)=>'<div class="fp-hp-sq'+(j<hits?' hit':'')+'"></div>').join('')+'</div>'
+      +'<div class="fp-ship-payout">'+(sunk?'SUNK':payLine)+'</div>';
+  });
+}
+function renderFiringJackpot(){
+  const bet=G.bet||0;
+  const sunk=G.sunkenCount||0;
+  [2,3,4].forEach(n=>{
+    const val=r2(JACKPOT[n]*bet);
+    const el=document.getElementById('fp-jt-'+n);
+    const vEl=document.getElementById('fp-jv-'+n);
+    if(vEl)vEl.textContent=val.toFixed(2);
+    if(el)el.classList.toggle('earned',sunk>=n);
+  });
+}
+function renderFiringRollHistory(){
+  const hist=document.getElementById('fp-roll-history');
+  if(!hist||!G.rollHistory)return;
+  hist.innerHTML='';
+  G.rollHistory.forEach(r=>{
+    const pip=document.createElement('div');
+    pip.className='fp-roll-pip '+(r.hit?'hit-pip':'miss-pip');
+    pip.textContent=r.letter+r.number;
+    hist.appendChild(pip);
+  });
+  hist.scrollLeft=hist.scrollWidth;
+}
+function renderFiringFireCenter(){
+  const fireBtn=document.getElementById('fp-fire-btn');
+  const buyBtn=document.getElementById('buy-btn');
+  const fmLabel=document.getElementById('fp-fm-label');
+  const pips=document.getElementById('fp-free-missiles-pips');
+  if(!fireBtn)return;
+  const inFiring=G.phase==='firing';
+  const outOfMissiles=inFiring&&G.missilesRemaining===0;
+  const canBuyNow=outOfMissiles&&G.canBuy;
+  const pastInitial=(G.missilesBought||0)>0;
+  const inBuyPhase=pastInitial||outOfMissiles;
+  fireBtn.disabled=!inFiring||G.missilesRemaining<=0||G.firing;
+  const offerLive=canBuyNow&&G.buyOfferPending;
+  if(buyBtn){
+    buyBtn.style.display=offerLive?'block':'none';
+    const price=G.buyPrice||0;
+    buyBtn.disabled=G.firing||price>G.bankroll;
+    buyBtn.textContent='🎯 Buy '+fmt(price);
+  }
+  const timerRow=document.getElementById('buy-timer-row');
+  if(timerRow&&!offerLive)timerRow.style.display='none';
+  if(fmLabel)fmLabel.textContent=inBuyPhase?'FOLLOW-UP STRIKES':'INITIAL STRIKES';
+  if(pips){
+    pips.innerHTML='';
+    if(!inBuyPhase){
+      const free=Math.max(0,G.freeMissiles||0);
+      const queue=G.missileQueue||[];
+      for(let i=0;i<4;i++){
+        const pip=document.createElement('div');
+        pip.className='fm-pip'+(i<free?'':' empty');
+        if(i<free){
+          const type=queue[i]||'initial';
+          const img=document.createElement('img');
+          img.src=MISSILE_IMG[type];
+          img.style.cssText='width:100%;height:100%;object-fit:contain';
+          pip.appendChild(img);
+        }
+        pips.appendChild(pip);
+      }
+    }else{
+      const usedUp=G.missilesBoughtUsed||0;
+      for(let i=0;i<MAX_BUY;i++){
+        const pip=document.createElement('div');
+        pip.className='fm-pip'+(i<usedUp?' used':'');
+        const img=document.createElement('img');
+        img.src=MISSILE_IMG.extra;
+        img.style.cssText='width:100%;height:100%;object-fit:contain';
+        pip.appendChild(img);
+        pips.appendChild(pip);
+      }
+    }
+  }
+}
+function renderFiringBetCircle(){
+  const el=document.getElementById('fp-bet-amt');
+  if(el)el.textContent=fmt(G.totalSpent||G.bet||0);
+}
+
 // ── UPDATE UI ────────────────────────────────────────────────────────────────
 function updateUI(){
   const net=r2(G.bankroll-G.startingBankroll);
@@ -1637,6 +1982,16 @@ function updateUI(){
   renderRollHistory();
   renderJackpotStrip();
   renderFireCenter();
+  // Firing-screen renders run last so they win on shared elements (the buy-flow button/
+  // timer row got reparented into the new board -- see moveFiringElements).
+  if(G.phase==='firing'||G.phase==='done'){
+    renderFiringGrid();
+    renderFiringShipStatus();
+    renderFiringRollHistory();
+    renderFiringJackpot();
+    renderFiringFireCenter();
+    renderFiringBetCircle();
+  }
 }
 
 function renderRollHistory(){
