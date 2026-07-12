@@ -373,7 +373,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.13</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.14</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -675,6 +675,7 @@ let G={
   missilesRemaining:4,
   missilesBought:0,
   missilesBoughtUsed:0,
+  pendingBuyDim:false,
   sunkenCount:0,
   rollHistory:[],
   freeMissiles:4,
@@ -832,7 +833,7 @@ async function logout(){
 function resetGameState(){
   G.phase='placement';G.ships=null;G.grid=null;
   G.shipHits=[0,0,0,0];G.shipSunk=[false,false,false,false];
-  G.missilesRemaining=4;G.missilesBought=0;G.missilesBoughtUsed=0;G.sunkenCount=0;
+  G.missilesRemaining=4;G.missilesBought=0;G.missilesBoughtUsed=0;G.pendingBuyDim=false;G.sunkenCount=0;
   G.canBuy=false;G.buyPrice=0;G.firing=false;G.lastWin=0;G.rollHistory=[];G.totalSpent=0;G.freeMissiles=4;G.placementBet=G.placementBet||5;G.buyOfferPending=false;
   G.missileQueue=['initial','initial','initial','initial'];
 }
@@ -1140,11 +1141,18 @@ async function fireMissile(){
   // Track free missiles: decrement one for the fired missile, add back if free earned
   if(!G.missileQueue)G.missileQueue=[];
   const firedType=G.missileQueue.length?G.missileQueue.shift():'initial';
+  const wasPendingBuyDim=G.pendingBuyDim;G.pendingBuyDim=false;
   if(G.freeMissiles>0)G.freeMissiles--;
-  if(data.freeMissile){G.freeMissiles++;G.missileQueue.push(firedType);}
+  if(data.freeMissile){
+    G.freeMissiles++;G.missileQueue.push(firedType);
+    // Undo buyMissile()'s optimistic dim -- a hit means the free-reload chain continues, so
+    // this purchase isn't actually used up yet.
+    if(wasPendingBuyDim)G.missilesBoughtUsed=Math.max(0,(G.missilesBoughtUsed||0)-1);
+  }
   // A purchased missile's pip only grays out once its hit-streak actually ends in a miss --
   // a hit grants data.freeMissile above, so the same purchase's "charge" carries forward.
-  else if(firedType==='extra'&&!hit){G.missilesBoughtUsed=(G.missilesBoughtUsed||0)+1;}
+  // Skip the increment if this miss was already optimistically dimmed at buy-click time.
+  else if(firedType==='extra'&&!hit&&!wasPendingBuyDim){G.missilesBoughtUsed=(G.missilesBoughtUsed||0)+1;}
   applyState(state,newBankroll);
   G.buyPrice=buyPrice||0;G.canBuy=canBuy||false;
   if(!G.rollHistory)G.rollHistory=[];
@@ -1263,6 +1271,12 @@ async function buyMissile(){
   if(timerRow)timerRow.style.display='none';
   G.firing=true;
   document.getElementById('buy-btn').disabled=true;
+  // Dim the box immediately on click rather than waiting for the roll to resolve -- a hit
+  // undoes this optimistic dim in the roll handler below (the free-reload chain continues),
+  // a miss leaves it dimmed since it's already correct.
+  G.missilesBoughtUsed=(G.missilesBoughtUsed||0)+1;
+  G.pendingBuyDim=true;
+  renderFireCenter();
   const token=localStorage.getItem('craps_session');
   let data;
   try{
