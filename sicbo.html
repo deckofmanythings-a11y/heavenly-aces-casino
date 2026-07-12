@@ -172,7 +172,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .nav-btn.active-game{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.12)}
 /* Chip row -- ported wholesale from craps (index.html): real chip-face images instead of
    flat colored discs, keyed off data-val. */
-.chip{width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.png')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.png')}
 .chip[data-val="3"]{background-image:url('chip-blank-3.png')}
@@ -180,7 +180,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .chip[data-val="10"]{background-image:url('chip-blank-10.png')}
 .chip[data-val="25"]{background-image:url('chip-blank-25.png')}
 .chip[data-val="50"]{background-image:url('chip-blank-50.png')}
-.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:10px}
+.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:13px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -276,10 +276,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    centers on the box instead, per Deck's request). --chip is scoped per cell-type since
    sic-bo's bet boxes vary wildly in size (the totals row is tiny, big/small is huge) --
    craps only ever had one uniformly-scaled felt so it needed just one global value. */
-body{--chip:22px;--edge:calc(var(--chip)*0.16)}
-.bs-btn{--chip:34px}
-.tot-cell{--chip:20px}
-.any-cell{--chip:15px}
+body{--chip:44px;--edge:calc(var(--chip)*0.16)}
+.bs-btn{--chip:68px}
+.tot-cell{--chip:40px}
+.any-cell{--chip:30px}
 /* Overrides whichever corner-anchored position the base -stk class set (bottom/right) --
    .has-stack is added alongside the original class and, being later in source order at equal
    specificity, wins per-property for position/left/top/transform/bottom/right. */
@@ -404,7 +404,7 @@ body{--chip:22px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.8</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.9</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1101,7 +1101,7 @@ function chipStackHTML(amt){
   h+='</span>';
   return h;
 }
-const SICBO_CHIP_STK_SEL='.bs-stk,.tot-stk,.trip-stk,.dbl-stk,.dom-stk,.any-stk';
+const SICBO_CHIP_STK_SEL='.bs-stk,.tot-stk,.trip-stk,.dbl-stk,.dom-stk,.any-stk,.at-stk';
 function renderChipStacks(){
   document.querySelectorAll(SICBO_CHIP_STK_SEL).forEach(el=>{
     const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
