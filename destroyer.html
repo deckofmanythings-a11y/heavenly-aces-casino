@@ -259,6 +259,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #free-missiles-pips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:440px}
 .fm-pip{width:96px;height:144px;border-radius:6px;background:rgba(74,158,255,.3);border:2px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;font-size:12px}
 .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
+.fm-pip.used{opacity:.35;filter:grayscale(1)}
 
 /* BET -- bottom-right corner of #main-area, persists through placement + battle */
 /* right offset clears #right-panel's 280px width so the circle sits just to its left,
@@ -372,7 +373,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.10</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.11</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -673,6 +674,7 @@ let G={
   shipSunk:[false,false,false,false],
   missilesRemaining:4,
   missilesBought:0,
+  missilesBoughtUsed:0,
   sunkenCount:0,
   rollHistory:[],
   freeMissiles:4,
@@ -787,6 +789,11 @@ function startSession(player){
     // missilesRemaining actually was -- resync them here instead of trusting the defaults.
     G.freeMissiles=G.missilesRemaining;
     G.missileQueue=Array(G.missilesRemaining).fill(G.missilesBought>0?'extra':'initial');
+    // missilesBoughtUsed is likewise client-only cosmetic (which purchased-missile pip is
+    // "used up" by a miss vs. still alive via a hit-streak isn't tracked server-side) --
+    // approximate on restore: if a missile is currently loaded, the most recent purchase is
+    // still active, so only the ones before it are used up; if none is loaded, they all are.
+    G.missilesBoughtUsed=Math.max(0,G.missilesBought-(G.freeMissiles>0?1:0));
     buildMainGrid();
     renderMainGrid();
     renderShipImages();
@@ -825,7 +832,7 @@ async function logout(){
 function resetGameState(){
   G.phase='placement';G.ships=null;G.grid=null;
   G.shipHits=[0,0,0,0];G.shipSunk=[false,false,false,false];
-  G.missilesRemaining=4;G.missilesBought=0;G.sunkenCount=0;
+  G.missilesRemaining=4;G.missilesBought=0;G.missilesBoughtUsed=0;G.sunkenCount=0;
   G.canBuy=false;G.buyPrice=0;G.firing=false;G.lastWin=0;G.rollHistory=[];G.totalSpent=0;G.freeMissiles=4;G.placementBet=G.placementBet||5;G.buyOfferPending=false;
   G.missileQueue=['initial','initial','initial','initial'];
 }
@@ -1135,6 +1142,9 @@ async function fireMissile(){
   const firedType=G.missileQueue.length?G.missileQueue.shift():'initial';
   if(G.freeMissiles>0)G.freeMissiles--;
   if(data.freeMissile){G.freeMissiles++;G.missileQueue.push(firedType);}
+  // A purchased missile's pip only grays out once its hit-streak actually ends in a miss --
+  // a hit grants data.freeMissile above, so the same purchase's "charge" carries forward.
+  else if(firedType==='extra'&&!hit){G.missilesBoughtUsed=(G.missilesBoughtUsed||0)+1;}
   applyState(state,newBankroll);
   G.buyPrice=buyPrice||0;G.canBuy=canBuy||false;
   if(!G.rollHistory)G.rollHistory=[];
@@ -1711,27 +1721,45 @@ function renderFireCenter(){
     }
   }
 
-  // Free missiles pip display (lower left). Once at least one missile has been bought,
-  // only a single Extra missile is ever in play at a time (each purchase auto-fires
-  // immediately, so there's never more than one queued from a hit-bonus reload) -- show
-  // just 1 slot from that point on, not just at the exact instant missilesRemaining hits 0.
+  // Free missiles pip display (lower left). Before any purchase: the original 4 starting-
+  // missile pips. Once at least one missile has been bought: MAX_BUY pip boxes, one per
+  // possible purchase, each showing the extra-missile icon greyed out once that purchase's
+  // hit-streak has actually ended in a miss -- a hit grants a free reload (see the
+  // firedType==='extra'&&!hit tracking in the roll handler above), so the box stays lit
+  // through any number of hits and only grays on the miss that finally ends the streak.
   if(pips){
     pips.innerHTML='';
-    const free=Math.max(0,G.freeMissiles||0);
-    const queue=G.missileQueue||[];
     const pastInitial=(G.missilesBought||0)>0;
-    const slotCount=pastInitial?1:4;
-    for(let i=0;i<slotCount;i++){
-      const pip=document.createElement('div');
-      pip.className='fm-pip'+(i<free?'':' empty');
-      if(i<free){
-        const type=queue[i]||'initial';
-        const img=document.createElement('img');
-        img.src=MISSILE_IMG[type];
-        img.style.cssText='width:100%;height:100%;object-fit:contain';
-        pip.appendChild(img);
+    if(!pastInitial){
+      const free=Math.max(0,G.freeMissiles||0);
+      const queue=G.missileQueue||[];
+      for(let i=0;i<4;i++){
+        const pip=document.createElement('div');
+        pip.className='fm-pip'+(i<free?'':' empty');
+        if(i<free){
+          const type=queue[i]||'initial';
+          const img=document.createElement('img');
+          img.src=MISSILE_IMG[type];
+          img.style.cssText='width:100%;height:100%;object-fit:contain';
+          pip.appendChild(img);
+        }
+        pips.appendChild(pip);
       }
-      pips.appendChild(pip);
+    }else{
+      const bought=G.missilesBought||0;
+      const usedUp=G.missilesBoughtUsed||0;
+      for(let i=0;i<MAX_BUY;i++){
+        const pip=document.createElement('div');
+        const purchased=i<bought;
+        pip.className='fm-pip'+(i<usedUp?' used':(purchased?'':' empty'));
+        if(purchased){
+          const img=document.createElement('img');
+          img.src=MISSILE_IMG.extra;
+          img.style.cssText='width:100%;height:100%;object-fit:contain';
+          pip.appendChild(img);
+        }
+        pips.appendChild(pip);
+      }
     }
   }
 }
