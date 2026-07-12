@@ -372,7 +372,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.3</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.4</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1126,6 +1126,7 @@ async function fireMissile(){
       setTimeout(()=>{
         cellEl.classList.remove('targeted');
         cellEl.className='grid-cell '+(hit?'hit':'miss');
+        hit?playHitExplosion():playMissSonar();
       },350);
     }
   }
@@ -1822,6 +1823,79 @@ async function redeemVoucher(code){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 <script src="cloche-dice.js"></script>
 <script>
+// Hit/miss impact sounds -- synthesized (same licensing reasoning as cloche-dice.js's bell
+// chime: a real explosion/sonar sample isn't something to source/license here) via a small
+// standalone Web Audio graph local to this page.
+let _dAudioCtx=null;
+function _destAudio(){
+  if(!_dAudioCtx){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return null;
+    _dAudioCtx=new AC();
+  }
+  if(_dAudioCtx.state==='suspended')_dAudioCtx.resume().catch(()=>{});
+  return _dAudioCtx;
+}
+// Fiery explosion: low pitch-dropping boom + a filtered noise blast that sweeps from bright
+// "whoosh" down to a dull rumble, topped with a few crackly high-frequency noise ticks for
+// the fire-crackle texture.
+function playHitExplosion(){
+  const ctx=_destAudio();if(!ctx)return;
+  const t=ctx.currentTime;
+  const boom=ctx.createOscillator(),bg=ctx.createGain();
+  boom.type='sine';
+  boom.frequency.setValueAtTime(120,t);
+  boom.frequency.exponentialRampToValueAtTime(30,t+0.5);
+  bg.gain.setValueAtTime(0,t);
+  bg.gain.linearRampToValueAtTime(1,t+0.01);
+  bg.gain.exponentialRampToValueAtTime(0.001,t+0.9);
+  boom.connect(bg);bg.connect(ctx.destination);
+  boom.start(t);boom.stop(t+1);
+
+  const dur=1.1;
+  const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.4);
+  const noise=ctx.createBufferSource();noise.buffer=buf;
+  const filt=ctx.createBiquadFilter();filt.type='lowpass';
+  filt.frequency.setValueAtTime(4000,t);
+  filt.frequency.exponentialRampToValueAtTime(200,t+dur);
+  const ng=ctx.createGain();ng.gain.setValueAtTime(0.8,t);ng.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  noise.connect(filt);filt.connect(ng);ng.connect(ctx.destination);
+  noise.start(t);
+
+  for(let i=0;i<5;i++){
+    const dt=t+Math.random()*0.35;
+    const cbuf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*0.06),ctx.sampleRate);
+    const cd=cbuf.getChannelData(0);
+    for(let j=0;j<cd.length;j++)cd[j]=(Math.random()*2-1)*(1-j/cd.length);
+    const cn=ctx.createBufferSource();cn.buffer=cbuf;
+    const chp=ctx.createBiquadFilter();chp.type='highpass';chp.frequency.value=2500;
+    const cg=ctx.createGain();cg.gain.value=0.25*(1-i*0.15);
+    cn.connect(chp);chp.connect(cg);cg.connect(ctx.destination);
+    cn.start(dt);
+  }
+}
+// Sonar ping: descending sine sweep with a feedback delay so it trails off in echoing repeats,
+// like a submarine sonar return finding nothing out there.
+function playMissSonar(){
+  const ctx=_destAudio();if(!ctx)return;
+  const t=ctx.currentTime;
+  const delay=ctx.createDelay(1.5);delay.delayTime.value=0.55;
+  const fb=ctx.createGain();fb.gain.value=0.32;
+  delay.connect(fb);fb.connect(delay);
+  const echoOut=ctx.createGain();echoOut.gain.value=0.5;
+  delay.connect(echoOut);echoOut.connect(ctx.destination);
+  const osc=ctx.createOscillator(),g=ctx.createGain();
+  osc.type='sine';
+  osc.frequency.setValueAtTime(1400,t);
+  osc.frequency.exponentialRampToValueAtTime(950,t+0.9);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(0.5,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+1.0);
+  osc.connect(g);g.connect(ctx.destination);g.connect(delay);
+  osc.start(t);osc.stop(t+1.1);
+}
 // Cloche dice overlay: shared module, configured for destroyer (letter die A-F + number
 // die 1-6, driven through ClocheDice's 1-6 physics via faceImagesPerDie).
 ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM,DIE_NUMBER_IMG],soundTheme:'action'});
