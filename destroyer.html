@@ -116,7 +116,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    top-level overlay rather than a cell child. Positioned/sized to match their cell exactly
    via inline style (set in buildFiringGrid), then enlarged via transform:scale so it grows
    from its own center without disturbing that positioning. */
-.fp-cell-marker{position:absolute;transform:translate(-50%,-60%) scale(1.5);pointer-events:none;display:none}
+.fp-cell-marker{position:absolute;transform:translate(-50%,-70%) scale(1.5);pointer-events:none;display:none}
 .fp-cell-marker.hit{display:block;background:url('hit.png') center/contain no-repeat;z-index:4}
 .fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.375)}
 /* Sibling of .fp-cell now (not a child), same reason as .fp-cell-marker above -- a child's
@@ -471,7 +471,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <span class="fp-winning-lbl" id="fp-winning-lbl">Winning: $0.00</span>
       </div>
       <div class="fp-region" id="fp-roll-history" style="left:1.794%;top:74.362%;width:96.651%;height:5%"></div>
-      <div class="fp-region" id="fp-strikes-area" style="left:1.794%;top:26%;width:12%;height:46%">
+      <div class="fp-region" id="fp-strikes-area" style="left:1.794%;top:60%;width:12%;height:13%">
         <span id="fp-fm-label">Initial Strikes</span>
         <div id="fp-free-missiles-pips"></div>
       </div>
@@ -515,7 +515,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.27</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.28</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -679,8 +679,8 @@ const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.0196, battleship:1.15296, carrier
 // (toward higher column/row), positive shortPct = right/down. Signs calibrated visually.
 const FLAT_SHIP_POSITION_CORRECTION = {
   battleship: {longPct:-10, shortPct:0},
-  destroyer: {longPct:0, shortPct:-30},
-  carrier: {longPct:15, shortPct:-30}
+  destroyer: {longPct:0, shortPct:30},
+  carrier: {longPct:-15, shortPct:30}
 };
 
 // Per-ship, per-orientation fine-tuning against the live isometric board (found by eye,
@@ -1729,7 +1729,8 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
     const posCorr=flat?(FLAT_SHIP_POSITION_CORRECTION[SHIP_IMG_KEY[i]]||{longPct:0,shortPct:0}):{longPct:0,shortPct:0};
     const posDx=horiz?posCorr.longPct:posCorr.shortPct;
     const posDy=horiz?posCorr.shortPct:posCorr.longPct;
-    const adjust='translate('+(adj.dxPct+posDx)+'%,'+(adj.dyPct+posDy)+'%) scale('+(adj.scale*flatCorrection)+') ';
+    const rotCorr=flat&&SHIP_IMG_KEY[i]==='battleship'?'rotate(5deg) ':'';
+    const adjust='translate('+(adj.dxPct+posDx)+'%,'+(adj.dyPct+posDy)+'%) '+rotCorr+'scale('+(adj.scale*flatCorrection)+') ';
 
     if(horiz||flat){
       // Horizontal: image fits the span directly. Flat grids (both orientations): the real
