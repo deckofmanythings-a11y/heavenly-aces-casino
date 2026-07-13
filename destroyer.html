@@ -65,7 +65,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-extra-wins .fp-jackpot-tier{font-size:.75em;color:rgba(255,215,0,.5)}
 #fp-extra-wins .fp-jackpot-tier.earned{color:#ffd700;font-weight:700}
 #fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;color:#fff;text-align:center;width:100%}
-#fp-bet-circle .fp-bet-lbl{font-size:.8em;color:rgba(255,255,255,.6);text-transform:uppercase}
 #fp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em;margin:0 auto}
 #fp-bet-circle .fp-bet-chips img{position:absolute;left:50%;bottom:0;width:100%;transform:translateX(-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 #fp-bet-circle .fp-bet-amt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;font-size:.8em;font-weight:900;color:#000;text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap}
@@ -86,7 +85,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-strikes-area .fm-pip.used{opacity:.35;filter:grayscale(1)}
 /* Initial Strikes (the 4 starting missiles, before any purchase): shown 5x larger than the
    Follow-Up Strikes pips. */
-#fp-strikes-area #fp-free-missiles-pips.initial-mode .fm-pip{width:10.5em;height:14em}
+#fp-strikes-area #fp-free-missiles-pips.initial-mode .fm-pip{width:2.8em;height:3.73em}
+#fp-strikes-area #fp-free-missiles-pips.initial-mode{flex-wrap:nowrap}
 #fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:.9em;font-weight:900;padding:.4em .8em;cursor:pointer;display:none;flex-shrink:0;width:auto!important}
 #fp-buy-area #buy-timer-row{display:none;flex-direction:row;align-items:center;gap:.5em;flex-shrink:0}
 /* !important needed on the sizing props -- these elements carry inline style="font-size:
@@ -464,8 +464,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="fp-region" id="fp-ship-1" style="left:89.533%;top:28.191%;width:8.732%;height:9.681%"></div>
       <div class="fp-region" id="fp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
       <div class="fp-region" id="fp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
-      <div class="fp-region" id="fp-bet-circle" style="left:76.5%;top:60.106%;width:9%;height:13%">
-        <span class="fp-bet-lbl">Bet</span>
+      <div class="fp-region" id="fp-bet-circle" style="left:77.85%;top:58.88%;width:9%;height:13%">
         <div class="fp-bet-chips" id="fp-bet-chips">
           <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
         </div>
@@ -516,7 +515,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.26</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.27</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -674,6 +673,15 @@ const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
 // rendered-width-as-fraction-of-panel between the placement screen (correct) and the new
 // flat firing-screen board (undersized) with Deck's Setup.png/Game.png reference screenshots.
 const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.0196, battleship:1.15296, carrier:1.26701};
+// Per-ship nudge on the flat firing board, expressed relative to the ship's OWN long/short
+// axis rather than raw x/y -- "long" is the axis running the ship's full length (width when
+// horiz, height when vert), "short" is the perpendicular axis. Positive longPct = forward
+// (toward higher column/row), positive shortPct = right/down. Signs calibrated visually.
+const FLAT_SHIP_POSITION_CORRECTION = {
+  battleship: {longPct:-10, shortPct:0},
+  destroyer: {longPct:0, shortPct:-30},
+  carrier: {longPct:15, shortPct:-30}
+};
 
 // Per-ship, per-orientation fine-tuning against the live isometric board (found by eye,
 // not derivable from the art alone). dxPct/dyPct are % of the ship's own rendered box
@@ -1715,7 +1723,13 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
     // its own panel, is ~1.27-1.49x larger than the same ship/orientation renders at here with
     // adj.scale alone. FLAT_SHIP_SIZE_CORRECTION reapplies that measured gap so sizes match.
     const flatCorrection=flat?(FLAT_SHIP_SIZE_CORRECTION[SHIP_IMG_KEY[i]]||1):1;
-    const adjust='translate('+adj.dxPct+'%,'+adj.dyPct+'%) scale('+(adj.scale*flatCorrection)+') ';
+    // Long axis = the ship's own length axis (width when horiz, height when vert); short axis
+    // is the perpendicular one. translate() % is relative to the wrap's own spanW/spanH, so
+    // horiz ships get longPct on X/shortPct on Y, vert ships get it swapped.
+    const posCorr=flat?(FLAT_SHIP_POSITION_CORRECTION[SHIP_IMG_KEY[i]]||{longPct:0,shortPct:0}):{longPct:0,shortPct:0};
+    const posDx=horiz?posCorr.longPct:posCorr.shortPct;
+    const posDy=horiz?posCorr.shortPct:posCorr.longPct;
+    const adjust='translate('+(adj.dxPct+posDx)+'%,'+(adj.dyPct+posDy)+'%) scale('+(adj.scale*flatCorrection)+') ';
 
     if(horiz||flat){
       // Horizontal: image fits the span directly. Flat grids (both orientations): the real
