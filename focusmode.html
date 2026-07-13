@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Rated Hex Craps</title>
+<title>Rated Hex Craps — Focus Mode</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 </script>
 <style>
@@ -336,6 +336,34 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .modal-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:8px 10px;color:#fff;font-size:24px;outline:none;margin-bottom:8px;text-align:center;letter-spacing:.1em;text-transform:uppercase}
 .modal-input:focus{border-color:rgba(255,215,0,.5)}
 .modal-input-error{font-size:19px;color:#ff9a9a;margin-bottom:8px;min-height:13px;text-align:center}
+
+/* ── FOCUS MODE ── */
+.fm-switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+.fm-switch input{opacity:0;width:0;height:0}
+.fm-switch-track{position:absolute;inset:0;background:rgba(255,255,255,.2);border-radius:24px;cursor:pointer;transition:background .15s}
+.fm-switch-track::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s}
+.fm-switch input:checked+.fm-switch-track{background:#4a9eff}
+.fm-switch input:checked+.fm-switch-track::before{transform:translateX(18px)}
+.fm-group{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:8px 10px}
+.fm-group-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.fm-group-name{font-weight:700;font-size:18px;color:#fff}
+.fm-group-desc{font-size:13px;color:rgba(255,255,255,.4);margin-top:1px}
+.fm-checkbox{width:20px;height:20px;accent-color:#ffd700;cursor:pointer;flex-shrink:0}
+.fm-numrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:0.5px solid rgba(255,255,255,.1)}
+.fm-numchip{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:3px 7px;font-size:15px;color:rgba(255,255,255,.8);cursor:pointer}
+.fm-numchip input{accent-color:#ffd700;cursor:pointer}
+/* Hidden felt elements -- removed outright (display:none), not dimmed. Table doesn't reflow:
+   every other #felt-stage element is positioned via its own fixed left/top/width/height %
+   from FELT_LAYOUT, so an element disappearing never shifts anything else. */
+body.fm-hide-line #pass-bar,body.fm-hide-line #dp-bar,body.fm-hide-line #dont-pass-stub{display:none!important}
+body.fm-hide-odds #pass-odds-cell,body.fm-hide-odds #dp-odds-cell{display:none!important}
+body.fm-hide-come #come-bar{display:none!important}
+body.fm-hide-comeodds .come-odds-btn,body.fm-hide-comeodds .dc-odds-btn,body.fm-hide-comeodds .come-half.odds-half{display:none!important}
+body.fm-hide-field #field-bar{display:none!important}
+body.fm-hide-hardways #panel-hw .hw-grid{display:none!important}
+body.fm-hide-hopbets #panel-hop{display:none!important}
+body.fm-hide-props #prop-block,body.fm-hide-props #circles-col .circle-stack{display:none!important}
+body.fm-hide-ats #lucky-roller{display:none!important}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
 .info-section{margin-bottom:12px}
 .info-section h3{font-size:19px;font-weight:700;color:#ffe066;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
@@ -801,16 +829,45 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     </div>
   </div>
 
+  <!-- FOCUS MODE SETTINGS -->
+  <div class="modal-overlay hidden" id="modal-focus">
+    <div class="modal-box" style="max-height:85vh;display:flex;flex-direction:column;max-width:480px">
+      <div class="modal-title" style="margin-bottom:4px">Focus Mode Settings</div>
+      <div class="modal-sub" style="margin-bottom:10px">Show only the bets you're working on. Hidden bets are removed from the felt entirely -- the rest of the table stays put, nothing reflows.</div>
+
+      <div id="fm-practice-row" style="display:flex;align-items:center;justify-content:space-between;background:rgba(74,158,255,.12);border:1px solid rgba(74,158,255,.4);border-radius:8px;padding:10px 12px;margin-bottom:12px">
+        <div>
+          <div style="font-weight:700;color:#fff">Practice Mode</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.5)" id="fm-practice-sub">Off — wagers your real bankroll</div>
+        </div>
+        <label class="fm-switch">
+          <input type="checkbox" id="fm-practice-toggle" onchange="toggleFocusPractice(this.checked)">
+          <span class="fm-switch-track"></span>
+        </label>
+      </div>
+      <div id="fm-practice-reset-row" style="display:none;margin:-6px 0 12px;text-align:right">
+        <button class="modal-btn" onclick="resetPracticeBankroll()" style="font-size:14px;padding:5px 10px">Reset Practice Bankroll</button>
+      </div>
+
+      <div id="fm-group-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px"></div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="modal-btn" onclick="focusShowAll()">Show All</button>
+        <button class="modal-btn cancel" onclick="closeFocusPanel()">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOP ROW -->
   <div id="top-row">
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
       <div id="game-mode-toggle">
-        <button class="gmode-btn active" id="gmode-crapless" onclick="switchGameMode('crapless')">
-          CRAPLESS<span class="gmode-sub">No naturals</span>
+        <button class="gmode-btn" onclick="navigateAway('index.html')">
+          CRAPS<span class="gmode-sub">Standard/Crapless</span>
         </button>
-        <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
-          STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
+        <button class="gmode-btn active" id="gmode-focus" disabled>
+          FOCUS MODE<span class="gmode-sub">Standard rules</span>
         </button>
         <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
           SIC-BO<span class="gmode-sub">3 dice</span>
@@ -818,8 +875,10 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
           DESTROYER<span class="gmode-sub">Naval Strike</span>
         </button>
-        <button class="gmode-btn" onclick="navigateAway('focusmode.html')" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">
-          FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span>
+      </div>
+      <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
+        <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
+          <span>⚙ FOCUS SETTINGS</span>
         </button>
       </div>
       <div style="display:flex;gap:3px;width:100%;flex:1;align-items:center;padding:3px">
@@ -904,7 +963,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   <div id="swoop-layer"></div>
   <div id="play-area">
     <div id="felt-stage">
-      <img id="felt-img" src="Crapless-Felt-with-Horn.gif" alt="" draggable="false">
+      <img id="felt-img" src="craps-felt-horn.gif" alt="" draggable="false">
     </div>
 
     <!-- LEFT COL -->
@@ -1174,7 +1233,13 @@ let ODDS_LABEL=ODDS_LABEL_CRAPLESS;
 let NUM_DEFS=NUM_DEFS_CRAPLESS;
 let ALL_NUMS=ALL_NUMS_CRAPLESS;
 let ALL_BOX_NUMS=ALL_NUMS_CRAPLESS;
-let activeGame='crapless'; // 'crapless' | 'standard'
+let activeGame='standard'; // Focus Mode only ever plays standard-craps rules
+// Hoisted up from its original position further down the script: the initial
+// applyGameMode('standard') call below needs this during its first updateUI() pass, and
+// unlike index.html (which always boots into crapless mode, so this branch was never hit
+// until well after the whole script had finished executing), Focus Mode boots straight into
+// 'standard' mode, exposing the temporal-dead-zone gap that only mattered on this path.
+let dualBetLoc={anyCraps:'bar',eleven:'circle'};
 
 const HARD_NUMS=new Set([4,6,8,10]);
 const LOW_NUMS=[2,3,4,5,6],HIGH_NUMS=[8,9,10,11,12],ALL_BONUS=[2,3,4,5,6,8,9,10,11,12];
@@ -1441,9 +1506,10 @@ function applyGameMode(mode){
     if(fiC)fiC.innerHTML=d1+d1+' pays double &nbsp;·&nbsp; '+d6+d6+' pays double';
     if(fiS)fiS.innerHTML=d1+d1+' pays double &nbsp;·&nbsp; '+d6+d6+' pays triple';
   }
-  // Update mode toggle buttons
-  document.getElementById('gmode-crapless').classList.toggle('active',mode==='crapless');
-  document.getElementById('gmode-standard').classList.toggle('active',mode==='standard');
+  // Update mode toggle buttons (Focus Mode has no Crapless/Standard switcher -- these ids
+  // don't exist here, only in index.html -- so guard rather than assume they're present).
+  const gmCl=document.getElementById('gmode-crapless');if(gmCl)gmCl.classList.toggle('active',mode==='crapless');
+  const gmSt=document.getElementById('gmode-standard');if(gmSt)gmSt.classList.toggle('active',mode==='standard');
   // Show/hide Don't Pass (standard = real bar, crapless = hidden entirely)
   const dps=document.getElementById('dont-pass-stub');
   const dpb=document.getElementById('dp-bar');
@@ -1564,7 +1630,14 @@ function chkRepeat(){
   if(br&&G.snapshot.bonus){for(const t of['low','all','high']){if((G.snapshot.bonus[t]||0)>(G.bonus[t]||0)){G.canRepeat=true;return;}}}
   G.canRepeat=false;
 }
-function checkBroke(){if(G.bankroll<=0&&tBets()===0)setTimeout(()=>openRedeemModal(true),300);}
+function checkBroke(){
+  if(G.bankroll>0||tBets()!==0)return;
+  // Practice Mode has no redeem-code path (there's nothing real to redeem into) -- running
+  // out of practice chips just resets the practice bankroll instead of surfacing the modal
+  // that openRedeemModal() would otherwise (correctly) refuse to open in this mode.
+  if(G.practiceMode){setTimeout(()=>{addLog('Out of practice chips — resetting practice bankroll.','info');resetPracticeBankroll();},300);return;}
+  setTimeout(()=>openRedeemModal(true),300);
+}
 function hasWorkingBets(){
   if(G.bets['pass']||G.bets['dp'])return true;
   if(G.bets['dpodds'])return true;
@@ -1816,19 +1889,35 @@ function startSession(player){
   G.bankroll=parseFloat(player.bankroll)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
-  applyServerGameState(player); // this calls applyGameMode() internally, setting mode from saved state
+  // Focus Mode only ever plays the 'standard' bucket -- it's a filtered view onto the same
+  // Standard Craps game as index.html, not a separate game_state, so force the mode rather
+  // than trusting rawGs.activeGame (which could be 'crapless' if the player was last there).
+  applyServerGameState(player,'standard');
   updateUI();initDice();
 }
+// saveCleanState() writes whatever G currently holds into the real player's saved
+// game_state -- if Practice Mode is on, G is the play-money sandbox, so swap back to the
+// real state first or the real rollHistory/etc gets overwritten with practice data. Unlike
+// the manual toggleFocusPractice() switch, this doesn't refuse to swap when practice bets
+// are on the table -- there's nothing to lose by discarding a practice-money bet layout on
+// the way out the door, and blocking navigation over play money would be bad UX.
+function exitFocusPracticeForNav(){
+  if(!G.practiceMode)return;
+  G_practiceState=G;
+  G=G_realState||G;
+}
 async function navigateAway(url){
+  exitFocusPracticeForNav();
   if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before leaving.','info');return;}
-  const mode=activeGame||'crapless';
+  const mode=activeGame||'standard';
   await saveCleanState(mode);
   window.location.href=url;
 }
 
 async function logout(){
+  exitFocusPracticeForNav();
   if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before logging out.','info');return;}
-  const mode=activeGame||'crapless';
+  const mode=activeGame||'standard';
   await saveCleanState(mode);
   if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
   localStorage.removeItem('craps_session');currentPlayer=null;G=makeInitialG();
@@ -1839,6 +1928,10 @@ async function logout(){
 
 // ── REDEEM ────────────────────────────────────────────────────────────────────
 function openRedeemModal(broke){
+  // A redeemed code's new bankroll gets written straight into G.bankroll -- while Practice
+  // Mode is on, G is the practice sandbox, so that write would silently clobber the practice
+  // number with the real one instead of actually reaching the real bankroll it's meant for.
+  if(G.practiceMode){addLog('Turn off Practice Mode before redeeming a code.','info');return;}
   document.getElementById('redeem-input').value='';document.getElementById('redeem-error').textContent='';
   document.getElementById('redeem-btn').disabled=false;document.getElementById('redeem-btn').textContent='Redeem';
   if(broke){document.getElementById('redeem-title').textContent='Out of Chips!';document.getElementById('redeem-sub').textContent='Get a code from Deck to continue playing.';document.getElementById('redeem-cancel').style.display='none';}
@@ -2328,7 +2421,11 @@ function renderChipStacks(){
 const _updateUI_orig=updateUI;
 updateUI=function(){_updateUI_orig();renderChipStacks();};
 
-applyGameMode('crapless');
+// Moved to the end of this script block (see the matching comment there) -- calling it here
+// triggers updateUI() before several later-declared `let`s (dualBetLoc, puck3dEl, ...) have
+// run, since index.html never hit this at load time (it always boots into crapless first,
+// by which point the whole script has long finished executing) but Focus Mode boots straight
+// into 'standard' mode.
 
 // ── ODDS MODAL ────────────────────────────────────────────────────────────────
 function openOddsModal(type,cbIdx,flatAmt,num){
@@ -2599,7 +2696,6 @@ function clearLastBet(){
   if(!G.bonus.locked){G.bonus.low=snap.bonus.low;G.bonus.all=snap.bonus.all;G.bonus.high=snap.bonus.high;}
   addLog('Last bet action undone.','info');updateUI();
 }
-let dualBetLoc={anyCraps:'bar',eleven:'circle'};
 function setDualLoc(key,loc){if(loc&&dualBetLoc.hasOwnProperty(key))dualBetLoc[key]=loc;}
 const COMMISSION_ACK_KEY='rh_commission_ack';
 function needsCommissionAck(){return localStorage.getItem(COMMISSION_ACK_KEY)!=='1';}
@@ -2747,7 +2843,10 @@ function restoreFromServerState(state){
   }
   if(state.rollHistory)G.rollHistory=state.rollHistory;
   G.bankrollAfterLastRoll=G.bankroll;
-  if(currentPlayer){
+  // Practice Mode rounds must never leak into the real player's saved game_state -- this
+  // object is what eventually gets synced back to Supabase, and G.practiceMode's whole point
+  // is that nothing here is real money, so it must stay purely local.
+  if(currentPlayer&&!G.practiceMode){
     const existing=currentPlayer.game_state||{};
     currentPlayer.game_state={...existing,activeGame,[''+activeGame]:state};
   }
@@ -2787,19 +2886,26 @@ async function rollDice(){
   let feedValues=null,failRoll=null;
   const clochePromise=ClocheDice.roll(new Promise((res,rej)=>{feedValues=res;failRoll=rej;}));
   clochePromise.catch(e=>console.warn('[cloche] overlay skipped:',e&&e.message?e.message:e)); // rejection is handled via the error branch below
-  const token=localStorage.getItem('craps_session');
-  const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
   let data;
-  try{
-    const rollEndpoint=activeGame==='standard'?'/roll-standard':'/roll-crapless';
-    const res=await fetch(FUNCTIONS_URL+rollEndpoint,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
-      body:requestBody
-    });
-    data=await res.json();
-  }catch(e){
-    data={ok:false,error:'network',message:'Network error. Try again.'};
+  if(G.practiceMode){
+    // Practice Mode never touches Supabase -- resolveFocusPractice() is a local port of
+    // roll-standard's resolve() (see FOCUS_PRACTICE_NOTE below) that returns a response
+    // shaped identically to the real Edge Function, so every line after this branch stays
+    // exactly the same regardless of which path produced `data`.
+    data=resolveFocusPractice();
+  }else{
+    const token=localStorage.getItem('craps_session');
+    const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
+    try{
+      const res=await fetch(FUNCTIONS_URL+'/roll-standard',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+        body:requestBody
+      });
+      data=await res.json();
+    }catch(e){
+      data={ok:false,error:'network',message:'Network error. Try again.'};
+    }
   }
 
   if(!data.ok){
@@ -3115,6 +3221,407 @@ function updateUI(){
     });
     hist.scrollLeft=0;
   }
+  applyFocusVisibility();
+}
+
+// ── FOCUS MODE ──────────────────────────────────────────────────────────────
+// Group-level toggles hide/show via a body class (works uniformly for both static felt
+// elements and ones built dynamically per-roll, like Come Odds buttons). Place/Buy/Lay are
+// the one exception Deck asked for per-number granularity on, so those are toggled directly
+// per element instead of through a shared class.
+const FOCUS_GROUPS=[
+  {key:'line',      name:'Line Bets',        desc:'Pass Line / Don\'t Pass'},
+  {key:'odds',      name:'Odds',             desc:'Pass Line / Don\'t Pass odds'},
+  {key:'come',      name:'Come / Don\'t Come', desc:'Come and Don\'t Come'},
+  {key:'comeodds',  name:'Come / DC Odds',   desc:'Odds on working Come and Don\'t Come bets'},
+  {key:'field',     name:'Field',            desc:'One-roll 2·3·4·9·10·11·12'},
+  {key:'place',     name:'Place Bets',       desc:'Bet a number directly', perNumber:true},
+  {key:'buy',       name:'Buy Bets',         desc:'Buy a number to roll', perNumber:true},
+  {key:'lay',       name:'Lay Bets',         desc:'Bet against a number', perNumber:true},
+  {key:'hardways',  name:'Hardways',         desc:'Hard 4 / 6 / 8 / 10'},
+  {key:'hopbets',   name:'Hop Bets',         desc:'One-roll exact-dice-combo bets'},
+  {key:'props',     name:'Proposition Bets', desc:'Any 7, Any Craps, Horn, C&E, Eleven, Aces, Ace-Deuce, Midnight'},
+  {key:'ats',       name:'Lucky Roller (ATS)', desc:'All-Tall-Small bonus side bet'}
+];
+const FOCUS_STORAGE_KEY='rh_focus_visibility';
+function defaultFocusVisible(){
+  const v={};
+  FOCUS_GROUPS.forEach(g=>{
+    if(g.perNumber){v[g.key]={};ALL_NUMS.forEach(n=>v[g.key][n]=true);}
+    else v[g.key]=true;
+  });
+  return v;
+}
+function loadFocusVisible(){
+  try{
+    const raw=localStorage.getItem(FOCUS_STORAGE_KEY);
+    if(!raw)return defaultFocusVisible();
+    const saved=JSON.parse(raw);
+    const def=defaultFocusVisible();
+    // Merge onto defaults so a future new group/number always starts visible instead of
+    // throwing when an older saved blob doesn't have that key yet.
+    FOCUS_GROUPS.forEach(g=>{
+      if(g.perNumber){if(saved[g.key])Object.assign(def[g.key],saved[g.key]);}
+      else if(saved[g.key]!==undefined)def[g.key]=saved[g.key];
+    });
+    return def;
+  }catch(e){return defaultFocusVisible();}
+}
+let focusVisible=loadFocusVisible();
+function saveFocusVisible(){
+  try{localStorage.setItem(FOCUS_STORAGE_KEY,JSON.stringify(focusVisible));}catch(e){}
+}
+function applyFocusVisibility(){
+  const body=document.body;
+  FOCUS_GROUPS.forEach(g=>{
+    if(g.perNumber)return;
+    body.classList.toggle('fm-hide-'+g.key,!focusVisible[g.key]);
+  });
+  ['place','buy','lay'].forEach(type=>{
+    ALL_NUMS.forEach(n=>{
+      // Buy's element is .nb-buy-left in standard felt mode and .nb-buy in classic mode, but
+      // the id is 'nb-buy-'+n either way, so one lookup covers both.
+      const target=document.getElementById('nb-'+type+'-'+n);
+      if(target)target.style.display=focusVisible[type][n]?'':'none';
+    });
+  });
+}
+function focusGroupRowHTML(g){
+  if(!g.perNumber){
+    return '<div class="fm-group"><div class="fm-group-hdr" onclick="toggleFocusGroup(\''+g.key+'\')">'
+      +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc">'+g.desc+'</div></div>'
+      +'<input type="checkbox" class="fm-checkbox" id="fm-chk-'+g.key+'" '+(focusVisible[g.key]?'checked':'')+' onclick="event.stopPropagation();toggleFocusGroup(\''+g.key+'\')">'
+      +'</div></div>';
+  }
+  const allOn=ALL_NUMS.every(n=>focusVisible[g.key][n]);
+  const nums=ALL_NUMS.map(n=>'<label class="fm-numchip"><input type="checkbox" id="fm-chk-'+g.key+'-'+n+'" '+(focusVisible[g.key][n]?'checked':'')+' onchange="toggleFocusNumber(\''+g.key+'\','+n+',this.checked)">'+n+'</label>').join('');
+  return '<div class="fm-group"><div class="fm-group-hdr" onclick="toggleFocusGroupAll(\''+g.key+'\')">'
+    +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc">'+g.desc+'</div></div>'
+    +'<input type="checkbox" class="fm-checkbox" id="fm-chk-'+g.key+'" '+(allOn?'checked':'')+' onclick="event.stopPropagation();toggleFocusGroupAll(\''+g.key+'\')">'
+    +'</div><div class="fm-numrow">'+nums+'</div></div>';
+}
+function renderFocusPanel(){
+  document.getElementById('fm-group-list').innerHTML=FOCUS_GROUPS.map(focusGroupRowHTML).join('');
+  const pt=document.getElementById('fm-practice-toggle');if(pt)pt.checked=!!G.practiceMode;
+  const sub=document.getElementById('fm-practice-sub');
+  if(sub)sub.textContent=G.practiceMode?'On — free chips, nothing here touches your real bankroll':'Off — wagers your real bankroll';
+  const resetRow=document.getElementById('fm-practice-reset-row');
+  if(resetRow)resetRow.style.display=G.practiceMode?'block':'none';
+}
+function openFocusPanel(){renderFocusPanel();document.getElementById('modal-focus').classList.remove('hidden');}
+function closeFocusPanel(){document.getElementById('modal-focus').classList.add('hidden');}
+function toggleFocusGroup(key){
+  focusVisible[key]=!focusVisible[key];
+  saveFocusVisible();applyFocusVisibility();renderFocusPanel();
+}
+function toggleFocusGroupAll(key){
+  const allOn=ALL_NUMS.every(n=>focusVisible[key][n]);
+  ALL_NUMS.forEach(n=>focusVisible[key][n]=!allOn);
+  saveFocusVisible();applyFocusVisibility();renderFocusPanel();
+}
+function toggleFocusNumber(key,n,checked){
+  focusVisible[key][n]=checked;
+  saveFocusVisible();applyFocusVisibility();renderFocusPanel();
+}
+function focusShowAll(){
+  focusVisible=defaultFocusVisible();
+  saveFocusVisible();applyFocusVisibility();renderFocusPanel();
+}
+
+// ── PRACTICE MODE ────────────────────────────────────────────────────────────
+// FOCUS_PRACTICE_NOTE: resolveFocusPractice()/focusLocalResolve() below are a hand-ported
+// copy of roll-standard/roll_index.ts's resolve() (server-authority.md's whole point is that
+// real-money payout logic lives ONLY on the server -- this is the one deliberate, narrow
+// exception, justified because Practice Mode never touches real bankroll/game_state, so
+// client-trust here can't cost anyone real money). If roll-standard.ts's payout math ever
+// changes, this function needs the same change made by hand, or Practice Mode will start
+// teaching the wrong odds. Kept structurally parallel to the server file (same constants,
+// same function shapes, same order) specifically so a side-by-side diff stays easy.
+const FOCUS_HOP_MAP={hop11:[1,1],hop12:[1,2],hop13:[1,3],hop14:[1,4],hop15:[1,5],hop16:[1,6],hop22:[2,2],hop23:[2,3],hop24:[2,4],hop25:[2,5],hop26:[2,6],hop33:[3,3],hop34:[3,4],hop35:[3,5],hop36:[3,6],hop44:[4,4],hop45:[4,5],hop46:[4,6],hop55:[5,5],hop56:[5,6],hop66:[6,6]};
+const FOCUS_ODDS_PAY={2:6,3:3,4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2,11:3,12:6};
+const FOCUS_NUM_DEFS={
+  2:{place:[11,2],buyRatio:(119/20)/0.95}, 3:{place:[11,4],buyRatio:(59/20)/0.95},
+  4:{place:[9,5],buyRatio:2}, 5:{place:[7,5],buyRatio:1.5}, 6:{place:[7,6],buyRatio:6/5},
+  8:{place:[7,6],buyRatio:6/5}, 9:{place:[7,5],buyRatio:1.5}, 10:{place:[9,5],buyRatio:2},
+  11:{place:[11,4],buyRatio:(59/20)/0.95}, 12:{place:[11,2],buyRatio:(119/20)/0.95}
+};
+const FOCUS_ALL_NUMS=[2,3,4,5,6,8,9,10,11,12];
+const FOCUS_LOW_NUMS=[2,3,4,5,6],FOCUS_HIGH_NUMS=[8,9,10,11,12],FOCUS_ALL_BONUS=[2,3,4,5,6,8,9,10,11,12];
+const FOCUS_HARD_NUMS=new Set([4,6,8,10]);
+function focusLocalResolve(s,bankroll,d1,d2,log){
+  const sum=d1+d2,hard=d1===d2;
+  let returned=0;
+  const act=(s.phase==='point'||s.betsOn)&&!s.betsOffThisRoll;
+  function loseBonus(){
+    ['low','all','high'].forEach(t=>{if(s.bonus[t]>0){log.push('Bonus '+t+': lost '+s.bonus[t].toFixed(2));s.bonus[t]=0;}});
+    s.bonus.lowHit=[];s.bonus.highHit=[];s.bonus.lowMax=s.bonus.allMax=s.bonus.highMax=0;
+    s.bonus.open=true;s.bonus.locked=false;
+  }
+  function pP(key,ratio,lbl){
+    const st=s.bets[key]||0;if(!st)return;
+    const p=r2(st*ratio);bankroll=r2(bankroll+p);returned=r2(returned+p);
+    log.push(lbl+': +'+p.toFixed(2)+' (stays)');
+  }
+  function pR(key,ratio,lbl){
+    const st=s.bets[key]||0;if(!st)return;
+    const p=r2(st*ratio);bankroll=r2(bankroll+st+p);returned=r2(returned+st+p);
+    delete s.bets[key];log.push(lbl+': +'+p.toFixed(2)+' (returned)');
+  }
+  function lose(key,lbl){
+    const st=s.bets[key]||0;if(!st)return;
+    delete s.bets[key];log.push(lbl+': lost '+st.toFixed(2));
+  }
+  function sweepPlace(){
+    FOCUS_ALL_NUMS.forEach(n=>{['place','buy'].forEach(t=>{
+      const k=t+n;if(!s.bets[k])return;
+      log.push((t==='buy'?'Buy':'Place')+' '+n+': lost '+s.bets[k].toFixed(2));
+      delete s.bets[k];
+    });});
+  }
+  function loseComesBetsSeven(){
+    const ow=s.betsOn;
+    s.comeBets.forEach(cb=>{
+      log.push('Come ('+cb.num+'): lost '+cb.flat.toFixed(2)+'.');
+      if(cb.odds>0){
+        if(ow)log.push('Come ('+cb.num+') odds: lost '+cb.odds.toFixed(2)+' — were working.');
+        else{bankroll=r2(bankroll+cb.odds);log.push('Come ('+cb.num+') odds: returned '+cb.odds.toFixed(2)+' — not working.');}
+      }
+    });
+    s.comeBets=[];
+  }
+
+  if(sum===7)loseBonus();
+
+  const wc=s.bets['come']||0;
+  if(sum!==7){
+    const rem=[];
+    s.comeBets.forEach((cb,i)=>{
+      if(cb.num!==sum)return;
+      const ow=s.betsOn;
+      const op=r2((cb.odds||0)*(FOCUS_ODDS_PAY[cb.num]||0));
+      if(wc>0&&wc===cb.flat){
+        const pr=r2(cb.flat+op);
+        bankroll=r2(bankroll+pr);returned=r2(returned+pr);
+        cb.odds=0;delete s.bets['come'];
+        log.push('Come ('+cb.num+') wins — off and on. '+pr.toFixed(2)+' returned, bet stays.');
+      }else{
+        const tot=r2(cb.flat+cb.flat+(cb.odds||0)+op);
+        bankroll=r2(bankroll+tot);returned=r2(returned+tot);rem.push(i);
+        log.push('Come ('+cb.num+') wins — '+tot.toFixed(2)+' returned.');
+        if(cb.odds>0){
+          if(ow)log.push('Come ('+cb.num+') odds win — were working.');
+          else log.push('Come ('+cb.num+') odds returned — not working.');
+        }
+      }
+    });
+    for(let i=rem.length-1;i>=0;i--)s.comeBets.splice(rem[i],1);
+  }
+
+  if(sum!==7){
+    const def=FOCUS_NUM_DEFS[sum];
+    if(def&&act){
+      const pk='place'+sum;
+      if(s.bets[pk]){
+        const[w,d]=def.place;const st=s.bets[pk];const p=r2(st*w/d);
+        bankroll=r2(bankroll+p);returned=r2(returned+p);
+        log.push('Place '+sum+': +'+p.toFixed(2)+' (stays)');
+      }
+      const bk='buy'+sum;
+      if(s.bets[bk]){
+        const st=s.bets[bk];const gr=r2(st*def.buyRatio);const net=r2(gr-r2(gr*0.05));
+        bankroll=r2(bankroll+st+net);returned=r2(returned+st+net);
+        delete s.bets[bk];log.push('Buy '+sum+': +'+net.toFixed(2)+' (returned)');
+      }
+    }else if(def&&!act&&(s.bets['place'+sum]||s.bets['buy'+sum])){
+      log.push('Place/Buy '+sum+': off');
+    }
+  }
+
+  let tag='normal';
+  if(s.phase==='comeout'){
+    if(sum===7){
+      tag='seven-win';
+      const hasPass=!!s.bets['pass'];const hasCome=s.comeBets.length>0;
+      pR('pass',1,'Pass Line');
+      const ow=s.betsOn;
+      if(hasCome){
+        if(hasPass)log.push('Front line winner — Pass Line wins.');
+        if(ow)log.push('Come bets lose — odds were working and also lost.');
+        else log.push('Come bets lose — odds returned (not working).');
+        loseComesBetsSeven();
+      }else if(hasPass)log.push('Front line winner — Pass Line wins.');
+      if(s.betsOn)sweepPlace();
+    }else{
+      if(s.bonus.open){s.bonus.open=false;s.bonus.locked=true;}
+      s.point=sum;s.phase='point';
+      if(s.bets['pass'])s.passLocked=true;
+      log.push('Point is '+sum);
+    }
+  }else{
+    if(sum===7){
+      tag='seven-out';
+      const hadPass=!!s.bets['pass'];const hadCome=s.comeBets.length>0;const hadPreCome=!!s.bets['come'];
+      lose('pass','Pass Line');
+      if(s.bets['passodds']){log.push('Pass Odds: lost '+s.bets['passodds'].toFixed(2));delete s.bets['passodds'];}
+      sweepPlace();
+      let msg='Seven-out — line away.';
+      if(hadPass)msg+=' Pass Line loses.';
+      if(hadCome||hadPreCome)msg+=' Come bets lose.';
+      log.push(msg);
+      loseComesBetsSeven();
+      if(s.bets['come'])lose('come','Come (waiting)');
+      s.passLocked=false;s.point=null;s.phase='comeout';
+      s.betsOn=false;s.betsOffThisRoll=false;
+    }else if(sum===s.point){
+      pR('pass',1,'Pass Line');
+      if(s.bets['passodds']){
+        const op=r2(s.bets['passodds']*FOCUS_ODDS_PAY[s.point]);
+        bankroll=r2(bankroll+s.bets['passodds']+op);returned=r2(returned+s.bets['passodds']+op);
+        log.push('Pass Odds: +'+op.toFixed(2)+' (returned)');
+        delete s.bets['passodds'];
+      }
+      s.passLocked=false;s.point=null;s.phase='comeout';
+      s.betsOn=false;s.betsOffThisRoll=false;
+      log.push('Point made!');tag='point-made';
+    }
+  }
+
+  if(s.bets['come']){
+    const flat=s.bets['come'];
+    if(sum===7||[2,3,12].includes(sum)){lose('come','Come');}
+    else{
+      delete s.bets['come'];
+      s.comeBets.push({num:sum,flat,odds:0});
+      log.push('Come → '+sum);
+    }
+  }
+
+  if(s.bets['field']){
+    if([2,3,4,9,10,11,12].includes(sum)){
+      let rx=1;if(sum===2||sum===12)rx=2;
+      pP('field',rx,'Field'+((sum===2||sum===12)?' (2x)':''));
+    }else lose('field','Field');
+  }
+  if(s.bets['any7'])sum===7?pP('any7',4,'Seven'):lose('any7','Seven');
+  if(s.bets['midnight'])sum===12?pP('midnight',30,'Midnight'):lose('midnight','Midnight');
+  if(s.bets['aces'])sum===2?pP('aces',30,'Aces'):lose('aces','Aces');
+  if(s.bets['ace2'])sum===3?pP('ace2',15,'Ace-Deuce'):lose('ace2','Ace-Deuce');
+  if(s.bets['yo'])sum===11?pP('yo',15,'Yo'):lose('yo','Yo');
+  if(s.bets['anyCraps'])[2,3,12].includes(sum)?pP('anyCraps',7,'Any Craps'):lose('anyCraps','Any Craps');
+  if(s.bets['horn']){
+    const st=s.bets['horn'];const u=r2(st/4);let pr=0;
+    if(sum===2||sum===12)pr=r2(r2(u*30)-r2(u*3));
+    else if(sum===3||sum===11)pr=r2(r2(u*15)-r2(u*3));
+    if([2,3,11,12].includes(sum)){
+      bankroll=r2(bankroll+st+pr);returned=r2(returned+st+pr);
+      delete s.bets['horn'];log.push('Horn: +'+pr.toFixed(2)+' (returned)');
+    }else lose('horn','Horn');
+  }
+  if(s.bets['cande']){
+    const st=s.bets['cande'];const h=r2(st/2);
+    if([2,3,12].includes(sum)){
+      const p=r2(h*7);bankroll=r2(bankroll+st+p);returned=r2(returned+st+p);
+      delete s.bets['cande'];log.push('C&E (craps): +'+p.toFixed(2)+' (returned)');
+    }else if(sum===11){
+      const p=r2(h*15);bankroll=r2(bankroll+st+p);returned=r2(returned+st+p);
+      delete s.bets['cande'];log.push('C&E (eleven): +'+p.toFixed(2)+' (returned)');
+    }else lose('cande','C&E');
+  }
+  if(s.bets['eleven'])sum===11?pP('eleven',15,'Eleven'):lose('eleven','Eleven');
+
+  const hT={hard4:4,hard6:6,hard8:8,hard10:10};
+  const hM={hard4:7,hard6:9,hard8:9,hard10:7};
+  for(const k in hT){
+    if(!s.bets[k])continue;
+    const t=hT[k];
+    if(sum===t&&hard)pP(k,hM[k],k.replace('hard','Hard '));
+    else if(sum===7||(sum===t&&!hard))lose(k,k.replace('hard','Hard '));
+  }
+  for(const key in FOCUS_HOP_MAP){
+    if(!s.bets[key])continue;
+    const[a,b]=FOCUS_HOP_MAP[key];const isH=a===b;
+    const m=(d1===a&&d2===b)||(d1===b&&d2===a);
+    if(m)pP(key,isH?30:15,'Hop '+a+'-'+b);
+    else lose(key,'Hop '+a+'-'+b);
+  }
+
+  if(sum!==7){
+    if(FOCUS_LOW_NUMS.includes(sum)&&!s.bonus.lowHit.includes(sum))s.bonus.lowHit.push(sum);
+    if(FOCUS_HIGH_NUMS.includes(sum)&&!s.bonus.highHit.includes(sum))s.bonus.highHit.push(sum);
+    if(s.bonus.low>0&&FOCUS_LOW_NUMS.every(n=>s.bonus.lowHit.includes(n))){
+      const st=s.bonus.low;const p=r2(st*30);
+      bankroll=r2(bankroll+st+p);returned=r2(returned+st+p);
+      s.bonus.low=0;s.bonus.lowMax=0;s.bonus.lowHit=[];
+      log.push("Low Rolls WON! +"+p.toFixed(2)+' (returned)');
+    }
+    if(s.bonus.high>0&&FOCUS_HIGH_NUMS.every(n=>s.bonus.highHit.includes(n))){
+      const st=s.bonus.high;const p=r2(st*30);
+      bankroll=r2(bankroll+st+p);returned=r2(returned+st+p);
+      s.bonus.high=0;s.bonus.highMax=0;s.bonus.highHit=[];
+      log.push('High Rolls WON! +'+p.toFixed(2)+' (returned)');
+    }
+    if(s.bonus.all>0&&FOCUS_ALL_BONUS.every(n=>s.bonus.lowHit.includes(n)||s.bonus.highHit.includes(n))){
+      const st=s.bonus.all;const p=r2(st*155);
+      bankroll=r2(bankroll+st+p);returned=r2(returned+st+p);
+      s.bonus.all=0;s.bonus.allMax=0;
+      log.push("Roll'em All WON! +"+p.toFixed(2)+' (returned)');
+    }
+  }
+
+  if(s.betsOffThisRoll&&s.phase==='point')s.betsOffThisRoll=false;
+  s.rollHistory=[{sum,d1,d2,isHard:hard&&FOCUS_HARD_NUMS.has(sum),tag},...s.rollHistory].slice(0,30);
+
+  return{bankroll,returned};
+}
+function resolveFocusPractice(){
+  const d1=1+Math.floor(Math.random()*6),d2=1+Math.floor(Math.random()*6);
+  const log=[];
+  // Deep-clone so focusLocalResolve can freely mutate without corrupting G until we've
+  // committed the result -- same pattern the server uses (JSON.parse(JSON.stringify(...))).
+  const workingState=JSON.parse(JSON.stringify({
+    bets:G.bets,
+    comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
+    bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high,lowMax:G.bonus.lowMax,allMax:G.bonus.allMax,highMax:G.bonus.highMax,lowHit:[...G.bonus.lowHit],highHit:[...G.bonus.highHit],open:G.bonus.open,locked:G.bonus.locked},
+    point:G.point,phase:G.phase,betsOn:G.betsOn,betsOffThisRoll:G.betsOffThisRoll,passLocked:G.passLocked,rollHistory:G.rollHistory
+  }));
+  const{bankroll,returned}=focusLocalResolve(workingState,G.bankroll,d1,d2,log);
+  return{ok:true,roll:{d1,d2,sum:d1+d2},log,returned,capped:false,newState:{bankroll,...workingState}};
+}
+
+// G_realState/G_practiceState hold whichever half of the split isn't currently active, so
+// flipping Practice Mode on/off resumes exactly where each side left off instead of wiping
+// progress. Both start null; the real state comes from the normal Supabase login flow the
+// first time, and practice state is lazily created with its own starting bankroll.
+let G_realState=null,G_practiceState=null;
+const FOCUS_PRACTICE_STARTING_BANKROLL=1000;
+function makePracticeState(){
+  const s=makeInitialG();
+  s.bankroll=FOCUS_PRACTICE_STARTING_BANKROLL;
+  s.startingBankroll=FOCUS_PRACTICE_STARTING_BANKROLL;
+  s.bankrollAfterLastRoll=FOCUS_PRACTICE_STARTING_BANKROLL;
+  s.practiceMode=true;
+  return s;
+}
+function toggleFocusPractice(enabled){
+  if(!!G.practiceMode===enabled)return;
+  if(animating||tumbling||ClocheDice.isRolling()){addLog('Wait for the current roll to finish before switching modes.','info');return;}
+  if(tBets()>0){addLog('Clear your bets before switching Practice Mode on or off.','info');return;}
+  if(enabled){
+    G_realState=G;
+    G=G_practiceState||makePracticeState();
+  }else{
+    G_practiceState=G;
+    G=G_realState;
+  }
+  updateUI();renderFocusPanel();
+  addLog(enabled?'Practice Mode on — this is play money, nothing here touches your real bankroll.':'Practice Mode off — back to your real bankroll.','info');
+}
+function resetPracticeBankroll(){
+  if(!G.practiceMode)return;
+  G_practiceState=makePracticeState();
+  G=G_practiceState;
+  updateUI();renderFocusPanel();
+  addLog('Practice bankroll reset to '+fmt(FOCUS_PRACTICE_STARTING_BANKROLL)+'.','info');
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth-screen').style.display!=='none')handleAuth();});
@@ -3135,6 +3642,9 @@ tryRestoreSession();
 // isProfitOnly/newTotalRedeemed all fall back to client-side computation if an older,
 // not-yet-updated server response is missing them, so this still degrades gracefully.
 async function cashOut(){
+  // G.bankroll is the PRACTICE bankroll while Practice Mode is on -- cashing it out would
+  // hit the real /cashout endpoint with fake money. Switch back to real money first.
+  if(G.practiceMode){addLog('Turn off Practice Mode before cashing out.','info');return;}
   if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
   const net=calcNet();
   if(net>0&&G.bankroll>G.startingBankroll){
@@ -3236,6 +3746,11 @@ async function redeemVoucher(code){
   await redeemCode();
   loadVoucherList();
 }
+
+// Bootstraps straight into 'standard' mode (Focus Mode has no Crapless option). Deliberately
+// placed at the very end of the script, after every other top-level let/const/function here --
+// see the comment left at this call's original position for why.
+applyGameMode('standard');
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
 </script>
