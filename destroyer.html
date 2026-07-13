@@ -515,7 +515,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.32</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.33</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -680,7 +680,7 @@ const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.0196, battleship:1.15296, carrier
 const FLAT_SHIP_POSITION_CORRECTION = {
   battleship: {longPct:-5, shortPct:5},
   destroyer: {longPct:0, shortPct:30},
-  carrier: {longPct:0, shortPct:0}
+  carrier: {longPct:0, shortPct:15}
 };
 // Per-ship clockwise rotation on the flat firing board, in degrees.
 const FLAT_SHIP_ROTATION = {
