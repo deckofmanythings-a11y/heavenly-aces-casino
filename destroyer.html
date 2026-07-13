@@ -98,19 +98,22 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    slow pulse so it reads as "alive" scan-grid. */
 @keyframes fpHoloPulse{0%,100%{opacity:.7}50%{opacity:1}}
 .fp-cell{position:absolute;cursor:default;background:rgba(40,190,255,.22);box-shadow:inset 0 0 0 2px rgba(150,225,255,.95),inset 0 0 20px rgba(40,190,255,.6),0 0 10px rgba(40,190,255,.5);z-index:1;animation:fpHoloPulse 3s ease-in-out infinite}
-.fp-cell.ship{background:rgba(40,190,255,.28)}
-/* Explosions paint over the ship layer, misses paint under it (z-index:1 on the plain/miss
-   cell is below .fp-ship-img-wrap's z-index:2; hit bumps to z-index:3 to go above it). */
-.fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400;z-index:3;animation:none}
+/* Ship-occupied cell: much brighter/more saturated than the base holographic tint so an
+   occupied cell actually stands out on the board. */
+.fp-cell.ship{background:rgba(90,225,255,.65);box-shadow:inset 0 0 0 2px rgba(190,240,255,1),inset 0 0 24px rgba(90,225,255,.85),0 0 14px rgba(90,225,255,.7)}
+/* The red hit-cell tint sorts BELOW the ship layer (z-index:1, same as the default/miss
+   tier, under .fp-ship-img-wrap's z-index:2) -- only the explosion icon itself
+   (.fp-cell-marker.hit, z-index:4) needs to paint over the ship. */
+.fp-cell.hit{background:rgba(255,80,0,.5);box-shadow:inset 0 0 0 1px #ff6400;animation:none}
 .fp-cell.miss{background:rgba(0,40,100,.35);box-shadow:inset 0 0 0 1px rgba(74,158,255,.35);animation:none}
 /* Markers are siblings of .fp-cell (not children) -- .fp-cell's clip-path would otherwise
    clip an enlarged marker down to the tiny rhombus shape, same reason ship art is a separate
    top-level overlay rather than a cell child. Positioned/sized to match their cell exactly
    via inline style (set in buildFiringGrid), then enlarged via transform:scale so it grows
    from its own center without disturbing that positioning. */
-.fp-cell-marker{position:absolute;transform:translate(-50%,-50%) scale(1.5);pointer-events:none;display:none}
+.fp-cell-marker{position:absolute;transform:translate(-50%,-60%) scale(1.5);pointer-events:none;display:none}
 .fp-cell-marker.hit{display:block;background:url('hit.png') center/contain no-repeat;z-index:4}
-.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.75)}
+.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.375)}
 /* Sibling of .fp-cell now (not a child), same reason as .fp-cell-marker above -- a child's
    z-index is trapped inside its parent .fp-cell's own stacking level, so it painted under
    the ship layer (z-index:2) regardless of its own z-index:4. */
@@ -508,7 +511,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.24</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.25</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
