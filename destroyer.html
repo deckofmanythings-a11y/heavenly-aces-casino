@@ -515,7 +515,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.31</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.32</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -681,6 +681,11 @@ const FLAT_SHIP_POSITION_CORRECTION = {
   battleship: {longPct:-5, shortPct:5},
   destroyer: {longPct:0, shortPct:30},
   carrier: {longPct:0, shortPct:0}
+};
+// Per-ship clockwise rotation on the flat firing board, in degrees.
+const FLAT_SHIP_ROTATION = {
+  battleship: 5,
+  carrier: 5
 };
 
 // Per-ship, per-orientation fine-tuning against the live isometric board (found by eye,
@@ -1729,7 +1734,8 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
     const posCorr=flat?(FLAT_SHIP_POSITION_CORRECTION[SHIP_IMG_KEY[i]]||{longPct:0,shortPct:0}):{longPct:0,shortPct:0};
     const posDx=horiz?posCorr.longPct:posCorr.shortPct;
     const posDy=horiz?posCorr.shortPct:posCorr.longPct;
-    const rotCorr=flat&&SHIP_IMG_KEY[i]==='battleship'?'rotate(5deg) ':'';
+    const rotDeg=flat?(FLAT_SHIP_ROTATION[SHIP_IMG_KEY[i]]||0):0;
+    const rotCorr=rotDeg?'rotate('+rotDeg+'deg) ':'';
     const adjust='translate('+(adj.dxPct+posDx)+'%,'+(adj.dyPct+posDy)+'%) '+rotCorr+'scale('+(adj.scale*flatCorrection)+') ';
 
     if(horiz||flat){
