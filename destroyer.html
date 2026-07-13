@@ -39,19 +39,19 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #firing-screen.active{display:flex}
 #firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
 #firing-panel .fp-region{position:absolute;overflow:hidden}
-#fp-game-select{display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:visible!important}
-#fp-game-select-menu{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#141420;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;z-index:20;min-width:100%}
-#fp-game-select-menu.open{display:block}
-#fp-game-select-menu button{display:block;width:100%;background:rgba(255,255,255,.06);border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff;font-size:1.1em;padding:.5em .8em;cursor:pointer;text-align:left;white-space:nowrap}
-#fp-game-select-menu button:last-child{border-bottom:none}
-#fp-game-select-menu button:hover{background:rgba(74,158,255,.25)}
-#fp-game-select-menu button.active{color:#4a9eff}
+#fp-game-select,#pp-game-select{display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:visible!important}
+#fp-game-select-menu,#pp-game-select-menu{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#141420;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;z-index:20;min-width:100%}
+#fp-game-select-menu.open,#pp-game-select-menu.open{display:block}
+#fp-game-select-menu button,#pp-game-select-menu button{display:block;width:100%;background:rgba(255,255,255,.06);border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff;font-size:1.1em;padding:.5em .8em;cursor:pointer;text-align:left;white-space:nowrap}
+#fp-game-select-menu button:last-child,#pp-game-select-menu button:last-child{border-bottom:none}
+#fp-game-select-menu button:hover,#pp-game-select-menu button:hover{background:rgba(74,158,255,.25)}
+#fp-game-select-menu button.active,#pp-game-select-menu button.active{color:#4a9eff}
 #fp-dice-result{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;color:#fff;text-align:center;overflow:visible!important}
 #fp-dice-result #dest-dice-canvas-wrap{width:22em;height:9.6em;flex-shrink:0}
 #fp-last-result-text{font-size:1.3em;font-weight:700;min-height:1.2em}
-#fp-topbtns{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:.35em;padding:.3em}
-#fp-topbtns button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:.85em;font-weight:700;padding:.3em .4em;cursor:pointer}
-#fp-topbtns button#fp-cashout-btn{border-color:rgba(100,200,100,.4);color:#7ee87e}
+#fp-topbtns,#pp-topbtns{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:.35em;padding:.3em}
+#fp-topbtns button,#pp-topbtns button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:.85em;font-weight:700;padding:.3em .4em;cursor:pointer}
+#fp-topbtns button#fp-cashout-btn,#pp-topbtns button#pp-cashout-btn{border-color:rgba(100,200,100,.4);color:#7ee87e}
 .fp-ship-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;padding:.2em;color:#fff;text-align:center}
 .fp-ship-card .fp-ship-name{font-size:.95em;font-weight:700}
 .fp-ship-card.sunk .fp-ship-name{color:#ff6a6a}
@@ -126,6 +126,36 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .fp-cell.targeted{outline:2px solid #fff;outline-offset:-2px;z-index:1}
 .fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible}
 .fp-ship-img-wrap img{width:100%;height:auto;opacity:.9;display:block}
+
+/* ── PLACEMENT SCREEN (same baked-art-panel treatment as the firing screen, companion
+   background DestroyerPanelSetup_bg.png -- same 1672x940 canvas, same top-bar/right-rail
+   frame dimensions, same grid geometry as DestroyerPanel_bg.png, confirmed by measuring the
+   Begin Game button against fp-fire-btn's position: they land within a few px of each other). */
+#placement-screen{display:none;flex:1;min-height:0;align-items:center;justify-content:center}
+#placement-screen.active{display:flex}
+#placement-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanelSetup_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
+#placement-panel .fp-region{position:absolute;overflow:hidden}
+/* Randomize/Begin Game text is already baked into the art -- these are just invisible
+   clickable hitboxes sized to the green buttons, not rebuilt UI. */
+.pp-invisible-btn{background:transparent!important;border:none!important;color:transparent!important;cursor:pointer;padding:0!important;font-size:0!important}
+#pp-grid-cells{position:absolute;inset:0;z-index:2}
+/* placement-chip-row is normally a flex:1 child of #fire-center; reparented here (not
+   rebuilt, same reuse pattern as moveFiringElements' buy-btn/dice canvas) it needs its own
+   sizing since #placement-panel isn't a flex container. */
+#pp-chip-row-wrap #placement-chip-row{position:static;display:flex!important;width:100%;height:100%;padding:0}
+#pp-chip-row-wrap #placement-chip-row .chip{width:4.4em;height:4.4em;font-size:1.3em}
+/* left:0/top:0 collides with the baked-in top bar (Game Select lives there); push it down
+   below the top bar to roughly where fp-extra-wins sits on the firing panel. */
+#placement-panel #jackpot-strip{top:14%;border-radius:8px}
+#placement-panel #free-missiles-display{border-top-right-radius:8px}
+/* bet-circle-wrap is normally right/bottom-anchored against #main-area's full viewport
+   width (right:296px to clear the old #right-panel) -- repositioned here as a % of the
+   panel itself, roughly over the same spot fp-bet-circle occupies on the firing panel. */
+#placement-panel #bet-circle-wrap{right:auto;left:77.85%;bottom:auto;top:60%;transform:scale(.8);transform-origin:top left}
+.fp-cell.ship{cursor:grab;user-select:none}
+.fp-cell.ship:active{cursor:grabbing}
+.fp-cell.drag-over{box-shadow:inset 0 0 0 3px #4a9eff;background:rgba(74,158,255,.4)}
+.fp-cell.drag-invalid{box-shadow:inset 0 0 0 3px #ff3c3c;background:rgba(255,60,60,.35)}
 
 /* ── TOP ROW ── */
 #top-row{display:flex;flex-shrink:0;height:calc(100dvh*3/8);border-bottom:1px solid rgba(255,255,255,.12);min-height:120px;max-height:160px}
@@ -482,6 +512,40 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     </div>
   </div>
 
+  <!-- PLACEMENT SCREEN -- same baked-art-panel treatment, DestroyerPanelSetup_bg.png.
+       Randomize Ship Positions / Begin Game text is baked into the art; the two regions
+       below are transparent hitboxes over those buttons, not rebuilt UI. Grid geometry
+       reuses fpCellCorners/fpPct (same 1672x940 companion canvas as the firing panel). -->
+  <div id="placement-screen">
+    <div id="placement-panel">
+      <div class="fp-region" id="pp-game-select" onclick="toggleFiringGameSelect(event)"
+           style="left:1.675%;top:1.17%;width:8.971%;height:9.681%">
+        Game Select
+        <div id="pp-game-select-menu">
+          <button onclick="window.location.href='index.html'">CRAPLESS</button>
+          <button onclick="window.location.href='index.html'">STANDARD</button>
+          <button onclick="window.location.href='sicbo.html'">SIC-BO</button>
+          <button class="active">DESTROYER</button>
+        </div>
+      </div>
+      <div class="fp-region" id="pp-topbtns" style="left:89.533%;top:1.17%;width:8.732%;height:9.681%">
+        <button onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
+        <button id="pp-cashout-btn" onclick="cashOut()">Cash Out</button>
+        <button onclick="logout()">Log Out</button>
+      </div>
+      <div class="fp-region" id="pp-ship-0" style="left:89.533%;top:14.255%;width:8.732%;height:9.681%"></div>
+      <div class="fp-region" id="pp-ship-1" style="left:89.533%;top:28.191%;width:8.732%;height:9.681%"></div>
+      <div class="fp-region" id="pp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
+      <div class="fp-region" id="pp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
+      <button class="fp-region pp-invisible-btn" id="pp-randomize-btn" onclick="reRandomize()"
+              style="left:76.735%;top:15.745%;width:7.895%;height:12.979%">Randomize</button>
+      <button class="fp-region pp-invisible-btn" id="pp-begin-btn" onclick="startBattle()"
+              style="left:90.132%;top:82.447%;width:7.895%;height:12.979%">Begin</button>
+      <div class="fp-region" id="pp-chip-row-wrap" style="left:14.5%;top:83.617%;width:72%;height:13.298%"></div>
+      <div id="pp-grid-cells"></div>
+    </div>
+  </div>
+
   <!-- Winner modal now lives in winner-modal.js -- replaces the old BATTLE OVER overlay.
        No button; auto-reverts to the placement screen once it closes. -->
 
@@ -515,7 +579,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.41</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.42</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1063,13 +1127,16 @@ function showPlacementScreen(){
   const chipRow=document.getElementById('placement-chip-row');if(chipRow)chipRow.style.display='flex';
   const buyArea=document.getElementById('buy-area');if(buyArea)buyArea.style.display='none';
   renderShipStatus(G.placementBet||0,'ship-status');
+  renderShipStatusCompact('pp',G.placementBet||0);
   renderBetCircle(G.placementBet||0);
+  showPlacementPanel();
 }
 function hidePlacementScreen(){
   const controls=document.getElementById('placement-controls');if(controls)controls.style.display='none';
   const rerandWrap=document.getElementById('re-randomize-wrap');if(rerandWrap)rerandWrap.style.display='none';
   const chipRow=document.getElementById('placement-chip-row');if(chipRow)chipRow.style.display='none';
   const buyArea=document.getElementById('buy-area');if(buyArea)buyArea.style.display='flex';
+  hidePlacementPanel();
 }
 function reRandomize(){G.ships=randomizeLocal();renderPlacementGrid();}
 // ── BET MANAGEMENT ────────────────────────────────────────────────────────────
@@ -1100,6 +1167,7 @@ function renderBetCircle(amt){
 function updateBetDisplay(){
   const bet=G.placementBet||0;
   renderShipStatus(bet,'ship-status');
+  renderShipStatusCompact('pp',bet);
   renderBetCircle(bet);
 }
 function addBetChip(){
@@ -1121,19 +1189,27 @@ let _dragShipIdx=null;
 let _dragOffset=null; // offset within the ship where the drag started
 
 function renderPlacementGrid(){
-  // Placement now happens directly on the main battle grid container (#grid-rows), not a
-  // separate overlay grid -- there's no more #placement-overlay.
-  const rowsEl=document.getElementById('grid-rows');
-  if(!rowsEl)return;
-  rowsEl.innerHTML='';
-  rowsEl.style.position='relative';
+  // Flat parallelogram grid baked into DestroyerPanelSetup_bg.png -- same fpCellCorners/fpPct
+  // geometry as the firing panel's #fp-grid-cells (companion 1672x940 art, same letter/number
+  // marker positions), rebuilt every call the same way the old rotated-diamond version was.
+  const container=document.getElementById('pp-grid-cells');
+  if(!container)return;
+  container.innerHTML='';
   const tempGrid=buildGrid(G.ships);
-  for(let r=0;r<GRID_SIZE;r++){
-    const row=document.createElement('div');row.className='p-row';
-    for(let c=0;c<GRID_SIZE;c++){
+  for(let c=0;c<GRID_SIZE;c++){
+    for(let r=0;r<GRID_SIZE;r++){
+      const corners=fpCellCorners(c,GRID_SIZE-1-r);
+      const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);
+      const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
       const cell=document.createElement('div');
-      cell.className='p-cell'+(tempGrid[r][c]==='ship'?' ship':'');
+      cell.className='fp-cell'+(tempGrid[r][c]==='ship'?' ship':'');
       cell.dataset.pr=r;cell.dataset.pc=c;
+      cell.style.left=fpPct(minX,FP_W)+'%';
+      cell.style.top=fpPct(minY,FP_H)+'%';
+      cell.style.width=fpPct(maxX-minX,FP_W)+'%';
+      cell.style.height=fpPct(maxY-minY,FP_H)+'%';
+      const poly=corners.map(p=>((p.x-minX)/(maxX-minX)*100).toFixed(2)+'% '+((p.y-minY)/(maxY-minY)*100).toFixed(2)+'%').join(',');
+      cell.style.clipPath='polygon('+poly+')';
       const si=G.ships.findIndex(ship=>ship.some(([sr,sc])=>sr===r&&sc===c));
       if(si>=0){
         cell.dataset.shipIdx=si;
@@ -1170,9 +1246,8 @@ function renderPlacementGrid(){
         _dragShipIdx=null;_dragOffset=null;
         document.querySelectorAll('.drag-over,.drag-invalid').forEach(el=>el.classList.remove('drag-over','drag-invalid'));
       });
-      row.appendChild(cell);
+      container.appendChild(cell);
     }
-    rowsEl.appendChild(row);
   }
   // Cancel drag if mouse leaves grid
   document.addEventListener('mouseup',()=>{
@@ -1182,8 +1257,7 @@ function renderPlacementGrid(){
     }
   },{once:true});
   requestAnimationFrame(()=>{
-    renderShipImagesOnGrid('grid-rows','pr','pc');
-    renderGridLabels('grid-rows','pr','pc','ABCDEF'.split(''));
+    renderShipImagesOnGrid('pp-grid-cells','pr','pc',true);
   });
 }
 
@@ -1869,11 +1943,14 @@ function moveFiringElements(){
 }
 function toggleFiringGameSelect(e){
   e.stopPropagation();
-  document.getElementById('fp-game-select-menu').classList.toggle('open');
+  const id=e.currentTarget&&e.currentTarget.id==='pp-game-select'?'pp-game-select-menu':'fp-game-select-menu';
+  document.getElementById(id).classList.toggle('open');
 }
 document.addEventListener('click',()=>{
   const m=document.getElementById('fp-game-select-menu');
   if(m)m.classList.remove('open');
+  const m2=document.getElementById('pp-game-select-menu');
+  if(m2)m2.classList.remove('open');
 });
 function showFiringScreen(){
   moveFiringElements();
@@ -1885,6 +1962,41 @@ function showFiringScreen(){
 }
 function hideFiringScreen(){
   const fs=document.getElementById('firing-screen');if(fs)fs.classList.remove('active');
+  ['top-row','main-area','history-strip','fire-center'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='';
+  });
+}
+let _ppMoved=false,_ppGridBuilt=false;
+// Same reuse pattern as moveFiringElements: reparent existing self-contained widgets
+// (already fully wired -- rendering, click handlers, bet math) into the new panel instead
+// of rebuilding them. jackpot-strip/free-missiles-display/bet-circle-wrap are already
+// position:absolute and self-anchoring, so they just need a new positioned ancestor;
+// placement-chip-row is normally a flex:1 child of #fire-center and gets its own sizing
+// rule (see #pp-chip-row-wrap CSS) since #placement-panel isn't a flex container.
+function movePlacementElements(){
+  if(_ppMoved)return;
+  _ppMoved=true;
+  const panel=document.getElementById('placement-panel');
+  const jackpot=document.getElementById('jackpot-strip');
+  if(panel&&jackpot)panel.appendChild(jackpot);
+  const strikes=document.getElementById('free-missiles-display');
+  if(panel&&strikes)panel.appendChild(strikes);
+  const betWrap=document.getElementById('bet-circle-wrap');
+  if(panel&&betWrap)panel.appendChild(betWrap);
+  const chipRowWrap=document.getElementById('pp-chip-row-wrap');
+  const chipRow=document.getElementById('placement-chip-row');
+  if(chipRowWrap&&chipRow)chipRowWrap.appendChild(chipRow);
+}
+function showPlacementPanel(){
+  movePlacementElements();
+  ['top-row','main-area','history-strip','fire-center'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  const ps=document.getElementById('placement-screen');if(ps)ps.classList.add('active');
+  renderPlacementGrid();
+}
+function hidePlacementPanel(){
+  const ps=document.getElementById('placement-screen');if(ps)ps.classList.remove('active');
   ['top-row','main-area','history-strip','fire-center'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='';
   });
@@ -1990,10 +2102,13 @@ function renderFiringGrid(){
 function renderFiringShipImages(){
   renderShipImagesOnGrid('fp-grid-cells','fr','fc',true);
 }
-function renderFiringShipStatus(){
-  const bet=G.bet||0;
+// Shared compact ship-status renderer for the right-rail plates on both baked-art panels --
+// prefix is 'fp' (firing, live hits/sunk) or 'pp' (placement, always 0 hits/not sunk -- a
+// payout preview against the bet the player has set so far).
+function renderShipStatusCompact(prefix,betOverride){
+  const bet=betOverride===undefined?(G.bet||0):betOverride;
   SHIP_DISPLAY_NAMES.forEach((name,i)=>{
-    const box=document.getElementById('fp-ship-'+i);
+    const box=document.getElementById(prefix+'-ship-'+i);
     if(!box)return;
     const hits=G.shipHits?G.shipHits[i]||0:0;
     const len=SHIP_LENGTHS[i];
@@ -2009,6 +2124,7 @@ function renderFiringShipStatus(){
       +'<div class="fp-ship-payout">'+(sunk?'SUNK':payLine)+'</div>';
   });
 }
+function renderFiringShipStatus(){renderShipStatusCompact('fp');}
 function renderFiringJackpot(){
   const bet=G.bet||0;
   const sunk=G.sunkenCount||0;
