@@ -46,8 +46,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-game-select-menu button:last-child{border-bottom:none}
 #fp-game-select-menu button:hover{background:rgba(74,158,255,.25)}
 #fp-game-select-menu button.active{color:#4a9eff}
-#fp-dice-result{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;color:#fff;text-align:center}
-#fp-dice-result #dest-dice-canvas-wrap{width:5.5em;height:2.4em;flex-shrink:0}
+#fp-dice-result{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;color:#fff;text-align:center;overflow:visible!important}
+#fp-dice-result #dest-dice-canvas-wrap{width:22em;height:9.6em;flex-shrink:0}
 #fp-last-result-text{font-size:1.3em;font-weight:700;min-height:1.2em}
 #fp-topbtns{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:.35em;padding:.3em}
 #fp-topbtns button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:.85em;font-weight:700;padding:.3em .4em;cursor:pointer}
@@ -64,24 +64,29 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-extra-wins .fp-jackpot-lbl{font-size:.85em;color:rgba(255,255,255,.6);text-transform:uppercase}
 #fp-extra-wins .fp-jackpot-tier{font-size:.75em;color:rgba(255,215,0,.5)}
 #fp-extra-wins .fp-jackpot-tier.earned{color:#ffd700;font-weight:700}
-#fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;color:#fff;text-align:center}
+#fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;color:#fff;text-align:center;width:100%}
 #fp-bet-circle .fp-bet-lbl{font-size:.8em;color:rgba(255,255,255,.6);text-transform:uppercase}
-#fp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em}
-#fp-bet-circle .fp-bet-chips img{position:absolute;left:0;bottom:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
-#fp-bet-circle .fp-bet-amt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;font-size:.8em;font-weight:900;color:#ffd700;text-shadow:0 0 3px #000,0 0 4px #000;white-space:nowrap}
-#fp-bet-circle .fp-winning-lbl{font-size:.7em;font-weight:700;color:#7ee87e;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-#fp-roll-history{display:flex;gap:.3em;overflow-x:auto;align-items:center;padding:0 .5em;scrollbar-width:none}
+#fp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em;margin:0 auto}
+#fp-bet-circle .fp-bet-chips img{position:absolute;left:50%;bottom:0;width:100%;transform:translateX(-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+#fp-bet-circle .fp-bet-amt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;font-size:.8em;font-weight:900;color:#000;text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap}
+#fp-bet-circle .fp-winning-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#7ee87e;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+/* gap here is the "space between rolls" -- each .fp-roll-pip is one roll's pair of dice. */
+#fp-roll-history{display:flex;gap:.6em;overflow-x:auto;align-items:center;padding:0 .5em;scrollbar-width:none}
 #fp-roll-history::-webkit-scrollbar{display:none}
-#fp-roll-history .fp-roll-pip{min-width:2.2em;height:2.2em;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:.75em;background:rgba(255,255,255,.12)}
-#fp-roll-history .fp-roll-pip.hit-pip{background:rgba(255,80,0,.4);color:#ff9944}
-#fp-roll-history .fp-roll-pip.miss-pip{background:rgba(0,40,100,.4);color:#88bbff}
+#fp-roll-history .fp-roll-pip{min-width:3.6em;height:2.2em;border-radius:4px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:.15em;padding:0 .2em;flex-shrink:0;background:rgba(255,255,255,.12)}
+#fp-roll-history .fp-roll-pip img{width:1.6em;height:1.6em;object-fit:contain;flex-shrink:0}
+#fp-roll-history .fp-roll-pip.hit-pip{background:rgba(255,80,0,.4)}
+#fp-roll-history .fp-roll-pip.miss-pip{background:rgba(0,40,100,.4)}
 #fp-buy-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3em;padding:.2em .6em}
-#fp-strikes-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4em;padding:.4em}
+#fp-strikes-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4em;padding:.4em;overflow:visible!important}
 #fp-strikes-area #fp-fm-label{font-size:.7em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0;text-align:center}
 #fp-strikes-area #fp-free-missiles-pips{display:flex;gap:.25em;flex-wrap:wrap;justify-content:center}
 #fp-strikes-area .fm-pip{width:2.1em;height:2.8em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #fp-strikes-area .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
 #fp-strikes-area .fm-pip.used{opacity:.35;filter:grayscale(1)}
+/* Initial Strikes (the 4 starting missiles, before any purchase): shown 5x larger than the
+   Follow-Up Strikes pips. */
+#fp-strikes-area #fp-free-missiles-pips.initial-mode .fm-pip{width:10.5em;height:14em}
 #fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:.9em;font-weight:900;padding:.4em .8em;cursor:pointer;display:none;flex-shrink:0;width:auto!important}
 #fp-buy-area #buy-timer-row{display:none;flex-direction:row;align-items:center;gap:.5em;flex-shrink:0}
 /* !important needed on the sizing props -- these elements carry inline style="font-size:
@@ -511,7 +516,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.25</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.26</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -668,7 +673,7 @@ const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
 // See the comment at its use in renderShipImagesOnGrid -- measured by comparing each ship's
 // rendered-width-as-fraction-of-panel between the placement screen (correct) and the new
 // flat firing-screen board (undersized) with Deck's Setup.png/Game.png reference screenshots.
-const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.2745, battleship:1.4412, carrier:1.4906};
+const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.0196, battleship:1.15296, carrier:1.26701};
 
 // Per-ship, per-orientation fine-tuning against the live isometric board (found by eye,
 // not derivable from the art alone). dxPct/dyPct are % of the ship's own rendered box
@@ -1988,7 +1993,11 @@ function renderFiringRollHistory(){
   G.rollHistory.forEach(r=>{
     const pip=document.createElement('div');
     pip.className='fp-roll-pip '+(r.hit?'hit-pip':'miss-pip');
-    pip.textContent=r.letter+r.number;
+    const lImg=document.createElement('img');
+    lImg.src=DIE_LETTER_IMG[r.letter];
+    const nImg=document.createElement('img');
+    nImg.src=DIE_NUMBER_IMG[r.number];
+    pip.appendChild(lImg);pip.appendChild(nImg);
     hist.appendChild(pip);
   });
   hist.scrollLeft=hist.scrollWidth;
@@ -2016,6 +2025,7 @@ function renderFiringFireCenter(){
   if(timerRow&&!offerLive)timerRow.style.display='none';
   if(fmLabel)fmLabel.textContent=inBuyPhase?'FOLLOW-UP STRIKES':'INITIAL STRIKES';
   if(pips){
+    pips.classList.toggle('initial-mode',!inBuyPhase);
     pips.innerHTML='';
     if(!inBuyPhase){
       const free=Math.max(0,G.freeMissiles||0);
