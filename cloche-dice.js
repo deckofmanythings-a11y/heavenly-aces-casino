@@ -465,7 +465,7 @@
     matSurface = new CANNON.Material('surface'); // felt floor only -- unchanged, dice still settle normally here
     matGlass = new CANNON.Material('glass'); // cloche walls + ceiling -- lower friction so dice don't stick to the glass
     world.addContactMaterial(new CANNON.ContactMaterial(matDie, matSurface, {
-      friction: 0.22, restitution: 0.42
+      friction: 0.11, restitution: 0.42
     }));
     world.addContactMaterial(new CANNON.ContactMaterial(matDie, matGlass, {
       friction: 0.04, restitution: 0.45
