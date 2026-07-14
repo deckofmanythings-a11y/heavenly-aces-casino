@@ -968,7 +968,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.12</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.13</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1290,13 +1290,16 @@ const FELT_LAYOUT=[
   ['#info-panel',     87.00, 0.70,12.60,17.00,null],
   ['#bottom-section',  0.30,86.70,99.40,13.00,null],
   // HARDWAYS view: one roll pills
-  ['@any7',           5.39,54.055,28.22, 7.89,'hw'],
-  ['@aces',           5.22,62.41, 7.44, 7.06,'hw'],
-  ['@ace2',          25.86,62.41, 7.34, 7.06,'hw'],
-  ['@horn',          12.86,66.19,13.28, 7.28,'hw'],
-  ['@midnight',       5.22,70.335, 7.44, 7.11,'hw'],
-  ['@yo',            25.86,70.335, 7.34, 7.11,'hw'],
-  ['@anyCraps',       5.39,77.725,28.22, 7.89,'hw'],
+  // y-nudges per Deck's spreadsheet-free follow-up (px offsets on the 3200x1800 canvas,
+  // 1px = 1/1800*100 = 0.05556% of canvas height): Any7/AnyCraps raised 52px, Horn/Midnight/
+  // Yo/Aces/Ace2 raised 38px.
+  ['@any7',           5.39,51.17,28.22, 7.89,'hw'],
+  ['@aces',           5.22,60.30, 7.44, 7.06,'hw'],
+  ['@ace2',          25.86,60.30, 7.34, 7.06,'hw'],
+  ['@horn',          12.86,64.08,13.28, 7.28,'hw'],
+  ['@midnight',       5.22,68.22, 7.44, 7.11,'hw'],
+  ['@yo',            25.86,68.22, 7.34, 7.11,'hw'],
+  ['@anyCraps',       5.39,74.84,28.22, 7.89,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- x/y re-centered against
   // Deck's BetAreas_Hops.png marker dots: outer columns were sitting too close to the middle
   // column (dots show them spread wider), and rows drift progressively further down than the
@@ -1363,10 +1366,11 @@ const STANDARD_LAYOUT=[
   // which, on re-measurement, DO match the dice-pair center almost exactly. The prior
   // "verified against gold borders" comment above this was wrong: it used a naive bbox that
   // picked up stray text-glyph pixels, inflating the box past the dice pair's real edges.
-  ['@hard6',           2.656,29.61, 5.97, 4.83,'hw'],
-  ['@hard10',         29.84, 29.61, 5.97, 4.83,'hw'],
-  ['@hard8',           2.656,37.56, 5.97, 4.89,'hw'],
-  ['@hard4',          29.84, 37.56, 5.97, 4.89,'hw'],
+  // y lowered 59px per Deck's follow-up (1px = 1/1800*100 = 0.05556% of canvas height).
+  ['@hard6',           2.656,32.89, 5.97, 4.83,'hw'],
+  ['@hard10',         29.84, 32.89, 5.97, 4.83,'hw'],
+  ['@hard8',           2.656,40.84, 5.97, 4.89,'hw'],
+  ['@hard4',          29.84, 40.84, 5.97, 4.89,'hw'],
   ['@hop22',           1.815,28.055,14.25, 7.89,'hop'],
   ['@hop44',          22.405,28.055,14.25, 7.89,'hop'],
   ['@hop33',           1.815,35.995,14.25, 7.89,'hop'],
