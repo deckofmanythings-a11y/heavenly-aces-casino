@@ -963,7 +963,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.3</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.4</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3349,7 +3349,13 @@ const FM_ART=[
   {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:145, y:981, w:970, h:692, tab:'hop'},
   {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:58,  y:505, w:1125,h:383, tab:'hop'},
   {id:'bigred',     img:'BigRed.png',         group:'props', x:172, y:971, w:913, h:152, tab:'hw'},
-  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:1123,w:913, h:499, tab:'hw'},
+  // PropBets.png bakes in its own "ONE ROLL BETS" header (rows ~0-50 of the 499px-tall image)
+  // followed by a ~170px transparent gap before the actual Aces/AceDeuce/Horn/Midnight/Yo
+  // cells start around row 220 -- measured via row-by-row alpha density, not eyeballed.
+  // Positioned here so that cell band lands right where BigRed/SEVEN ends (y:1123), which
+  // puts the header ~18px above SEVEN and the image's bottom edge lands almost exactly on
+  // AnyCraps's top (1399), i.e. the whole stack was clearly designed for this anchor point.
+  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:903, w:913, h:499, tab:'hw'},
   {id:'anycraps',   img:'AnyCraps.png',       group:'props', x:172, y:1399,w:913, h:152, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
 ];
@@ -3375,14 +3381,17 @@ function buildFocusFeltArt(){
     layer.appendChild(el);
   }
   FM_ART.forEach(a=>addRegion(a.id,a.img,a.x,a.y,a.w,a.h,a.group,null,a.tab));
-  // Number Boxes: always on, not tied to any toggle group (per Deck: "those should probably
-  // be on the felt at all times").
-  ALL_NUMS.forEach(n=>addRegion('box'+n,'Box'+n+'.png',FM_BOX_X[n],386,275,450,null,n));
   // Buy/Place/Lay/DC: one shared box image, tiled per number, each toggled individually.
+  // Built BEFORE the Number Boxes below (not after) -- #fm-art-layer's children have no
+  // individual z-index, so they stack by DOM order, and Deck wants the Number Box sitting on
+  // top of these, not the other way around.
   ALL_NUMS.forEach(n=>addRegion('buy'+n,'BuyBox.png',FM_LEFT_X[n],731,138,100,'buy',n));
   ALL_NUMS.forEach(n=>addRegion('place'+n,'PlaceBox.png',FM_RIGHT_X[n],731,138,100,'place',n));
   ALL_NUMS.forEach(n=>addRegion('lay'+n,'LayBox.png',FM_RIGHT_X[n],389,138,100,'lay',n));
   ALL_NUMS.forEach(n=>addRegion('dc'+n,'DCNumberBox.png',FM_LEFT_X[n],389,138,100,'dc',n));
+  // Number Boxes: always on, not tied to any toggle group (per Deck: "those should probably
+  // be on the felt at all times") -- and rendered last so they sit on top of Buy/Place/Lay/DC.
+  ALL_NUMS.forEach(n=>addRegion('box'+n,'Box'+n+'.png',FM_BOX_X[n],386,275,450,null,n));
 }
 function applyFocusVisibility(){
   const body=document.body;
