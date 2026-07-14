@@ -457,7 +457,12 @@ body.felt-mode #felt-stage{display:block}
 body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
 #felt-stage .felt-abs{position:absolute;margin:0}
 /* transparent skins: art draws the felt, DOM supplies hit areas + live data */
-body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img){display:none!important}
+/* .fm-art-img added to the exemption list -- Focus Mode's new painted bet-region art is a
+   real image the player needs to see, not one of the old per-bet dice/icon images this rule
+   exists to hide. Without this, the images were forced display:none while their (correctly
+   sized/positioned) container divs stayed visible -- exactly the "toggle appears to work but
+   nothing ever shows" symptom Deck reported. */
+body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img){display:none!important}
 #roll-history img{display:inline!important}
 body.felt-mode #felt-stage #roll-history img:not(#felt-img){display:inline!important}
 body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .nb-buy,
@@ -958,7 +963,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.2</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.3</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3365,7 +3370,7 @@ function buildFocusFeltArt(){
     el.style.width=fmPct(w,FM_CANVAS_W)+'%';
     el.style.height=fmPct(h,FM_CANVAS_H)+'%';
     const im=document.createElement('img');
-    im.src=img;im.draggable=false;im.alt='';
+    im.src=img;im.draggable=false;im.alt='';im.className='fm-art-img';
     el.appendChild(im);
     layer.appendChild(el);
   }
