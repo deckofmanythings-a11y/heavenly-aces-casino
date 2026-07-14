@@ -963,7 +963,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.5</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.6</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3346,7 +3346,10 @@ const FM_ART=[
   {id:'dcwait',     img:'DCWaitingBox.png',   group:'come',  x:2891, y:386, w:275, h:450},
   {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1037, w:1358,h:216},
   {id:'hardways',   img:'HardWays.png',       group:'hardways', x:58,  y:505, w:1125,h:383, tab:'hw'},
-  {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:145, y:981, w:970, h:692, tab:'hop'},
+  // Aligned to the same anchor as One Roll Bets (propbets, x:172,y:901) -- Hop Bets and
+  // Proposition Bets/SEVEN occupy the same physical tab-switched real estate, so they should
+  // share the same top-left corner.
+  {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:172, y:901, w:970, h:692, tab:'hop'},
   {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:58,  y:505, w:1125,h:383, tab:'hop'},
   {id:'bigred',     img:'BigRed.png',         group:'props', x:172, y:971, w:913, h:152, tab:'hw'},
   // PropBets.png bakes in its own "ONE ROLL BETS" header (rows ~0-50 of the 499px-tall image)
