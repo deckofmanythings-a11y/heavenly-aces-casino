@@ -948,7 +948,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.0</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.1</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3271,6 +3271,22 @@ let focusVisible=loadFocusVisible();
 function saveFocusVisible(){
   try{localStorage.setItem(FOCUS_STORAGE_KEY,JSON.stringify(focusVisible));}catch(e){}
 }
+// Hardways/Hop Bets/Proposition Bets each have their own per-bet '@name' entry in
+// FELT_LAYOUT/STANDARD_LAYOUT (see feltEl() and enterFeltMode()), meaning in felt mode every
+// individual bet cell gets pulled OUT of its classic-mode wrapper (.hw-grid, #panel-hop,
+// #prop-block) and repositioned directly under #felt-stage on its own. Hiding the wrapper
+// only hides it in classic mode -- in felt mode the wrapper is left empty and every bet cell
+// is still sitting there fully visible and clickable (Deck's report: disabling Proposition
+// Bets still let a Horn bet through). Line/Odds/Come/Field/ATS don't have this problem
+// because #pass-bar/#come-bar/#field-bar/#lucky-roller etc. are moved as ONE whole container
+// (a plain '#id' FELT_LAYOUT entry, not '@name'), so hiding that one element is enough in
+// either mode. Hardways/Hop/Props need every individual bet element hidden directly instead.
+const FOCUS_HARDWAYS_IDS=['bet-hard4','bet-hard6','bet-hard8','bet-hard10'];
+// Hardcoded rather than derived from FOCUS_HOP_MAP -- that constant is declared further down
+// the script (next to the practice-mode resolver), and this array is built at parse time, so
+// referencing it here would be the exact same temporal-dead-zone bug already hit twice above.
+const FOCUS_HOPBETS_IDS=['bet-hop11','bet-hop12','bet-hop13','bet-hop14','bet-hop15','bet-hop16','bet-hop22','bet-hop23','bet-hop24','bet-hop25','bet-hop26','bet-hop33','bet-hop34','bet-hop35','bet-hop36','bet-hop44','bet-hop45','bet-hop46','bet-hop55','bet-hop56','bet-hop66'];
+const FOCUS_PROPS_IDS=['bet-any7','bet-horn','bet-aces','bet-ace2','bet-midnight','bet-yo','bet-anyCraps','bet-anyCraps-circle','bet-cande','bet-eleven'];
 function applyFocusVisibility(){
   const body=document.body;
   FOCUS_GROUPS.forEach(g=>{
@@ -3285,6 +3301,10 @@ function applyFocusVisibility(){
       if(target)target.style.display=focusVisible[type][n]?'':'none';
     });
   });
+  const showHide=(ids,visible)=>ids.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=visible?'':'none';});
+  showHide(FOCUS_HARDWAYS_IDS,focusVisible.hardways);
+  showHide(FOCUS_HOPBETS_IDS,focusVisible.hopbets);
+  showHide(FOCUS_PROPS_IDS,focusVisible.props);
 }
 function focusGroupRowHTML(g){
   if(!g.perNumber){
