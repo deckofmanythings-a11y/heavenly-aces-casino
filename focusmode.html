@@ -370,10 +370,13 @@ body.fm-hide-ats #lucky-roller{display:none!important}
    convention as the baked-art panels in destroyer.html. Pure visual layout pass for now
    (pointer-events:none) so Deck can check scale/position before this gets wired to real
    click handlers. */
-/* z-index:8, not 3 -- .dc-chip-box (the existing DC-lands-on-a-number marker) also uses z:3,
-   and ties are broken by DOM order, which this layer doesn't reliably win by default since
-   it's a fairly early sibling inside #felt-stage. */
-#fm-art-layer{position:absolute;inset:0;pointer-events:none;z-index:8}
+/* z-index:1 -- this layer must sit ABOVE the plain background felt (#felt-img, unpositioned/
+   z-index:auto) but BELOW every interactive bet element: chip stacks (.has-stack, z:6),
+   DC-lands marker (.dc-chip-box, z:3), OFF overlays (.off-ov, z:2), mini-buttons (z:3-5),
+   etc. It was previously set to z:8 to beat .dc-chip-box's z:3, which was backwards -- that
+   made the new felt art render on top of chips and other live bet indicators instead of
+   underneath them (Deck: "bet chips are rendering UNDER the bet area graphics"). */
+#fm-art-layer{position:absolute;inset:0;pointer-events:none;z-index:1}
 .fm-art-region{position:absolute}
 .fm-art-region img{width:100%;height:100%;display:block}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
@@ -965,7 +968,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.10</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.11</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1353,13 +1356,16 @@ const CRAPLESS_LAYOUT=[
 const STANDARD_LAYOUT=[
   // Same panel, measured directly on the standard felt art -- different x-position than
   // crapless's version, confirmed by dots on both tables.
-  // x re-centered against Deck's BetAreas_HardwaysHorn.png marker dots: the HARD WAYS boxes
-  // (unlike Hopping Hard Ways in the same physical slot) sit further apart than originally
-  // measured -- left column dot at ~5.6%, right column dot at ~32.8% of canvas width.
-  ['@hard6',          -1.5,  28.055,14.25, 7.89,'hw'],
-  ['@hard10',         25.655,28.055,14.25, 7.89,'hw'],
-  ['@hard8',          -1.5,  35.995,14.25, 7.89,'hw'],
-  ['@hard4',          25.655,35.995,14.25, 7.89,'hw'],
+  // Verified directly against the gold box borders in BetAreas_HardwaysHorn.png (color-
+  // thresholded pixel scan, not the pink dots): left box spans x 58-511px, right box spans
+  // 717-1170px, both matching these coordinates almost exactly. The pink dots in that image
+  // mark the die ICON's center, not the whole box -- each Hard Ways box also contains a
+  // separate "10 for1"/"8 for1" text label next to the die, so the die sits off-center within
+  // the clickable box. Do not re-derive this from those dots again.
+  ['@hard6',           1.815,28.055,14.25, 7.89,'hw'],
+  ['@hard10',         22.405,28.055,14.25, 7.89,'hw'],
+  ['@hard8',           1.815,35.995,14.25, 7.89,'hw'],
+  ['@hard4',          22.405,35.995,14.25, 7.89,'hw'],
   ['@hop22',           1.815,28.055,14.25, 7.89,'hop'],
   ['@hop44',          22.405,28.055,14.25, 7.89,'hop'],
   ['@hop33',           1.815,35.995,14.25, 7.89,'hop'],
