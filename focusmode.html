@@ -364,6 +364,16 @@ body.fm-hide-hardways #panel-hw .hw-grid{display:none!important}
 body.fm-hide-hopbets #panel-hop{display:none!important}
 body.fm-hide-props #prop-block,body.fm-hide-props #circles-col .circle-stack{display:none!important}
 body.fm-hide-ats #lucky-roller{display:none!important}
+/* New art overlay layer -- positioned as % of the 3200x1800 BlankFelt.png canvas, same
+   convention as the baked-art panels in destroyer.html. Pure visual layout pass for now
+   (pointer-events:none) so Deck can check scale/position before this gets wired to real
+   click handlers. */
+/* z-index:8, not 3 -- .dc-chip-box (the existing DC-lands-on-a-number marker) also uses z:3,
+   and ties are broken by DOM order, which this layer doesn't reliably win by default since
+   it's a fairly early sibling inside #felt-stage. */
+#fm-art-layer{position:absolute;inset:0;pointer-events:none;z-index:8}
+.fm-art-region{position:absolute}
+.fm-art-region img{width:100%;height:100%;display:block}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
 .info-section{margin-bottom:12px}
 .info-section h3{font-size:19px;font-weight:700;color:#ffe066;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
@@ -948,7 +958,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.1</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.2</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -963,7 +973,8 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   <div id="swoop-layer"></div>
   <div id="play-area">
     <div id="felt-stage">
-      <img id="felt-img" src="craps-felt-horn.gif" alt="" draggable="false">
+      <img id="felt-img" src="BlankFelt.png" alt="" draggable="false">
+      <div id="fm-art-layer"></div>
     </div>
 
     <!-- LEFT COL -->
@@ -1251,7 +1262,10 @@ let REPEATABLE=getRepeatable();
 // ===================== FELT IMAGE MODE (crapless) =====================
 const FELT_IMG={
   crapless:{hw:'Crapless-Felt-with-Horn.gif',hop:'Crapless-Felt-with-HopBets.gif'},
-  standard:{hw:'craps-felt-horn.gif',hop:'craps-felt-hopbets.gif'}
+  // Focus Mode always plays standard rules on the new blank felt -- BlankFelt.png has no
+  // baked-in Hardways/Hop art (that's now the separate HardWays.png/HopBets.png overlays in
+  // #fm-art-layer), so both tabs use the same base image, unlike the original two-GIF setup.
+  standard:{hw:'BlankFelt.png',hop:'BlankFelt.png'}
 };
 // [selector, leftPct, topPct, widthPct, heightPct, tab or null]
 // '@name' = the .bwrap around #bet-name (or the bet element itself if unwrapped)
@@ -2607,6 +2621,10 @@ function switchTab(t){
     if(panel)panel.style.display=x===t?'flex':'none';
   });
   if(feltActive)feltApplyTab(t);else feltTab=t;
+  // Hardways/HopHardWays and (BigRed+PropBets+AnyCraps)/HopBets share the exact same physical
+  // felt slot, switched by this tab, not by the Focus toggle alone -- re-apply so the art
+  // layer follows suit.
+  if(typeof applyFocusVisibility==='function')applyFocusVisibility();
 }
 function flashPuckGreen(){
   const p=document.getElementById('puck3d-wrap');
@@ -3238,6 +3256,7 @@ const FOCUS_GROUPS=[
   {key:'place',     name:'Place Bets',       desc:'Bet a number directly', perNumber:true},
   {key:'buy',       name:'Buy Bets',         desc:'Buy a number to roll', perNumber:true},
   {key:'lay',       name:'Lay Bets',         desc:'Bet against a number', perNumber:true},
+  {key:'dc',        name:'Don\'t Come (landed)', desc:'Don\'t Come chip once it lands on a number', perNumber:true},
   {key:'hardways',  name:'Hardways',         desc:'Hard 4 / 6 / 8 / 10'},
   {key:'hopbets',   name:'Hop Bets',         desc:'One-roll exact-dice-combo bets'},
   {key:'props',     name:'Proposition Bets', desc:'Any 7, Any Craps, Horn, C&E, Eleven, Aces, Ace-Deuce, Midnight'},
@@ -3287,6 +3306,79 @@ const FOCUS_HARDWAYS_IDS=['bet-hard4','bet-hard6','bet-hard8','bet-hard10'];
 // referencing it here would be the exact same temporal-dead-zone bug already hit twice above.
 const FOCUS_HOPBETS_IDS=['bet-hop11','bet-hop12','bet-hop13','bet-hop14','bet-hop15','bet-hop16','bet-hop22','bet-hop23','bet-hop24','bet-hop25','bet-hop26','bet-hop33','bet-hop34','bet-hop35','bet-hop36','bet-hop44','bet-hop45','bet-hop46','bet-hop55','bet-hop56','bet-hop66'];
 const FOCUS_PROPS_IDS=['bet-any7','bet-horn','bet-aces','bet-ace2','bet-midnight','bet-yo','bet-anyCraps','bet-anyCraps-circle','bet-cande','bet-eleven'];
+
+// ── FOCUS MODE ART LAYER ─────────────────────────────────────────────────────
+// Visual-layout pass: positions every new painted asset on top of BlankFelt.png at Deck's
+// measured coordinates (all in px against the 3200x1800 canvas, converted to % below --
+// same convention as the baked-art panels in destroyer.html). Pure overlay for now
+// (pointer-events:none) so positions/scale can be checked and tweaked before this gets
+// wired to real click handlers -- the existing CSS-drawn bet cells underneath still do the
+// actual clicking/staking for now.
+const FM_CANVAS_W=3200,FM_CANVAS_H=1800;
+// Buy and DC(landed) share the same x column (left half of each number box); Place and Lay
+// share the other (right half, +138px). Buy/Place sit in the top row (y=731), Lay/DC in the
+// bottom row (y=389) -- read directly off Deck's measured table, not derived/offset math.
+const FM_LEFT_X={4:1206,5:1487,6:1768,8:2049,9:2330,10:2611};   // Buy, DC
+const FM_RIGHT_X={4:1344,5:1625,6:1906,8:2187,9:2468,10:2749}; // Place, Lay
+const FM_BOX_X={4:1205,5:1486,6:1767,8:2048,9:2329,10:2610};
+// Single/shared-image regions. Hardways/HopBets/PropBets ship as ONE combined image per
+// Deck's art (not one file per cell), positioned at the union bounding box of their
+// individual cells' measured coordinates, sized to the art's own native pixel dimensions
+// (there's some intentional padding/bleed in the art beyond the tight cell bounding box).
+// tab: 'hw'/'hop' for regions that share a physical slot with something in the other tab
+// (Hardways vs Hop Bets panel) -- these need BOTH their toggle group on AND the matching
+// felt tab active to show, or e.g. HopBets would permanently cover Proposition Bets since
+// they occupy the exact same screen area. null = not tab-gated.
+const FM_ART=[
+  // Nudged down from Deck's measured y:1292 -- that overlapped 93px into Don't Pass (y:1257,
+  // h:128, bottom 1385) above it. Moved to start exactly where DP ends instead; DP itself
+  // stays put since it only had a 4px gap to Field above it (y:1037,h:216, bottom 1253) and
+  // shifting it up would've just traded one overlap for another. Flag if this doesn't match
+  // the actual art's intended seam.
+  {id:'pass',       img:'PassLine.png',       group:'line',  x:1813,y:1385,w:1358,h:160},
+  {id:'dp',         img:'DontPassLine.png',   group:'line',  x:1813,y:1257,w:1358,h:128},
+  {id:'come',       img:'ComeLine.png',       group:'come',  x:1813, y:867, w:1358,h:160},
+  {id:'dcwait',     img:'DCWaitingBox.png',   group:'come',  x:2891, y:386, w:275, h:450},
+  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1037, w:1358,h:216},
+  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:58,  y:505, w:1125,h:383, tab:'hw'},
+  {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:145, y:981, w:970, h:692, tab:'hop'},
+  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:58,  y:505, w:1125,h:383, tab:'hop'},
+  {id:'bigred',     img:'BigRed.png',         group:'props', x:172, y:971, w:913, h:152, tab:'hw'},
+  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:1123,w:913, h:499, tab:'hw'},
+  {id:'anycraps',   img:'AnyCraps.png',       group:'props', x:172, y:1399,w:913, h:152, tab:'hw'},
+  {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
+];
+function fmPct(px,total){return px/total*100;}
+function buildFocusFeltArt(){
+  const layer=document.getElementById('fm-art-layer');
+  if(!layer)return;
+  layer.innerHTML='';
+  function addRegion(id,img,x,y,w,h,group,num,tab){
+    const el=document.createElement('div');
+    el.className='fm-art-region';
+    el.id='fmart-'+id;
+    if(group)el.dataset.fmGroup=group;
+    if(num!=null)el.dataset.fmNum=num;
+    if(tab)el.dataset.fmTab=tab;
+    el.style.left=fmPct(x,FM_CANVAS_W)+'%';
+    el.style.top=fmPct(y,FM_CANVAS_H)+'%';
+    el.style.width=fmPct(w,FM_CANVAS_W)+'%';
+    el.style.height=fmPct(h,FM_CANVAS_H)+'%';
+    const im=document.createElement('img');
+    im.src=img;im.draggable=false;im.alt='';
+    el.appendChild(im);
+    layer.appendChild(el);
+  }
+  FM_ART.forEach(a=>addRegion(a.id,a.img,a.x,a.y,a.w,a.h,a.group,null,a.tab));
+  // Number Boxes: always on, not tied to any toggle group (per Deck: "those should probably
+  // be on the felt at all times").
+  ALL_NUMS.forEach(n=>addRegion('box'+n,'Box'+n+'.png',FM_BOX_X[n],386,275,450,null,n));
+  // Buy/Place/Lay/DC: one shared box image, tiled per number, each toggled individually.
+  ALL_NUMS.forEach(n=>addRegion('buy'+n,'BuyBox.png',FM_LEFT_X[n],731,138,100,'buy',n));
+  ALL_NUMS.forEach(n=>addRegion('place'+n,'PlaceBox.png',FM_RIGHT_X[n],731,138,100,'place',n));
+  ALL_NUMS.forEach(n=>addRegion('lay'+n,'LayBox.png',FM_RIGHT_X[n],389,138,100,'lay',n));
+  ALL_NUMS.forEach(n=>addRegion('dc'+n,'DCNumberBox.png',FM_LEFT_X[n],389,138,100,'dc',n));
+}
 function applyFocusVisibility(){
   const body=document.body;
   FOCUS_GROUPS.forEach(g=>{
@@ -3305,6 +3397,19 @@ function applyFocusVisibility(){
   showHide(FOCUS_HARDWAYS_IDS,focusVisible.hardways);
   showHide(FOCUS_HOPBETS_IDS,focusVisible.hopbets);
   showHide(FOCUS_PROPS_IDS,focusVisible.props);
+  // New art-layer regions: whole-group ones keyed by data-fm-group, per-number ones (buy/
+  // place/lay/dc) additionally keyed by data-fm-num. Number Boxes have no data-fm-group at
+  // all, so this loop never touches them -- they're always on, per Deck's instruction.
+  document.querySelectorAll('#fm-art-layer [data-fm-group]').forEach(el=>{
+    const g=el.dataset.fmGroup;
+    const num=el.dataset.fmNum;
+    let visible=num!=null?(focusVisible[g]&&focusVisible[g][num]):focusVisible[g];
+    // Hardways/Props ('hw') and Hop Bets ('hop') share the exact same felt real estate,
+    // switched by the left-column tab -- both being toggle-on at once must still only show
+    // whichever one matches the currently active tab.
+    if(visible&&el.dataset.fmTab&&el.dataset.fmTab!==feltTab)visible=false;
+    el.style.display=visible?'':'none';
+  });
 }
 function focusGroupRowHTML(g){
   if(!g.perNumber){
@@ -3771,6 +3876,8 @@ async function redeemVoucher(code){
 // placed at the very end of the script, after every other top-level let/const/function here --
 // see the comment left at this call's original position for why.
 applyGameMode('standard');
+buildFocusFeltArt();
+applyFocusVisibility();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
 </script>
