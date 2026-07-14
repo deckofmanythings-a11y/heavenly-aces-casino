@@ -963,7 +963,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.4</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.5</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3352,10 +3352,10 @@ const FM_ART=[
   // PropBets.png bakes in its own "ONE ROLL BETS" header (rows ~0-50 of the 499px-tall image)
   // followed by a ~170px transparent gap before the actual Aces/AceDeuce/Horn/Midnight/Yo
   // cells start around row 220 -- measured via row-by-row alpha density, not eyeballed.
-  // Positioned here so that cell band lands right where BigRed/SEVEN ends (y:1123), which
-  // puts the header ~18px above SEVEN and the image's bottom edge lands almost exactly on
-  // AnyCraps's top (1399), i.e. the whole stack was clearly designed for this anchor point.
-  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:903, w:913, h:499, tab:'hw'},
+  // y:901 puts the header's bottom edge (901+50=951) exactly 20px above SEVEN (971), per
+  // Deck's exact spec; the image's bottom edge (901+499=1400) still lands almost exactly on
+  // AnyCraps's top (1399).
+  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:901, w:913, h:499, tab:'hw'},
   {id:'anycraps',   img:'AnyCraps.png',       group:'props', x:172, y:1399,w:913, h:152, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
 ];
