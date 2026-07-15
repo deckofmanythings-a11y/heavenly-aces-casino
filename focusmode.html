@@ -1004,7 +1004,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.19</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.20</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3462,13 +3462,13 @@ function buildFocusFeltArt(){
 // to the types we have elsewhere."
 const CHIP_BOX_NUM=6;
 const CHIP_BOX_LAYOUT=[
-  ['@chip-buy',      55.250,40.611,4.3125,5.556,null],
-  ['@chip-place',    59.563,40.611,4.3125,5.556,null],
-  ['@chip-lay',      59.563,21.611,4.3125,5.556,null],
-  ['@chip-dc',       55.250,21.611,4.3125,5.556,null],
-  ['@chip-dcodds',   55.250,28.000,4.3125,5.556,null],
-  ['@chip-come',     59.563,28.000,4.3125,5.556,null],
-  ['@chip-comeodds', 59.563,34.500,4.3125,5.556,null]
+  ['@chip-buy',      55.293,40.611,4.313,5.556,null],
+  ['@chip-place',    59.563,40.611,4.313,5.556,null],
+  ['@chip-lay',      59.563,21.611,4.313,5.556,null],
+  ['@chip-dc',       55.250,21.611,4.313,5.556,null],
+  ['@chip-dcodds',   55.250,26.851,4.313,5.556,null],
+  ['@chip-come',     57.279,28.460,4.313,5.556,null],
+  ['@chip-comeodds', 57.279,33.810,4.313,5.556,null]
 ];
 const CHIP_BOX_ELS={
   buy:n=>document.getElementById('stk-buy'+n),
