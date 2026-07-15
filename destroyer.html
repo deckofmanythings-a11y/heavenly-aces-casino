@@ -49,6 +49,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-dice-result{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;color:#fff;text-align:center;overflow:visible!important}
 #fp-dice-result #dest-dice-canvas-wrap{width:22em;height:9.6em;flex-shrink:0}
 #fp-last-result-text{font-size:1.3em;font-weight:700;min-height:1.2em}
+#pp-instructions{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;white-space:pre-line;font-size:.85em;line-height:1.3;font-weight:600;padding:0 .5em}
 #fp-topbtns,#pp-topbtns{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:.35em;padding:.3em}
 #fp-topbtns button,#pp-topbtns button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:.85em;font-weight:700;padding:.3em .4em;cursor:pointer}
 #fp-topbtns button#fp-cashout-btn,#pp-topbtns button#pp-cashout-btn{border-color:rgba(100,200,100,.4);color:#7ee87e}
@@ -118,7 +119,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    from its own center without disturbing that positioning. */
 .fp-cell-marker{position:absolute;transform:translate(-50%,-70%) scale(1.5);pointer-events:none;display:none}
 .fp-cell-marker.hit{display:block;background:url('hit.png') center/contain no-repeat;z-index:4}
-.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.375)}
+.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.75)}
 /* Sibling of .fp-cell now (not a child), same reason as .fp-cell-marker above -- a child's
    z-index is trapped inside its parent .fp-cell's own stacking level, so it painted under
    the ship layer (z-index:2) regardless of its own z-index:4. */
@@ -541,6 +542,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
           <button onclick="window.location.href='focusmode.html'">FOCUS MODE</button>
         </div>
       </div>
+      <!-- Same region firing screen's #fp-dice-result (the 3D dice results) occupies during
+           the main game -- blank here during setup, so it hosts placement instructions instead. -->
+      <div class="fp-region" id="pp-instructions" style="left:13.816%;top:1.17%;width:72.368%;height:9.681%">Select your bet size by dragging chips to, or tapping, the bet area.
+Alter ship positions via the Randomize Ship Positions button or drag them on the game board to move them.
+Tap the northernmost cell of the ship to rotate it (room permitting, move the ship to clearer space if its not rotating).
+Tap BEGIIN GAME to start the game.</div>
       <div class="fp-region" id="pp-topbtns" style="left:89.533%;top:1.17%;width:8.732%;height:9.681%">
         <button onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
         <button id="pp-cashout-btn" onclick="cashOut()">Cash Out</button>
@@ -614,7 +621,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.31</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.32</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
