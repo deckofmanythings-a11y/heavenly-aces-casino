@@ -614,7 +614,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.30</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.31</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -772,31 +772,34 @@ const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
 // See the comment at its use in renderShipImagesOnGrid -- measured by comparing each ship's
 // rendered-width-as-fraction-of-panel between the placement screen (correct) and the new
 // flat firing-screen board (undersized) with Deck's Setup.png/Game.png reference screenshots.
-const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.0196, battleship:1.15296, carrier:1.26701};
+// Calibrated via Destroyer's ship calibration tool (🎯 Calibrate Ships).
+const FLAT_SHIP_SIZE_CORRECTION = {destroyer:1.01960, battleship:1.15296, carrier:1.03914};
 // Per-ship nudge on the flat firing board, expressed relative to the ship's OWN long/short
 // axis rather than raw x/y -- "long" is the axis running the ship's full length (width when
 // horiz, height when vert), "short" is the perpendicular axis. Positive longPct = forward
 // (toward higher column/row), positive shortPct = right/down. Signs calibrated visually.
 // Pool A = SHIP_IMG_ALT (vert orientation). Pool B = SHIP_IMG (horiz orientation), reset to 0.
 const FLAT_SHIP_POSITION_CORRECTION_POOL_A = {
-  battleship: {longPct:-5, shortPct:5},
-  destroyer: {longPct:0, shortPct:15},
-  carrier: {longPct:-5, shortPct:0}
+  battleship: {longPct:-5.0, shortPct:6.1},
+  destroyer: {longPct:-0.1, shortPct:18.2},
+  carrier: {longPct:-1.2, shortPct:5.7}
 };
 const FLAT_SHIP_POSITION_CORRECTION_POOL_B = {
-  battleship: {longPct:5, shortPct:-5},
-  destroyer: {longPct:0, shortPct:-15},
-  carrier: {longPct:5, shortPct:0}
+  battleship: {longPct:3.9, shortPct:-5.6},
+  destroyer: {longPct:8.1, shortPct:-0.6},
+  carrier: {longPct:13.0, shortPct:3.8}
 };
 // Per-ship clockwise rotation on the flat firing board, in degrees.
 // Pool A = SHIP_IMG_ALT (vert orientation). Pool B = SHIP_IMG (horiz orientation), reset to 0.
 const FLAT_SHIP_ROTATION_POOL_A = {
-  battleship: 5,
-  carrier: 5
+  battleship:2.6,
+  carrier:1.1,
+  destroyer:1.4
 };
 const FLAT_SHIP_ROTATION_POOL_B = {
-  battleship: -5,
-  carrier: -5
+  battleship:-2.6,
+  carrier:-1.2,
+  destroyer:-0.7
 };
 
 // Per-ship, per-orientation fine-tuning against the live isometric board (found by eye,
