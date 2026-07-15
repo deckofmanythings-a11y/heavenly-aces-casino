@@ -1004,7 +1004,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.21</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.22</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3479,16 +3479,17 @@ const CHIP_BOX_REF={
   come:n=>'nb-mid-'+n,
   comeodds:n=>'nb-mid-'+n
 };
-// Placeholder centered boxes -- the canvas-based values from before this fix are meaningless
-// in the new per-cell-% coordinate system. Needs one fresh calibration pass.
+// Calibrated via Focus Mode's drag tool -- % of each type's own real cell (nb-buy-6/
+// nb-place-6/etc), not % of the felt canvas. Some go negative/over 100 -- that's fine, it just
+// means the chip sits above or wider than its own cell's bounds, no clamping applied.
 const CHIP_BOX_LAYOUT=[
-  ['@chip-buy',      25,25,50,50,null],
-  ['@chip-place',    25,25,50,50,null],
-  ['@chip-lay',      25,25,50,50,null],
-  ['@chip-dc',       25,10,50,30,null],
-  ['@chip-dcodds',   25,40,50,30,null],
-  ['@chip-come',     25,60,50,30,null],
-  ['@chip-comeodds', 25,90,50,30,null]
+  ['@chip-buy',      69.326,-37.795,86.266,109.401,null],
+  ['@chip-place',    70.802,-36.098,89.695,106.006,null],
+  ['@chip-lay',      72.587,-97.908,80.375, 95.652,null],
+  ['@chip-dc',       36.138,-75.670,42.406, 35.977,null],
+  ['@chip-dcodds',   36.138,-39.029,42.406, 37.969,null],
+  ['@chip-come',     53.352,-13.052,49.494, 39.297,null],
+  ['@chip-comeodds', 53.352, 26.910,48.987, 42.618,null]
 ];
 const CHIP_BOX_ELS={
   buy:n=>document.getElementById('stk-buy'+n),
