@@ -466,7 +466,15 @@ body.felt-mode #play-area{position:relative}
 body.felt-mode #felt-stage{display:block}
 #felt-img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none;-webkit-user-drag:none}
 body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
-#felt-stage .felt-abs{position:absolute;margin:0}
+/* z-index:2 -- every reparented bet container (@name/#id items: Hard Ways, Hop Bets, One Roll
+   Bets, num-zone/Buy/Place/Lay/DC/Come, Come/Pass/Field/Don't Pass bars, DC waiting box) had no
+   z-index of its own (auto/0), so #fm-art-layer's z-index:1 painted OVER all of them wherever
+   they overlap -- invisible for the mostly-transparent hit-targets (Hard Ways etc), but hid
+   real visible content on the number-box cells: backgrounds, hover/active highlights, OFF
+   overlays, mini buttons. 2 is enough to clear the art layer while staying below chip-specific
+   z-indices (.has-stack:6, Come/DC's bet-vs-odds z:7/6) so a chip still sits on top of its own
+   cell's background, not the other way around. */
+#felt-stage .felt-abs{position:absolute;margin:0;z-index:2}
 /* transparent skins: art draws the felt, DOM supplies hit areas + live data */
 /* .fm-art-img added to the exemption list -- Focus Mode's new painted bet-region art is a
    real image the player needs to see, not one of the old per-bet dice/icon images this rule
@@ -998,7 +1006,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.27</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.28</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
