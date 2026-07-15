@@ -1006,7 +1006,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.28</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.29</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3837,6 +3837,25 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
         loseComesBetsSeven();
       }else if(hasPass)log.push('Front line winner — Pass Line wins.');
       if(s.betsOn)sweepPlace();
+    }else if(sum===11){
+      // Natural on the come-out: Pass Line wins, shooter stays on the come-out (no point set).
+      // Bonus still locks -- it opens on a 7 and locks on the very next roll regardless of
+      // what that roll is, same as the craps/point branches below.
+      tag='natural-win';
+      if(s.bets['pass'])pR('pass',1,'Pass Line');
+      log.push('Natural '+sum+' — Pass Line wins. Comes out again.');
+      if(s.bonus.open){s.bonus.open=false;s.bonus.locked=true;}
+    }else if(sum===2||sum===3||sum===12){
+      // Craps on the come-out: Pass Line loses, shooter stays on the come-out (no point set).
+      // This used to fall into the generic "else" below, which wrongly treated ANY non-7
+      // come-out roll as point-establishing -- setting s.point to 2/3/12 (never a legal point)
+      // and, since the phase transition never correctly happened, leaving the bonus lock in an
+      // inconsistent state on the next actual roll (Deck: rolled a comeout 12, bonus never
+      // locked).
+      tag='craps';
+      if(s.bets['pass'])lose('pass','Pass Line');
+      log.push('Craps '+sum+' — Pass Line loses. Comes out again.');
+      if(s.bonus.open){s.bonus.open=false;s.bonus.locked=true;}
     }else{
       if(s.bonus.open){s.bonus.open=false;s.bonus.locked=true;}
       s.point=sum;s.phase='point';
