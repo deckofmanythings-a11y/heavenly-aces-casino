@@ -998,7 +998,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.23</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.24</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2475,7 +2475,41 @@ function renderChipStacks(){
   });
 }
 const _updateUI_orig=updateUI;
-updateUI=function(){_updateUI_orig();renderChipStacks();};
+updateUI=function(){_updateUI_orig();renderChipStacks();applyBetAreaNudges();};
+// Manual pixel nudges on top of the (already-correct, pre-existing) Buy/Place/Lay/Come/DC
+// positions, per Deck's follow-up. Pure CSS transform (not position/left/top), so it can't
+// touch the flex layout that positions these correctly in the first place -- purely additive,
+// zero risk of the reflow/collapse issues from the earlier (now-removed) custom positioning
+// system. Offsets are in px on the 3200x1800 reference canvas, scaled to the felt's actual
+// rendered size so they land the same regardless of window size.
+function applyBetAreaNudges(){
+  const stage=document.getElementById('felt-stage');
+  if(!stage||!document.body.classList.contains('felt-mode'))return;
+  const sx=stage.clientWidth/FM_CANVAS_W,sy=stage.clientHeight/FM_CANVAS_H;
+  if(!sx||!sy)return;
+  const nudgePlain=(idFn,dxPx,dyPx)=>{
+    ALL_NUMS.forEach(n=>{
+      const el=document.getElementById(idFn(n));
+      if(el)el.style.transform='translate('+(dxPx*sx)+'px,'+(dyPx*sy)+'px)';
+    });
+  };
+  // .come-half elements (combox-flat/odds, dcbox-flat/odds) already carry translateX(-50%) for
+  // horizontal centering -- an inline style would otherwise clobber it, not add to it.
+  const nudgeComeHalf=(idFn,dxPx,dyPx)=>{
+    ALL_NUMS.forEach(n=>{
+      const el=document.getElementById(idFn(n));
+      if(el)el.style.transform='translateX(-50%) translate('+(dxPx*sx)+'px,'+(dyPx*sy)+'px)';
+    });
+  };
+  nudgePlain(n=>'nb-place-'+n, 60,-15);
+  nudgePlain(n=>'nb-buy-'+n,   60,-15);
+  nudgePlain(n=>'nb-lay-'+n,   95,-80);
+  nudgeComeHalf(n=>'combox-flat-'+n,  100,-90);
+  nudgeComeHalf(n=>'combox-odds-'+n,  100,-90);
+  nudgeComeHalf(n=>'dcbox-flat-'+n,   100,-90);
+  nudgeComeHalf(n=>'dcbox-odds-'+n,   100,-90);
+}
+window.addEventListener('resize',()=>{ if(typeof updateUI==='function')applyBetAreaNudges(); });
 
 // Moved to the end of this script block (see the matching comment there) -- calling it here
 // triggers updateUI() before several later-declared `let`s (dualBetLoc, puck3dEl, ...) have
