@@ -1004,7 +1004,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.20</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.21</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3444,8 +3444,14 @@ function buildFocusFeltArt(){
   // Built BEFORE the Number Boxes below (not after) -- #fm-art-layer's children have no
   // individual z-index, so they stack by DOM order, and Deck wants the Number Box sitting on
   // top of these, not the other way around.
-  ALL_NUMS.forEach(n=>addRegion('buy'+n,'BuyBox.png',FM_LEFT_X[n],731,138,100,'buy',n));
-  ALL_NUMS.forEach(n=>addRegion('place'+n,'PlaceBox.png',FM_RIGHT_X[n],731,138,100,'place',n));
+  // Buy/Place were swapped here vs. where their REAL clickable cells (.nb-buy-left/.nb-place)
+  // actually sit -- confirmed by measuring live rects: Place+DC are the LEFT column of each
+  // number's box (~FM_LEFT_X), Buy+Lay are the RIGHT column (~FM_RIGHT_X). This mislabeling
+  // predates the chip calibration work; it's why a calibrated "Place" chip marker (faithfully
+  // matching the WRONG art tile) visually sat over the real Buy/Lay cell of the NEXT number
+  // over and stole its clicks (Deck: clicking Place-5 bet $25 onto Place-6 instead).
+  ALL_NUMS.forEach(n=>addRegion('buy'+n,'BuyBox.png',FM_RIGHT_X[n],731,138,100,'buy',n));
+  ALL_NUMS.forEach(n=>addRegion('place'+n,'PlaceBox.png',FM_LEFT_X[n],731,138,100,'place',n));
   ALL_NUMS.forEach(n=>addRegion('lay'+n,'LayBox.png',FM_RIGHT_X[n],389,138,100,'lay',n));
   ALL_NUMS.forEach(n=>addRegion('dc'+n,'DCNumberBox.png',FM_LEFT_X[n],389,138,100,'dc',n));
   // Number Boxes: always on, not tied to any toggle group (per Deck: "those should probably
@@ -3453,22 +3459,36 @@ function buildFocusFeltArt(){
   ALL_NUMS.forEach(n=>addRegion('box'+n,'Box'+n+'.png',FM_BOX_X[n],386,275,450,null,n));
 }
 
-// Number-box chip spots (Buy, Place, Lay, DC, DC Odds, Come, Come Odds) -- same box model as
-// every other calibratable item ([selector, leftPct, topPct, widthPct, heightPct, tab]), just
-// calibrated once on number 6 and re-applied to every other number by shifting horizontally
-// the same amount FM_BOX_X shifts between numbers (every number's box is the identical art
-// tile, just translated sideways). Replaces an earlier per-cell-relative-percentage system
-// that turned out to be fragile and hard to verify -- Deck: "just show me boxes... identical
-// to the types we have elsewhere."
+// Number-box chip spots (Buy, Place, Lay, DC, DC Odds, Come, Come Odds). x/y/w/h here are NOT
+// canvas-% like every other CHIP_BOX_LAYOUT-adjacent entry -- they're % of each type's own
+// REAL clickable cell (CHIP_BOX_REF below), because the art canvas (FM_LEFT_X/FM_RIGHT_X/
+// FM_BOX_X) and the real flex-laid-out number strip turned out not to agree pixel-for-pixel:
+// calibrating a chip marker against the art (canvas-%) put it close to, but not exactly on,
+// its own cell -- close enough to bleed into a NEIGHBORING number's real cell and steal its
+// clicks (Deck: clicking Place-5 placed the bet on Place-6). Referencing each number's own
+// real cell directly makes that impossible -- every number's cell is already exactly where it
+// needs to be (flex handles that), so this needs no per-number shifting at all, just one
+// calibration on number 6 reused as-is for every number.
 const CHIP_BOX_NUM=6;
+const CHIP_BOX_REF={
+  buy:n=>'nb-buy-'+n,
+  place:n=>'nb-place-'+n,
+  lay:n=>'nb-lay-'+n,
+  dc:n=>'nb-mid-'+n,
+  dcodds:n=>'nb-mid-'+n,
+  come:n=>'nb-mid-'+n,
+  comeodds:n=>'nb-mid-'+n
+};
+// Placeholder centered boxes -- the canvas-based values from before this fix are meaningless
+// in the new per-cell-% coordinate system. Needs one fresh calibration pass.
 const CHIP_BOX_LAYOUT=[
-  ['@chip-buy',      55.293,40.611,4.313,5.556,null],
-  ['@chip-place',    59.563,40.611,4.313,5.556,null],
-  ['@chip-lay',      59.563,21.611,4.313,5.556,null],
-  ['@chip-dc',       55.250,21.611,4.313,5.556,null],
-  ['@chip-dcodds',   55.250,26.851,4.313,5.556,null],
-  ['@chip-come',     57.279,28.460,4.313,5.556,null],
-  ['@chip-comeodds', 57.279,33.810,4.313,5.556,null]
+  ['@chip-buy',      25,25,50,50,null],
+  ['@chip-place',    25,25,50,50,null],
+  ['@chip-lay',      25,25,50,50,null],
+  ['@chip-dc',       25,10,50,30,null],
+  ['@chip-dcodds',   25,40,50,30,null],
+  ['@chip-come',     25,60,50,30,null],
+  ['@chip-comeodds', 25,90,50,30,null]
 ];
 const CHIP_BOX_ELS={
   buy:n=>document.getElementById('stk-buy'+n),
@@ -3484,22 +3504,29 @@ const CHIP_BOX_ELS={
 // explicit z-index here it loses to #fm-art-layer's z-index:1 and renders under the number
 // art. The flat/bet chip additionally needs to outrank its own Odds chip.
 const CHIP_BOX_Z={buy:6,place:6,lay:6,dc:7,dcodds:6,come:7,comeodds:6};
+function chipBoxTargetRect(sel,n){
+  const key=sel.slice('@chip-'.length);
+  const s=calibState&&calibState[sel]?calibState[sel]:{x:CHIP_BOX_LAYOUT.find(e=>e[0]===sel)[1],y:CHIP_BOX_LAYOUT.find(e=>e[0]===sel)[2],w:CHIP_BOX_LAYOUT.find(e=>e[0]===sel)[3],h:CHIP_BOX_LAYOUT.find(e=>e[0]===sel)[4]};
+  const refFn=CHIP_BOX_REF[key];
+  if(!refFn)return null;
+  const ref=document.getElementById(refFn(n));
+  if(!ref)return null;
+  const r=ref.getBoundingClientRect();
+  if(!r.width||!r.height)return null;
+  return {left:r.left+s.x/100*r.width, top:r.top+s.y/100*r.height, width:s.w/100*r.width, height:s.h/100*r.height, refRect:r};
+}
 function applyChipBoxAnchors(){
-  const stage=document.getElementById('felt-stage');
-  if(!stage||!document.body.classList.contains('felt-mode'))return;
-  const stageR=stage.getBoundingClientRect();
-  if(!stageR.width||!stageR.height)return;
-  const box6X=FM_BOX_X[CHIP_BOX_NUM];
-  CHIP_BOX_LAYOUT.forEach(([sel,bx,by,bw,bh])=>{
+  if(!document.body.classList.contains('felt-mode'))return;
+  CHIP_BOX_LAYOUT.forEach(([sel])=>{
     const key=sel.slice('@chip-'.length);
     const getEl=CHIP_BOX_ELS[key];
     if(!getEl)return;
     ALL_NUMS.forEach(n=>{
       const el=getEl(n);
       if(!el)return;
-      const shiftPct=(FM_BOX_X[n]-box6X)/FM_CANVAS_W*100;
-      const cxPct=bx+shiftPct+bw/2,cyPct=by+bh/2;
-      const cx=stageR.left+cxPct/100*stageR.width,cy=stageR.top+cyPct/100*stageR.height;
+      const t=chipBoxTargetRect(sel,n);
+      if(!t)return;
+      const cx=t.left+t.width/2,cy=t.top+t.height/2;
       const parent=el.offsetParent;
       if(!parent)return;
       const pr=parent.getBoundingClientRect();
@@ -3536,8 +3563,19 @@ function calibInitState(){
 }
 function calibFeltRect(){ return document.getElementById('felt-stage').getBoundingClientRect(); }
 function calibLabelFor(sel){ return sel.charAt(0)==='@'?sel.slice(1):sel; }
+// '@chip-*' entries are % of their own real cell (see CHIP_BOX_REF), not % of the felt canvas
+// like everything else here -- so the calibration box for those needs its reference cell's
+// rect to know where on screen to actually draw itself, and drag/resize deltas need to be
+// measured against that same cell's size, not the whole felt-stage.
+function calibChipRef(sel){
+  const key=sel.slice('@chip-'.length);
+  const refFn=CHIP_BOX_REF[key];
+  if(!refFn)return null;
+  return document.getElementById(refFn(CHIP_BOX_NUM));
+}
 function calibBuildLayer(){
   const stage=document.getElementById('felt-stage');
+  const stageR=stage.getBoundingClientRect();
   let layer=document.getElementById('calib-layer');
   if(!layer){ layer=document.createElement('div'); layer.id='calib-layer'; stage.appendChild(layer); }
   layer.innerHTML='';
@@ -3547,7 +3585,17 @@ function calibBuildLayer(){
     const box=document.createElement('div');
     box.className='calib-box';
     box.dataset.sel=sel;
-    box.style.left=s.x+'%'; box.style.top=s.y+'%'; box.style.width=s.w+'%'; box.style.height=s.h+'%';
+    if(sel.startsWith('@chip-')){
+      const ref=calibChipRef(sel);
+      if(!ref)return;
+      const r=ref.getBoundingClientRect();
+      box.style.left=((r.left+s.x/100*r.width-stageR.left)/stageR.width*100)+'%';
+      box.style.top=((r.top+s.y/100*r.height-stageR.top)/stageR.height*100)+'%';
+      box.style.width=((s.w/100*r.width)/stageR.width*100)+'%';
+      box.style.height=((s.h/100*r.height)/stageR.height*100)+'%';
+    }else{
+      box.style.left=s.x+'%'; box.style.top=s.y+'%'; box.style.width=s.w+'%'; box.style.height=s.h+'%';
+    }
     const lbl=document.createElement('div'); lbl.className='calib-label'; lbl.textContent=calibLabelFor(sel);
     const dot=document.createElement('div'); dot.className='calib-dot';
     const handle=document.createElement('div'); handle.className='calib-handle';
@@ -3560,8 +3608,13 @@ function calibBuildLayer(){
 function calibStartDrag(e,box,sel){
   e.preventDefault();
   box.classList.add('dragging');
-  document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
-  const rect=calibFeltRect();
+  const isChip=sel.startsWith('@chip-');
+  const ref=isChip?calibChipRef(sel):null;
+  const rect=isChip?(ref&&ref.getBoundingClientRect()):calibFeltRect();
+  if(!rect)return;
+  const stageR=calibFeltRect();
+  const report=()=>{document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2)+(isChip?' (% of its own cell)':'');};
+  report();
   const startX=e.clientX,startY=e.clientY;
   const orig={x:calibState[sel].x,y:calibState[sel].y};
   function move(ev){
@@ -3569,8 +3622,13 @@ function calibStartDrag(e,box,sel){
     const dyPct=(ev.clientY-startY)/rect.height*100;
     calibState[sel].x=orig.x+dxPct;
     calibState[sel].y=orig.y+dyPct;
-    box.style.left=calibState[sel].x+'%'; box.style.top=calibState[sel].y+'%';
-    document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
+    if(isChip){
+      box.style.left=((rect.left+calibState[sel].x/100*rect.width-stageR.left)/stageR.width*100)+'%';
+      box.style.top=((rect.top+calibState[sel].y/100*rect.height-stageR.top)/stageR.height*100)+'%';
+    }else{
+      box.style.left=calibState[sel].x+'%'; box.style.top=calibState[sel].y+'%';
+    }
+    report();
   }
   function up(){ box.classList.remove('dragging'); document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
   document.addEventListener('pointermove',move);
@@ -3578,7 +3636,11 @@ function calibStartDrag(e,box,sel){
 }
 function calibStartResize(e,box,sel){
   e.preventDefault();
-  const rect=calibFeltRect();
+  const isChip=sel.startsWith('@chip-');
+  const ref=isChip?calibChipRef(sel):null;
+  const rect=isChip?(ref&&ref.getBoundingClientRect()):calibFeltRect();
+  if(!rect)return;
+  const stageR=calibFeltRect();
   const startX=e.clientX,startY=e.clientY;
   const orig={w:calibState[sel].w,h:calibState[sel].h};
   function move(ev){
@@ -3586,7 +3648,12 @@ function calibStartResize(e,box,sel){
     const dhPct=(ev.clientY-startY)/rect.height*100;
     calibState[sel].w=Math.max(0.5,orig.w+dwPct);
     calibState[sel].h=Math.max(0.5,orig.h+dhPct);
-    box.style.width=calibState[sel].w+'%'; box.style.height=calibState[sel].h+'%';
+    if(isChip){
+      box.style.width=((calibState[sel].w/100*rect.width)/stageR.width*100)+'%';
+      box.style.height=((calibState[sel].h/100*rect.height)/stageR.height*100)+'%';
+    }else{
+      box.style.width=calibState[sel].w+'%'; box.style.height=calibState[sel].h+'%';
+    }
     document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
   }
   function up(){ document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
@@ -3612,11 +3679,15 @@ function calibReset(){
 function calibExport(){
   const order=calibBaseEntries().map(e=>e[0]);
   let out='// Calibrated via Focus Mode\'s drag tool\n';
+  let chipOut='// @chip-* entries above are % of their OWN real cell (nb-buy-6/nb-place-6/etc),\n// not % of the felt canvas like everything else -- paste as-is into CHIP_BOX_LAYOUT.\n';
+  let hasChip=false;
   order.forEach(sel=>{
     const s=calibState[sel];
     const tabStr=s.tab?"'"+s.tab+"'":'null';
+    if(sel.startsWith('@chip-'))hasChip=true;
     out+="  ['"+sel+"', "+s.x.toFixed(3)+","+s.y.toFixed(3)+","+s.w.toFixed(3)+","+s.h.toFixed(3)+","+tabStr+"],\n";
   });
+  if(hasChip)out+='\n'+chipOut;
   document.getElementById('calib-export-text').value=out;
   document.getElementById('modal-calib-export').classList.remove('hidden');
 }
