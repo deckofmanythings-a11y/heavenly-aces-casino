@@ -998,7 +998,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.14</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.15</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1320,33 +1320,30 @@ const FELT_LAYOUT=[
   ['#info-panel',     87.00, 0.70,12.60,17.00,null],
   ['#bottom-section',  0.30,86.70,99.40,13.00,null],
   // HARDWAYS view: one roll pills
-  // y-nudges per Deck's spreadsheet-free follow-up (px offsets on the 3200x1800 canvas,
-  // 1px = 1/1800*100 = 0.05556% of canvas height): Any7/AnyCraps raised 52px, Horn/Midnight/
-  // Yo/Aces/Ace2 raised 38px.
-  ['@any7',           5.39,51.17,28.22, 7.89,'hw'],
-  ['@aces',           5.22,60.30, 7.44, 7.06,'hw'],
-  ['@ace2',          25.86,60.30, 7.34, 7.06,'hw'],
-  ['@horn',          12.86,64.08,13.28, 7.28,'hw'],
-  ['@midnight',       5.22,68.22, 7.44, 7.11,'hw'],
-  ['@yo',            25.86,68.22, 7.34, 7.11,'hw'],
-  ['@anyCraps',       5.39,74.84,28.22, 7.89,'hw'],
-  // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- x/y re-centered against
-  // Deck's BetAreas_Hops.png marker dots: outer columns were sitting too close to the middle
-  // column (dots show them spread wider), and rows drift progressively further down than the
-  // original measurement assumed (row 5 was off by ~0.84%).
-  ['@hop13',          4.535,54.45, 8.81, 6.22,'hop'],
-  ['@hop16',         15.155,54.45, 8.75, 6.22,'hop'],
-  ['@hop26',         26.035,54.45, 8.81, 6.22,'hop'],
-  ['@hop14',          4.535,61.22, 8.81, 6.22,'hop'],
-  ['@hop25',         15.155,61.22, 8.75, 6.22,'hop'],
-  ['@hop35',         26.035,61.22, 8.81, 6.22,'hop'],
-  ['@hop23',          4.535,68.00, 8.81, 6.22,'hop'],
-  ['@hop34',         15.155,68.00, 8.75, 6.22,'hop'],
-  ['@hop36',         26.035,68.00, 8.81, 6.22,'hop'],
-  ['@hop24',          4.535,74.78, 8.81, 6.22,'hop'],
-  ['@hop45',         26.035,74.78, 8.81, 6.22,'hop'],
-  ['@hop15',          4.535,81.56, 8.81, 6.22,'hop'],
-  ['@hop46',         26.035,81.56, 8.81, 6.22,'hop']
+  // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
+  // each box to its correct spot and exported the exact coordinates. Do not re-derive these
+  // from reference images again; this is ground truth.
+  ['@any7',           5.347,51.936,28.220, 7.890,'hw'],
+  ['@aces',           5.521,60.530, 7.440, 7.060,'hw'],
+  ['@ace2',          26.334,60.453, 7.340, 7.060,'hw'],
+  ['@horn',          12.860,64.080,13.280, 7.280,'hw'],
+  ['@midnight',       5.521,68.067, 7.440, 7.110,'hw'],
+  ['@yo',            26.248,67.990, 7.340, 7.110,'hw'],
+  ['@anyCraps',       5.433,75.606,28.220, 7.890,'hw'],
+  // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
+  ['@hop13',          4.277,52.613, 8.810, 6.220,'hop'],
+  ['@hop16',         14.983,52.689, 8.750, 6.220,'hop'],
+  ['@hop26',         25.518,52.459, 8.810, 6.220,'hop'],
+  ['@hop14',          4.320,59.383, 8.810, 6.220,'hop'],
+  ['@hop25',         14.897,59.459, 8.750, 6.220,'hop'],
+  ['@hop35',         25.518,59.383, 8.810, 6.220,'hop'],
+  ['@hop23',          4.320,66.239, 8.810, 6.220,'hop'],
+  ['@hop34',         14.940,66.163, 8.750, 6.220,'hop'],
+  ['@hop36',         25.475,66.239, 8.810, 6.220,'hop'],
+  ['@hop24',          4.320,72.713, 8.810, 6.220,'hop'],
+  ['@hop45',         25.475,72.866, 8.810, 6.220,'hop'],
+  ['@hop15',          4.277,79.799, 8.810, 6.220,'hop'],
+  ['@hop46',         25.475,79.646, 8.810, 6.220,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
 const LR_LAYOUT=[
@@ -1387,34 +1384,22 @@ const CRAPLESS_LAYOUT=[
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
 // these coordinates are shared with crapless.
 const STANDARD_LAYOUT=[
-  // Corrected AGAIN, this time via connected-component analysis of BetAreas_HardwaysHorn.png
-  // (isolating solid white blobs from sparse text-glyph pixels, not just a naive white-pixel
-  // bbox) -- each box's dice PAIR (two small dice, not one) has its own tight bounding box,
-  // separate from the "10 for1"/"8 for1" text. Chips anchor at the bet element's horizontal
-  // center (see .has-stack, left:50%), so the element is now sized to the dice pair itself
-  // (not the whole gold-bordered box) so the chip lands on the dice, matching Deck's dots --
-  // which, on re-measurement, DO match the dice-pair center almost exactly. The prior
-  // "verified against gold borders" comment above this was wrong: it used a naive bbox that
-  // picked up stray text-glyph pixels, inflating the box past the dice pair's real edges.
-  // y lowered 59px per Deck's follow-up (1px = 1/1800*100 = 0.05556% of canvas height).
-  ['@hard6',           2.656,32.89, 5.97, 4.83,'hw'],
-  ['@hard10',         29.84, 32.89, 5.97, 4.83,'hw'],
-  ['@hard8',           2.656,40.84, 5.97, 4.89,'hw'],
-  ['@hard4',          29.84, 40.84, 5.97, 4.89,'hw'],
-  ['@hop22',           1.815,28.055,14.25, 7.89,'hop'],
-  ['@hop44',          22.405,28.055,14.25, 7.89,'hop'],
-  ['@hop33',           1.815,35.995,14.25, 7.89,'hop'],
-  ['@hop55',          22.405,35.995,14.25, 7.89,'hop'],
+  // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- ground
+  // truth, do not re-derive from reference images again.
+  ['@hard6',           2.656,32.890, 5.970, 4.830,'hw'],
+  ['@hard10',         29.840,32.890, 5.970, 4.830,'hw'],
+  ['@hard8',           2.656,40.840, 5.970, 4.890,'hw'],
+  ['@hard4',          29.840,40.840, 5.970, 4.890,'hw'],
+  ['@hop22',           1.815,30.964,14.250, 7.890,'hop'],
+  ['@hop44',          22.620,31.041,14.250, 7.890,'hop'],
+  ['@hop33',           1.815,38.981,14.250, 7.890,'hop'],
+  ['@hop55',          22.620,38.675,14.250, 7.890,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
-  ['#dc-wait-wrap',  87.31,22.22, 8.16,25.00,null],
-  // Come/Field/DP/Pass widths corrected: the original measurement clipped its scan window at
-  // x=2790 (right where the Don't Come Bar starts overhead) and never checked past it. All four
-  // bars actually extend to the same right margin as the Don't Come Bar itself, ~x=3055.
-  // Re-measured across 5 independent samples, all agreeing at 42.44% width.
-  ['#come-bar',      52.97,49.50,42.44, 8.89,null],
-  ['#field-bar',     53.03,57.00,42.44,12.00,null],
-  ['#dp-bar',        53.03,69.33,42.44, 7.11,null],
-  ['#pass-bar',      53.12,76.83,42.44, 7.11,null]
+  ['#dc-wait-wrap',  90.712,21.531, 8.160,25.000,null],
+  ['#come-bar',      56.458,48.122,42.440, 8.890,null],
+  ['#field-bar',     56.561,57.766,42.440,12.000,null],
+  ['#dp-bar',        56.561,69.560,42.440, 7.110,null],
+  ['#pass-bar',      56.738,77.672,42.440, 7.110,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 let feltActive=false,feltTab='hw';
