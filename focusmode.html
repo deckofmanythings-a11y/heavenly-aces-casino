@@ -379,6 +379,12 @@ body.fm-hide-ats #lucky-roller{display:none!important}
 #fm-art-layer{position:absolute;inset:0;pointer-events:none;z-index:1}
 .fm-art-region{position:absolute}
 .fm-art-region img{width:100%;height:100%;display:block}
+#calib-layer{position:absolute;inset:0;z-index:200;pointer-events:none}
+.calib-box{position:absolute;border:2px dashed #0ff;background:rgba(0,255,255,.15);cursor:move;pointer-events:auto;box-sizing:border-box}
+.calib-box.dragging{background:rgba(0,255,255,.3);border-color:#fff}
+.calib-box .calib-label{position:absolute;top:1px;left:2px;font-size:10px;color:#0ff;background:rgba(0,0,0,.6);padding:0 3px;border-radius:2px;white-space:nowrap;pointer-events:none}
+.calib-box .calib-handle{position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;background:#0ff;border:1px solid #003;border-radius:3px;cursor:nwse-resize;pointer-events:auto}
+.calib-box .calib-dot{position:absolute;left:50%;top:50%;width:6px;height:6px;background:#f0f;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
 .info-section{margin-bottom:12px}
 .info-section h3{font-size:19px;font-weight:700;color:#ffe066;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
@@ -875,6 +881,30 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="modal-btn" onclick="focusShowAll()">Show All</button>
         <button class="modal-btn cancel" onclick="closeFocusPanel()">Done</button>
       </div>
+      <div style="margin-top:8px;text-align:right">
+        <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleCalibMode()">🎯 Calibrate Positions (Debug)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALIBRATION MODE: drag/resize every bet target directly on the real felt instead of
+       eyeballing screenshots and reporting pixel offsets back and forth. See calibXxx() funcs. -->
+  <div id="calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff">
+    <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
+    <span id="calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Drag a box to move it, corner handle to resize</span>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibReset()">Reset</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibExport()">Export</button>
+    <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleCalibMode()">Exit</button>
+  </div>
+  <div class="modal-overlay hidden" id="modal-calib-export" style="z-index:401">
+    <div class="modal-box" style="max-width:640px">
+      <div class="modal-title">Calibration Export</div>
+      <div class="modal-sub">Copy this and send it back -- it's the exact array syntax used in the code.</div>
+      <textarea id="calib-export-text" readonly style="width:100%;height:320px;font-family:monospace;font-size:12px;background:#111;color:#0f0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px;margin:10px 0" onclick="this.select()"></textarea>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn" onclick="document.getElementById('calib-export-text').select();document.execCommand('copy')">Copy to Clipboard</button>
+        <button class="modal-btn cancel" onclick="document.getElementById('modal-calib-export').classList.add('hidden')">Close</button>
+      </div>
     </div>
   </div>
 
@@ -968,7 +998,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.13</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.14</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2652,6 +2682,7 @@ function switchTab(t){
   // felt slot, switched by this tab, not by the Focus toggle alone -- re-apply so the art
   // layer follows suit.
   if(typeof applyFocusVisibility==='function')applyFocusVisibility();
+  if(typeof calibActive!=='undefined'&&calibActive)calibBuildLayer();
 }
 function flashPuckGreen(){
   const p=document.getElementById('puck3d-wrap');
@@ -3428,6 +3459,112 @@ function buildFocusFeltArt(){
   // Number Boxes: always on, not tied to any toggle group (per Deck: "those should probably
   // be on the felt at all times") -- and rendered last so they sit on top of Buy/Place/Lay/DC.
   ALL_NUMS.forEach(n=>addRegion('box'+n,'Box'+n+'.png',FM_BOX_X[n],386,275,450,null,n));
+}
+
+// ── CALIBRATION MODE ─────────────────────────────────────────────────────────
+// Drag/resize every bet target directly on the real felt instead of eyeballing screenshots
+// and reporting pixel offsets back and forth (Deck: "faster for you maybe, pain in the ass
+// for me"). Only touches STANDARD_LAYOUT/FELT_LAYOUT entries -- Focus Mode never runs
+// crapless mode, so CRAPLESS_LAYOUT is out of scope here.
+let calibActive=false;
+let calibState=null; // {selector: {x,y,w,h,tab}} in % of canvas, keyed by the layout array's own selector string
+function calibBaseEntries(){
+  // Bet-relevant entries only -- skip pure UI chrome (#info-panel, #left-col-header, etc.)
+  // and the crapless-only zone bars, since Focus Mode is standard-only.
+  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#lucky-roller','#info-panel','#bottom-section','#num-zone']);
+  return feltLayoutFor('standard').filter(e=>!skip.has(e[0]));
+}
+function calibInitState(){
+  const st={};
+  calibBaseEntries().forEach(([sel,x,y,w,h,tab])=>{ st[sel]={x,y,w,h,tab}; });
+  return st;
+}
+function calibFeltRect(){ return document.getElementById('felt-stage').getBoundingClientRect(); }
+function calibLabelFor(sel){ return sel.charAt(0)==='@'?sel.slice(1):sel; }
+function calibBuildLayer(){
+  const stage=document.getElementById('felt-stage');
+  let layer=document.getElementById('calib-layer');
+  if(!layer){ layer=document.createElement('div'); layer.id='calib-layer'; stage.appendChild(layer); }
+  layer.innerHTML='';
+  Object.keys(calibState).forEach(sel=>{
+    const s=calibState[sel];
+    if(s.tab&&s.tab!==feltTab)return; // hw/hop share screen space -- only show the active tab's boxes
+    const box=document.createElement('div');
+    box.className='calib-box';
+    box.dataset.sel=sel;
+    box.style.left=s.x+'%'; box.style.top=s.y+'%'; box.style.width=s.w+'%'; box.style.height=s.h+'%';
+    const lbl=document.createElement('div'); lbl.className='calib-label'; lbl.textContent=calibLabelFor(sel);
+    const dot=document.createElement('div'); dot.className='calib-dot';
+    const handle=document.createElement('div'); handle.className='calib-handle';
+    box.appendChild(lbl); box.appendChild(dot); box.appendChild(handle);
+    box.addEventListener('pointerdown',e=>calibStartDrag(e,box,sel));
+    handle.addEventListener('pointerdown',e=>{e.stopPropagation();calibStartResize(e,box,sel);});
+    layer.appendChild(box);
+  });
+}
+function calibStartDrag(e,box,sel){
+  e.preventDefault();
+  box.classList.add('dragging');
+  document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
+  const rect=calibFeltRect();
+  const startX=e.clientX,startY=e.clientY;
+  const orig={x:calibState[sel].x,y:calibState[sel].y};
+  function move(ev){
+    const dxPct=(ev.clientX-startX)/rect.width*100;
+    const dyPct=(ev.clientY-startY)/rect.height*100;
+    calibState[sel].x=orig.x+dxPct;
+    calibState[sel].y=orig.y+dyPct;
+    box.style.left=calibState[sel].x+'%'; box.style.top=calibState[sel].y+'%';
+    document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
+  }
+  function up(){ box.classList.remove('dragging'); document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function calibStartResize(e,box,sel){
+  e.preventDefault();
+  const rect=calibFeltRect();
+  const startX=e.clientX,startY=e.clientY;
+  const orig={w:calibState[sel].w,h:calibState[sel].h};
+  function move(ev){
+    const dwPct=(ev.clientX-startX)/rect.width*100;
+    const dhPct=(ev.clientY-startY)/rect.height*100;
+    calibState[sel].w=Math.max(0.5,orig.w+dwPct);
+    calibState[sel].h=Math.max(0.5,orig.h+dhPct);
+    box.style.width=calibState[sel].w+'%'; box.style.height=calibState[sel].h+'%';
+    document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
+  }
+  function up(){ document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function toggleCalibMode(){
+  calibActive=!calibActive;
+  document.getElementById('calib-toolbar').classList.toggle('hidden',!calibActive);
+  if(calibActive){
+    closeFocusPanel();
+    if(!calibState)calibState=calibInitState();
+    calibBuildLayer();
+  }else{
+    const layer=document.getElementById('calib-layer');
+    if(layer)layer.remove();
+  }
+}
+function calibReset(){
+  calibState=calibInitState();
+  calibBuildLayer();
+}
+function calibExport(){
+  const bySel=id=>calibBaseEntries().find(e=>e[0]===id);
+  const order=calibBaseEntries().map(e=>e[0]);
+  let out='// Calibrated via Focus Mode\'s drag tool\n';
+  order.forEach(sel=>{
+    const s=calibState[sel];
+    const tabStr=s.tab?"'"+s.tab+"'":'null';
+    out+="  ['"+sel+"', "+s.x.toFixed(3)+","+s.y.toFixed(3)+","+s.w.toFixed(3)+","+s.h.toFixed(3)+","+tabStr+"],\n";
+  });
+  document.getElementById('calib-export-text').value=out;
+  document.getElementById('modal-calib-export').classList.remove('hidden');
 }
 function applyFocusVisibility(){
   const body=document.body;
