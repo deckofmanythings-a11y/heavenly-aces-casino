@@ -402,6 +402,8 @@ body.fm-hide-ats #lucky-roller{display:none!important}
 .calib-chip-dot{width:22px;height:22px;cursor:move}
 .calib-chip-dot .calib-chip-dotinner{position:absolute;inset:0;border-radius:50%;background:rgba(255,0,255,.55);border:2px solid #fff;box-shadow:0 0 6px rgba(255,0,255,.8)}
 .calib-chip-dot .calib-chip-lbl{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:#fff;background:rgba(0,0,0,.75);padding:1px 4px;border-radius:3px;white-space:nowrap}
+.calib-chip-box{border:1px dashed rgba(255,0,255,.6);box-sizing:border-box;pointer-events:none}
+.calib-chip-box .calib-chip-boxlbl{position:absolute;bottom:1px;left:1px;font-size:8px;color:#f0f;background:rgba(0,0,0,.6);padding:0 3px;border-radius:2px;white-space:nowrap}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
 .info-section{margin-bottom:12px}
 .info-section h3{font-size:19px;font-weight:700;color:#ffe066;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
@@ -1015,7 +1017,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.17</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.18</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3581,13 +3583,13 @@ const FOCUS_CHIP_ANCHOR_KEY='focus_chip_anchors_v1';
 function defaultChipAnchors(){
   // Calibrated via Focus Mode's drag tool (calibExport()) -- ground truth, do not re-derive.
   return {
-    buy:{x:17,y:77},
-    place:{x:100,y:77},
+    buy:{x:15.819297969463245,y:78.41421373640944},
+    place:{x:100,y:80.11137629276054},
     lay:{x:100,y:100},
-    dc:{x:58,y:100},
-    dcodds:{x:58,y:100},
-    come:{x:82,y:88.045619491965},
-    comeodds:{x:82,y:53.5406946604458}
+    dc:{x:58.70579859188355,y:100},
+    dcodds:{x:59.21208765129341,y:100},
+    come:{x:81.9079987353778,y:88.04561949196474},
+    comeodds:{x:82.91969649067342,y:53.54069466044583}
   };
 }
 function loadChipAnchors(){
@@ -3627,6 +3629,12 @@ function positionChipAnchor(chipEl,refEl,anchorKey){
   chipEl.style.top='auto';
   chipEl.style.right='auto';
   chipEl.style.transform='translateX(-50%)';
+  // .chip-stack (used by Come/DC) never gets the .has-stack class (that's only added by
+  // renderChipStacks() for the generic STK_SEL elements Buy/Place/Lay/etc use), so it never
+  // picked up .has-stack's z-index:6 -- meaning it lost to #fm-art-layer's z-index:1 and
+  // rendered UNDER the number art (Deck: "Come is in the right spot but is behind the number").
+  // The flat/bet chip additionally needs to outrank its own Odds chip, not just the art layer.
+  chipEl.style.zIndex=(anchorKey==='come'||anchorKey==='dc')?'7':'6';
 }
 function calibChipBuildLayer(){
   let layer=document.getElementById('calib-chip-layer');
@@ -3636,6 +3644,14 @@ function calibChipBuildLayer(){
     const cont=document.getElementById(t.containerId);
     if(!cont)return;
     const r=cont.getBoundingClientRect();
+    // Outline of the actual reference box the dot's x/y % are measured against -- shows
+    // whether the underlying cell (nb-buy-6/nb-place-6/etc) even covers the area Deck expects
+    // a chip to land in, not just where the dot currently sits within it.
+    const box=document.createElement('div');
+    box.className='calib-chip-box';
+    box.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px';
+    box.innerHTML='<div class="calib-chip-boxlbl">'+t.label+' box</div>';
+    layer.appendChild(box);
     const a=focusChipAnchors[t.key];
     const px=r.left+a.x/100*r.width,py=r.bottom-a.y/100*r.height;
     const dot=document.createElement('div');
