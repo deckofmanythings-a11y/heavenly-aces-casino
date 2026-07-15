@@ -1015,7 +1015,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.16</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.17</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3579,7 +3579,16 @@ const CALIB_CHIP_TYPES=[
 ];
 const FOCUS_CHIP_ANCHOR_KEY='focus_chip_anchors_v1';
 function defaultChipAnchors(){
-  return {buy:{x:50,y:6},place:{x:50,y:6},lay:{x:50,y:6},dc:{x:50,y:80},dcodds:{x:50,y:65},come:{x:50,y:35},comeodds:{x:50,y:20}};
+  // Calibrated via Focus Mode's drag tool (calibExport()) -- ground truth, do not re-derive.
+  return {
+    buy:{x:17,y:77},
+    place:{x:100,y:77},
+    lay:{x:100,y:100},
+    dc:{x:58,y:100},
+    dcodds:{x:58,y:100},
+    come:{x:82,y:88.045619491965},
+    comeodds:{x:82,y:53.5406946604458}
+  };
 }
 function loadChipAnchors(){
   try{
