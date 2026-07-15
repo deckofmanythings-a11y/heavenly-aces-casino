@@ -142,6 +142,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    individual .fp-cell children (positioned to their own small area) accept clicks, so the
    container doesn't block Randomize/Begin Game/chip row/Game Select sitting underneath it. */
 #pp-grid-cells{position:absolute;inset:0;z-index:2;pointer-events:none}
+#ship-calib-layer{position:absolute;inset:0;z-index:50;pointer-events:none}
+.ship-calib-box{position:absolute;border:2px dashed #0ff;background:rgba(0,255,255,.12);cursor:move;pointer-events:auto;box-sizing:border-box}
+.ship-calib-box.dragging{background:rgba(0,255,255,.28);border-color:#fff}
+.ship-calib-box .scb-label{position:absolute;top:2px;left:2px;font-size:10px;color:#0ff;background:rgba(0,0,0,.65);padding:0 4px;border-radius:2px;white-space:nowrap;pointer-events:none}
+.ship-calib-box .scb-rotate{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#f0f;border:2px solid #fff;cursor:grab;pointer-events:auto}
+.ship-calib-box .scb-rotate::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:8px;background:#f0f;transform:translateX(-50%)}
+.ship-calib-box .scb-resize{position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;background:#0ff;border:1px solid #003;border-radius:3px;cursor:nwse-resize;pointer-events:auto}
 #pp-grid-cells .fp-cell{pointer-events:auto}
 /* placement-chip-row is normally a flex:1 child of #fire-center; reparented here (not
    rebuilt, same reuse pattern as moveFiringElements' buy-btn/dice canvas) it needs its own
@@ -555,7 +562,29 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- Winner modal now lives in winner-modal.js -- replaces the old BATTLE OVER overlay.
        No button; auto-reverts to the placement screen once it closes. -->
 
-
+  <!-- SHIP CALIBRATION (debug tool): drag/rotate/scale ship art directly on whichever flat
+       screen (placement or firing) is currently showing. Fixed position so it's reachable
+       regardless of which screen is active -- see toggleShipCalib()/buildShipCalibLayer(). -->
+  <button id="ship-calib-toggle" onclick="toggleShipCalib()"
+    style="position:fixed;left:8px;bottom:8px;z-index:401;font-size:11px;padding:5px 9px;opacity:.55;background:rgba(0,0,0,.8);color:#0ff;border:1px solid rgba(0,255,255,.5);border-radius:6px;cursor:pointer">🎯 Calibrate Ships</button>
+  <div id="ship-calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff">
+    <span style="color:#0ff;font-weight:700">SHIP CALIBRATE</span>
+    <span id="ship-calib-selected" style="min-width:260px;color:rgba(255,255,255,.7)">Drag a ship to move it, top handle to rotate, corner handle to resize</span>
+    <button class="bar-btn" onclick="shipCalibReset()" style="font-size:12px;padding:4px 8px;height:auto">Reset</button>
+    <button class="bar-btn" onclick="shipCalibExport()" style="font-size:12px;padding:4px 8px;height:auto">Export</button>
+    <button class="bar-btn" onclick="toggleShipCalib()" style="font-size:12px;padding:4px 8px;height:auto">Exit</button>
+  </div>
+  <div class="modal-overlay hidden" id="modal-ship-calib-export" style="z-index:401">
+    <div class="modal-box" style="max-width:640px">
+      <div class="modal-title">Ship Calibration Export</div>
+      <div class="modal-sub">Copy this and send it back -- paste each object in place of its matching const.</div>
+      <textarea id="ship-calib-export-text" readonly style="width:100%;height:320px;font-family:monospace;font-size:12px;background:#111;color:#0f0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px;margin:10px 0" onclick="this.select()"></textarea>
+      <div style="display:flex;gap:8px">
+        <button class="bar-btn" onclick="document.getElementById('ship-calib-export-text').select();document.execCommand('copy')" style="font-size:14px;padding:6px 12px;height:auto">Copy to Clipboard</button>
+        <button class="bar-btn" onclick="document.getElementById('modal-ship-calib-export').classList.add('hidden')" style="font-size:14px;padding:6px 12px;height:auto">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODALS -->
   <div class="modal-overlay hidden" id="modal-cap">
@@ -585,7 +614,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.29</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.30</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1797,6 +1826,9 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
 
     const wrap=document.createElement('div');
     wrap.className='ship-img-wrap';
+    // Lets the ship calibration tool (shipCalib*) identify which correction-table entry a
+    // given rendered wrap corresponds to, without re-deriving orientation/key from scratch.
+    wrap.dataset.shipIdx=i;wrap.dataset.shipKey=SHIP_IMG_KEY[i];wrap.dataset.shipHoriz=horiz?'1':'0';wrap.dataset.shipFlat=flat?'1':'0';
     const img=document.createElement('img');
     // Base art spans letters (horiz); Alt is the artist-mirrored version that spans
     // numbers (vert) -- no CSS rotation needed, only an optional bow-direction flip.
@@ -1856,6 +1888,177 @@ function renderShipImagesOnGrid(containerId, attrR, attrC, flat){
     wrap.appendChild(img);
     container.appendChild(wrap);
   });
+}
+
+// ── SHIP CALIBRATION TOOL ─────────────────────────────────────────────────────
+// Drag/rotate/scale ship art directly on the real board instead of hand-tuning the
+// FLAT_SHIP_*_CORRECTION tables blind (same idea as Focus Mode's felt calibration tool).
+// Only targets the flat boards (placement + firing) -- the old diamond board (#grid-rows/
+// SHIP_ADJUST) sits behind #main-area, which is permanently hidden now that both screens use
+// the flat baked-art panels; see showFiringScreen/showPlacementPanel.
+let shipCalibActive=false;
+let shipCalibOrig=null;
+function shipCalibSnapshotOriginals(){
+  if(shipCalibOrig)return;
+  shipCalibOrig={
+    size:JSON.parse(JSON.stringify(FLAT_SHIP_SIZE_CORRECTION)),
+    posA:JSON.parse(JSON.stringify(FLAT_SHIP_POSITION_CORRECTION_POOL_A)),
+    posB:JSON.parse(JSON.stringify(FLAT_SHIP_POSITION_CORRECTION_POOL_B)),
+    rotA:JSON.parse(JSON.stringify(FLAT_SHIP_ROTATION_POOL_A)),
+    rotB:JSON.parse(JSON.stringify(FLAT_SHIP_ROTATION_POOL_B))
+  };
+}
+function shipCalibActiveScreen(){
+  const firing=document.getElementById('firing-screen');
+  if(firing&&firing.classList.contains('active'))return {containerId:'fp-grid-cells',attrR:'fr',attrC:'fc',flat:true};
+  const placement=document.getElementById('placement-screen');
+  if(placement&&placement.classList.contains('active'))return {containerId:'pp-grid-cells',attrR:'pr',attrC:'pc',flat:true};
+  return null;
+}
+function toggleShipCalib(){
+  shipCalibActive=!shipCalibActive;
+  document.getElementById('ship-calib-toolbar').classList.toggle('hidden',!shipCalibActive);
+  if(shipCalibActive){shipCalibSnapshotOriginals();buildShipCalibLayer();}
+  else{const l=document.getElementById('ship-calib-layer');if(l)l.remove();}
+}
+// Ship types repeat (2 battleships share SHIP_LENGTHS index 1&2), so entries are keyed by
+// SHIP_IMG_KEY string, not per-ship-index -- adjusting one battleship moves both, matching how
+// the correction tables already work (this tool doesn't change that, just exposes it visually).
+function shipCalibEntry(key,horiz){
+  const posPool=horiz?FLAT_SHIP_POSITION_CORRECTION_POOL_B:FLAT_SHIP_POSITION_CORRECTION_POOL_A;
+  const rotPool=horiz?FLAT_SHIP_ROTATION_POOL_B:FLAT_SHIP_ROTATION_POOL_A;
+  if(!posPool[key])posPool[key]={longPct:0,shortPct:0};
+  if(rotPool[key]===undefined)rotPool[key]=0;
+  if(FLAT_SHIP_SIZE_CORRECTION[key]===undefined)FLAT_SHIP_SIZE_CORRECTION[key]=1;
+  return {posPool,rotPool};
+}
+function buildShipCalibLayer(){
+  const scr=shipCalibActiveScreen();
+  const oldLayer=document.getElementById('ship-calib-layer');
+  if(oldLayer)oldLayer.remove();
+  if(!scr||!shipCalibActive)return;
+  const container=document.getElementById(scr.containerId);
+  if(!container)return;
+  const layer=document.createElement('div');
+  layer.id='ship-calib-layer';
+  container.appendChild(layer);
+  container.querySelectorAll('.ship-img-wrap').forEach(wrap=>{
+    const key=wrap.dataset.shipKey,horiz=wrap.dataset.shipHoriz==='1';
+    const box=document.createElement('div');
+    box.className='ship-calib-box';
+    box.style.left=wrap.style.left;box.style.top=wrap.style.top;
+    box.style.width=wrap.style.width;box.style.height=wrap.style.height;
+    const lbl=document.createElement('div');lbl.className='scb-label';
+    lbl.textContent=key+' ('+(horiz?'normal':'ALT')+')';
+    const rotHandle=document.createElement('div');rotHandle.className='scb-rotate';
+    const resizeHandle=document.createElement('div');resizeHandle.className='scb-resize';
+    box.appendChild(lbl);box.appendChild(rotHandle);box.appendChild(resizeHandle);
+    box.addEventListener('pointerdown',e=>{ if(e.target===box||e.target===lbl)shipCalibStartMove(e,box,wrap,key,horiz,scr); });
+    rotHandle.addEventListener('pointerdown',e=>{e.stopPropagation();shipCalibStartRotate(e,wrap,key,horiz,scr);});
+    resizeHandle.addEventListener('pointerdown',e=>{e.stopPropagation();shipCalibStartScale(e,wrap,key,horiz,scr);});
+    layer.appendChild(box);
+  });
+}
+function shipCalibRerender(scr){
+  renderShipImagesOnGrid(scr.containerId,scr.attrR,scr.attrC,scr.flat);
+  buildShipCalibLayer();
+}
+function shipCalibReport(key,horiz){
+  const e=shipCalibEntry(key,horiz);
+  document.getElementById('ship-calib-selected').textContent=
+    key+' ('+(horiz?'normal':'ALT')+') -- long:'+e.posPool[key].longPct.toFixed(1)+' short:'+e.posPool[key].shortPct.toFixed(1)
+    +' rot:'+e.rotPool[key].toFixed(1)+'° scale:'+FLAT_SHIP_SIZE_CORRECTION[key].toFixed(3);
+}
+function shipCalibStartMove(e,box,wrap,key,horiz,scr){
+  e.preventDefault();box.classList.add('dragging');
+  const ent=shipCalibEntry(key,horiz);
+  const startX=e.clientX,startY=e.clientY;
+  const startLong=ent.posPool[key].longPct,startShort=ent.posPool[key].shortPct;
+  const w=wrap.offsetWidth||1,h=wrap.offsetHeight||1;
+  shipCalibReport(key,horiz);
+  function move(ev){
+    const dxPct=(ev.clientX-startX)/w*100;
+    const dyPct=(ev.clientY-startY)/h*100;
+    // translate() % is relative to the wrap's own box; horiz ships get longPct on X/shortPct
+    // on Y, vert ships get it swapped (see renderShipImagesOnGrid's posDx/posDy mapping) --
+    // inverted here so dragging always reads as plain screen-space move either way.
+    if(horiz){ ent.posPool[key].longPct=r2Ship(startLong+dxPct); ent.posPool[key].shortPct=r2Ship(startShort+dyPct); }
+    else{ ent.posPool[key].shortPct=r2Ship(startShort+dxPct); ent.posPool[key].longPct=r2Ship(startLong+dyPct); }
+    shipCalibRerender(scr);
+    shipCalibReport(key,horiz);
+  }
+  function up(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function shipCalibStartRotate(e,wrap,key,horiz,scr){
+  e.preventDefault();
+  const ent=shipCalibEntry(key,horiz);
+  const rect=wrap.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  const startAngle=Math.atan2(e.clientY-cy,e.clientX-cx)*180/Math.PI;
+  const startRot=ent.rotPool[key];
+  shipCalibReport(key,horiz);
+  function move(ev){
+    const angle=Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI;
+    ent.rotPool[key]=r2Ship(startRot+(angle-startAngle));
+    shipCalibRerender(scr);
+    shipCalibReport(key,horiz);
+  }
+  function up(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function shipCalibStartScale(e,wrap,key,horiz,scr){
+  e.preventDefault();
+  const startScale=FLAT_SHIP_SIZE_CORRECTION[key]||1;
+  const rect=wrap.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  const startDist=Math.max(1,Math.hypot(e.clientX-cx,e.clientY-cy));
+  shipCalibReport(key,horiz);
+  function move(ev){
+    const dist=Math.max(1,Math.hypot(ev.clientX-cx,ev.clientY-cy));
+    FLAT_SHIP_SIZE_CORRECTION[key]=Math.max(0.1,Math.round(startScale*(dist/startDist)*100000)/100000);
+    shipCalibRerender(scr);
+    shipCalibReport(key,horiz);
+  }
+  function up(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function r2Ship(n){return Math.round(n*10)/10;}
+function shipCalibReset(){
+  if(!shipCalibOrig)return;
+  Object.keys(FLAT_SHIP_SIZE_CORRECTION).forEach(k=>delete FLAT_SHIP_SIZE_CORRECTION[k]);
+  Object.assign(FLAT_SHIP_SIZE_CORRECTION,shipCalibOrig.size);
+  Object.keys(FLAT_SHIP_POSITION_CORRECTION_POOL_A).forEach(k=>delete FLAT_SHIP_POSITION_CORRECTION_POOL_A[k]);
+  Object.assign(FLAT_SHIP_POSITION_CORRECTION_POOL_A,shipCalibOrig.posA);
+  Object.keys(FLAT_SHIP_POSITION_CORRECTION_POOL_B).forEach(k=>delete FLAT_SHIP_POSITION_CORRECTION_POOL_B[k]);
+  Object.assign(FLAT_SHIP_POSITION_CORRECTION_POOL_B,shipCalibOrig.posB);
+  Object.keys(FLAT_SHIP_ROTATION_POOL_A).forEach(k=>delete FLAT_SHIP_ROTATION_POOL_A[k]);
+  Object.assign(FLAT_SHIP_ROTATION_POOL_A,shipCalibOrig.rotA);
+  Object.keys(FLAT_SHIP_ROTATION_POOL_B).forEach(k=>delete FLAT_SHIP_ROTATION_POOL_B[k]);
+  Object.assign(FLAT_SHIP_ROTATION_POOL_B,shipCalibOrig.rotB);
+  const scr=shipCalibActiveScreen();
+  if(scr)shipCalibRerender(scr);
+}
+function shipCalibExport(){
+  const fmtObj=(obj,decimals)=>{
+    const parts=Object.keys(obj).map(k=>{
+      const v=obj[k];
+      if(typeof v==='number')return '  '+k+':'+v.toFixed(decimals);
+      return '  '+k+': {longPct:'+v.longPct.toFixed(1)+', shortPct:'+v.shortPct.toFixed(1)+'}';
+    });
+    return '{\n'+parts.join(',\n')+'\n}';
+  };
+  let out='// Calibrated via Destroyer\'s ship calibration tool\n';
+  out+='const FLAT_SHIP_SIZE_CORRECTION = '+fmtObj(FLAT_SHIP_SIZE_CORRECTION,5)+';\n\n';
+  out+='const FLAT_SHIP_POSITION_CORRECTION_POOL_A = '+fmtObj(FLAT_SHIP_POSITION_CORRECTION_POOL_A)+';\n\n';
+  out+='const FLAT_SHIP_POSITION_CORRECTION_POOL_B = '+fmtObj(FLAT_SHIP_POSITION_CORRECTION_POOL_B)+';\n\n';
+  out+='const FLAT_SHIP_ROTATION_POOL_A = '+fmtObj(FLAT_SHIP_ROTATION_POOL_A,1)+';\n\n';
+  out+='const FLAT_SHIP_ROTATION_POOL_B = '+fmtObj(FLAT_SHIP_ROTATION_POOL_B,1)+';\n';
+  document.getElementById('ship-calib-export-text').value=out;
+  document.getElementById('modal-ship-calib-export').classList.remove('hidden');
 }
 
 function renderShipImages(){
