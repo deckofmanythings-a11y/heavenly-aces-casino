@@ -65,15 +65,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-extra-wins .fp-jackpot-lbl{font-size:.85em;color:rgba(255,255,255,.6);text-transform:uppercase}
 #fp-extra-wins .fp-jackpot-tier{font-size:.75em;color:rgba(255,215,0,.5)}
 #fp-extra-wins .fp-jackpot-tier.earned{color:#ffd700;font-weight:700}
-#fp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;color:#fff;text-align:center;width:100%}
+#fp-bet-circle,#pp-bet-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;color:#fff;text-align:center;width:100%}
 /* Single chip, no stack -- color/denomination is just the highest-value chip that fits the
-   bet, per Deck's request to drop the stacking logic here (Current Bet/Winning/Bankroll are
-   now shown as plain text below it, so the stack wasn't adding information anyway). */
-#fp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em;margin:0 auto}
-#fp-bet-circle .fp-bet-chips img{position:absolute;left:50%;bottom:0;width:100%;transform:translateX(-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
-#fp-bet-circle .fp-bet-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-#fp-bet-circle .fp-winning-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#7ee87e;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-#fp-bet-circle .fp-bankroll-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#ffe066;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+   bet. The amount lives back on TOP of the chip (Deck: "Move the bet value on top of the
+   chip in the main game"), with Winning/Playable as plain text below it. */
+#fp-bet-circle .fp-bet-chips,#pp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em;margin:0 auto;cursor:pointer}
+#fp-bet-circle .fp-bet-chips img,#pp-bet-circle .fp-bet-chips img{position:absolute;left:50%;bottom:0;width:100%;transform:translateX(-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+#fp-bet-circle .fp-bet-amt,#pp-bet-circle .fp-bet-amt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;font-size:.8em;font-weight:900;color:#000;text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none}
+#fp-bet-circle .fp-winning-lbl,#pp-bet-circle .fp-winning-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#7ee87e;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+#fp-bet-circle .fp-bankroll-lbl,#pp-bet-circle .fp-bankroll-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#ffe066;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 /* gap here is the "space between rolls" -- each .fp-roll-pip is one roll's pair of dice. */
 #fp-roll-history{display:flex;gap:.6em;overflow-x:auto;align-items:center;padding:0 .5em;scrollbar-width:none}
 #fp-roll-history::-webkit-scrollbar{display:none}
@@ -81,19 +81,32 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-roll-history .fp-roll-pip img{width:1.6em;height:1.6em;object-fit:contain;flex-shrink:0}
 #fp-roll-history .fp-roll-pip.hit-pip{background:rgba(255,80,0,.4)}
 #fp-roll-history .fp-roll-pip.miss-pip{background:rgba(0,40,100,.4)}
-#fp-buy-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3em;padding:.2em .6em}
+/* Buy Missile sits on the right; the countdown+End Game column sits to its LEFT (Deck:
+   "Put the countdown off to the left of Buy Missile with the End Game button beneath the
+   countdown"), so this is a row, not the old column layout. */
+#fp-buy-area{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:.8em;padding:.2em .6em}
+/* Strikes container widened to actually fit the enlarged pips below (see .fm-pip) -- it used
+   to be sized only for the old tiny 2.1em/2.8em pips and would have clipped/overlapped once
+   they grew to match the setup screen's size. */
 #fp-strikes-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4em;padding:.4em;overflow:visible!important}
 #fp-strikes-area #fp-fm-label{font-size:.7em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0;text-align:center}
-#fp-strikes-area #fp-free-missiles-pips{display:flex;gap:.25em;flex-wrap:wrap;justify-content:center}
-#fp-strikes-area .fm-pip{width:2.1em;height:2.8em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#fp-strikes-area #fp-free-missiles-pips{display:flex;gap:.25em;flex-wrap:nowrap;justify-content:center;overflow-x:auto;max-width:100%}
+/* Follow-Up Strikes: same WIDTH as Initial Strikes now (8em, see .initial-mode below), per
+   Deck's request -- height stays smaller to keep them visually distinct as the "lesser" pip. */
+#fp-strikes-area .fm-pip{width:8em;height:2.8em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #fp-strikes-area .fm-pip.empty{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
 #fp-strikes-area .fm-pip.used{opacity:.35;filter:grayscale(1)}
-/* Initial Strikes (the 4 starting missiles, before any purchase): shown 5x larger than the
-   Follow-Up Strikes pips. */
-#fp-strikes-area #fp-free-missiles-pips.initial-mode .fm-pip{width:2.8em;height:3.73em}
+/* Initial Strikes (the 4 starting missiles, before any purchase): matched 1:1 to the setup
+   screen's #free-missiles-display pips (96x144px, measured directly against the same
+   962x540px panel size both screens render at -- 12px font-size here (measured via
+   getComputedStyle, not assumed), so 96/12=8em, 144/12=12em). Was 2.8em/3.73em, much
+   smaller than setup's version. */
+#fp-strikes-area #fp-free-missiles-pips.initial-mode .fm-pip{width:8em;height:12em}
 #fp-strikes-area #fp-free-missiles-pips.initial-mode{flex-wrap:nowrap}
-#fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:.9em;font-weight:900;padding:.4em .8em;cursor:pointer;display:none;flex-shrink:0;width:auto!important}
-#fp-buy-area #buy-timer-row{display:none;flex-direction:row;align-items:center;gap:.5em;flex-shrink:0}
+/* Buy Missile: "way larger", scaled equally in both directions (font-size AND padding, not
+   just one or the other) so the whole button grows uniformly rather than stretching. */
+#fp-buy-area #buy-btn{background:linear-gradient(180deg,#1a5faa,#0d3d7a);border:1px solid rgba(74,158,255,.5);border-radius:6px;color:#fff;font-size:2.2em;font-weight:900;padding:.9em 1.8em;cursor:pointer;display:none;flex-shrink:0;width:auto!important}
+#fp-buy-area #buy-timer-row{display:none;flex-direction:column;align-items:center;gap:.3em;flex-shrink:0}
 /* !important needed on the sizing props -- these elements carry inline style="font-size:
    60px..." etc. from the original bottom-bar markup (reparented here, not rebuilt), and
    inline styles beat any external stylesheet rule regardless of selector specificity. */
@@ -157,10 +170,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    below the top bar to roughly where fp-extra-wins sits on the firing panel. */
 #placement-panel #jackpot-strip{top:14%;border-radius:8px}
 #placement-panel #free-missiles-display{border-top-right-radius:8px}
-/* bet-circle-wrap is normally right/bottom-anchored against #main-area's full viewport
-   width (right:296px to clear the old #right-panel) -- repositioned here as a % of the
-   panel itself, roughly over the same spot fp-bet-circle occupies on the firing panel. */
-#placement-panel #bet-circle-wrap{right:auto;left:77.85%;bottom:auto;top:60%;transform:scale(.8);transform-origin:top left}
 .fp-cell.ship{cursor:grab;user-select:none}
 .fp-cell.ship:active{cursor:grabbing}
 .fp-cell.drag-over{box-shadow:inset 0 0 0 3px #4a9eff;background:rgba(74,158,255,.4)}
@@ -505,13 +514,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="fp-region" id="fp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
       <div class="fp-region" id="fp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
       <div class="fp-region" id="fp-bet-circle" style="left:77.85%;top:58.88%;width:9%;height:13%">
-        <div class="fp-bet-chips" id="fp-bet-chips"></div>
-        <span class="fp-bet-lbl" id="fp-bet-lbl">Bet: $0</span>
+        <div class="fp-bet-chips" id="fp-bet-chips" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">
+          <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
+        </div>
         <span class="fp-winning-lbl" id="fp-winning-lbl">Winning: $0.00</span>
-        <span class="fp-bankroll-lbl" id="fp-bankroll-lbl">Bankroll: $0.00</span>
+        <span class="fp-bankroll-lbl" id="fp-bankroll-lbl">Playable: $0</span>
       </div>
       <div class="fp-region" id="fp-roll-history" style="left:1.794%;top:74.362%;width:96.651%;height:5%"></div>
-      <div class="fp-region" id="fp-strikes-area" style="left:1.794%;top:60%;width:12%;height:13%">
+      <div class="fp-region" id="fp-strikes-area" style="left:1.794%;top:52%;width:44%;height:22%">
         <span id="fp-fm-label">Initial Strikes</span>
         <div id="fp-free-missiles-pips"></div>
       </div>
@@ -559,6 +569,16 @@ Tap BEGIIN GAME to start the game.</div>
       <button class="fp-region pp-invisible-btn" id="pp-begin-btn" onclick="startBattle()"
               style="left:90.132%;top:82.447%;width:7.895%;height:12.979%">Begin</button>
       <div class="fp-region" id="pp-chip-row-wrap" style="left:14.5%;top:83.617%;width:72%;height:13.298%"></div>
+      <!-- Same structure/style as the firing screen's #fp-bet-circle (Deck: "Make the setup
+           phase Bet area look identical to the Main Game's") -- replaces the old circular
+           #bet-circle-wrap widget, which stacked chips and looked visually different. -->
+      <div class="fp-region" id="pp-bet-circle" style="left:77.85%;top:58.88%;width:9%;height:13%">
+        <div class="fp-bet-chips" id="pp-bet-chips" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">
+          <span class="fp-bet-amt" id="pp-bet-amt">$0</span>
+        </div>
+        <span class="fp-winning-lbl" id="pp-winning-lbl">Winning: $0.00</span>
+        <span class="fp-bankroll-lbl" id="pp-bankroll-lbl">Playable: $0</span>
+      </div>
       <div id="pp-grid-cells"></div>
     </div>
   </div>
@@ -595,7 +615,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.33</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.34</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1170,19 +1190,11 @@ function chipBreakdownDest(amt){
   return out;
 }
 function renderBetCircle(amt){
-  const chipsEl=document.getElementById('bet-circle-chips');
-  const amtEl=document.getElementById('bet-circle-amt');
-  if(amtEl)amtEl.textContent=fmt(amt);
-  if(!chipsEl)return;
-  chipsEl.innerHTML='';
-  if(amt<=0)return;
-  chipBreakdownDest(amt).forEach((d,i)=>{
-    const img=document.createElement('img');
-    img.src='chip-blank-'+d+'.png';
-    img.draggable=false;
-    img.style.bottom=(i*5)+'px';
-    chipsEl.appendChild(img);
-  });
+  // Delegates to the same single-chip-with-overlay rendering the firing screen uses (see
+  // renderBetCirclePair) -- #pp-bet-circle replaces the old #bet-circle-wrap widget, which
+  // stacked chips and looked visually different from the main game (Deck: "Make the setup
+  // phase Bet area look identical to the Main Game's").
+  renderBetCirclePair('pp',amt);
 }
 function updateBetDisplay(){
   const bet=G.placementBet||0;
@@ -1950,8 +1962,10 @@ function moveFiringElements(){
   const buyArea=document.getElementById('fp-buy-area');
   const buyBtn=document.getElementById('buy-btn');
   const timerRow=document.getElementById('buy-timer-row');
-  if(buyArea&&buyBtn)buyArea.appendChild(buyBtn);
+  // timerRow appended BEFORE buyBtn -- #fp-buy-area is a row now, and flex lays children out
+  // in DOM order, so this is what actually puts the countdown to the LEFT of Buy Missile.
   if(buyArea&&timerRow)buyArea.appendChild(timerRow);
+  if(buyArea&&buyBtn)buyArea.appendChild(buyBtn);
   const diceResult=document.getElementById('fp-dice-result');
   const diceCanvasWrap=document.getElementById('dest-dice-canvas-wrap');
   const resultText=document.getElementById('last-result-text');
@@ -1988,10 +2002,11 @@ function hideFiringScreen(){
 let _ppMoved=false,_ppGridBuilt=false;
 // Same reuse pattern as moveFiringElements: reparent existing self-contained widgets
 // (already fully wired -- rendering, click handlers, bet math) into the new panel instead
-// of rebuilding them. jackpot-strip/free-missiles-display/bet-circle-wrap are already
-// position:absolute and self-anchoring, so they just need a new positioned ancestor;
-// placement-chip-row is normally a flex:1 child of #fire-center and gets its own sizing
-// rule (see #pp-chip-row-wrap CSS) since #placement-panel isn't a flex container.
+// of rebuilding them. jackpot-strip/free-missiles-display are already position:absolute and
+// self-anchoring, so they just need a new positioned ancestor; placement-chip-row is normally
+// a flex:1 child of #fire-center and gets its own sizing rule (see #pp-chip-row-wrap CSS)
+// since #placement-panel isn't a flex container. bet-circle-wrap is NOT reparented here
+// anymore -- #pp-bet-circle (built fresh, matching #fp-bet-circle's markup) replaces it.
 function movePlacementElements(){
   if(_ppMoved)return;
   _ppMoved=true;
@@ -2000,8 +2015,6 @@ function movePlacementElements(){
   if(panel&&jackpot)panel.appendChild(jackpot);
   const strikes=document.getElementById('free-missiles-display');
   if(panel&&strikes)panel.appendChild(strikes);
-  const betWrap=document.getElementById('bet-circle-wrap');
-  if(panel&&betWrap)panel.appendChild(betWrap);
   const chipRowWrap=document.getElementById('pp-chip-row-wrap');
   const chipRow=document.getElementById('placement-chip-row');
   if(chipRowWrap&&chipRow)chipRowWrap.appendChild(chipRow);
@@ -2228,13 +2241,15 @@ function renderFiringFireCenter(){
     }
   }
 }
-function renderFiringBetCircle(){
-  const amt=G.totalSpent||G.bet||0;
-  const betEl=document.getElementById('fp-bet-lbl');
-  if(betEl)betEl.textContent='Bet: '+fmt(amt);
-  const chipsEl=document.getElementById('fp-bet-chips');
+// Shared by both the firing screen (#fp-bet-circle) and the setup screen (#pp-bet-circle) --
+// same markup structure (chip with the amount overlaid on top, Winning/Playable below), just
+// different id prefixes, per Deck's request that the two look identical.
+function renderBetCirclePair(prefix,amt){
+  const amtEl=document.getElementById(prefix+'-bet-amt');
+  if(amtEl)amtEl.textContent=fmt(amt);
+  const chipsEl=document.getElementById(prefix+'-bet-chips');
   if(chipsEl){
-    chipsEl.innerHTML='';
+    chipsEl.querySelectorAll('img').forEach(img=>img.remove());
     if(amt>0){
       // Single chip, not a stack -- chipBreakdownDest() is sorted highest-denomination-first,
       // so its own first entry IS the highest-value chip that fits the bet.
@@ -2245,13 +2260,16 @@ function renderFiringBetCircle(){
       chipsEl.appendChild(img);
     }
   }
-  const winEl=document.getElementById('fp-winning-lbl');
+  const winEl=document.getElementById(prefix+'-winning-lbl');
   if(winEl){
     const winning=G.phase==='firing'||G.phase==='done'?computeCurrentWinnings():0;
     winEl.textContent='Winning: '+fmt(winning);
   }
-  const bankEl=document.getElementById('fp-bankroll-lbl');
-  if(bankEl)bankEl.textContent='Bankroll: '+fmt(G.bankroll);
+  const bankEl=document.getElementById(prefix+'-bankroll-lbl');
+  if(bankEl)bankEl.textContent='Playable: '+fmtS(G.bankroll);
+}
+function renderFiringBetCircle(){
+  renderBetCirclePair('fp',G.totalSpent||G.bet||0);
 }
 
 // ── UPDATE UI ────────────────────────────────────────────────────────────────
