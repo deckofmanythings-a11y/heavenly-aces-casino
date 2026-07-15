@@ -88,9 +88,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* Strikes container widened to actually fit the enlarged pips below (see .fm-pip) -- it used
    to be sized only for the old tiny 2.1em/2.8em pips and would have clipped/overlapped once
    they grew to match the setup screen's size. */
-#fp-strikes-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4em;padding:.4em;overflow:visible!important}
-#fp-strikes-area #fp-fm-label{font-size:.7em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0;text-align:center}
-#fp-strikes-area #fp-free-missiles-pips{display:flex;gap:.25em;flex-wrap:nowrap;justify-content:center;overflow-x:auto;max-width:100%}
+/* Left-justified within the region (which itself already sits left:1.794%, clear of the
+   panel's own bevel graphic) instead of centered, per Deck's request -- was align-items/
+   justify-content:center on both this and the inner pips row. */
+#fp-strikes-area{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:.4em;padding:.4em;overflow:visible!important}
+#fp-strikes-area #fp-fm-label{font-size:.7em;color:rgba(74,158,255,.7);text-transform:uppercase;flex-shrink:0;text-align:left}
+#fp-strikes-area #fp-free-missiles-pips{display:flex;gap:.25em;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;max-width:100%}
 /* Follow-Up Strikes: same WIDTH as Initial Strikes now (8em, see .initial-mode below), per
    Deck's request -- height stays smaller to keep them visually distinct as the "lesser" pip. */
 #fp-strikes-area .fm-pip{width:8em;height:2.8em;border-radius:4px;background:rgba(74,158,255,.3);border:1px solid rgba(74,158,255,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -110,8 +113,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* !important needed on the sizing props -- these elements carry inline style="font-size:
    60px..." etc. from the original bottom-bar markup (reparented here, not rebuilt), and
    inline styles beat any external stylesheet rule regardless of selector specificity. */
-#fp-buy-area #buy-offer-timer{font-size:1.1em!important;font-weight:900;color:#4a9eff;min-width:1.3em!important;text-align:center}
-#fp-buy-area #end-game-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:rgba(255,255,255,.75);font-size:.75em!important;font-weight:700;padding:.35em .7em!important;cursor:pointer}
+#fp-buy-area #buy-offer-timer{font-size:2.6em!important;font-weight:900;color:#4a9eff;min-width:1.6em!important;text-align:center}
+#fp-buy-area #end-game-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:rgba(255,255,255,.75);font-size:1.5em!important;font-weight:700;padding:.5em 1em!important;cursor:pointer}
 #fp-fire-btn{cursor:pointer;background:transparent;border:none}
 #fp-fire-btn:disabled{cursor:not-allowed}
 #fp-grid-cells{position:absolute;inset:0;z-index:2;pointer-events:none}
@@ -615,7 +618,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.34</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.35</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
