@@ -186,6 +186,19 @@ body.felt-mode #felt-stage .dc-on-box .come-half{position:static;left:auto;trans
    chain .chip-stack normally relies on to size itself off its parent. Give it a definite
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
 body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
+/* Chip anchor calibration (Deck: "I need the tool to do all 7 places... DC, DC Odds, Lay, Buy,
+   Place, Come, Come odds"). Buy/Place/Lay chips ARE the .has-stack span itself, positioned via
+   left/bottom % of their own cell (.nb-buy-left/.nb-place/.nb-lay), so overriding those two
+   properties per cell type is enough -- CSS handles those three fine. Come/DC chips live
+   nested three levels deep (come-slot-N > .come-on-box > .come-half > .chip-stack), and the
+   intermediate wrappers collapse to ~1px in felt mode (their only children are position:
+   absolute, so nothing gives them real height) -- fighting that cascade with more CSS just
+   moved the bug around. Those four (dc/dcodds/come/comeodds) are positioned directly via JS
+   instead, see positionChipAnchor() -- it sets inline left/bottom in px computed from
+   nb-mid-N's real rect, which always wins over any stylesheet rule. */
+body.felt-mode #felt-stage .nb-buy-left .has-stack,body.felt-mode #felt-stage .nb-buy .has-stack{left:var(--fc-buy-x,50%);bottom:var(--fc-buy-y,6%)}
+body.felt-mode #felt-stage .nb-place .has-stack{left:var(--fc-place-x,50%);bottom:var(--fc-place-y,6%)}
+body.felt-mode #felt-stage .nb-lay .has-stack{left:var(--fc-lay-x,50%);bottom:var(--fc-lay-y,6%)}
 body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
 .come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:#ff9a9a;font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
 
@@ -385,6 +398,10 @@ body.fm-hide-ats #lucky-roller{display:none!important}
 .calib-box .calib-label{position:absolute;top:1px;left:2px;font-size:10px;color:#0ff;background:rgba(0,0,0,.6);padding:0 3px;border-radius:2px;white-space:nowrap;pointer-events:none}
 .calib-box .calib-handle{position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;background:#0ff;border:1px solid #003;border-radius:3px;cursor:nwse-resize;pointer-events:auto}
 .calib-box .calib-dot{position:absolute;left:50%;top:50%;width:6px;height:6px;background:#f0f;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+#calib-chip-layer{position:fixed;inset:0;z-index:210;pointer-events:none}
+.calib-chip-dot{width:22px;height:22px;cursor:move}
+.calib-chip-dot .calib-chip-dotinner{position:absolute;inset:0;border-radius:50%;background:rgba(255,0,255,.55);border:2px solid #fff;box-shadow:0 0 6px rgba(255,0,255,.8)}
+.calib-chip-dot .calib-chip-lbl{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:#fff;background:rgba(0,0,0,.75);padding:1px 4px;border-radius:3px;white-space:nowrap}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
 .info-section{margin-bottom:12px}
 .info-section h3{font-size:19px;font-weight:700;color:#ffe066;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
@@ -998,7 +1015,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.15</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.16</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3159,7 +3176,17 @@ function updateUI(){
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
         if(cur>0)html+='<span class="come-odds-amt">'+fmt(cur)+'</span>';
       }
-      html+='</div>';slot.innerHTML=html;}
+      html+='</div>';slot.innerHTML=html;
+      if(feltOn){
+        // Reposition the .come-half WRAPPER (already position:absolute from its base CSS),
+        // not the .chip-stack inside it -- .come-half is width:auto/shrink-wrap, so making the
+        // chip-stack itself position:absolute would remove its only child from flow and
+        // collapse it to 0x0, breaking the very box this math is supposed to use.
+        const midEl=document.getElementById('nb-mid-'+n);
+        positionChipAnchor(document.getElementById('combox-flat-'+n),midEl,'come');
+        positionChipAnchor(document.getElementById('combox-odds-'+n),midEl,'comeodds');
+      }
+    }
     else slot.innerHTML='';
     // DC slot
     const dslot=document.getElementById('dc-slot-'+n);if(!dslot)return;
@@ -3182,6 +3209,11 @@ function updateUI(){
       }
       html+='</div>';
       dslot.innerHTML=html;
+      if(feltOn){
+        const dmidEl=document.getElementById('nb-mid-'+n);
+        positionChipAnchor(document.getElementById('dcbox-flat-'+n),dmidEl,'dc');
+        positionChipAnchor(document.getElementById('dcbox-odds-'+n),dmidEl,'dcodds');
+      }
     }else dslot.innerHTML='';
   });
   // Standard bb bets
@@ -3523,6 +3555,106 @@ function calibStartResize(e,box,sel){
   document.addEventListener('pointermove',move);
   document.addEventListener('pointerup',up);
 }
+// ── CHIP ANCHOR CALIBRATION (the 7 in-box chip spots) ──────────────────────────
+// Buy/Place/Lay/DC/DC Odds/Come/Come Odds chips aren't standalone felt elements like Hard
+// Ways or Come -- they're positioned relative to their OWN number box (see the CSS block
+// above this comment for exactly which selector each one maps to). Calibrated once, on a
+// single representative number (6), since every number's box is the same art tile just
+// translated sideways -- the resulting left%/bottom% anchor applies to all of them via CSS
+// custom properties, not per-number coordinates.
+const CALIB_CHIP_NUM=6;
+// come-half's position:absolute resolves against .nb-mid (the shared, positioned parent of
+// both come-slot-N and dc-slot-N, see .nb-mid{position:relative} in the CSS) -- NOT against
+// come-slot-N/dc-slot-N themselves, which have no in-flow content of their own and collapse
+// to ~1px tall. Using nb-mid as the calibration reference so the drag math matches what the
+// CSS inset:0 rule actually fills.
+const CALIB_CHIP_TYPES=[
+  {key:'buy',      label:'Buy',       containerId:'nb-buy-'+CALIB_CHIP_NUM},
+  {key:'place',    label:'Place',     containerId:'nb-place-'+CALIB_CHIP_NUM},
+  {key:'lay',      label:'Lay',       containerId:'nb-lay-'+CALIB_CHIP_NUM},
+  {key:'dc',       label:'DC',        containerId:'nb-mid-'+CALIB_CHIP_NUM},
+  {key:'dcodds',   label:'DC Odds',   containerId:'nb-mid-'+CALIB_CHIP_NUM},
+  {key:'come',     label:'Come',      containerId:'nb-mid-'+CALIB_CHIP_NUM},
+  {key:'comeodds', label:'Come Odds', containerId:'nb-mid-'+CALIB_CHIP_NUM}
+];
+const FOCUS_CHIP_ANCHOR_KEY='focus_chip_anchors_v1';
+function defaultChipAnchors(){
+  return {buy:{x:50,y:6},place:{x:50,y:6},lay:{x:50,y:6},dc:{x:50,y:80},dcodds:{x:50,y:65},come:{x:50,y:35},comeodds:{x:50,y:20}};
+}
+function loadChipAnchors(){
+  try{
+    const raw=localStorage.getItem(FOCUS_CHIP_ANCHOR_KEY);
+    if(!raw)return defaultChipAnchors();
+    const saved=JSON.parse(raw),def=defaultChipAnchors();
+    Object.keys(def).forEach(k=>{if(saved[k])Object.assign(def[k],saved[k]);});
+    return def;
+  }catch(e){return defaultChipAnchors();}
+}
+let focusChipAnchors=loadChipAnchors();
+function saveChipAnchors(){try{localStorage.setItem(FOCUS_CHIP_ANCHOR_KEY,JSON.stringify(focusChipAnchors));}catch(e){}}
+function applyChipAnchorVars(){
+  const root=document.documentElement;
+  Object.keys(focusChipAnchors).forEach(k=>{
+    root.style.setProperty('--fc-'+k+'-x',focusChipAnchors[k].x+'%');
+    root.style.setProperty('--fc-'+k+'-y',focusChipAnchors[k].y+'%');
+  });
+}
+// Come/DC chips sit 3 DOM levels below a wrapper (come-slot-N/dc-slot-N) that collapses to
+// ~1px tall in felt mode (see the CSS comment above .nb-buy-left .has-stack), so % positioning
+// against it is meaningless. Positioned directly here instead, in px, against nb-mid-N (a real,
+// definite-height ancestor) -- inline styles always win regardless of the wrapper chain.
+function positionChipAnchor(chipEl,refEl,anchorKey){
+  if(!chipEl||!refEl)return;
+  const a=focusChipAnchors[anchorKey];
+  const r=refEl.getBoundingClientRect();
+  const parent=chipEl.offsetParent;
+  if(!parent)return;
+  const pr=parent.getBoundingClientRect();
+  const targetCenterX=r.left+a.x/100*r.width;
+  const targetBottomY=r.bottom-a.y/100*r.height;
+  chipEl.style.position='absolute';
+  chipEl.style.left=(targetCenterX-pr.left)+'px';
+  chipEl.style.bottom=(pr.bottom-targetBottomY)+'px';
+  chipEl.style.top='auto';
+  chipEl.style.right='auto';
+  chipEl.style.transform='translateX(-50%)';
+}
+function calibChipBuildLayer(){
+  let layer=document.getElementById('calib-chip-layer');
+  if(!layer){layer=document.createElement('div');layer.id='calib-chip-layer';document.body.appendChild(layer);}
+  layer.innerHTML='';
+  CALIB_CHIP_TYPES.forEach(t=>{
+    const cont=document.getElementById(t.containerId);
+    if(!cont)return;
+    const r=cont.getBoundingClientRect();
+    const a=focusChipAnchors[t.key];
+    const px=r.left+a.x/100*r.width,py=r.bottom-a.y/100*r.height;
+    const dot=document.createElement('div');
+    dot.className='calib-chip-dot';
+    dot.style.cssText='position:fixed;left:'+px+'px;top:'+py+'px;transform:translate(-50%,-50%);pointer-events:auto';
+    dot.innerHTML='<div class="calib-chip-dotinner"></div><div class="calib-chip-lbl">'+t.label+'</div>';
+    dot.addEventListener('pointerdown',e=>calibChipStartDrag(e,dot,t,cont));
+    layer.appendChild(dot);
+  });
+}
+function calibChipStartDrag(e,dot,t,cont){
+  e.preventDefault();e.stopPropagation();
+  function move(ev){
+    const r=cont.getBoundingClientRect();
+    const xPct=Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100));
+    const yPct=Math.max(0,Math.min(100,(r.bottom-ev.clientY)/r.height*100));
+    focusChipAnchors[t.key].x=xPct;focusChipAnchors[t.key].y=yPct;
+    dot.style.left=ev.clientX+'px';dot.style.top=ev.clientY+'px';
+    applyChipAnchorVars();
+    document.getElementById('calib-selected').textContent=t.label+' chip (number '+CALIB_CHIP_NUM+') -- x:'+xPct.toFixed(1)+'% y:'+yPct.toFixed(1)+'% of its own box';
+  }
+  function up(){saveChipAnchors();document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function calibChipReflow(){ if(calibActive)calibChipBuildLayer(); }
+window.addEventListener('resize',calibChipReflow);
+
 function toggleCalibMode(){
   calibActive=!calibActive;
   document.getElementById('calib-toolbar').classList.toggle('hidden',!calibActive);
@@ -3530,17 +3662,23 @@ function toggleCalibMode(){
     closeFocusPanel();
     if(!calibState)calibState=calibInitState();
     calibBuildLayer();
+    calibChipBuildLayer();
   }else{
     const layer=document.getElementById('calib-layer');
     if(layer)layer.remove();
+    const clayer=document.getElementById('calib-chip-layer');
+    if(clayer)clayer.remove();
   }
 }
 function calibReset(){
   calibState=calibInitState();
   calibBuildLayer();
+  focusChipAnchors=defaultChipAnchors();
+  saveChipAnchors();
+  applyChipAnchorVars();
+  calibChipBuildLayer();
 }
 function calibExport(){
-  const bySel=id=>calibBaseEntries().find(e=>e[0]===id);
   const order=calibBaseEntries().map(e=>e[0]);
   let out='// Calibrated via Focus Mode\'s drag tool\n';
   order.forEach(sel=>{
@@ -3548,6 +3686,9 @@ function calibExport(){
     const tabStr=s.tab?"'"+s.tab+"'":'null';
     out+="  ['"+sel+"', "+s.x.toFixed(3)+","+s.y.toFixed(3)+","+s.w.toFixed(3)+","+s.h.toFixed(3)+","+tabStr+"],\n";
   });
+  out+='\n// Chip anchors (left%/bottom% of their own box, calibrated on number '+CALIB_CHIP_NUM+') --\n';
+  out+='// paste this whole object in place of the existing focusChipAnchors default:\n';
+  out+='const FOCUS_CHIP_ANCHORS = '+JSON.stringify(focusChipAnchors,null,2)+';\n';
   document.getElementById('calib-export-text').value=out;
   document.getElementById('modal-calib-export').classList.remove('hidden');
 }
@@ -4069,6 +4210,7 @@ async function redeemVoucher(code){
 applyGameMode('standard');
 buildFocusFeltArt();
 applyFocusVisibility();
+applyChipAnchorVars();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
 </script>
