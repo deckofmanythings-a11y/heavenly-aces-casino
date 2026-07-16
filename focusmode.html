@@ -1106,7 +1106,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.40</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.41</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1427,6 +1427,13 @@ const FELT_LAYOUT=[
   ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
   ['#info-panel',     87.00, 0.70,12.60,17.00,null],
   ['#bottom-section',  0.30,86.70,99.40,13.00,null],
+  // Hardways/Hop Bets tab buttons pulled off #left-col-header (Deck: "Pull the Hardways and
+  // Hop Bets buttons off the upper left element and put them over the Hard Ways/Hoppin Hard
+  // Ways") -- sit directly above that shared art slot as a left/right pair, always visible
+  // (not tab-gated, since you need to be able to tap either one regardless of which is
+  // currently showing). Positioned with a 10px gap above Hard Ways' own y:327.
+  ['#tab-hw',   0.250,14.278,17.5625,3.333,null],
+  ['#tab-hop', 17.828,14.278,17.5625,3.333,null],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
@@ -2943,6 +2950,7 @@ function placeBet(key,loc){setDualLoc(key,loc);
   if(key==='dp'){if(activeGame!=='standard'){addLog('Don\'t Pass: standard mode only.','info');return;}if(G.phase==='point'){addLog('Don\'t Pass: come-out only.','info');return;}}
   if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
   const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);updateUI();
+  if(tutorialActive)tutorialOnBetPlaced(key);
 }
 function removeBet(key,loc){setDualLoc(key,loc);if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];updateUI();}
 // Place bets on 6 or 8 must land in multiples of $6 for the 7-for-6 payout to resolve cleanly.
@@ -3461,7 +3469,6 @@ const FOCUS_GROUPS=[
   {key:'place',     name:'Place Bets',       desc:'Bet a number directly', perNumber:true},
   {key:'buy',       name:'Buy Bets',         desc:'Buy a number to roll', perNumber:true},
   {key:'lay',       name:'Lay Bets',         desc:'Bet against a number', perNumber:true},
-  {key:'dc',        name:'Don\'t Come (landed)', desc:'Don\'t Come chip once it lands on a number', perNumber:true},
   {key:'hardways',  name:'Hardways',         desc:'Hard 4 / 6 / 8 / 10'},
   {key:'hopbets',   name:'Hop Bets',         desc:'One-roll exact-dice-combo bets'},
   // Any 7 and Any Craps pulled out of Proposition Bets into their own item-toggle group,
@@ -3567,21 +3574,22 @@ const FM_ART=[
   // Hardways/SEVEN/Prop Bets/Any Craps ('hw' tab only -- HopHardWays/HopBets on the 'hop' tab
   // are a separate physical slot with no headroom to spare, so they're untouched here):
   // - propbets/bigred/anycraps x centered under Hardways (Hardways center = 8+1125/2 = 570.5;
-  //   573x-wide propbets/bigred/anycraps -> x=114 puts their shared center on the same 570.5,
+  //   913-wide propbets/bigred/anycraps -> x=114 puts their shared center on the same 570.5,
   //   Deck: "prop bets needs to be centered under Hard Ways better").
-  // - Whole 'hw' cluster shifted up 80px as a group (hardways/bigred/propbets all moved by the
-  //   same amount, so their existing relative gaps -- header-to-SEVEN, Hardways-to-PropBets --
-  //   stay exactly as before).
-  // - anycraps.y is now propbets.y+propbets.h+20 (flush under PropBets' real, taller height,
-  //   plus a small gap) instead of a stale fixed value from before PropBets' height was
-  //   corrected -- that's what let PropBets' now-taller art visually cover Any Craps (Deck:
-  //   "so the Seven and Any Craps elements are not overlapping anything").
+  // - bigred (SEVEN) and anycraps zero-gapped against PropBets.png's own actual pill content,
+  //   not just against the image's outer box -- row-scanned PropBets.png's alpha channel and
+  //   found its "ONE ROLL BETS" header spans local rows 0-74, then blank until the Aces/Horn/
+  //   Midnight/Yo pill cluster starts at local row 304 and runs to the image's bottom edge
+  //   (row 698, no internal margin below it). So pill-top = propbets.y+304, pill-bottom =
+  //   propbets.y+698: bigred.y = pill-top-bigred.h, anycraps.y = pill-bottom, both touching
+  //   with zero space (Deck: "no gap between Any Seven and the Horn Bet ... no gap between Any
+  //   Craps and the horn bet").
   {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:327, w:1125,h:393, tab:'hw'},
   {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:981, h:710, tab:'hop'},
   {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:334, w:1125,h:466, tab:'hop'},
-  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:851, w:913, h:218, tab:'hw'},
+  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:867, w:913, h:218, tab:'hw'},
   {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:781, w:913, h:698, tab:'hw'},
-  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1499,w:913, h:218, tab:'hw'},
+  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1479,w:913, h:218, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
 ];
 function fmPct(px,total){return px/total*100;}
@@ -3606,14 +3614,10 @@ function buildFocusFeltArt(){
     layer.appendChild(el);
   }
   FM_ART.forEach(a=>addRegion(a.id,a.img,a.x,a.y,a.w,a.h,a.group,a.num!=null?a.num:null,a.tab));
-  // DC (per-number "landed" marker) is still one small tile per number -- unchanged.
-  // y was a fixed 389 -- set back when the number line's own y was 425, i.e. a -36px offset
-  // above the number line's top. Both times the number line has been nudged up since (425->415,
-  // 415->405) that offset went stale and this marker silently drifted away from the number
-  // line, which is almost certainly Deck's "DC Travel boxes are still being rendered [in the
-  // wrong place]" report. Deriving it from NUMLINE_ART.y keeps the same -36px relationship
-  // through any future nudge instead of needing a manual fix every time.
-  ALL_NUMS.forEach(n=>addRegion('dc'+n,'DCNumberBox.png',FM_LEFT_X[n],NUMLINE_ART.y-36,138,100,'dc',n));
+  // Per-number DC "landed/travel-to" marker (DCNumberBox.png) removed entirely per Deck: "no
+  // longer needed." The real per-number landed-DC indicator is #dc-slot-N (a live chip-stack
+  // element driven by actual bet state, built in buildStrip()/updateUI()) -- that's untouched,
+  // this was only ever a decorative art overlay on top of it.
   // Number Line, Buy, Place, Lay are now each ONE full-width image spanning all 6 numbers,
   // all exactly the same size/position (NUMLINE_ART) so they stack perfectly on top of each
   // other and the number line itself. Built in this order (number line first) so #fm-art-
@@ -4381,6 +4385,52 @@ const TUTORIAL_LESSONS=[
       {title:'Your Roll',body:'The two dice are added together. Most bets win or lose based on this total.',highlight:'#dice-sum-overlay'},
       {title:'Lesson Complete',body:'Next, you will use those dice to make your first bet.',complete:true}
     ]
+  },
+  {
+    id:'passline',title:'The Pass Line',reset:true,
+    visible:['dice','roll','chip','pass'],enabled:['chip','pass'],
+    steps:[
+      {title:'The Pass Line',body:"The Pass Line is the standard starting bet in Craps.",highlight:'#pass-main'},
+      {title:'Place Your Bet',body:'Place a chip on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main'},
+      // Spec: "Enable the Roll button" -- roll stays off until here, unlike Lesson 1 where it
+      // was on from the start.
+      {title:'The Come Out Roll',body:'The first roll of a new round is called the Come Out Roll.',enabled:['chip','pass','roll']},
+      {title:'Roll a Winner',body:'On the Come Out Roll, a 7 or 11 wins the Pass Line immediately.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',enabled:['chip','pass','roll']},
+      {title:'Winner',body:'A 7 on the Come Out Roll wins your Pass Line bet.',enabled:['chip','pass','roll']},
+      {title:'Try Again',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll']},
+      {title:'Another Winner',body:'An 11 also wins the Pass Line on the Come Out Roll.',requirement:'roll',forcedRoll:11,highlight:'#roll-btn',enabled:['chip','pass','roll']},
+      {title:'Craps Numbers',body:'On the Come Out Roll, 2, 3, and 12 lose the Pass Line bet.',enabled:['chip','pass','roll']},
+      // Spec's step 9 ("place a bet, then roll, force a 3") bundles two actions in one text
+      // box -- split here into its own bet step + roll step instead, per the spec's own rule
+      // to keep each box to a single action.
+      {title:'See a Losing Roll',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll']},
+      {title:'Roll It',body:'Roll the dice.',requirement:'roll',forcedRoll:3,highlight:'#roll-btn',enabled:['chip','pass','roll']},
+      {title:'Craps',body:'A 3 on the Come Out Roll loses the Pass Line bet.',enabled:['chip','pass','roll']},
+      {title:'Lesson Complete',body:'The Come Out Roll now has two clear outcomes: 7 or 11 wins, while 2, 3, or 12 loses.',complete:true,enabled:['chip','pass','roll']}
+    ]
+  },
+  {
+    id:'point',title:'Establishing a Point',reset:true,
+    visible:['dice','roll','chip','pass','numberboxes','pointmarker'],enabled:['chip','pass','roll','numberboxes'],
+    steps:[
+      {title:'Point Numbers',body:'A Come Out Roll of 4, 5, 6, 8, 9, or 10 establishes a Point.',highlight:'#num-zone'},
+      {title:'Start a Round',body:'Place a bet on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main'},
+      {title:'Set the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
+      {title:'The Point Is 6',body:'The Point marker moves to 6. The round now continues until either 6 or 7 is rolled.',highlight:'#numbox-6'},
+      {title:'Make the Point',body:'Your Pass Line bet wins if the Point rolls again before a 7.'},
+      {title:'Other Numbers',body:'Other dice totals do not resolve the Pass Line bet. The Point stays active.',requirement:'roll',forcedRoll:9,highlight:'#roll-btn'},
+      {title:'The Round Continues',body:'A 9 does not affect this Pass Line bet. The Point is still 6.'},
+      {title:'Hit the Point',body:'Roll again.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
+      {title:'Point Made',body:'You rolled the Point before a 7, so the Pass Line wins.'},
+      {title:'Seven Out',body:'If a 7 rolls before the Point, the Pass Line loses. This is called a Seven Out.'},
+      // Spec's step 11 bundles a bet + two forced rolls into one text box -- split into three
+      // steps for the same single-action-per-box reason as Lesson 2.
+      {title:'See a Seven Out',body:'Place another Pass Line bet and establish a new Point.',requirement:'bet',betKey:'pass',highlight:'#pass-main'},
+      {title:'Roll the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn'},
+      {title:'Roll a Seven',body:'Roll again.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn'},
+      {title:'Seven Out',body:'The 7 arrived before the Point. The Pass Line loses, and a new round begins.'},
+      {title:'Lesson Complete',body:"Pass Line play follows one cycle: make a Come Out Roll, establish a Point, then roll the Point again before a 7.",complete:true}
+    ]
   }
 ];
 
@@ -4426,10 +4476,20 @@ function tutorialArrow(sel){
 function tutorialCurrentLesson(){return TUTORIAL_LESSONS[tutorialLessonIdx];}
 function tutorialCurrentStep(){const l=tutorialCurrentLesson();return l?l.steps[tutorialStepIdx]:null;}
 
+// Clears the table the same way switchGameMode() does -- used at the start of a lesson whose
+// data has reset:true (Lessons 2/3: "Reset the table before beginning"), so leftover bets/point
+// from a previous lesson (or from before the tutorial started) never bleed into a fresh one.
+function tutorialResetTable(){
+  G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
+  G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
+  updateUI();
+}
+
 function tutorialRenderStep(){
   const lesson=tutorialCurrentLesson(),step=tutorialCurrentStep();
   if(!lesson||!step){tutorialEnd(false);return;}
-  tutorialSetGroups(lesson.visible,lesson.enabled);
+  if(tutorialStepIdx===0&&lesson.reset)tutorialResetTable();
+  tutorialSetGroups(lesson.visible,step.enabled||lesson.enabled);
   tutorialActionDone=false;
   tutorialAllowEmptyRoll=!!step.allowEmptyRoll;
   document.getElementById('tt-title').textContent=step.title;
@@ -4477,6 +4537,15 @@ function tutorialOnRollResolved(d1,d2,sum){
   tutorialActionDone=true;
   document.getElementById('tt-continue').disabled=false;
   tutorialAdvance();
+}
+// Bet-placement requirement (Lessons 2/3: "Required: Place a Pass Line bet.") -- unlike a roll,
+// placing a bet doesn't auto-advance (the player might still want to add more chips or look at
+// the highlighted area before continuing), it just unlocks the Continue button.
+function tutorialOnBetPlaced(key){
+  const step=tutorialCurrentStep();
+  if(!step||step.requirement!=='bet'||step.betKey!==key)return;
+  tutorialActionDone=true;
+  document.getElementById('tt-continue').disabled=false;
 }
 
 function tutorialStart(lessonIdx){

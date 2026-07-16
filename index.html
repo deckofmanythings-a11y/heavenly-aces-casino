@@ -214,7 +214,13 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 #pass-main.active-bar{background:rgba(255,215,0,.15)}
 
 /* ── GAME MODE TOGGLE ── */
-#game-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;width:100%;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0}
+#game-mode-toggle{padding:3px;width:100%;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0;position:relative}
+#gmode-current-btn{width:100%;padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+#gmode-current-btn:hover{background:rgba(255,255,255,.14)}
+#gmode-caret{font-size:11px;opacity:.7;transition:transform .15s}
+#gmode-current-btn.open #gmode-caret{transform:rotate(180deg)}
+#gmode-dropdown{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:3px}
+#gmode-dropdown.hidden{display:none}
 .gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
 .gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
 .gmode-btn:disabled{opacity:.35;cursor:not-allowed}
@@ -806,24 +812,29 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
       <div id="game-mode-toggle">
-        <button class="gmode-btn active" id="gmode-crapless" onclick="switchGameMode('crapless')">
-          CRAPLESS<span class="gmode-sub">No naturals</span>
+        <button id="gmode-current-btn" onclick="toggleGameModeDropdown()">
+          <span id="gmode-current-label">CRAPLESS</span><span id="gmode-caret">▾</span>
         </button>
-        <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
-          STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
-          SIC-BO<span class="gmode-sub">3 dice</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
-          DESTROYER<span class="gmode-sub">Naval Strike</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('focusmode.html')" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">
-          FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('focusmode.html?tutorial=1')" style="border-color:rgba(120,255,140,.4);color:rgba(150,255,170,.9);grid-column:1/-1">
-          TUTORIAL<span class="gmode-sub">Guided lessons</span>
-        </button>
+        <div id="gmode-dropdown" class="hidden">
+          <button class="gmode-btn active" id="gmode-crapless" onclick="switchGameMode('crapless')">
+            CRAPLESS<span class="gmode-sub">No naturals</span>
+          </button>
+          <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
+            STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
+          </button>
+          <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
+            SIC-BO<span class="gmode-sub">3 dice</span>
+          </button>
+          <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
+            DESTROYER<span class="gmode-sub">Naval Strike</span>
+          </button>
+          <button class="gmode-btn" onclick="navigateAway('focusmode.html')" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">
+            FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span>
+          </button>
+          <button class="gmode-btn" onclick="navigateAway('focusmode.html?tutorial=1')" style="border-color:rgba(120,255,140,.4);color:rgba(150,255,170,.9);grid-column:1/-1">
+            TUTORIAL<span class="gmode-sub">Guided lessons</span>
+          </button>
+        </div>
       </div>
       <div style="display:flex;gap:3px;width:100%;flex:1;align-items:center;padding:3px">
         <button class="mode-btn active" id="tab-hw" onclick="switchTab('hw')" style="flex:1">
@@ -892,7 +903,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.40</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.41</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1447,6 +1458,7 @@ function applyGameMode(mode){
   // Update mode toggle buttons
   document.getElementById('gmode-crapless').classList.toggle('active',mode==='crapless');
   document.getElementById('gmode-standard').classList.toggle('active',mode==='standard');
+  document.getElementById('gmode-current-label').textContent=mode==='standard'?'STANDARD':'CRAPLESS';
   // Show/hide Don't Pass (standard = real bar, crapless = hidden entirely)
   const dps=document.getElementById('dont-pass-stub');
   const dpb=document.getElementById('dp-bar');
@@ -1506,6 +1518,7 @@ async function saveCleanState(mode){
 }
 
 async function switchGameMode(mode){
+  closeGameModeDropdown();
   if(activeGame===mode)return;
   if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before switching.','info');return;}
   const currentMode=activeGame;
@@ -1822,8 +1835,17 @@ function startSession(player){
   applyServerGameState(player); // this calls applyGameMode() internally, setting mode from saved state
   updateUI();initDice();
 }
+function toggleGameModeDropdown(){
+  document.getElementById('gmode-dropdown').classList.toggle('hidden');
+  document.getElementById('gmode-current-btn').classList.toggle('open');
+}
+function closeGameModeDropdown(){
+  document.getElementById('gmode-dropdown').classList.add('hidden');
+  document.getElementById('gmode-current-btn').classList.remove('open');
+}
 async function navigateAway(url){
   if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before leaving.','info');return;}
+  closeGameModeDropdown();
   const mode=activeGame||'crapless';
   await saveCleanState(mode);
   window.location.href=url;
