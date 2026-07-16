@@ -1006,7 +1006,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.35</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.36</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3420,9 +3420,18 @@ const FM_CANVAS_W=3200,FM_CANVAS_H=1800;
 // Buy and DC(landed) share the same x column (left half of each number box); Place and Lay
 // share the other (right half, +138px). Buy/Place sit in the top row (y=731), Lay/DC in the
 // bottom row (y=389) -- read directly off Deck's measured table, not derived/offset math.
-const FM_LEFT_X={4:1206,5:1487,6:1768,8:2049,9:2330,10:2611};   // Buy, DC
-const FM_RIGHT_X={4:1344,5:1625,6:1906,8:2187,9:2468,10:2749}; // Place, Lay
-const FM_BOX_X={4:1205,5:1486,6:1767,8:2048,9:2329,10:2610};
+const FM_LEFT_X={4:1206,5:1487,6:1768,8:2049,9:2330,10:2611};   // DC only now (Buy/Place/Lay/
+                                                                  // the number line itself are
+                                                                  // single full-width images --
+                                                                  // see NUMLINE_ART below).
+// New art set (Deck, mid-session): the whole number line (4/5/6/8/9/10) is one image now, not
+// one per number, and Buy/Place/Lay are EACH a full-width image sized/positioned identically
+// to it, meant to be stacked directly on top when their toggle is on (one, two, or all three
+// at once). Position measured directly off Craps_Felt_Modular_Hardways_and_Props.png (gold-
+// border pixel scan, same method used throughout this project) -- left edge of the "4" box to
+// the right edge of "10", top/bottom of that row. All 4 images are exactly 1710x460, so one
+// x/y/w/h serves all of them.
+const NUMLINE_ART={x:1198,y:425,w:1710,h:460};
 // Single/shared-image regions. Hardways/HopBets/PropBets ship as ONE combined image per
 // Deck's art (not one file per cell), positioned at the union bounding box of their
 // individual cells' measured coordinates, sized to the art's own native pixel dimensions
@@ -3440,17 +3449,17 @@ const FM_ART=[
   {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1385,w:1358,h:160},
   {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1257,w:1358,h:128},
   {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:867, w:1358,h:160},
-  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2891, y:386, w:275, h:450},
+  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2913, y:425, w:286, h:460},
   {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1037, w:1358,h:216},
   // Whole left column (Hardways/HopHardWays/HopBets/SEVEN/Horn(PropBets)/AnyCraps) shifted up
   // 40px as a group -- relative spacing between them (header-to-SEVEN gap, PropBets-to-
   // AnyCraps seam, etc.) all preserved since every y below moved by the same amount.
-  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:58,  y:465, w:1125,h:383, tab:'hw'},
+  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:407, w:1125,h:393, tab:'hw'},
   // Aligned to the same anchor as One Roll Bets (propbets) -- Hop Bets and Proposition
   // Bets/SEVEN occupy the same physical tab-switched real estate, so they should share the
   // same top-left corner.
   {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:970, h:692, tab:'hop'},
-  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:58,  y:465, w:1125,h:383, tab:'hop'},
+  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:334, w:1125,h:466, tab:'hop'},
   {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:172, y:931, w:913, h:152, tab:'hw'},
   // PropBets.png bakes in its own "ONE ROLL BETS" header (rows ~0-50 of the 499px-tall image)
   // followed by a ~170px transparent gap before the actual Aces/AceDeuce/Horn/Midnight/Yo
@@ -3484,23 +3493,22 @@ function buildFocusFeltArt(){
     layer.appendChild(el);
   }
   FM_ART.forEach(a=>addRegion(a.id,a.img,a.x,a.y,a.w,a.h,a.group,a.num!=null?a.num:null,a.tab));
-  // Buy/Place/Lay/DC: one shared box image, tiled per number, each toggled individually.
-  // Built BEFORE the Number Boxes below (not after) -- #fm-art-layer's children have no
-  // individual z-index, so they stack by DOM order, and Deck wants the Number Box sitting on
-  // top of these, not the other way around.
-  // Buy/Place were swapped here vs. where their REAL clickable cells (.nb-buy-left/.nb-place)
-  // actually sit -- confirmed by measuring live rects: Place+DC are the LEFT column of each
-  // number's box (~FM_LEFT_X), Buy+Lay are the RIGHT column (~FM_RIGHT_X). This mislabeling
-  // predates the chip calibration work; it's why a calibrated "Place" chip marker (faithfully
-  // matching the WRONG art tile) visually sat over the real Buy/Lay cell of the NEXT number
-  // over and stole its clicks (Deck: clicking Place-5 bet $25 onto Place-6 instead).
-  ALL_NUMS.forEach(n=>addRegion('buy'+n,'BuyBox.png',FM_RIGHT_X[n],731,138,100,'buy',n));
-  ALL_NUMS.forEach(n=>addRegion('place'+n,'PlaceBox.png',FM_LEFT_X[n],731,138,100,'place',n));
-  ALL_NUMS.forEach(n=>addRegion('lay'+n,'LayBox.png',FM_RIGHT_X[n],389,138,100,'lay',n));
+  // DC (per-number "landed" marker) is still one small tile per number -- unchanged.
   ALL_NUMS.forEach(n=>addRegion('dc'+n,'DCNumberBox.png',FM_LEFT_X[n],389,138,100,'dc',n));
-  // Number Boxes: always on, not tied to any toggle group (per Deck: "those should probably
-  // be on the felt at all times") -- and rendered last so they sit on top of Buy/Place/Lay/DC.
-  ALL_NUMS.forEach(n=>addRegion('box'+n,'Box'+n+'.png',FM_BOX_X[n],386,275,450,null,n));
+  // Number Line, Buy, Place, Lay are now each ONE full-width image spanning all 6 numbers,
+  // all exactly the same size/position (NUMLINE_ART) so they stack perfectly on top of each
+  // other and the number line itself. Built in this order (number line first) so #fm-art-
+  // layer's DOM-order stacking puts Buy/Place/Lay on top of the plain number line, matching
+  // the old "Number Box sits on top of Buy/Place/Lay/DC" intent.
+  // Visibility is all-or-nothing per type now, not per-number (there's only one image to
+  // show/hide) -- if ANY number in that category is toggled on, the whole image shows, per
+  // Deck: "If a player turns one on, just use the appropriate image... If they turn all three
+  // on, you'll want to turn all three images on, so they all will stack." See
+  // applyFocusVisibility()'s handling for the 'buy'/'place'/'lay' keys.
+  addRegion('numberline','Number_Line.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,null,null);
+  addRegion('buyall','BuyBox.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,'buy',null);
+  addRegion('placeall','PlaceBox.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,'place',null);
+  addRegion('layall','LayBox.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,'lay',null);
 }
 
 // Buy/Place/Lay/DC/DC Odds/Come/Come Odds chip positions are handled entirely by pre-existing
@@ -3558,20 +3566,31 @@ function calibBuildLayer(){
     layer.appendChild(box);
   });
 }
+// Whole-pixel snapping (Deck: "the decimals throw me off") -- calibState is still stored as %
+// (that's what the CSS positioning needs), but every value is snapped so its pixel equivalent
+// on the 3200x1800 reference canvas is always a whole number, and the live readout/export show
+// that whole-pixel number instead of the % decimal.
+function pxSnapPct(pct,total){ return Math.round(pct/100*total)/total*100; }
+function calibStatusText(sel){
+  const s=calibState[sel];
+  const px=Math.round(s.x/100*FM_CANVAS_W),py=Math.round(s.y/100*FM_CANVAS_H);
+  const pw=Math.round(s.w/100*FM_CANVAS_W),ph=Math.round(s.h/100*FM_CANVAS_H);
+  return calibLabelFor(sel)+' -- x:'+px+'px y:'+py+'px w:'+pw+'px h:'+ph+'px';
+}
 function calibStartDrag(e,box,sel){
   e.preventDefault();
   box.classList.add('dragging');
-  document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
+  document.getElementById('calib-selected').textContent=calibStatusText(sel);
   const rect=calibFeltRect();
   const startX=e.clientX,startY=e.clientY;
   const orig={x:calibState[sel].x,y:calibState[sel].y};
   function move(ev){
     const dxPct=(ev.clientX-startX)/rect.width*100;
     const dyPct=(ev.clientY-startY)/rect.height*100;
-    calibState[sel].x=orig.x+dxPct;
-    calibState[sel].y=orig.y+dyPct;
+    calibState[sel].x=pxSnapPct(orig.x+dxPct,FM_CANVAS_W);
+    calibState[sel].y=pxSnapPct(orig.y+dyPct,FM_CANVAS_H);
     box.style.left=calibState[sel].x+'%'; box.style.top=calibState[sel].y+'%';
-    document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
+    document.getElementById('calib-selected').textContent=calibStatusText(sel);
   }
   function up(){ box.classList.remove('dragging'); document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
   document.addEventListener('pointermove',move);
@@ -3585,10 +3604,10 @@ function calibStartResize(e,box,sel){
   function move(ev){
     const dwPct=(ev.clientX-startX)/rect.width*100;
     const dhPct=(ev.clientY-startY)/rect.height*100;
-    calibState[sel].w=Math.max(0.5,orig.w+dwPct);
-    calibState[sel].h=Math.max(0.5,orig.h+dhPct);
+    calibState[sel].w=pxSnapPct(Math.max(1/FM_CANVAS_W*100,orig.w+dwPct),FM_CANVAS_W);
+    calibState[sel].h=pxSnapPct(Math.max(1/FM_CANVAS_H*100,orig.h+dhPct),FM_CANVAS_H);
     box.style.width=calibState[sel].w+'%'; box.style.height=calibState[sel].h+'%';
-    document.getElementById('calib-selected').textContent=calibLabelFor(sel)+' -- x:'+calibState[sel].x.toFixed(2)+' y:'+calibState[sel].y.toFixed(2)+' w:'+calibState[sel].w.toFixed(2)+' h:'+calibState[sel].h.toFixed(2);
+    document.getElementById('calib-selected').textContent=calibStatusText(sel);
   }
   function up(){ document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
   document.addEventListener('pointermove',move);
@@ -3612,11 +3631,13 @@ function calibReset(){
 }
 function calibExport(){
   const order=calibBaseEntries().map(e=>e[0]);
-  let out='// Calibrated via Focus Mode\'s drag tool\n';
+  let out='// Calibrated via Focus Mode\'s drag tool (whole pixels, '+FM_CANVAS_W+'x'+FM_CANVAS_H+' canvas)\n';
   order.forEach(sel=>{
     const s=calibState[sel];
     const tabStr=s.tab?"'"+s.tab+"'":'null';
-    out+="  ['"+sel+"', "+s.x.toFixed(3)+","+s.y.toFixed(3)+","+s.w.toFixed(3)+","+s.h.toFixed(3)+","+tabStr+"],\n";
+    const px=Math.round(s.x/100*FM_CANVAS_W),py=Math.round(s.y/100*FM_CANVAS_H);
+    const pw=Math.round(s.w/100*FM_CANVAS_W),ph=Math.round(s.h/100*FM_CANVAS_H);
+    out+="  ['"+sel+"', "+px+","+py+","+pw+","+ph+","+tabStr+"],\n";
   });
   document.getElementById('calib-export-text').value=out;
   document.getElementById('modal-calib-export').classList.remove('hidden');
@@ -3646,7 +3667,18 @@ function applyFocusVisibility(){
   document.querySelectorAll('#fm-art-layer [data-fm-group]').forEach(el=>{
     const g=el.dataset.fmGroup;
     const num=el.dataset.fmNum;
-    let visible=num!=null?(focusVisible[g]&&focusVisible[g][num]):focusVisible[g];
+    let visible;
+    if(num!=null){
+      visible=focusVisible[g]&&focusVisible[g][num];
+    }else if(g==='buy'||g==='place'||g==='lay'){
+      // Buy/Place/Lay are now ONE stacked image for the whole number line, not one per
+      // number -- show it if ANY number in that category is toggled on (Deck: "If a player
+      // turns one on, just use the appropriate image... turns all three on, turn all three
+      // images on, so they all will stack").
+      visible=ALL_NUMS.some(n=>focusVisible[g]&&focusVisible[g][n]);
+    }else{
+      visible=focusVisible[g];
+    }
     // Hardways/Props ('hw') and Hop Bets ('hop') share the exact same felt real estate,
     // switched by the left-column tab -- both being toggle-on at once must still only show
     // whichever one matches the currently active tab.
