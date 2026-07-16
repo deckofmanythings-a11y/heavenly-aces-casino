@@ -1106,7 +1106,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.41</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.42</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -4376,7 +4376,7 @@ const TUTORIAL_SUM_PAIRS={2:[1,1],3:[1,2],4:[1,3],5:[1,4],6:[1,5],7:[3,4],8:[2,6
 
 const TUTORIAL_LESSONS=[
   {
-    id:'dice',title:'Rolling the Dice',
+    id:'dice',title:'Rolling the Dice',freeRoll:true,
     visible:['dice','roll'],enabled:['dice','roll'],
     steps:[
       {title:'Welcome to Craps',body:'Craps is a game built around the total of two dice.'},
@@ -4489,7 +4489,22 @@ function tutorialRenderStep(){
   const lesson=tutorialCurrentLesson(),step=tutorialCurrentStep();
   if(!lesson||!step){tutorialEnd(false);return;}
   if(tutorialStepIdx===0&&lesson.reset)tutorialResetTable();
-  tutorialSetGroups(lesson.visible,step.enabled||lesson.enabled);
+  // Roll is only ever enabled on the exact step that wants a roll (requirement==='roll'), or
+  // throughout a lesson explicitly flagged freeRoll (Lesson 1 -- no bets exist yet, so an
+  // early/extra roll has no game-state side effects). Never trust a lesson's or step's own
+  // 'enabled' list for 'roll' beyond that.
+  // Real softlock this caused: Lesson 2's "The Come Out Roll" step listed 'roll' as enabled
+  // (just to have it ready for the *next* step) while the Pass Line bet from the step before
+  // was already down and phase was still 'comeout'. Nothing stopped the player from rolling
+  // right there -- with tutorialForcedRoll still null, since only the *next* step sets it --
+  // so a real random roll (Deck's report: landed on 6) resolved the come-out roll for real,
+  // silently establishing a point instead of the come-out win/loss the lesson expected. Every
+  // later step assuming "still come-out" broke from there, and "place another Pass Line bet"
+  // steps got permanently rejected by placeBet()'s own phase==='point' guard with no tutorial-
+  // visible feedback -- a hard, silent softlock.
+  const stepEnabled=new Set((step.enabled||lesson.enabled).filter(k=>k!=='roll'));
+  if(step.requirement==='roll'||lesson.freeRoll)stepEnabled.add('roll');
+  tutorialSetGroups(lesson.visible,[...stepEnabled]);
   tutorialActionDone=false;
   tutorialAllowEmptyRoll=!!step.allowEmptyRoll;
   document.getElementById('tt-title').textContent=step.title;
