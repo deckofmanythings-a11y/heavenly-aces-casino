@@ -1006,7 +1006,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.36</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.37</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3530,13 +3530,49 @@ function buildFocusFeltArt(){
 // crapless mode, so CRAPLESS_LAYOUT is out of scope here.
 let calibActive=false;
 let calibState=null; // {selector: {x,y,w,h,tab}} in % of canvas, keyed by the layout array's own selector string
+// Markers for bet areas that aren't individually positioned in real STANDARD_LAYOUT/FELT_LAYOUT
+// entries -- per-number Buy/Place/Lay (baked into the new stacked Number_Line/Buy/Place/Lay art
+// instead of positioned in code), the three C/C&E/E circles (share one draggable stack,
+// .circle-stack, so aren't individually adjustable there), and the three Lucky Roller bonus
+// bars (LR_LAYOUT positions them as % of the Lucky Roller box, not the felt stage). These are
+// calibration-tool-only (calibBuildLayer() never binds them to a real element -- it's a pure
+// visual ruler), seeded so they start roughly in the right spot; drag to refine, then hand the
+// exported values back for the real position to be coded in wherever each one actually lives.
+function calibExtraEntries(){
+  const out=[];
+  const colW=NUMLINE_ART.w/6, topH=NUMLINE_ART.h*0.2159, botY=NUMLINE_ART.y+NUMLINE_ART.h*0.7768, botH=NUMLINE_ART.h*0.2232;
+  ALL_NUMS.forEach((n,i)=>{
+    const cx=NUMLINE_ART.x+colW*i, leftW=colW/2, rightX=cx+leftW, rightW=colW-leftW;
+    out.push(['@lay'+n,   fmPct(rightX,FM_CANVAS_W),fmPct(NUMLINE_ART.y,FM_CANVAS_H),fmPct(rightW,FM_CANVAS_W),fmPct(topH,FM_CANVAS_H),null]);
+    out.push(['@place'+n, fmPct(cx,FM_CANVAS_W),    fmPct(botY,FM_CANVAS_H),         fmPct(leftW,FM_CANVAS_W), fmPct(botH,FM_CANVAS_H),null]);
+    out.push(['@buy'+n,   fmPct(rightX,FM_CANVAS_W),fmPct(botY,FM_CANVAS_H),         fmPct(rightW,FM_CANVAS_W),fmPct(botH,FM_CANVAS_H),null]);
+  });
+  const cs=FELT_LAYOUT.find(e=>e[0]==='.circle-stack');
+  if(cs){
+    const cx=cs[1],cy=cs[2],cw=cs[3],ch=cs[4],third=ch/3;
+    out.push(['@circle-c',    cx,cy,       cw,third,null]);
+    out.push(['@circle-cande',cx,cy+third, cw,third,null]);
+    out.push(['@circle-e',    cx,cy+third*2,cw,third,null]);
+  }
+  const lr=FELT_LAYOUT.find(e=>e[0]==='#lucky-roller');
+  if(lr){
+    const lx=lr[1],ly=lr[2],lw=lr[3],lh=lr[4];
+    ['low','all','high'].forEach(key=>{
+      const e=LR_LAYOUT.find(x=>x[0]===key); if(!e)return;
+      const rx=e[1],ry=e[2],rw=e[3],rh=e[4];
+      out.push(['@lr-'+key, lx+rx/100*lw, ly+ry/100*lh, rw/100*lw, rh/100*lh, null]);
+    });
+  }
+  return out;
+}
 function calibBaseEntries(){
   // Bet-relevant entries only -- skip pure UI chrome (#info-panel, #left-col-header, etc.)
   // and the crapless-only zone bars, since Focus Mode is standard-only. Buy/Place/Lay/DC/DC
   // Odds/Come/Come Odds are NOT here -- their positions are handled by pre-existing felt-mode
-  // layout code (feltSplitStandardNumBox + CSS), not this calibration system.
+  // layout code (feltSplitStandardNumBox + CSS), not this calibration system; per-number
+  // markers for them come from calibExtraEntries() instead.
   const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#lucky-roller','#info-panel','#bottom-section','#num-zone']);
-  return feltLayoutFor('standard').filter(e=>!skip.has(e[0]));
+  return feltLayoutFor('standard').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
 }
 function calibInitState(){
   const st={};
