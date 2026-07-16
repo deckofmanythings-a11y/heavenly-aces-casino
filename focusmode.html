@@ -379,8 +379,16 @@ body.tutorial-hide-betonoff .off-ov{display:none!important}
 body.tutorial-disable-dice #dice-zone,body.tutorial-disable-roll #roll-btn,
 body.tutorial-disable-chip #bottom-bar,body.tutorial-disable-numberboxes #num-zone,
 body.tutorial-disable-pointmarker .puck-anchor,body.tutorial-disable-betonoff .off-ov{pointer-events:none!important;opacity:.55}
-/* Tutorial text-box overlay */
-#tutorial-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:500;
+/* Whole tutorial session (not per-step): #left-col-header holds Focus Settings, the
+   Practice Mode toggle (behind it), and game/tab navigation -- none of it is lesson content,
+   and reaching it mid-lesson can break the tutorial's assumptions (Deck's softlock: leaving
+   Practice Mode meant the next forced roll went to the real server instead, ignoring the
+   queued forced value entirely). Hidden for the whole tutorial, not just specific steps. */
+body.tutorial-hide-chrome #left-col-header{display:none!important}
+/* Tutorial text-box overlay. z-index is well above every known modal in this file (winner
+   modal, odds modal, move modal, cap modal all sit under 1000) so Continue/Skip Lesson are
+   never accidentally covered/blocked by one popping up mid-lesson. */
+#tutorial-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9000;
   width:min(92vw,460px);background:rgba(20,20,26,.97);border:1px solid rgba(255,255,255,.18);
   border-radius:12px;padding:16px 18px;box-shadow:0 8px 30px rgba(0,0,0,.5);color:#fff}
 #tutorial-box.hidden{display:none}
@@ -393,14 +401,14 @@ body.tutorial-disable-pointmarker .puck-anchor,body.tutorial-disable-betonoff .o
 #tutorial-box .tt-btns button:disabled{opacity:.4;cursor:not-allowed}
 #tutorial-box .tt-btns button.tt-continue{background:rgba(74,158,255,.35);border-color:rgba(120,180,255,.5)}
 #tutorial-box .tt-btns .tt-spacer{flex:1}
-#tutorial-highlight{position:fixed;z-index:499;border:3px solid #ffd700;border-radius:8px;
+#tutorial-highlight{position:fixed;z-index:8999;border:3px solid #ffd700;border-radius:8px;
   box-shadow:0 0 0 3px rgba(255,215,0,.25),0 0 18px rgba(255,215,0,.7);pointer-events:none;
   animation:tutorialPulse 1.4s ease-in-out infinite}
 #tutorial-highlight.hidden{display:none}
 @keyframes tutorialPulse{0%,100%{opacity:.55}50%{opacity:1}}
 /* Bouncing pointer arrow -- shown instead of "Required:" text, aimed at whatever element the
    player must actually interact with to advance a required-action step. */
-#tutorial-arrow{position:fixed;z-index:499;width:0;height:0;
+#tutorial-arrow{position:fixed;z-index:8999;width:0;height:0;
   border-left:16px solid transparent;border-right:16px solid transparent;border-top:22px solid #ffd700;
   filter:drop-shadow(0 0 6px rgba(255,215,0,.8));pointer-events:none;
   animation:tutorialArrowBounce 1s ease-in-out infinite}
@@ -1106,7 +1114,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.42</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.43</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3095,6 +3103,13 @@ async function rollDice(){
   // Lesson 1 (Rolling the Dice) rolls before the player has ever placed a bet, on purpose --
   // tutorialAllowEmptyRoll is only ever true while that lesson's "Roll the Dice" step is active.
   if(!hasWorkingBets()&&!(tutorialActive&&tutorialAllowEmptyRoll)){addLog('Place an active bet before rolling.','info');return;}
+  // Self-heal: a forced roll only ever applies through resolveFocusPractice() (the
+  // G.practiceMode branch below). If Practice Mode somehow got switched off mid-lesson --
+  // #left-col-header is now hidden for the whole tutorial session so this shouldn't be
+  // reachable anymore, but re-checking here costs nothing and guarantees a forced roll can
+  // never silently go to the real server and get ignored.
+  if(tutorialActive&&!G.practiceMode){addLog('[tutorial] Practice Mode was off -- re-enabling before this roll.','info');toggleFocusPractice(true);}
+  if(tutorialActive)addLog('[tutorial] forced roll queued: '+JSON.stringify(tutorialForcedRoll),'info');
   G.bonus.gracePeriod=false;
   document.getElementById('roll-btn').disabled=true;
   const nm=r2(G.bankrollAfterLastRoll-G.bankroll);G._lastBetDisplay=nm>0?nm:null;
@@ -3152,7 +3167,7 @@ async function rollDice(){
   feedValues([d1,d2]);            // cloche now pre-simulates and lands on d1,d2
   try{await clochePromise;}catch(e){}
   showFinalDice(d1,d2);
-  if(tutorialActive)tutorialOnRollResolved(d1,d2,sum);
+  if(tutorialActive){addLog('[tutorial] rolled d1='+d1+' d2='+d2+' sum='+sum+' practiceMode='+G.practiceMode,'info');tutorialOnRollResolved(d1,d2,sum);}
   {
     document.getElementById('dice-sum-overlay').textContent=sum;document.getElementById('dice-sum-overlay').style.opacity='1';
     // Group each roll's log into: the roll itself, then dealer barks (narrative lines with
@@ -3201,6 +3216,10 @@ async function rollDice(){
     const justEstablishedPoint=!!(thisRoll&&thisRoll.tag==='point-established');
     if(thisRoll&&thisRoll.tag==='seven-out')playVoiceSfx(SFX_SEVEN_OUT);
     function maybeOpenOddsModal(){
+      // Lessons 1-3 never teach odds bets -- a forced point-establishing roll (Lesson 3's
+      // "Set the Point") would otherwise trigger this exact prompt and block the tutorial box
+      // underneath it with no way to dismiss it from inside the guided flow.
+      if(tutorialActive)return;
       if(document.getElementById('modal-odds')&&!document.getElementById('modal-odds').classList.contains('hidden'))return;
       // Pass Line odds prompt only on the roll that set the point, not on every later roll of it
       if(justEstablishedPoint&&G.phase==='point'&&G.bets['pass']&&!G.bets['passodds']&&G.bankroll>0){
@@ -3230,6 +3249,7 @@ async function rollDice(){
     // arrived at a number), rather than inventing a separate detection mechanism. On/off status
     // doesn't matter here, per spec, so no act/betsOn check is applied.
     function maybeOpenMoveModal(){
+      if(tutorialActive)return false;
       if(document.getElementById('modal-move')&&!document.getElementById('modal-move').classList.contains('hidden'))return false;
       if(justEstablishedPoint&&G.phase==='point'&&G.point){
         const p=G.bets['place'+G.point]||0,b=G.bets['buy'+G.point]||0;
@@ -4576,6 +4596,10 @@ function tutorialStart(lessonIdx){
   tutorialActive=true;
   tutorialLessonIdx=lessonIdx||0;
   tutorialStepIdx=0;
+  // #left-col-header (Focus Settings -> Practice Mode toggle, game-mode nav) isn't lesson
+  // content and reaching it mid-lesson can break the tutorial's own assumptions -- hidden for
+  // the whole session, not just specific steps (see the CSS comment on tutorial-hide-chrome).
+  document.body.classList.add('tutorial-hide-chrome');
   document.getElementById('tutorial-popup-backdrop').classList.add('hidden');
   tutorialRenderStep();
 }
@@ -4586,6 +4610,11 @@ function tutorialEnd(skipped){
   document.getElementById('tutorial-box').classList.add('hidden');
   document.getElementById('tutorial-highlight').classList.add('hidden');
   document.getElementById('tutorial-arrow').classList.add('hidden');
+  document.body.classList.remove('tutorial-hide-chrome');
+  // Force-close any modal that might have been left open mid-lesson (e.g. an odds prompt
+  // triggered by a forced point-establishing roll) -- Skip Lesson/exiting the tutorial must
+  // always actually get the player unstuck, regardless of what else is on screen.
+  ['modal-odds','modal-move','modal-cap'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
   if(tutorialSavedVisible){focusVisible=tutorialSavedVisible;applyFocusVisibility();tutorialSavedVisible=null;}
   TUTORIAL_EXTRA_GROUPS.forEach(key=>{
     document.body.classList.remove('tutorial-hide-'+key);
