@@ -560,6 +560,11 @@ body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;paddin
 body.felt-mode.game-standard #puck-row-h{height:17.1%;padding:0;gap:2px}
 body.felt-mode.game-standard #num-strip-h{flex:1;padding:0;gap:2px}
 body.felt-mode.game-standard #felt-stage .num-box{position:relative}
+/* .num-box's default 0.5px white border/dark background (see the plain .num-box rule) was
+   drawn for the old per-number Box4-10 art; now that the whole number line is one continuous
+   image underneath, that leftover border shows up as an unwanted frame around every number
+   cell (Deck: "The frames for the DC boxes need to be removed"). */
+body.felt-mode.game-standard #felt-stage .num-box{background:transparent!important;border-color:transparent!important}
 body.felt-mode.game-standard #felt-stage .nb-buy-wrap{position:absolute;left:0;width:100%;top:0%;height:21.59%;display:flex}
 body.felt-mode.game-standard #felt-stage .nb-mid{position:absolute;left:0;width:100%;top:21.59%;height:56.09%}
 body.felt-mode.game-standard #felt-stage .nb-place-wrap{position:absolute;left:0;width:100%;top:77.68%;height:22.32%;display:flex}
@@ -1006,7 +1011,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.37</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.38</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1331,27 +1336,27 @@ const FELT_LAYOUT=[
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
   // from reference images again; this is ground truth.
-  ['@any7',           5.347,51.936,28.220, 7.890,'hw'],
-  ['@aces',           5.521,60.530, 7.440, 7.060,'hw'],
-  ['@ace2',          26.334,60.453, 7.340, 7.060,'hw'],
-  ['@horn',          12.860,64.080,13.280, 7.280,'hw'],
-  ['@midnight',       5.521,68.067, 7.440, 7.110,'hw'],
-  ['@yo',            26.248,67.990, 7.340, 7.110,'hw'],
-  ['@anyCraps',       5.433,75.606,28.220, 7.890,'hw'],
+  ['@any7',           5.344,51.944,28.219, 7.889,'hw'],
+  ['@aces',           5.531,60.556, 7.438, 7.056,'hw'],
+  ['@ace2',          26.344,60.444, 7.344, 7.056,'hw'],
+  ['@horn',          12.875,64.056,13.281, 7.278,'hw'],
+  ['@midnight',       5.531,68.056, 7.438, 7.111,'hw'],
+  ['@yo',            26.250,68.000, 7.344, 7.111,'hw'],
+  ['@anyCraps',       5.438,75.611,28.219, 7.889,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
-  ['@hop13',          4.277,52.613, 8.810, 6.220,'hop'],
-  ['@hop16',         14.983,52.689, 8.750, 6.220,'hop'],
-  ['@hop26',         25.518,52.459, 8.810, 6.220,'hop'],
-  ['@hop14',          4.320,59.383, 8.810, 6.220,'hop'],
-  ['@hop25',         14.897,59.459, 8.750, 6.220,'hop'],
-  ['@hop35',         25.518,59.383, 8.810, 6.220,'hop'],
-  ['@hop23',          4.320,66.239, 8.810, 6.220,'hop'],
-  ['@hop34',         14.940,66.163, 8.750, 6.220,'hop'],
-  ['@hop36',         25.475,66.239, 8.810, 6.220,'hop'],
-  ['@hop24',          4.320,72.713, 8.810, 6.220,'hop'],
-  ['@hop45',         25.475,72.866, 8.810, 6.220,'hop'],
-  ['@hop15',          4.277,79.799, 8.810, 6.220,'hop'],
-  ['@hop46',         25.475,79.646, 8.810, 6.220,'hop']
+  ['@hop13',          4.625,53.500, 8.812, 6.222,'hop'],
+  ['@hop16',         15.094,53.222, 8.750, 6.222,'hop'],
+  ['@hop26',         25.562,53.611, 8.812, 6.222,'hop'],
+  ['@hop14',          4.625,59.722, 8.812, 6.222,'hop'],
+  ['@hop25',         15.062,60.000, 8.750, 6.222,'hop'],
+  ['@hop35',         25.562,60.000, 8.812, 6.222,'hop'],
+  ['@hop23',          4.625,66.611, 8.812, 6.222,'hop'],
+  ['@hop34',         15.094,66.500, 8.750, 6.222,'hop'],
+  ['@hop36',         25.562,66.500, 8.812, 6.222,'hop'],
+  ['@hop24',          4.625,73.000, 8.812, 6.222,'hop'],
+  ['@hop45',         25.562,73.333, 8.812, 6.222,'hop'],
+  ['@hop15',          4.594,79.722, 8.812, 6.222,'hop'],
+  ['@hop46',         25.562,79.722, 8.812, 6.222,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
 const LR_LAYOUT=[
@@ -1394,20 +1399,26 @@ const CRAPLESS_LAYOUT=[
 const STANDARD_LAYOUT=[
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- ground
   // truth, do not re-derive from reference images again.
-  ['@hard6',           2.656,32.890, 5.970, 4.830,'hw'],
-  ['@hard10',         29.840,32.890, 5.970, 4.830,'hw'],
-  ['@hard8',           2.656,40.840, 5.970, 4.890,'hw'],
-  ['@hard4',          29.840,40.840, 5.970, 4.890,'hw'],
-  ['@hop22',           1.815,30.964,14.250, 7.890,'hop'],
-  ['@hop44',          22.620,31.041,14.250, 7.890,'hop'],
-  ['@hop33',           1.815,38.981,14.250, 7.890,'hop'],
-  ['@hop55',          22.620,38.675,14.250, 7.890,'hop'],
+  ['@hard6',           0.438,28.389,14.000, 7.500,'hw'],
+  ['@hard10',         21.000,28.111,14.219, 8.000,'hw'],
+  ['@hard8',           0.406,36.167,14.062, 7.833,'hw'],
+  ['@hard4',          21.031,36.278,14.219, 7.667,'hw'],
+  ['@hop22',          21.031,36.222,14.250, 7.889,'hop'],
+  ['@hop44',           0.312,36.167,14.250, 7.889,'hop'],
+  ['@hop33',           0.312,28.056,14.250, 7.889,'hop'],
+  ['@hop55',          21.062,28.167,14.250, 7.889,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
-  ['#dc-wait-wrap',  90.712,21.531, 8.160,25.000,null],
-  ['#come-bar',      56.458,48.122,42.440, 8.890,null],
-  ['#field-bar',     56.561,57.766,42.440,12.000,null],
-  ['#dp-bar',        56.561,69.560,42.440, 7.110,null],
-  ['#pass-bar',      56.738,77.672,42.440, 7.110,null]
+  // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
+  // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
+  ['#dc-wait-wrap',   90.875,23.667, 8.562,25.167,null],
+  // Come/Field/Don't Pass/Pass Line stacked with zero gap between rows (Deck: "should all be
+  // perfectly stacked with no space between them") -- matches the FM_ART bar images exactly
+  // (same x/w/h/seams as pass/dp/come/field below), not Deck's raw drag-tool export, so the
+  // clickable area and the visible bar always line up.
+  ['#come-bar',       56.656,48.167,42.438, 8.889,null],
+  ['#field-bar',      56.656,57.056,42.438,12.000,null],
+  ['#dp-bar',         56.656,69.056,42.438, 7.111,null],
+  ['#pass-bar',       56.656,76.167,42.438, 8.889,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 let feltActive=false,feltTab='hw';
@@ -3431,7 +3442,8 @@ const FM_LEFT_X={4:1206,5:1487,6:1768,8:2049,9:2330,10:2611};   // DC only now (
 // border pixel scan, same method used throughout this project) -- left edge of the "4" box to
 // the right edge of "10", top/bottom of that row. All 4 images are exactly 1710x460, so one
 // x/y/w/h serves all of them.
-const NUMLINE_ART={x:1198,y:425,w:1710,h:460};
+// Nudged 10px higher per Deck ("The number line should be slightly higher, like 10 pixels").
+const NUMLINE_ART={x:1198,y:415,w:1710,h:460};
 // Single/shared-image regions. Hardways/HopBets/PropBets ship as ONE combined image per
 // Deck's art (not one file per cell), positioned at the union bounding box of their
 // individual cells' measured coordinates, sized to the art's own native pixel dimensions
@@ -3441,16 +3453,18 @@ const NUMLINE_ART={x:1198,y:425,w:1710,h:460};
 // felt tab active to show, or e.g. HopBets would permanently cover Proposition Bets since
 // they occupy the exact same screen area. null = not tab-gated.
 const FM_ART=[
-  // Nudged down from Deck's measured y:1292 -- that overlapped 93px into Don't Pass (y:1257,
-  // h:128, bottom 1385) above it. Moved to start exactly where DP ends instead; DP itself
-  // stays put since it only had a 4px gap to Field above it (y:1037,h:216, bottom 1253) and
-  // shifting it up would've just traded one overlap for another. Flag if this doesn't match
-  // the actual art's intended seam.
-  {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1385,w:1358,h:160},
-  {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1257,w:1358,h:128},
+  // Come/Field/Don't Pass/Pass Line stacked with zero gap between them (Deck: "should all be
+  // perfectly stacked with no space between them") -- come's y is ground truth (867), the rest
+  // chain directly off the previous bar's bottom edge, each keeping its own already-correct
+  // height.
   {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:867, w:1358,h:160},
-  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2913, y:425, w:286, h:460},
-  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1037, w:1358,h:216},
+  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1027, w:1358,h:216},
+  {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1243,w:1358,h:128},
+  {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1371,w:1358,h:160},
+  // Adjacent to the number line's right edge with no gap (Deck: "should be adjacent to the
+  // number line with no space in-between") -- x = NUMLINE_ART.x+NUMLINE_ART.w (2908), y matches
+  // the number line's own (post -10px-nudge) top.
+  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2908, y:415, w:286, h:460},
   // Whole left column (Hardways/HopHardWays/HopBets/SEVEN/Horn(PropBets)/AnyCraps) shifted up
   // 40px as a group -- relative spacing between them (header-to-SEVEN gap, PropBets-to-
   // AnyCraps seam, etc.) all preserved since every y below moved by the same amount.
@@ -3458,17 +3472,16 @@ const FM_ART=[
   // Aligned to the same anchor as One Roll Bets (propbets) -- Hop Bets and Proposition
   // Bets/SEVEN occupy the same physical tab-switched real estate, so they should share the
   // same top-left corner.
-  {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:970, h:692, tab:'hop'},
+  // hopbets/bigred/propbets/anycraps: w/h now match each PNG's own real pixel dimensions
+  // (981x710 / 913x218 / 913x698 / 913x218 -- measured directly off the regenerated art) instead
+  // of the old, smaller pre-refresh sizes. Using a smaller box than the asset's real size forces
+  // the browser to squash it to fit, which is what was causing the "stretched" look Deck
+  // flagged -- x/y (top-left anchor) unchanged, only w/h corrected.
+  {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:981, h:710, tab:'hop'},
   {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:334, w:1125,h:466, tab:'hop'},
-  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:172, y:931, w:913, h:152, tab:'hw'},
-  // PropBets.png bakes in its own "ONE ROLL BETS" header (rows ~0-50 of the 499px-tall image)
-  // followed by a ~170px transparent gap before the actual Aces/AceDeuce/Horn/Midnight/Yo
-  // cells start around row 220 -- measured via row-by-row alpha density, not eyeballed.
-  // y:861 puts the header's bottom edge (861+50=911) exactly 20px above SEVEN (931), per
-  // Deck's exact spec; the image's bottom edge (861+499=1360) still lands almost exactly on
-  // AnyCraps's top (1359).
-  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:861, w:913, h:499, tab:'hw'},
-  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:172, y:1359,w:913, h:152, tab:'hw'},
+  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:172, y:931, w:913, h:218, tab:'hw'},
+  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:861, w:913, h:698, tab:'hw'},
+  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:172, y:1359,w:913, h:218, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
 ];
 function fmPct(px,total){return px/total*100;}
