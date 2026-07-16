@@ -401,6 +401,10 @@ body.tutorial-hide-chrome #history-strip{display:none!important}
    enabled for a bet-placement step, but no Lesson 1-3 step ever needs them -- disabled for the
    whole tutorial session regardless of 'chip' state, leaving only the chip denominations live. */
 body.tutorial-hide-chrome #bottom-bar .bar-btn{pointer-events:none!important;opacity:.4}
+/* Deck: "Restrict the player to only $1 bets during the tutorial." -- selectChip() already
+   refuses anything but $1 at the logic level; this just makes the other denominations visibly
+   inert instead of looking clickable and silently doing nothing. */
+body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!important;opacity:.35}
 /* Tutorial text-box overlay. z-index is well above every known modal in this file (winner
    modal, odds modal, move modal, cap modal all sit under 1000) so Continue/Skip Lesson are
    never accidentally covered/blocked by one popping up mid-lesson. */
@@ -417,7 +421,10 @@ body.tutorial-hide-chrome #bottom-bar .bar-btn{pointer-events:none!important;opa
 #tutorial-box .tt-btns button:disabled{opacity:.4;cursor:not-allowed}
 #tutorial-box .tt-btns button.tt-continue{background:rgba(74,158,255,.35);border-color:rgba(120,180,255,.5)}
 #tutorial-box .tt-btns .tt-spacer{flex:1}
-#tutorial-highlight{position:fixed;z-index:8999;border:3px solid #ffd700;border-radius:8px;
+/* #tutorial-highlight is just a positioning root now -- it holds 0..N .tutorial-highlight-ring
+   children (one per highlighted element), so a step can ring more than one thing at once (e.g.
+   the dice AND the number box a point just landed on). */
+.tutorial-highlight-ring{position:fixed;z-index:8999;border:3px solid #ffd700;border-radius:8px;
   box-shadow:0 0 0 3px rgba(255,215,0,.25),0 0 18px rgba(255,215,0,.7);pointer-events:none;
   animation:tutorialPulse 1.4s ease-in-out infinite}
 #tutorial-highlight.hidden{display:none}
@@ -1130,7 +1137,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.46</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.47</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2849,7 +2856,10 @@ function moveBetTo(toNum){document.getElementById('modal-move').classList.add('h
 function moveModalClose(){document.getElementById('modal-move').classList.add('hidden');moveCtx=null;const cb=moveModalCloseCB;moveModalCloseCB=null;if(cb)cb();}
 
 // ── BET ACTIONS ───────────────────────────────────────────────────────────────
-function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
+// Deck: "Restrict the player to only $1 bets during the tutorial." Logic-level, same as the
+// bet/roll gates -- CSS below also visually dims/disables the other denominations, but this
+// is what actually stops a $1 tutorial bankroll lesson from suddenly wagering $100.
+function selectChip(v){if(tutorialActive&&v!==1)return;G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
 function switchTab(t){
   ['hw','hop'].forEach(x=>{
     const tab=document.getElementById('tab-'+x);const panel=document.getElementById('panel-'+x);
@@ -3310,12 +3320,20 @@ async function rollDice(){
     // Whichever one (if either) actually opens chains to the other via its own close callback,
     // so at most one modal is ever showing at a time.
     function afterWinnerCloses(){
+      // Tutorial box was hidden (not re-rendered) just to let the winner celebration be seen --
+      // tutorialAdvance() already moved the step forward before this modal ever opened, so
+      // just un-hide it again rather than re-rendering.
+      if(tutorialActive)document.getElementById('tutorial-box').classList.remove('hidden');
       if(!maybeOpenMoveModal())maybeOpenOddsModal();
     }
-    // Every lesson step already narrates the win/loss through its own text box -- the winner
-    // celebration modal is suppressed the same as odds/move/cap during the tutorial (Deck:
-    // "suppress ALL modal pop ups during the tutorial").
-    if(data.returned>0&&!tutorialActive){
+    // Odds/move/cap prompts stay suppressed during the tutorial (Lessons 1-3 don't teach them
+    // yet), but the winner celebration itself should still show -- Deck: "Show the Winner modal
+    // whenever the player wins money during the tutorial." The tutorial box's z-index sits
+    // above every modal on purpose (so Continue/Skip Lesson can never get covered), which would
+    // otherwise bury the winner celebration right behind it -- hide it for the celebration's
+    // duration and restore it when the modal actually closes.
+    if(data.returned>0){
+      if(tutorialActive)document.getElementById('tutorial-box').classList.add('hidden');
       // Chain the odds prompt off the winner modal's ACTUAL close (timeout or tap-dismiss),
       // instead of a fixed guessed delay that could fire before or well after it's gone.
       WinnerModal.show(data.returned,{big:bigWin,onClose:afterWinnerCloses});
@@ -4289,6 +4307,18 @@ function resetPracticeBankroll(){
   addLog('Practice bankroll reset to '+fmt(FOCUS_PRACTICE_STARTING_BANKROLL)+'.','info');
 }
 
+// Tutorial state flags declared here (moved up from the tutorial engine section further down)
+// because selectChip(25) below is a bootstrap call that runs immediately at parse time --
+// referencing tutorialActive from inside selectChip() before its `let` declaration had
+// executed threw "Cannot access 'tutorialActive' before initialization" and silently aborted
+// this entire script, breaking the whole page. The rest of the tutorial engine (functions,
+// TUTORIAL_LESSONS, etc.) stays where it is -- function declarations are hoisted, only the
+// variable bindings actually needed to exist this early.
+let tutorialActive=false,tutorialLessonIdx=-1,tutorialStepIdx=-1;
+let tutorialSavedVisible=null,tutorialSavedPractice=null;
+let tutorialForcedRoll=null;
+let tutorialAllowEmptyRoll=false;
+let tutorialActionDone=false;
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth-screen').style.display!=='none')handleAuth();});
 selectChip(25);
 updateMuteVoicesBtn();
@@ -4427,12 +4457,10 @@ let tutorialProgress=loadTutorialProgress();
 // Groups the tutorial can show/hide that FOCUS_GROUPS has no concept of, since they aren't
 // optional bet types (dice, roll button, chip tray, the number line, the point puck, On/Off).
 const TUTORIAL_EXTRA_GROUPS=['dice','roll','chip','numberboxes','pointmarker','betonoff'];
-
-let tutorialActive=false,tutorialLessonIdx=-1,tutorialStepIdx=-1;
-let tutorialSavedVisible=null,tutorialSavedPractice=null; // restored on exit
-let tutorialForcedRoll=null; // [d1,d2], consumed once by resolveFocusPractice()
-let tutorialAllowEmptyRoll=false; // true only while a step's requirement is 'roll' with no bet needed
-let tutorialActionDone=false; // whether the current step's requirement has been satisfied
+// (tutorialActive/tutorialLessonIdx/tutorialStepIdx/tutorialSavedVisible/tutorialSavedPractice/
+// tutorialForcedRoll/tutorialAllowEmptyRoll/tutorialActionDone are declared earlier now, right
+// before the selectChip(25) bootstrap call that needs them to already exist -- see the comment
+// there.)
 
 // Canonical non-double dice pair for each sum 2-12 (doubles only used when a step explicitly
 // forces exact dice, e.g. Hardways/Hop lessons later).
@@ -4446,8 +4474,8 @@ const TUTORIAL_LESSONS=[
       {title:'Welcome to Craps',body:'Craps is a game built around the total of two dice.'},
       {title:'Dice Totals',body:'Each roll produces a total from 2 through 12.'},
       {title:'Roll the Dice',body:'Press Roll to see your first dice total.',requirement:'roll',highlight:'#roll-btn',allowEmptyRoll:true},
-      {title:'Your Roll',body:'The two dice are added together. Most bets win or lose based on this total.',highlight:'#dice-sum-overlay'},
-      {title:'Lesson Complete',body:'Next, you will use those dice to make your first bet.',complete:true}
+      {title:'Your Roll',body:'The two dice are added together. Most bets win or lose based on this total.',highlight:'#dice-zone'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
     ]
   },
   {
@@ -4455,22 +4483,23 @@ const TUTORIAL_LESSONS=[
     visible:['dice','roll','chip','pass'],enabled:['chip','pass'],
     steps:[
       {title:'The Pass Line',body:"The Pass Line is the standard starting bet in Craps.",highlight:'#pass-main',expectPhase:'comeout'},
-      {title:'Place Your Bet',body:'Place a chip on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'Place Your Bet',body:'Place a chip on the Pass Line. Do this by tapping the Pass Line (which will increment up the bet by the selected chip amount), or by dragging a chip from your chip tray to the Pass Line box.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
       // Spec: "Enable the Roll button" -- roll stays off until here, unlike Lesson 1 where it
       // was on from the start.
       {title:'The Come Out Roll',body:'The first roll of a new round is called the Come Out Roll.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Roll a Winner',body:'On the Come Out Roll, a 7 or 11 wins the Pass Line immediately.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Winner',body:'A 7 on the Come Out Roll wins your Pass Line bet.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Winner',body:'A 7 on the Come Out Roll wins your Pass Line bet.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Try Again',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Another Winner',body:'An 11 also wins the Pass Line on the Come Out Roll.',requirement:'roll',forcedRoll:11,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Craps Numbers',body:'On the Come Out Roll, 2, 3, and 12 lose the Pass Line bet.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Another Winner',body:'There are multiple ways to win on the Come Out Roll.',requirement:'roll',forcedRoll:11,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Eleven Wins',body:'An 11 also wins the Pass Line on the Come Out Roll.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Craps Numbers',body:'It is possible to lose your bet on the Come Out Roll.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       // Spec's step 9 ("place a bet, then roll, force a 3") bundles two actions in one text
       // box -- split here into its own bet step + roll step instead, per the spec's own rule
       // to keep each box to a single action.
       {title:'See a Losing Roll',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Roll It',body:'Roll the dice.',requirement:'roll',forcedRoll:3,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Craps',body:'A 3 on the Come Out Roll loses the Pass Line bet.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Lesson Complete',body:'The Come Out Roll now has two clear outcomes: 7 or 11 wins, while 2, 3, or 12 loses.',complete:true,enabled:['chip','pass','roll']}
+      {title:'Craps',body:'A 2, 3, or 12 on the Come Out Roll loses the Pass Line bet. You rolled a 3, so your wager is lost.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true,enabled:['chip','pass','roll']}
     ]
   },
   {
@@ -4480,20 +4509,20 @@ const TUTORIAL_LESSONS=[
       {title:'Point Numbers',body:'A Come Out Roll of 4, 5, 6, 8, 9, or 10 establishes a Point.',highlight:'#num-zone',expectPhase:'comeout'},
       {title:'Start a Round',body:'Place a bet on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
       {title:'Set the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn',expectPhase:'comeout'},
-      {title:'The Point Is 6',body:'The Point marker moves to 6. The round now continues until either 6 or 7 is rolled.',highlight:'#numbox-6',expectPhase:'point',expectPoint:6},
+      {title:'The Point Is 6',body:'The Point marker moves to 6. The round now continues until either 6 or 7 is rolled.',highlight:['#dice-zone','#numbox-6'],expectPhase:'point',expectPoint:6},
       {title:'Make the Point',body:'Your Pass Line bet wins if the Point rolls again before a 7.',expectPhase:'point',expectPoint:6},
       {title:'Other Numbers',body:'Other dice totals do not resolve the Pass Line bet. The Point stays active.',requirement:'roll',forcedRoll:9,highlight:'#roll-btn',expectPhase:'point',expectPoint:6},
-      {title:'The Round Continues',body:'A 9 does not affect this Pass Line bet. The Point is still 6.',expectPhase:'point',expectPoint:6},
+      {title:'The Round Continues',body:'A 9 does not affect this Pass Line bet. The Point is still 6.',highlight:'#dice-zone',expectPhase:'point',expectPoint:6},
       {title:'Hit the Point',body:'Roll again.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn',expectPhase:'point',expectPoint:6},
-      {title:'Point Made',body:'You rolled the Point before a 7, so the Pass Line wins.',expectPhase:'comeout'},
+      {title:'Point Made',body:'You rolled the Point before a 7, so the Pass Line wins.',highlight:'#dice-zone',expectPhase:'comeout'},
       {title:'Seven Out',body:'If a 7 rolls before the Point, the Pass Line loses. This is called a Seven Out.',expectPhase:'comeout'},
       // Spec's step 11 bundles a bet + two forced rolls into one text box -- split into three
       // steps for the same single-action-per-box reason as Lesson 2.
       {title:'See a Seven Out',body:'Place another Pass Line bet and establish a new Point.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
       {title:'Roll the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn',expectPhase:'comeout'},
       {title:'Roll a Seven',body:'Roll again.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',expectPhase:'point',expectPoint:8},
-      {title:'Seven Out',body:'The 7 arrived before the Point. The Pass Line loses, and a new round begins.',expectPhase:'comeout'},
-      {title:'Lesson Complete',body:"Pass Line play follows one cycle: make a Come Out Roll, establish a Point, then roll the Point again before a 7.",complete:true}
+      {title:'Seven Out',body:'The 7 arrived before the Point. The Pass Line loses, and a new round begins.',highlight:'#dice-zone',expectPhase:'comeout'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
     ]
   }
 ];
@@ -4513,15 +4542,28 @@ function tutorialSetGroups(visibleKeys,enabledKeys){
   });
 }
 
-function tutorialHighlight(sel){
-  const box=document.getElementById('tutorial-highlight');
-  if(!sel){box.classList.add('hidden');return;}
-  const el=document.querySelector(sel);
-  if(!el){box.classList.add('hidden');return;}
-  const r=el.getBoundingClientRect();
-  box.style.left=(r.left-4)+'px';box.style.top=(r.top-4)+'px';
-  box.style.width=(r.width+8)+'px';box.style.height=(r.height+8)+'px';
-  box.classList.remove('hidden');
+// Accepts one selector or an array of selectors -- a step can ring more than one element at
+// once (e.g. the dice AND the number box a point just landed on).
+function tutorialHighlight(sels){
+  const container=document.getElementById('tutorial-highlight');
+  const list=sels?(Array.isArray(sels)?sels:[sels]):[];
+  if(list.length===0){container.classList.add('hidden');container.innerHTML='';return;}
+  while(container.children.length<list.length){
+    const ring=document.createElement('div');ring.className='tutorial-highlight-ring';container.appendChild(ring);
+  }
+  while(container.children.length>list.length)container.removeChild(container.lastChild);
+  let any=false;
+  list.forEach((sel,i)=>{
+    const ring=container.children[i];
+    const el=document.querySelector(sel);
+    if(!el){ring.style.display='none';return;}
+    any=true;
+    const r=el.getBoundingClientRect();
+    ring.style.display='block';
+    ring.style.left=(r.left-4)+'px';ring.style.top=(r.top-4)+'px';
+    ring.style.width=(r.width+8)+'px';ring.style.height=(r.height+8)+'px';
+  });
+  container.classList.toggle('hidden',!any);
 }
 // Bouncing arrow instead of a "Required:" text line -- points straight down at the exact
 // control the player needs to tap to advance a required-action step (Deck: "put a pointer
@@ -4658,6 +4700,9 @@ function tutorialStart(lessonIdx){
   // the whole session, not just specific steps (see the CSS comment on tutorial-hide-chrome).
   document.body.classList.add('tutorial-hide-chrome');
   document.getElementById('tutorial-popup-backdrop').classList.add('hidden');
+  // Force $1 chips regardless of whatever denomination was selected before the tutorial
+  // started -- selectChip()'s own tutorial guard keeps it there from here on.
+  G.chip=1;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===1));
   tutorialRenderStep();
 }
 function tutorialEnd(skipped){
@@ -4666,6 +4711,7 @@ function tutorialEnd(skipped){
   tutorialForcedRoll=null;
   document.getElementById('tutorial-box').classList.add('hidden');
   document.getElementById('tutorial-highlight').classList.add('hidden');
+  document.getElementById('tutorial-highlight').innerHTML='';
   document.getElementById('tutorial-arrow').classList.add('hidden');
   document.body.classList.remove('tutorial-hide-chrome');
   // Force-close any modal that might have been left open mid-lesson (e.g. an odds prompt
