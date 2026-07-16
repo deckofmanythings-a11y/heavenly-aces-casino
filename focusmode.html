@@ -1130,7 +1130,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.45</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.46</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -4629,14 +4629,15 @@ function tutorialOnRollResolved(d1,d2,sum){
   document.getElementById('tt-continue').disabled=false;
   tutorialAdvance();
 }
-// Bet-placement requirement (Lessons 2/3: "Required: Place a Pass Line bet.") -- unlike a roll,
-// placing a bet doesn't auto-advance (the player might still want to add more chips or look at
-// the highlighted area before continuing), it just unlocks the Continue button.
+// Bet-placement requirement (Lessons 2/3: "Required: Place a Pass Line bet.") -- auto-advances
+// on success, same as a roll. Deck: "whenever the player needs to do an input, that should
+// automatically advance the lesson when the player gets it right."
 function tutorialOnBetPlaced(key){
   const step=tutorialCurrentStep();
   if(!step||step.requirement!=='bet'||step.betKey!==key)return;
   tutorialActionDone=true;
   document.getElementById('tt-continue').disabled=false;
+  tutorialAdvance();
 }
 
 function tutorialStart(lessonIdx){
