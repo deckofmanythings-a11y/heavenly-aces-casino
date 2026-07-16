@@ -1130,7 +1130,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.44</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.45</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2974,6 +2974,17 @@ function cancelCommission(){
   pendingCommissionAction=null;
 }
 function placeBet(key,loc){setDualLoc(key,loc);
+  // Logic-level gate, not just CSS: a FOCUS_GROUPS bet area (Pass Line, Come, etc.) has no
+  // "visible but not yet clickable" state of its own -- once its group is visible it's fully
+  // interactive, so becoming visible for the whole lesson (per the spec's own "Visible: Pass
+  // Line" for Lesson 2) meant it was clickable from the lesson's first step, not just the step
+  // that actually asks for it (Deck: "I can still place a pass line bet... a step before I am
+  // asked to"). This check is independent of any CSS/DOM state, so it can't be bypassed the
+  // way a pointer-events rule could.
+  if(tutorialActive){
+    const ts=tutorialCurrentStep();
+    if(!ts||ts.requirement!=='bet'||ts.betKey!==key){addLog('Follow the tutorial\'s highlighted step to continue.','info');return;}
+  }
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
   if(key==='pass'){if(G.passLocked){addLog('Pass Line locked.','info');return;}if(G.phase==='point'){addLog('Pass Line: come-out only.','info');return;}}
@@ -3123,6 +3134,13 @@ function totalActiveBetValue(){
 }
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
+  // Same logic-level gate as placeBet() -- the CSS pointer-events rule on #roll-btn should
+  // already stop this, but a second, DOM-independent check costs nothing and can't be
+  // bypassed by anything that slips past the CSS.
+  if(tutorialActive){
+    const ts=tutorialCurrentStep();
+    if(!ts||(ts.requirement!=='roll'&&!tutorialCurrentLesson().freeRoll)){addLog('Follow the tutorial\'s highlighted step to continue.','info');return;}
+  }
   // Lesson 1 (Rolling the Dice) rolls before the player has ever placed a bet, on purpose --
   // tutorialAllowEmptyRoll is only ever true while that lesson's "Roll the Dice" step is active.
   if(!hasWorkingBets()&&!(tutorialActive&&tutorialAllowEmptyRoll)){addLog('Place an active bet before rolling.','info');return;}
