@@ -380,13 +380,12 @@ body.tutorial-disable-dice #dice-zone,body.tutorial-disable-roll #roll-btn,
 body.tutorial-disable-chip #bottom-bar,body.tutorial-disable-numberboxes #num-zone,
 body.tutorial-disable-pointmarker .puck-anchor,body.tutorial-disable-betonoff .off-ov{pointer-events:none!important;opacity:.55}
 /* Tutorial text-box overlay */
-#tutorial-box{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;
+#tutorial-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:500;
   width:min(92vw,460px);background:rgba(20,20,26,.97);border:1px solid rgba(255,255,255,.18);
   border-radius:12px;padding:16px 18px;box-shadow:0 8px 30px rgba(0,0,0,.5);color:#fff}
 #tutorial-box.hidden{display:none}
 #tutorial-box .tt-title{font-weight:700;font-size:18px;margin-bottom:6px}
 #tutorial-box .tt-body{font-size:14px;line-height:1.4;color:rgba(255,255,255,.85)}
-#tutorial-box .tt-action{margin-top:10px;font-size:13px;font-weight:700;color:#ffd700}
 #tutorial-box .tt-btns{display:flex;gap:8px;margin-top:14px}
 #tutorial-box .tt-btns button{padding:8px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.25);
   background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer}
@@ -399,6 +398,14 @@ body.tutorial-disable-pointmarker .puck-anchor,body.tutorial-disable-betonoff .o
   animation:tutorialPulse 1.4s ease-in-out infinite}
 #tutorial-highlight.hidden{display:none}
 @keyframes tutorialPulse{0%,100%{opacity:.55}50%{opacity:1}}
+/* Bouncing pointer arrow -- shown instead of "Required:" text, aimed at whatever element the
+   player must actually interact with to advance a required-action step. */
+#tutorial-arrow{position:fixed;z-index:499;width:0;height:0;
+  border-left:16px solid transparent;border-right:16px solid transparent;border-top:22px solid #ffd700;
+  filter:drop-shadow(0 0 6px rgba(255,215,0,.8));pointer-events:none;
+  animation:tutorialArrowBounce 1s ease-in-out infinite}
+#tutorial-arrow.hidden{display:none}
+@keyframes tutorialArrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 #tutorial-popup-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:center;justify-content:center}
 #tutorial-popup-backdrop.hidden{display:none}
 #tutorial-popup{background:#181820;border:1px solid rgba(255,255,255,.2);border-radius:14px;
@@ -952,10 +959,10 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
   <!-- TUTORIAL SYSTEM -->
   <div id="tutorial-highlight" class="hidden"></div>
+  <div id="tutorial-arrow" class="hidden"></div>
   <div id="tutorial-box" class="hidden">
     <div class="tt-title" id="tt-title"></div>
     <div class="tt-body" id="tt-body"></div>
-    <div class="tt-action hidden" id="tt-action"></div>
     <div class="tt-btns">
       <button id="tt-back" onclick="tutorialBack()">Back</button>
       <button id="tt-skip" onclick="tutorialSkipLesson()">Skip Lesson</button>
@@ -1099,7 +1106,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.39</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.40</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1268,7 +1275,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           </div>
           <div id="pass-bar">
             <div id="pass-odds-cell" data-odds-type="pass" onclick="addOddsAmt('pass',G.chip)" oncontextmenu="event.preventDefault();event.stopPropagation();removeOddsAmt('pass',G.chip)">
-              <span class="odds-lbl-new">Place Odds</span>
+              <span class="odds-lbl-new"></span>
               <span class="odds-stk" id="stk-passodds"></span>
               <span class="odds-pay" id="po-limit">—</span>
             </div>
@@ -3533,8 +3540,9 @@ const FM_LEFT_X={4:1206,5:1487,6:1768,8:2049,9:2330,10:2611};   // DC only now (
 // border pixel scan, same method used throughout this project) -- left edge of the "4" box to
 // the right edge of "10", top/bottom of that row. All 4 images are exactly 1710x460, so one
 // x/y/w/h serves all of them.
-// Nudged 10px higher per Deck ("The number line should be slightly higher, like 10 pixels").
-const NUMLINE_ART={x:1198,y:415,w:1710,h:460};
+// Nudged 10px higher twice now per Deck ("The number line should be slightly higher, like 10
+// pixels" -- first pass to 415, this pass to 405).
+const NUMLINE_ART={x:1198,y:405,w:1710,h:460};
 // Single/shared-image regions. Hardways/HopBets/PropBets ship as ONE combined image per
 // Deck's art (not one file per cell), positioned at the union bounding box of their
 // individual cells' measured coordinates, sized to the art's own native pixel dimensions
@@ -3554,25 +3562,26 @@ const FM_ART=[
   {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1371,w:1358,h:160},
   // Adjacent to the number line's right edge with no gap (Deck: "should be adjacent to the
   // number line with no space in-between") -- x = NUMLINE_ART.x+NUMLINE_ART.w (2908), y matches
-  // the number line's own (post -10px-nudge) top.
-  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2908, y:415, w:286, h:460},
-  // Whole left column (Hardways/HopHardWays/HopBets/SEVEN/Horn(PropBets)/AnyCraps) shifted up
-  // 40px as a group -- relative spacing between them (header-to-SEVEN gap, PropBets-to-
-  // AnyCraps seam, etc.) all preserved since every y below moved by the same amount.
-  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:407, w:1125,h:393, tab:'hw'},
-  // Aligned to the same anchor as One Roll Bets (propbets) -- Hop Bets and Proposition
-  // Bets/SEVEN occupy the same physical tab-switched real estate, so they should share the
-  // same top-left corner.
-  // hopbets/bigred/propbets/anycraps: w/h now match each PNG's own real pixel dimensions
-  // (981x710 / 913x218 / 913x698 / 913x218 -- measured directly off the regenerated art) instead
-  // of the old, smaller pre-refresh sizes. Using a smaller box than the asset's real size forces
-  // the browser to squash it to fit, which is what was causing the "stretched" look Deck
-  // flagged -- x/y (top-left anchor) unchanged, only w/h corrected.
+  // the number line's own (now y:405) top.
+  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2908, y:405, w:286, h:460},
+  // Hardways/SEVEN/Prop Bets/Any Craps ('hw' tab only -- HopHardWays/HopBets on the 'hop' tab
+  // are a separate physical slot with no headroom to spare, so they're untouched here):
+  // - propbets/bigred/anycraps x centered under Hardways (Hardways center = 8+1125/2 = 570.5;
+  //   573x-wide propbets/bigred/anycraps -> x=114 puts their shared center on the same 570.5,
+  //   Deck: "prop bets needs to be centered under Hard Ways better").
+  // - Whole 'hw' cluster shifted up 80px as a group (hardways/bigred/propbets all moved by the
+  //   same amount, so their existing relative gaps -- header-to-SEVEN, Hardways-to-PropBets --
+  //   stay exactly as before).
+  // - anycraps.y is now propbets.y+propbets.h+20 (flush under PropBets' real, taller height,
+  //   plus a small gap) instead of a stale fixed value from before PropBets' height was
+  //   corrected -- that's what let PropBets' now-taller art visually cover Any Craps (Deck:
+  //   "so the Seven and Any Craps elements are not overlapping anything").
+  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:327, w:1125,h:393, tab:'hw'},
   {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:981, h:710, tab:'hop'},
   {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:334, w:1125,h:466, tab:'hop'},
-  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:172, y:931, w:913, h:218, tab:'hw'},
-  {id:'propbets',   img:'PropBets.png',       group:'props', x:172, y:861, w:913, h:698, tab:'hw'},
-  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:172, y:1359,w:913, h:218, tab:'hw'},
+  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:851, w:913, h:218, tab:'hw'},
+  {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:781, w:913, h:698, tab:'hw'},
+  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1499,w:913, h:218, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
 ];
 function fmPct(px,total){return px/total*100;}
@@ -3598,7 +3607,13 @@ function buildFocusFeltArt(){
   }
   FM_ART.forEach(a=>addRegion(a.id,a.img,a.x,a.y,a.w,a.h,a.group,a.num!=null?a.num:null,a.tab));
   // DC (per-number "landed" marker) is still one small tile per number -- unchanged.
-  ALL_NUMS.forEach(n=>addRegion('dc'+n,'DCNumberBox.png',FM_LEFT_X[n],389,138,100,'dc',n));
+  // y was a fixed 389 -- set back when the number line's own y was 425, i.e. a -36px offset
+  // above the number line's top. Both times the number line has been nudged up since (425->415,
+  // 415->405) that offset went stale and this marker silently drifted away from the number
+  // line, which is almost certainly Deck's "DC Travel boxes are still being rendered [in the
+  // wrong place]" report. Deriving it from NUMLINE_ART.y keeps the same -36px relationship
+  // through any future nudge instead of needing a manual fix every time.
+  ALL_NUMS.forEach(n=>addRegion('dc'+n,'DCNumberBox.png',FM_LEFT_X[n],NUMLINE_ART.y-36,138,100,'dc',n));
   // Number Line, Buy, Place, Lay are now each ONE full-width image spanning all 6 numbers,
   // all exactly the same size/position (NUMLINE_ART) so they stack perfectly on top of each
   // other and the number line itself. Built in this order (number line first) so #fm-art-
@@ -4362,7 +4377,7 @@ const TUTORIAL_LESSONS=[
     steps:[
       {title:'Welcome to Craps',body:'Craps is a game built around the total of two dice.'},
       {title:'Dice Totals',body:'Each roll produces a total from 2 through 12.'},
-      {title:'Roll the Dice',body:'Press Roll to see your first dice total.',action:'Required: Roll the dice.',requirement:'roll',allowEmptyRoll:true},
+      {title:'Roll the Dice',body:'Press Roll to see your first dice total.',requirement:'roll',highlight:'#roll-btn',allowEmptyRoll:true},
       {title:'Your Roll',body:'The two dice are added together. Most bets win or lose based on this total.',highlight:'#dice-sum-overlay'},
       {title:'Lesson Complete',body:'Next, you will use those dice to make your first bet.',complete:true}
     ]
@@ -4394,6 +4409,19 @@ function tutorialHighlight(sel){
   box.style.width=(r.width+8)+'px';box.style.height=(r.height+8)+'px';
   box.classList.remove('hidden');
 }
+// Bouncing arrow instead of a "Required:" text line -- points straight down at the exact
+// control the player needs to tap to advance a required-action step (Deck: "put a pointer
+// arrow (bouncing) at the required input to move the lesson forward on that step instead").
+function tutorialArrow(sel){
+  const arrow=document.getElementById('tutorial-arrow');
+  if(!sel){arrow.classList.add('hidden');return;}
+  const el=document.querySelector(sel);
+  if(!el){arrow.classList.add('hidden');return;}
+  const r=el.getBoundingClientRect();
+  arrow.style.left=(r.left+r.width/2-16)+'px';
+  arrow.style.top=(r.top-34)+'px';
+  arrow.classList.remove('hidden');
+}
 
 function tutorialCurrentLesson(){return TUTORIAL_LESSONS[tutorialLessonIdx];}
 function tutorialCurrentStep(){const l=tutorialCurrentLesson();return l?l.steps[tutorialStepIdx]:null;}
@@ -4406,13 +4434,14 @@ function tutorialRenderStep(){
   tutorialAllowEmptyRoll=!!step.allowEmptyRoll;
   document.getElementById('tt-title').textContent=step.title;
   document.getElementById('tt-body').textContent=step.body;
-  const actionEl=document.getElementById('tt-action');
-  if(step.action){actionEl.textContent=step.action;actionEl.classList.remove('hidden');}
-  else actionEl.classList.add('hidden');
   document.getElementById('tt-continue').disabled=!!step.requirement;
   document.getElementById('tt-continue').textContent=step.complete?'Finish':'Continue';
   document.getElementById('tt-back').disabled=tutorialStepIdx===0;
-  tutorialHighlight(step.highlight);
+  // Required-action steps get the bouncing arrow (pointing at what the player must tap)
+  // instead of the static pulsing highlight ring; a plain look-here step (no requirement)
+  // still gets the ring. Never both, and no arrow at all on a step that just needs Continue.
+  if(step.requirement){tutorialArrow(step.highlight);tutorialHighlight(null);}
+  else{tutorialArrow(null);tutorialHighlight(step.highlight);}
   document.getElementById('tutorial-box').classList.remove('hidden');
   if(step.forcedRoll!=null){
     tutorialForcedRoll=Array.isArray(step.forcedRoll)?step.forcedRoll:TUTORIAL_SUM_PAIRS[step.forcedRoll];
@@ -4472,6 +4501,7 @@ function tutorialEnd(skipped){
   tutorialForcedRoll=null;
   document.getElementById('tutorial-box').classList.add('hidden');
   document.getElementById('tutorial-highlight').classList.add('hidden');
+  document.getElementById('tutorial-arrow').classList.add('hidden');
   if(tutorialSavedVisible){focusVisible=tutorialSavedVisible;applyFocusVisibility();tutorialSavedVisible=null;}
   TUTORIAL_EXTRA_GROUPS.forEach(key=>{
     document.body.classList.remove('tutorial-hide-'+key);
