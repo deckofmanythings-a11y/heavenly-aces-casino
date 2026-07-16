@@ -366,6 +366,55 @@ body.fm-hide-hardways #panel-hw .hw-grid{display:none!important}
 body.fm-hide-hopbets #panel-hop{display:none!important}
 body.fm-hide-props #prop-block,body.fm-hide-props #circles-col .circle-stack{display:none!important}
 body.fm-hide-ats #lucky-roller{display:none!important}
+/* Tutorial-only groups: table elements the normal focusVisible/FOCUS_GROUPS toggle system has
+   no concept of, since they're not optional bet types (dice, roll button, chip tray, the
+   number line itself, the point puck, bet On/Off controls). The tutorial gets its own body
+   classes for these instead of teaching FOCUS_GROUPS about non-bet UI. */
+body.tutorial-hide-dice #dice-zone{display:none!important}
+body.tutorial-hide-roll #roll-btn{display:none!important}
+body.tutorial-hide-chip #bottom-bar{display:none!important}
+body.tutorial-hide-numberboxes #num-zone,body.tutorial-hide-numberboxes #dc-wait-wrap{display:none!important}
+body.tutorial-hide-pointmarker .puck-anchor{display:none!important}
+body.tutorial-hide-betonoff .off-ov{display:none!important}
+body.tutorial-disable-dice #dice-zone,body.tutorial-disable-roll #roll-btn,
+body.tutorial-disable-chip #bottom-bar,body.tutorial-disable-numberboxes #num-zone,
+body.tutorial-disable-pointmarker .puck-anchor,body.tutorial-disable-betonoff .off-ov{pointer-events:none!important;opacity:.55}
+/* Tutorial text-box overlay */
+#tutorial-box{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;
+  width:min(92vw,460px);background:rgba(20,20,26,.97);border:1px solid rgba(255,255,255,.18);
+  border-radius:12px;padding:16px 18px;box-shadow:0 8px 30px rgba(0,0,0,.5);color:#fff}
+#tutorial-box.hidden{display:none}
+#tutorial-box .tt-title{font-weight:700;font-size:18px;margin-bottom:6px}
+#tutorial-box .tt-body{font-size:14px;line-height:1.4;color:rgba(255,255,255,.85)}
+#tutorial-box .tt-action{margin-top:10px;font-size:13px;font-weight:700;color:#ffd700}
+#tutorial-box .tt-btns{display:flex;gap:8px;margin-top:14px}
+#tutorial-box .tt-btns button{padding:8px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer}
+#tutorial-box .tt-btns button:hover{background:rgba(255,255,255,.16)}
+#tutorial-box .tt-btns button:disabled{opacity:.4;cursor:not-allowed}
+#tutorial-box .tt-btns button.tt-continue{background:rgba(74,158,255,.35);border-color:rgba(120,180,255,.5)}
+#tutorial-box .tt-btns .tt-spacer{flex:1}
+#tutorial-highlight{position:fixed;z-index:499;border:3px solid #ffd700;border-radius:8px;
+  box-shadow:0 0 0 3px rgba(255,215,0,.25),0 0 18px rgba(255,215,0,.7);pointer-events:none;
+  animation:tutorialPulse 1.4s ease-in-out infinite}
+#tutorial-highlight.hidden{display:none}
+@keyframes tutorialPulse{0%,100%{opacity:.55}50%{opacity:1}}
+#tutorial-popup-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:center;justify-content:center}
+#tutorial-popup-backdrop.hidden{display:none}
+#tutorial-popup{background:#181820;border:1px solid rgba(255,255,255,.2);border-radius:14px;
+  padding:24px;width:min(90vw,420px);color:#fff;text-align:center}
+#tutorial-popup h3{margin:0 0 10px;font-size:20px}
+#tutorial-popup p{color:rgba(255,255,255,.75);font-size:14px;margin:0 0 18px}
+#tutorial-popup .tt-btns{display:flex;gap:10px;justify-content:center}
+#tutorial-popup button{padding:10px 18px;border-radius:8px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(74,158,255,.35);color:#fff;font-weight:700;cursor:pointer}
+#tutorial-popup button.tt-secondary{background:rgba(255,255,255,.08)}
+#tutorial-debug-panel{position:fixed;top:10px;right:10px;z-index:501;background:rgba(20,20,26,.97);
+  border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px;color:#fff;font-size:12px;
+  width:220px}
+#tutorial-debug-panel.hidden{display:none}
+#tutorial-debug-panel select,#tutorial-debug-panel input{width:100%;margin-bottom:6px;box-sizing:border-box}
+#tutorial-debug-panel button{width:100%;margin-bottom:6px;padding:5px;border-radius:5px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
 /* New art overlay layer -- positioned as % of the 3200x1800 BlankFelt.png canvas, same
    convention as the baked-art panels in destroyer.html. Pure visual layout pass for now
    (pointer-events:none) so Deck can check scale/position before this gets wired to real
@@ -894,10 +943,49 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="modal-btn" onclick="focusShowAll()">Show All</button>
         <button class="modal-btn cancel" onclick="closeFocusPanel()">Done</button>
       </div>
-      <div style="margin-top:8px;text-align:right">
+      <div style="margin-top:8px;text-align:right;display:flex;gap:8px;justify-content:flex-end">
         <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleCalibMode()">🎯 Calibrate Positions (Debug)</button>
+        <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleTutorialDebug()">🎓 Tutorial (Debug)</button>
       </div>
     </div>
+  </div>
+
+  <!-- TUTORIAL SYSTEM -->
+  <div id="tutorial-highlight" class="hidden"></div>
+  <div id="tutorial-box" class="hidden">
+    <div class="tt-title" id="tt-title"></div>
+    <div class="tt-body" id="tt-body"></div>
+    <div class="tt-action hidden" id="tt-action"></div>
+    <div class="tt-btns">
+      <button id="tt-back" onclick="tutorialBack()">Back</button>
+      <button id="tt-skip" onclick="tutorialSkipLesson()">Skip Lesson</button>
+      <div class="tt-spacer"></div>
+      <button class="tt-continue" id="tt-continue" onclick="tutorialAdvance()">Continue</button>
+    </div>
+  </div>
+  <div id="tutorial-popup-backdrop" class="hidden">
+    <div id="tutorial-popup">
+      <h3>Learn Craps</h3>
+      <p>Would you like to play a short guided tutorial before you start?</p>
+      <div class="tt-btns">
+        <button onclick="tutorialStartFromPopup()">Start Tutorial</button>
+        <button class="tt-secondary" onclick="tutorialSkipFromPopup()">Skip</button>
+      </div>
+    </div>
+  </div>
+  <div id="tutorial-debug-panel" class="hidden">
+    <div style="font-weight:700;margin-bottom:6px">Tutorial Debug</div>
+    <select id="td-lesson"></select>
+    <input id="td-step" type="number" min="1" value="1" placeholder="Step #">
+    <button onclick="tutorialDebugJump()">Jump to Lesson/Step</button>
+    <button onclick="tutorialDebugRestart()">Restart Lesson</button>
+    <input id="td-force" type="text" placeholder="Force roll: sum or d1,d2">
+    <button onclick="tutorialDebugForceRoll()">Queue Forced Roll</button>
+    <button onclick="tutorialDebugCompleteAction()">Complete Current Action</button>
+    <button onclick="tutorialDebugShowGroups()">Show All Group Names</button>
+    <button onclick="tutorialDebugReset()">Reset Tutorial Progress</button>
+    <button onclick="tutorialEnd(false)">Exit Tutorial</button>
+    <button onclick="toggleTutorialDebug()">Close</button>
   </div>
 
   <!-- CALIBRATION MODE: drag/resize every bet target directly on the real felt instead of
@@ -1011,7 +1099,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.38</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.39</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2989,7 +3077,9 @@ function totalActiveBetValue(){
 }
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
-  if(!hasWorkingBets()){addLog('Place an active bet before rolling.','info');return;}
+  // Lesson 1 (Rolling the Dice) rolls before the player has ever placed a bet, on purpose --
+  // tutorialAllowEmptyRoll is only ever true while that lesson's "Roll the Dice" step is active.
+  if(!hasWorkingBets()&&!(tutorialActive&&tutorialAllowEmptyRoll)){addLog('Place an active bet before rolling.','info');return;}
   G.bonus.gracePeriod=false;
   document.getElementById('roll-btn').disabled=true;
   const nm=r2(G.bankrollAfterLastRoll-G.bankroll);G._lastBetDisplay=nm>0?nm:null;
@@ -3047,6 +3137,7 @@ async function rollDice(){
   feedValues([d1,d2]);            // cloche now pre-simulates and lands on d1,d2
   try{await clochePromise;}catch(e){}
   showFinalDice(d1,d2);
+  if(tutorialActive)tutorialOnRollResolved(d1,d2,sum);
   {
     document.getElementById('dice-sum-overlay').textContent=sum;document.getElementById('dice-sum-overlay').style.opacity='1';
     // Group each roll's log into: the roll itself, then dealer barks (narrative lines with
@@ -4060,7 +4151,12 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
   return{bankroll,returned};
 }
 function resolveFocusPractice(){
-  const d1=1+Math.floor(Math.random()*6),d2=1+Math.floor(Math.random()*6);
+  // Tutorial forced rolls consume tutorialForcedRoll (set by tutorialForceRoll()/the debug
+  // panel) exactly once, then fall back to normal randomness -- outside tutorial mode this is
+  // always null, so real play/Practice Mode randomness is untouched.
+  let d1,d2;
+  if(tutorialForcedRoll){[d1,d2]=tutorialForcedRoll;tutorialForcedRoll=null;}
+  else{d1=1+Math.floor(Math.random()*6);d2=1+Math.floor(Math.random()*6);}
   const log=[];
   // Deep-clone so focusLocalResolve can freely mutate without corrupting G until we've
   // committed the result -- same pattern the server uses (JSON.parse(JSON.stringify(...))).
@@ -4233,12 +4329,231 @@ async function redeemVoucher(code){
   loadVoucherList();
 }
 
+// ── TUTORIAL SYSTEM ───────────────────────────────────────────────────────────
+// Fundamentals pass: the reusable engine (step data → visibility/enable control → text-box UI →
+// forced rolls → persistence), proven out with Lesson 1 only. Every later lesson from "Craps
+// Tutorial System.pdf" plugs into TUTORIAL_LESSONS the same way -- no engine changes expected.
+const TUTORIAL_STORAGE_KEY='rh_focus_tutorial_progress';
+function loadTutorialProgress(){
+  try{const raw=JSON.parse(localStorage.getItem(TUTORIAL_STORAGE_KEY));return raw||{completed:[],skipped:false};}
+  catch(e){return{completed:[],skipped:false};}
+}
+function saveTutorialProgress(){try{localStorage.setItem(TUTORIAL_STORAGE_KEY,JSON.stringify(tutorialProgress));}catch(e){}}
+let tutorialProgress=loadTutorialProgress();
+
+// Groups the tutorial can show/hide that FOCUS_GROUPS has no concept of, since they aren't
+// optional bet types (dice, roll button, chip tray, the number line, the point puck, On/Off).
+const TUTORIAL_EXTRA_GROUPS=['dice','roll','chip','numberboxes','pointmarker','betonoff'];
+
+let tutorialActive=false,tutorialLessonIdx=-1,tutorialStepIdx=-1;
+let tutorialSavedVisible=null,tutorialSavedPractice=null; // restored on exit
+let tutorialForcedRoll=null; // [d1,d2], consumed once by resolveFocusPractice()
+let tutorialAllowEmptyRoll=false; // true only while a step's requirement is 'roll' with no bet needed
+let tutorialActionDone=false; // whether the current step's requirement has been satisfied
+
+// Canonical non-double dice pair for each sum 2-12 (doubles only used when a step explicitly
+// forces exact dice, e.g. Hardways/Hop lessons later).
+const TUTORIAL_SUM_PAIRS={2:[1,1],3:[1,2],4:[1,3],5:[1,4],6:[1,5],7:[3,4],8:[2,6],9:[4,5],10:[4,6],11:[5,6],12:[6,6]};
+
+const TUTORIAL_LESSONS=[
+  {
+    id:'dice',title:'Rolling the Dice',
+    visible:['dice','roll'],enabled:['dice','roll'],
+    steps:[
+      {title:'Welcome to Craps',body:'Craps is a game built around the total of two dice.'},
+      {title:'Dice Totals',body:'Each roll produces a total from 2 through 12.'},
+      {title:'Roll the Dice',body:'Press Roll to see your first dice total.',action:'Required: Roll the dice.',requirement:'roll',allowEmptyRoll:true},
+      {title:'Your Roll',body:'The two dice are added together. Most bets win or lose based on this total.',highlight:'#dice-sum-overlay'},
+      {title:'Lesson Complete',body:'Next, you will use those dice to make your first bet.',complete:true}
+    ]
+  }
+];
+
+function tutorialSetGroups(visibleKeys,enabledKeys){
+  const on=new Set(visibleKeys),en=new Set(enabledKeys||visibleKeys);
+  FOCUS_GROUPS.forEach(g=>{
+    const show=on.has(g.key);
+    if(g.perNumber){ALL_NUMS.forEach(n=>focusVisible[g.key][n]=show);}
+    else if(g.items){g.items.forEach(it=>focusVisible[g.key][it.key]=show);}
+    else focusVisible[g.key]=show;
+  });
+  applyFocusVisibility();
+  TUTORIAL_EXTRA_GROUPS.forEach(key=>{
+    document.body.classList.toggle('tutorial-hide-'+key,!on.has(key));
+    document.body.classList.toggle('tutorial-disable-'+key,on.has(key)&&!en.has(key));
+  });
+}
+
+function tutorialHighlight(sel){
+  const box=document.getElementById('tutorial-highlight');
+  if(!sel){box.classList.add('hidden');return;}
+  const el=document.querySelector(sel);
+  if(!el){box.classList.add('hidden');return;}
+  const r=el.getBoundingClientRect();
+  box.style.left=(r.left-4)+'px';box.style.top=(r.top-4)+'px';
+  box.style.width=(r.width+8)+'px';box.style.height=(r.height+8)+'px';
+  box.classList.remove('hidden');
+}
+
+function tutorialCurrentLesson(){return TUTORIAL_LESSONS[tutorialLessonIdx];}
+function tutorialCurrentStep(){const l=tutorialCurrentLesson();return l?l.steps[tutorialStepIdx]:null;}
+
+function tutorialRenderStep(){
+  const lesson=tutorialCurrentLesson(),step=tutorialCurrentStep();
+  if(!lesson||!step){tutorialEnd(false);return;}
+  tutorialSetGroups(lesson.visible,lesson.enabled);
+  tutorialActionDone=false;
+  tutorialAllowEmptyRoll=!!step.allowEmptyRoll;
+  document.getElementById('tt-title').textContent=step.title;
+  document.getElementById('tt-body').textContent=step.body;
+  const actionEl=document.getElementById('tt-action');
+  if(step.action){actionEl.textContent=step.action;actionEl.classList.remove('hidden');}
+  else actionEl.classList.add('hidden');
+  document.getElementById('tt-continue').disabled=!!step.requirement;
+  document.getElementById('tt-continue').textContent=step.complete?'Finish':'Continue';
+  document.getElementById('tt-back').disabled=tutorialStepIdx===0;
+  tutorialHighlight(step.highlight);
+  document.getElementById('tutorial-box').classList.remove('hidden');
+  if(step.forcedRoll!=null){
+    tutorialForcedRoll=Array.isArray(step.forcedRoll)?step.forcedRoll:TUTORIAL_SUM_PAIRS[step.forcedRoll];
+  }
+}
+
+function tutorialAdvance(){
+  const step=tutorialCurrentStep();
+  if(step&&step.requirement&&!tutorialActionDone)return; // Continue is disabled in this case anyway
+  if(step&&step.complete){tutorialCompleteLesson();return;}
+  const lesson=tutorialCurrentLesson();
+  if(tutorialStepIdx<lesson.steps.length-1){tutorialStepIdx++;tutorialRenderStep();}
+  else tutorialCompleteLesson();
+}
+function tutorialBack(){
+  if(tutorialStepIdx>0){tutorialStepIdx--;tutorialRenderStep();}
+}
+function tutorialCompleteLesson(){
+  const lesson=tutorialCurrentLesson();
+  if(lesson&&!tutorialProgress.completed.includes(lesson.id)){
+    tutorialProgress.completed.push(lesson.id);saveTutorialProgress();
+  }
+  // Fundamentals pass only ships Lesson 1 -- once more lessons are added this moves to the
+  // next TUTORIAL_LESSONS entry instead of ending outright.
+  if(tutorialLessonIdx<TUTORIAL_LESSONS.length-1){tutorialLessonIdx++;tutorialStepIdx=0;tutorialRenderStep();}
+  else tutorialEnd(false);
+}
+function tutorialSkipLesson(){tutorialEnd(true);}
+
+function tutorialOnRollResolved(d1,d2,sum){
+  const step=tutorialCurrentStep();
+  if(!step||step.requirement!=='roll')return;
+  tutorialActionDone=true;
+  document.getElementById('tt-continue').disabled=false;
+  tutorialAdvance();
+}
+
+function tutorialStart(lessonIdx){
+  const wasPractice=!!G.practiceMode;
+  if(!wasPractice){
+    toggleFocusPractice(true);
+    // toggleFocusPractice() silently refuses to switch with live bets or a roll in flight --
+    // never let the tutorial's forced rolls run against the real bankroll if that happened.
+    if(!G.practiceMode){addLog('Clear your bets before starting the tutorial.','info');return;}
+  }
+  tutorialSavedVisible=JSON.parse(JSON.stringify(focusVisible));
+  tutorialSavedPractice=wasPractice;
+  tutorialActive=true;
+  tutorialLessonIdx=lessonIdx||0;
+  tutorialStepIdx=0;
+  document.getElementById('tutorial-popup-backdrop').classList.add('hidden');
+  tutorialRenderStep();
+}
+function tutorialEnd(skipped){
+  if(skipped)tutorialProgress.skipped=true,saveTutorialProgress();
+  tutorialActive=false;
+  tutorialForcedRoll=null;
+  document.getElementById('tutorial-box').classList.add('hidden');
+  document.getElementById('tutorial-highlight').classList.add('hidden');
+  if(tutorialSavedVisible){focusVisible=tutorialSavedVisible;applyFocusVisibility();tutorialSavedVisible=null;}
+  TUTORIAL_EXTRA_GROUPS.forEach(key=>{
+    document.body.classList.remove('tutorial-hide-'+key);
+    document.body.classList.remove('tutorial-disable-'+key);
+  });
+  if(tutorialSavedPractice!==null&&!tutorialSavedPractice&&G.practiceMode)toggleFocusPractice(false);
+  tutorialSavedPractice=null;
+}
+function tutorialStartFromPopup(){tutorialStart(0);}
+function tutorialSkipFromPopup(){
+  document.getElementById('tutorial-popup-backdrop').classList.add('hidden');
+  tutorialProgress.skipped=true;saveTutorialProgress();
+}
+function tutorialMaybeShowPopup(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('tutorial')==='1'){tutorialStart(0);return;}
+  if(tutorialProgress.completed.length===0&&!tutorialProgress.skipped){
+    document.getElementById('tutorial-popup-backdrop').classList.remove('hidden');
+  }
+}
+
+// ── Tutorial debug panel ──────────────────────────────────────────────────────
+function toggleTutorialDebug(){
+  const panel=document.getElementById('tutorial-debug-panel');
+  const opening=panel.classList.contains('hidden');
+  panel.classList.toggle('hidden');
+  if(opening){
+    const sel=document.getElementById('td-lesson');
+    sel.innerHTML=TUTORIAL_LESSONS.map((l,i)=>'<option value="'+i+'">'+(i+1)+'. '+l.title+'</option>').join('');
+    if(tutorialActive)sel.value=tutorialLessonIdx;
+  }
+}
+function tutorialDebugJump(){
+  const li=+document.getElementById('td-lesson').value;
+  const si=Math.max(1,+document.getElementById('td-step').value||1)-1;
+  if(!tutorialActive)tutorialStart(li);
+  else{tutorialLessonIdx=li;}
+  tutorialStepIdx=Math.min(si,TUTORIAL_LESSONS[li].steps.length-1);
+  tutorialRenderStep();
+}
+function tutorialDebugRestart(){
+  if(!tutorialActive)return;
+  tutorialStepIdx=0;tutorialRenderStep();
+}
+function tutorialDebugForceRoll(){
+  const raw=document.getElementById('td-force').value.trim();
+  if(!raw)return;
+  if(raw.includes(',')){
+    const[a,b]=raw.split(',').map(n=>parseInt(n,10));
+    if(a>=1&&a<=6&&b>=1&&b<=6)tutorialForcedRoll=[a,b];
+  }else{
+    const sum=parseInt(raw,10);
+    if(TUTORIAL_SUM_PAIRS[sum])tutorialForcedRoll=TUTORIAL_SUM_PAIRS[sum];
+  }
+}
+function tutorialDebugCompleteAction(){
+  const step=tutorialCurrentStep();
+  if(!step)return;
+  tutorialActionDone=true;
+  document.getElementById('tt-continue').disabled=false;
+}
+function tutorialDebugShowGroups(){
+  const names=FOCUS_GROUPS.map(g=>g.key).concat(TUTORIAL_EXTRA_GROUPS);
+  addLog('Tutorial groups: '+names.join(', '),'info');
+}
+function tutorialDebugReset(){
+  tutorialProgress={completed:[],skipped:false};saveTutorialProgress();
+  addLog('Tutorial progress reset.','info');
+}
+
 // Bootstraps straight into 'standard' mode (Focus Mode has no Crapless option). Deliberately
 // placed at the very end of the script, after every other top-level let/const/function here --
 // see the comment left at this call's original position for why.
 applyGameMode('standard');
 buildFocusFeltArt();
 applyFocusVisibility();
+// Deferred: cloche-dice.js (ClocheDice, used by toggleFocusPractice()'s guard) loads via a
+// <script src> tag further down the page and isn't parsed yet at this point in the inline
+// script -- calling tutorialStart() this early threw a ReferenceError inside that guard and
+// silently aborted before tutorialActive ever got set. Letting the load event pass first
+// guarantees every deferred script tag below this one has already run.
+window.addEventListener('load',tutorialMaybeShowPopup);
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
 </script>
