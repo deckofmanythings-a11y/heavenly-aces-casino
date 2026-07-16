@@ -375,10 +375,11 @@ body.tutorial-hide-roll #roll-btn{display:none!important}
 body.tutorial-hide-chip #bottom-bar{display:none!important}
 body.tutorial-hide-numberboxes #num-zone,body.tutorial-hide-numberboxes #dc-wait-wrap{display:none!important}
 body.tutorial-hide-pointmarker .puck-anchor{display:none!important}
-body.tutorial-hide-betonoff .off-ov{display:none!important}
+body.tutorial-hide-betonoff .off-ov,body.tutorial-hide-betonoff #beton-btn{display:none!important}
 body.tutorial-disable-dice #dice-zone,body.tutorial-disable-roll #roll-btn,
 body.tutorial-disable-chip #bottom-bar,body.tutorial-disable-numberboxes #num-zone,
-body.tutorial-disable-pointmarker .puck-anchor,body.tutorial-disable-betonoff .off-ov{pointer-events:none!important;opacity:.55}
+body.tutorial-disable-pointmarker .puck-anchor,
+body.tutorial-disable-betonoff .off-ov,body.tutorial-disable-betonoff #beton-btn{pointer-events:none!important;opacity:.55}
 /* Whole tutorial session (not per-step): #left-col-header holds Focus Settings, the
    Practice Mode toggle (behind it), and game/tab navigation -- none of it is lesson content,
    and reaching it mid-lesson can break the tutorial's assumptions (Deck's softlock: leaving
@@ -389,13 +390,15 @@ body.tutorial-hide-chrome #left-col-header{display:none!important}
    dice/roll/chip/numberboxes/pointmarker/betonoff groups the tutorial already controls
    per-step, but is still fully clickable by default -- Deck: "make the entire board
    non-interactive... except any elements the player is expected to use during that specific
-   step." #info-panel (Redeem/Cash Out/Log Out/mute/info) and .sc-stack (Bets On/Press/Across/
-   Inside/Outside, which mass-edit every active bet at once) have no business being reachable
+   step." #info-panel (Redeem/Cash Out/Log Out/mute/info) has no business being reachable
    mid-lesson; #history-strip (roll log/bets-status) is just informational chrome riding along
    inside #bottom-section, which itself can't be hidden outright since #roll-btn and #bottom-bar
-   (the chip tray) are direct children of it and are legitimately needed on other steps. */
+   (the chip tray) are direct children of it and are legitimately needed on other steps.
+   .sc-stack's Press/Across/Inside/Outside (mass-edit every active bet at once) are hidden the
+   same way always -- but #beton-btn is excluded here since Lesson 7 (Turning Bets On/Off)
+   needs it, controlled per-lesson through the 'betonoff' group instead (see above). */
 body.tutorial-hide-chrome #info-panel,
-body.tutorial-hide-chrome .sc-stack,
+body.tutorial-hide-chrome .sc-stack .sc-btn:not(#beton-btn),
 body.tutorial-hide-chrome #history-strip{display:none!important}
 /* #bottom-bar's Undo/Clear/Double/Repeat buttons ride along whenever the 'chip' group is
    enabled for a bet-placement step, but no Lesson 1-3 step ever needs them -- disabled for the
@@ -1137,7 +1140,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.47</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.48</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2755,6 +2758,7 @@ function clearOddsToZero(){
 }
 function oddsModalClose(){document.getElementById('modal-odds').classList.add('hidden');oddsCtx=null;}
 function addOddsAmt(type,amt){
+  if(!tutorialActionAllowed('odds',type))return;
   if(!G.point){addLog('No point.','info');return;}
   if(type==='pass'){
     if(!G.bets['pass']){addLog('Need Pass Line first.','info');return;}
@@ -2772,6 +2776,7 @@ function addOddsAmt(type,amt){
 }
 function addComeOddsAmt(idx,amt){
   const cb=G.comeBets[idx];if(!cb)return;
+  if(!tutorialActionAllowed('comeodds',cb.num))return;
   const cur=cb.odds||0,lim=oddsLim(cb.flat,cb.num);
   const room=r2(lim-cur);if(room<=0){addLog('Come Odds at max.','info');return;}
   const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
@@ -2779,6 +2784,7 @@ function addComeOddsAmt(idx,amt){
 }
 function addDcOddsAmt(idx,amt){
   const dc=G.dcBets[idx];if(!dc)return;
+  if(!tutorialActionAllowed('dcodds',dc.num))return;
   const cur=dc.odds||0,lim=dcOddsLim(dc.flat,dc.num);
   const room=r2(lim-cur);if(room<=0){addLog('Lay Odds at max.','info');return;}
   const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
@@ -2830,6 +2836,7 @@ function removeDcFlat(idx){
 
 // ── LAY BETS ──────────────────────────────────────────────────────────────────
 function placeLay(n){
+  if(!tutorialActionAllowed('lay',n))return;
   if(activeGame!=='standard'){addLog('Lay bets: standard mode only.','info');return;}
   if(!G.bankroll){addLog('No bankroll.','info');checkBroke();return;}
   const a=r2(Math.min(G.chip,G.bankroll));
@@ -2929,7 +2936,9 @@ function updatePuck3D(anchorEl,state){
   if(moved)setTimeout(()=>playSfx(SFX_PUCK_LAND),1100);
   puck3dState=state;puck3dAnchor=anchorEl;
 }
-function bonusBet(t){pushUndo();
+function bonusBet(t){
+  if(!tutorialActionAllowed('bonus',t))return;
+  pushUndo();
   const max=G.bonus[t+'Max']||0;
   // Lock always wins, even during the grace-period top-up window -- Lucky Roller's only
   // legal betting opportunity is the single roll immediately after a 7; grace period must
@@ -2966,6 +2975,9 @@ const COMMISSION_ACK_KEY='rh_commission_ack';
 function needsCommissionAck(){return localStorage.getItem(COMMISSION_ACK_KEY)!=='1';}
 let pendingCommissionAction=null;
 function placeBetWithCommissionCheck(fn){
+  // Same "suppress ALL modal pop ups during the tutorial" rule -- Buy/Lay's one-time commission
+  // disclosure isn't a lesson concept, just execute the action directly.
+  if(tutorialActive){fn();return;}
   if(needsCommissionAck()){
     pendingCommissionAction=fn;
     document.getElementById('commission-dont-ask').checked=false;
@@ -3533,6 +3545,7 @@ function updateUI(){
     hist.scrollLeft=0;
   }
   applyFocusVisibility();
+  if(tutorialActive)tutorialCheckProgress();
 }
 
 // ── FOCUS MODE ──────────────────────────────────────────────────────────────
@@ -4102,6 +4115,7 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       tag='seven-win';
       const hasPass=!!s.bets['pass'];const hasCome=s.comeBets.length>0;
       pR('pass',1,'Pass Line');
+      lose('dp',"Don't Pass");
       const ow=s.betsOn;
       if(hasCome){
         if(hasPass)log.push('Front line winner — Pass Line wins.');
@@ -4116,9 +4130,18 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       // what that roll is, same as the craps/point branches below.
       tag='natural-win';
       if(s.bets['pass'])pR('pass',1,'Pass Line');
+      lose('dp',"Don't Pass");
       log.push('Natural '+sum+' — Pass Line wins. Comes out again.');
       if(s.bonus.open){s.bonus.open=false;s.bonus.locked=true;}
-    }else if(sum===2||sum===3||sum===12){
+    }else if(sum===12){
+      // Push for Don't Pass specifically (most tables) -- bet returns with no win/loss, Pass
+      // Line still loses same as any other craps number.
+      tag='craps';
+      if(s.bets['pass'])lose('pass','Pass Line');
+      if(s.bets['dp']){const st=s.bets['dp'];bankroll=r2(bankroll+st);returned=r2(returned+st);delete s.bets['dp'];log.push("Don't Pass: push (12), bet returned.");}
+      log.push('Craps '+sum+' — Pass Line loses. Comes out again.');
+      if(s.bonus.open){s.bonus.open=false;s.bonus.locked=true;}
+    }else if(sum===2||sum===3){
       // Craps on the come-out: Pass Line loses, shooter stays on the come-out (no point set).
       // This used to fall into the generic "else" below, which wrongly treated ANY non-7
       // come-out roll as point-establishing -- setting s.point to 2/3/12 (never a legal point)
@@ -4127,6 +4150,7 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       // locked).
       tag='craps';
       if(s.bets['pass'])lose('pass','Pass Line');
+      pR('dp',1,"Don't Pass");
       log.push('Craps '+sum+' — Pass Line loses. Comes out again.');
       if(s.bonus.open){s.bonus.open=false;s.bonus.locked=true;}
     }else{
@@ -4141,6 +4165,13 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       const hadPass=!!s.bets['pass'];const hadCome=s.comeBets.length>0;const hadPreCome=!!s.bets['come'];
       lose('pass','Pass Line');
       if(s.bets['passodds']){log.push('Pass Odds: lost '+s.bets['passodds'].toFixed(2));delete s.bets['passodds'];}
+      pR('dp',1,"Don't Pass");
+      if(s.bets['dpodds']){
+        const op=r2(s.bets['dpodds']*DC_ODDS_PAY[s.point]);
+        bankroll=r2(bankroll+s.bets['dpodds']+op);returned=r2(returned+s.bets['dpodds']+op);
+        log.push("Don't Pass Odds: +"+op.toFixed(2)+' (returned)');
+        delete s.bets['dpodds'];
+      }
       sweepPlace();
       let msg='Seven-out — line away.';
       if(hadPass)msg+=' Pass Line loses.';
@@ -4148,6 +4179,16 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       log.push(msg);
       loseComesBetsSeven();
       if(s.bets['come'])lose('come','Come (waiting)');
+      // Don't Come: every landed bet wins when 7 arrives before its number, same event that
+      // seven-outs the Pass Line/Come bets.
+      s.dcBets.forEach(dc=>{
+        const op=r2((dc.odds||0)*DC_ODDS_PAY[dc.num]);
+        const tot=r2(dc.flat+dc.flat+(dc.odds||0)+op);
+        bankroll=r2(bankroll+tot);returned=r2(returned+tot);
+        log.push("Don't Come ("+dc.num+"): +"+tot.toFixed(2)+' (returned)');
+      });
+      s.dcBets=[];
+      if(s.bets['dc'])lose('dc',"Don't Come (waiting)");
       s.passLocked=false;s.point=null;s.phase='comeout';
       s.betsOn=false;s.betsOffThisRoll=false;
     }else if(sum===s.point){
@@ -4158,10 +4199,24 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
         log.push('Pass Odds: +'+op.toFixed(2)+' (returned)');
         delete s.bets['passodds'];
       }
+      lose('dp',"Don't Pass");
+      if(s.bets['dpodds']){log.push("Don't Pass Odds: lost "+s.bets['dpodds'].toFixed(2));delete s.bets['dpodds'];}
       s.passLocked=false;s.point=null;s.phase='comeout';
       s.betsOn=false;s.betsOffThisRoll=false;
       log.push('Point made!');tag='point-made';
     }
+  }
+  // Don't Come landed bets lose if the exact number they're behind rolls before a 7 (mirrors
+  // Come bets winning on their own number, just inverted) -- runs on every non-7 roll, same as
+  // the Come win-on-number loop below.
+  if(sum!==7){
+    const remDc=[];
+    s.dcBets.forEach((dc,i)=>{
+      if(dc.num!==sum)return;
+      log.push("Don't Come ("+dc.num+"): lost "+r2(dc.flat+(dc.odds||0)).toFixed(2));
+      remDc.push(i);
+    });
+    for(let i=remDc.length-1;i>=0;i--)s.dcBets.splice(remDc[i],1);
   }
 
   if(s.bets['come']){
@@ -4171,6 +4226,19 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       delete s.bets['come'];
       s.comeBets.push({num:sum,flat,odds:0});
       log.push('Come → '+sum);
+    }
+  }
+  // Don't Come waiting bet: same personal come-out-roll idea as Come, inverted (7/11 lose,
+  // 2/3 win, 12 pushes, anything else moves behind that number same as Come does).
+  if(s.bets['dc']){
+    const flat=s.bets['dc'];
+    if(sum===7||sum===11){lose('dc',"Don't Come");}
+    else if(sum===2||sum===3){pR('dc',1,"Don't Come");}
+    else if(sum===12){bankroll=r2(bankroll+flat);returned=r2(returned+flat);delete s.bets['dc'];log.push("Don't Come: push (12), bet returned.");}
+    else{
+      delete s.bets['dc'];
+      s.dcBets.push({num:sum,flat,odds:0});
+      log.push("Don't Come → "+sum);
     }
   }
 
@@ -4264,6 +4332,7 @@ function resolveFocusPractice(){
   const workingState=JSON.parse(JSON.stringify({
     bets:G.bets,
     comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
+    dcBets:G.dcBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
     bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high,lowMax:G.bonus.lowMax,allMax:G.bonus.allMax,highMax:G.bonus.highMax,lowHit:[...G.bonus.lowHit],highHit:[...G.bonus.highHit],open:G.bonus.open,locked:G.bonus.locked},
     point:G.point,phase:G.phase,betsOn:G.betsOn,betsOffThisRoll:G.betsOffThisRoll,passLocked:G.passLocked,rollHistory:G.rollHistory
   }));
@@ -4524,6 +4593,215 @@ const TUTORIAL_LESSONS=[
       {title:'Seven Out',body:'The 7 arrived before the Point. The Pass Line loses, and a new round begins.',highlight:'#dice-zone',expectPhase:'comeout'},
       {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
     ]
+  },
+  {
+    id:'passodds',title:'Pass Line Odds',reset:true,
+    visible:['dice','roll','chip','pass','odds','numberboxes','pointmarker'],enabled:['chip','odds','numberboxes'],
+    steps:[
+      {title:'Pass Line Odds',body:'After a Point is established, you may add an Odds bet behind your Pass Line bet.',expectPhase:'comeout'},
+      {title:'Establish a Point',body:'Place a bet on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'Come Out Roll',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn',expectPhase:'comeout'},
+      {title:'Take Odds',body:'Place an additional chip in the Odds area behind your Pass Line bet.',requirement:'custom',actionType:'odds',actionKey:'pass',check:()=>G.bets['passodds']>0,highlight:'#pass-odds-cell',expectPhase:'point',expectPoint:8},
+      {title:'Two Connected Bets',body:'Your original Pass Line bet and your Odds bet both depend on the Point.',expectPhase:'point',expectPoint:8},
+      {title:'True Odds',body:'The Odds bet pays according to the chance of rolling the Point before a 7.',expectPhase:'point',expectPoint:8},
+      {title:'Hit the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn',expectPhase:'point',expectPoint:8},
+      {title:'Two Payouts',body:'The Pass Line and Odds bets both win, but they use different payout rates.',highlight:'#dice-zone',expectPhase:'comeout'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'come',title:'Come Bets',reset:true,
+    visible:['dice','roll','chip','pass','come','comeodds','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
+    steps:[
+      {title:'Come Bets',body:'A Come bet follows the same rules as the Pass Line, but it begins after the table Point is already active.',expectPhase:'comeout'},
+      {title:'Establish the Table Point',body:'Place a Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'Set the Table Point',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn',expectPhase:'comeout'},
+      {title:'Place a Come Bet',body:'Place a chip in the Come area.',requirement:'bet',betKey:'come',highlight:'#come-bar',expectPhase:'point',expectPoint:8},
+      {title:'A Personal Come Out Roll',body:'The next roll acts like a Come Out Roll for this Come bet.',expectPhase:'point',expectPoint:8},
+      {title:'Come Bet Outcomes',body:'A 7 or 11 wins the Come bet. A 2, 3, or 12 loses it. Any Point number moves the bet to that number.',expectPhase:'point',expectPoint:8},
+      {title:'Move the Come Bet',body:'Roll the dice.',requirement:'roll',forcedRoll:5,highlight:'#roll-btn',expectPhase:'point',expectPoint:8},
+      {title:'Come Point of 5',body:'The Come bet moves to 5. It now wins if 5 rolls before 7.',highlight:'#dice-zone',expectPhase:'point',expectPoint:8},
+      {title:'Come Odds',body:'You may place Odds behind a Come bet after it moves to a number.',requirement:'custom',actionType:'comeodds',actionKey:5,check:()=>G.comeBets.some(cb=>cb.num===5&&cb.odds>0),highlight:'#combox-odds-5',expectPhase:'point',expectPoint:8},
+      {title:'Multiple Points',body:'The table Point is still 8, while your Come bet has its own Point of 5.',highlight:'#dice-zone',expectPhase:'point',expectPoint:8},
+      {title:'Resolve the Come Bet',body:'Roll the dice.',requirement:'roll',forcedRoll:5,highlight:'#roll-btn',expectPhase:'point',expectPoint:8},
+      {title:'Come Bet Winner',body:'The 5 wins both the Come bet and its Odds. The Pass Line remains active on 8.',highlight:'#dice-zone',expectPhase:'point',expectPoint:8},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'place',title:'Place Bets',reset:true,forceBetsOn:true,
+    visible:['dice','roll','chip','numberboxes','place'],enabled:['chip','numberboxes'],
+    steps:[
+      {title:'Place Bets',body:'A Place bet lets you choose a number directly.',highlight:'#num-zone'},
+      {title:'Choose a Number',body:'Place a bet on 6.',requirement:'bet',betKey:'place6',highlight:'#nb-place-6'},
+      {title:'Winning a Place Bet',body:'Your Place bet wins whenever 6 rolls before 7.'},
+      {title:'Unrelated Rolls',body:'Other numbers do not affect this bet.',requirement:'roll',forcedRoll:9,highlight:'#roll-btn'},
+      {title:'Still Working',body:'The 9 does not affect your Place bet on 6.',highlight:'#dice-zone'},
+      {title:'Hit Your Number',body:'Roll again.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
+      {title:'Place Bet Winner',body:'The 6 rolled, so your Place bet wins.',highlight:'#dice-zone'},
+      {title:'The Losing Number',body:'All active Place bets lose when a 7 rolls.'},
+      {title:'Seven Out',body:'Roll again.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn'},
+      {title:'Place Bets Removed',body:'The 7 removes your Place bet.',highlight:'#dice-zone'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'betonoff',title:'Turning Bets On and Off',reset:true,
+    visible:['dice','roll','chip','numberboxes','place','betonoff'],enabled:['chip','numberboxes','betonoff'],
+    steps:[
+      {title:'Working Bets',body:'A working bet is active on the next roll.'},
+      {title:'Place a Bet',body:'Place a bet on 6.',requirement:'bet',betKey:'place6',highlight:'#nb-place-6'},
+      {title:'Turn the Bet Off',body:'Use the Off control to make the bet inactive.',requirement:'custom',actionType:'betonoff',actionKey:'off',check:()=>!bActive(),highlight:'#beton-btn'},
+      {title:'An Inactive Bet',body:'An Off bet does not win or lose until it is turned back On.'},
+      {title:'Roll While Off',body:'Roll the dice.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
+      {title:'No Action',body:'The 6 rolled, but the bet was Off, so no payout occurs.',highlight:'#dice-zone'},
+      {title:'Turn It Back On',body:'Turn the Place bet back On.',requirement:'custom',actionType:'betonoff',actionKey:'on',check:()=>bActive(),highlight:'#beton-btn'},
+      {title:'Roll While Working',body:'Roll again.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
+      {title:'Active Winner',body:'The bet was working, so the 6 pays.',highlight:'#dice-zone'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'buy',title:'Buy Bets',reset:true,forceBetsOn:true,
+    visible:['dice','roll','chip','numberboxes','buy'],enabled:['chip','numberboxes'],
+    steps:[
+      {title:'Buy Bets',body:'A Buy bet also wagers on a number rolling before 7.'},
+      {title:'Buy the 4',body:'Place a Buy bet on 4.',requirement:'bet',betKey:'buy4',highlight:'#nb-buy-4'},
+      {title:'Buy Bet Payouts',body:'Buy bets use true odds, with a commission charged according to the table rules.'},
+      {title:'Roll a Winner',body:'Roll the dice.',requirement:'roll',forcedRoll:4,highlight:'#roll-btn'},
+      {title:'Buy Bet Winner',body:'The 4 rolled before 7, so the Buy bet wins.',highlight:'#dice-zone'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'field',title:'The Field',reset:true,
+    visible:['dice','roll','chip','field'],enabled:['chip'],
+    steps:[
+      {title:'The Field',body:'The Field is a one-roll bet.'},
+      {title:'Winning Numbers',body:'The Field wins on 2, 3, 4, 9, 10, 11, or 12.',highlight:'#field-bar'},
+      {title:'Losing Numbers',body:'The Field loses on 5, 6, 7, or 8.',highlight:'#field-bar'},
+      {title:'Place a Field Bet',body:'Place a chip in the Field.',requirement:'bet',betKey:'field',highlight:'#field-bar'},
+      {title:'One Roll Only',body:'The bet resolves on the next roll.',requirement:'roll',forcedRoll:10,highlight:'#roll-btn'},
+      {title:'Field Winner',body:'A 10 wins the Field bet.',highlight:'#dice-zone'},
+      {title:'Try a Losing Roll',body:'Place another Field bet.',requirement:'bet',betKey:'field',highlight:'#field-bar'},
+      {title:'Field Loss',body:'Roll the dice.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'hardways',title:'Hardways',reset:true,
+    visible:['dice','roll','chip','hardways'],enabled:['chip'],
+    steps:[
+      {title:'Hardways',body:'A Hardway bet wins when an even total is rolled as a matching pair.'},
+      {title:'Hard 6',body:'Hard 6 means rolling 3 and 3.',highlight:'#bet-hard6'},
+      {title:'Place the Bet',body:'Place a bet on Hard 6.',requirement:'bet',betKey:'hard6',highlight:'#bet-hard6'},
+      {title:'Roll It the Hard Way',body:'Roll the dice.',requirement:'roll',forcedRoll:[3,3],highlight:'#roll-btn'},
+      {title:'Hardway Winner',body:'The total is 6, and both dice match. Hard 6 wins.',highlight:'#dice-zone'},
+      {title:'The Easy Way',body:'Hard 6 loses if 6 appears as 1 and 5 or 2 and 4.'},
+      {title:'See an Easy 6',body:'Place another Hard 6 bet.',requirement:'bet',betKey:'hard6',highlight:'#bet-hard6'},
+      {title:'Roll It the Easy Way',body:'Roll the dice.',requirement:'roll',forcedRoll:[2,4],highlight:'#roll-btn'},
+      {title:'Hardway Loss',body:'The total is 6, but the dice do not match. Hard 6 loses.',highlight:'#dice-zone'},
+      {title:'Seven Also Loses',body:'A 7 also removes active Hardway bets.'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'props',title:'Proposition Bets',reset:true,
+    visible:['dice','roll','chip','props','oneroll'],enabled:['chip'],
+    steps:[
+      {title:'Proposition Bets',body:'Proposition bets predict the result of the next roll.'},
+      {title:'One-Roll Bets',body:'Each proposition bet wins or loses immediately after one roll.'},
+      {title:'Choose a Proposition',body:'Place a bet on Any 7.',requirement:'bet',betKey:'any7',highlight:'#bet-any7'},
+      {title:'Resolve the Bet',body:'Roll the dice.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn'},
+      {title:'Any 7 Wins',body:'The next roll was 7, so the bet wins.',highlight:'#dice-zone'},
+      {title:'Higher Risk',body:'Proposition bets often offer larger payouts because they win less frequently.'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'hopbets',title:'Hop Bets',reset:true,
+    visible:['dice','roll','chip','hopbets'],enabled:['chip'],
+    steps:[
+      {title:'Hop Bets',body:'A Hop bet predicts the exact dice combination on the next roll.'},
+      {title:'Choose a Combination',body:'Place a Hop bet on 3 and 4.',requirement:'bet',betKey:'hop34',highlight:'#bet-hop34'},
+      {title:'Exact Dice',body:'The next roll must show a 3 and a 4 for this bet to win.'},
+      {title:'Roll the Dice',body:'Roll now.',requirement:'roll',forcedRoll:[3,4],highlight:'#roll-btn'},
+      {title:'Hop Winner',body:'The exact combination appeared, so the Hop bet wins.',highlight:'#dice-zone'},
+      {title:'Doubles',body:'Hop bets on doubles usually use a different payout because there is only one matching combination.'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'bonus',title:'Bonus Bets',reset:true,
+    visible:['dice','roll','chip','ats'],enabled:['chip'],
+    steps:[
+      {title:'Bonus Bets',body:'Bonus bets track a series of results across several rolls.'},
+      {title:'Longer Objectives',body:'Unlike one-roll bets, a Bonus bet may stay active through many rolls.'},
+      {title:'Choose a Bonus Bet',body:'Place a bet on the highlighted Bonus area.',requirement:'custom',actionType:'bonus',actionKey:'low',check:()=>G.bonus.low>0,highlight:'#bbonus-low'},
+      {title:'Track Progress',body:'Each qualifying roll marks progress toward the Bonus.',requirement:'roll',forcedRoll:4,highlight:'#roll-btn'},
+      {title:'The Seven',body:'A 7 usually ends unfinished Bonus bets.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'dontpass',title:"Don't Pass",reset:true,
+    visible:['dice','roll','chip','dontpass','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
+    steps:[
+      {title:"Don't Pass",body:"The Don't Pass bet wagers against the shooter making the Point.",expectPhase:'comeout'},
+      {title:'Come Out Roll',body:'On the Come Out Roll, 2 or 3 wins the Don\'t Pass bet.',expectPhase:'comeout'},
+      {title:'Come Out Losses',body:"A 7 or 11 loses the Don't Pass bet.",expectPhase:'comeout'},
+      {title:'The 12',body:"A 12 is a push on most Don't Pass tables. Your bet is returned with no win or loss.",expectPhase:'comeout'},
+      {title:"Place a Don't Pass Bet",body:"Place a chip on Don't Pass.",requirement:'bet',betKey:'dp',highlight:'#dp-main',expectPhase:'comeout'},
+      {title:'Establish a Point',body:'Roll the dice.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn',expectPhase:'comeout'},
+      {title:'Betting Against the Point',body:"With a Point established, Don't Pass wins if 7 rolls before the Point.",expectPhase:'point',expectPoint:6},
+      {title:'Win With 7',body:'Roll again.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',expectPhase:'point',expectPoint:6},
+      {title:"Don't Pass Winner",body:"The 7 arrived before the Point, so the Don't Pass bet wins.",highlight:'#dice-zone',expectPhase:'comeout'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'dontcome',title:"Don't Come",reset:true,
+    visible:['dice','roll','chip','dontpass','dontcome','comeodds','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
+    steps:[
+      {title:"Don't Come",body:"A Don't Come bet works like Don't Pass after the table Point is already active.",expectPhase:'comeout'},
+      {title:'Establish the Table Point',body:"Place a Don't Pass bet.",requirement:'bet',betKey:'dp',highlight:'#dp-main',expectPhase:'comeout'},
+      {title:'Set the Table Point',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn',expectPhase:'comeout'},
+      {title:"Place a Don't Come Bet",body:"Place a chip in the Don't Come area.",requirement:'bet',betKey:'dc',highlight:'#dc-wait-bar',expectPhase:'point',expectPoint:8},
+      {title:'A Separate Come Out Roll',body:"The next roll acts as a personal Come Out Roll for the Don't Come bet.",expectPhase:'point',expectPoint:8},
+      {title:'Move the Bet',body:'Roll the dice.',requirement:'roll',forcedRoll:5,highlight:'#roll-btn',expectPhase:'point',expectPoint:8},
+      {title:"Don't Come Point of 5",body:"The Don't Come bet moves behind 5. It wins if 7 rolls before 5.",highlight:'#dice-zone',expectPhase:'point',expectPoint:8},
+      {title:"Don't Come Odds",body:"You may add Odds to a Don't Come bet after it moves to a number.",requirement:'custom',actionType:'dcodds',actionKey:5,check:()=>G.dcBets.some(dc=>dc.num===5&&dc.odds>0),highlight:'#numbox-5',expectPhase:'point',expectPoint:8},
+      {title:'Multiple Points',body:"The table Point is still 8, while your Don't Come bet has its own Point of 5.",highlight:'#dice-zone',expectPhase:'point',expectPoint:8},
+      {title:'Resolve the Bet',body:'Roll the dice.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',expectPhase:'point',expectPoint:8},
+      {title:"Don't Come Winner",body:"The 7 rolled before 5, so the Don't Come bet and its Odds win.",highlight:'#dice-zone',expectPhase:'comeout'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'lay',title:'Lay Bets',reset:true,
+    visible:['dice','roll','chip','numberboxes','lay'],enabled:['chip','numberboxes'],
+    steps:[
+      {title:'Lay Bets',body:'A Lay bet wins when 7 rolls before the selected number.'},
+      {title:'The Opposite of a Buy Bet',body:'Buy bets want the number before 7. Lay bets want 7 before the number.'},
+      {title:'Lay Against 4',body:'Place a Lay bet against 4.',requirement:'custom',actionType:'lay',actionKey:4,check:()=>G.bets['lay4']>0,highlight:'#nb-lay-4'},
+      {title:'Winning the Lay Bet',body:'This bet wins if 7 rolls before 4.'},
+      {title:'Roll a Winner',body:'Roll the dice.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn'},
+      {title:'Lay Bet Winner',body:'The 7 arrived before 4, so the Lay bet wins.',highlight:'#dice-zone'},
+      {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
+    ]
+  },
+  {
+    id:'fulltable',title:'The Full Table',reset:true,
+    visible:['dice','roll','chip','pass','dontpass','odds','come','dontcome','comeodds','field','place','buy','lay','hardways','hopbets','oneroll','props','ats','numberboxes','pointmarker','betonoff'],
+    enabled:['chip','numberboxes','betonoff'],
+    steps:[
+      {title:'The Full Craps Table',body:'The complete table contains every betting area introduced during the tutorial.'},
+      {title:'Line Bets',body:"Pass, Come, Don't Pass, and Don't Come follow the Point system.",highlight:['#pass-main','#come-bar','#dp-main','#dc-wait-bar']},
+      {title:'Number Bets',body:'Place, Buy, and Lay bets target the individual number boxes.',highlight:['#nb-place-6','#nb-buy-6','#nb-lay-6']},
+      {title:'Single-Roll Bets',body:'Field, Proposition, and Hop bets resolve on the next roll.',highlight:['#field-bar','#bet-any7','#bet-horn']},
+      {title:'Persistent Side Bets',body:'Hardways and Bonus bets may remain active across several rolls.',highlight:['#bet-hard6','#bbonus-low']},
+      {title:'Tutorial Complete',body:'You now know how each major section of the table works. Choose the bets you prefer and play at your own pace.',complete:true}
+    ]
   }
 ];
 
@@ -4594,7 +4872,7 @@ function tutorialResetTable(){
 function tutorialRenderStep(){
   const lesson=tutorialCurrentLesson(),step=tutorialCurrentStep();
   if(!lesson||!step){tutorialEnd(false);return;}
-  if(tutorialStepIdx===0&&lesson.reset)tutorialResetTable();
+  if(tutorialStepIdx===0&&lesson.reset){tutorialResetTable();if(lesson.forceBetsOn)G.betsOn=true;}
   // Checkpoint: every step (other than a plain Continue-only one) declares the table state
   // it expects to already be in -- Deck: "build into the script where we are expected to be
   // after every player input other than 'continue'." If the actual state doesn't match
@@ -4680,6 +4958,30 @@ function tutorialOnBetPlaced(key){
   tutorialActionDone=true;
   document.getElementById('tt-continue').disabled=false;
   tutorialAdvance();
+}
+// Generic requirement for every action that isn't a plain placeBet()/roll (Lay, Bonus/ATS,
+// Pass/DP/Come/DC Odds) -- rather than a bespoke hook per betting function, updateUI() (called
+// after every one of them) calls this, and the step just declares a `check` predicate over G.
+// Auto-advances the same as bet/roll requirements do.
+function tutorialCheckProgress(){
+  const step=tutorialCurrentStep();
+  if(!step||step.requirement!=='custom'||tutorialActionDone||!step.check)return;
+  if(step.check()){
+    tutorialActionDone=true;
+    document.getElementById('tt-continue').disabled=false;
+    tutorialAdvance();
+  }
+}
+// Shared gate for the handful of betting functions that aren't placeBet()/rollDice() (Lay,
+// Bonus/ATS, the three Odds functions) -- same principle as placeBet()'s own gate: a
+// requirement:'custom' step must name this exact action (actionType+actionKey) or it's
+// rejected outright, regardless of what's merely visible on screen.
+function tutorialActionAllowed(actionType,actionKey){
+  if(!tutorialActive)return true;
+  const step=tutorialCurrentStep();
+  const ok=!!step&&step.requirement==='custom'&&step.actionType===actionType&&step.actionKey===actionKey;
+  if(!ok)addLog('Follow the tutorial\'s highlighted step to continue.','info');
+  return ok;
 }
 
 function tutorialStart(lessonIdx){
