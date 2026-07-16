@@ -385,6 +385,22 @@ body.tutorial-disable-pointmarker .puck-anchor,body.tutorial-disable-betonoff .o
    Practice Mode meant the next forced roll went to the real server instead, ignoring the
    queued forced value entirely). Hidden for the whole tutorial, not just specific steps. */
 body.tutorial-hide-chrome #left-col-header{display:none!important}
+/* Same whole-session treatment for every other piece of chrome that sits outside the
+   dice/roll/chip/numberboxes/pointmarker/betonoff groups the tutorial already controls
+   per-step, but is still fully clickable by default -- Deck: "make the entire board
+   non-interactive... except any elements the player is expected to use during that specific
+   step." #info-panel (Redeem/Cash Out/Log Out/mute/info) and .sc-stack (Bets On/Press/Across/
+   Inside/Outside, which mass-edit every active bet at once) have no business being reachable
+   mid-lesson; #history-strip (roll log/bets-status) is just informational chrome riding along
+   inside #bottom-section, which itself can't be hidden outright since #roll-btn and #bottom-bar
+   (the chip tray) are direct children of it and are legitimately needed on other steps. */
+body.tutorial-hide-chrome #info-panel,
+body.tutorial-hide-chrome .sc-stack,
+body.tutorial-hide-chrome #history-strip{display:none!important}
+/* #bottom-bar's Undo/Clear/Double/Repeat buttons ride along whenever the 'chip' group is
+   enabled for a bet-placement step, but no Lesson 1-3 step ever needs them -- disabled for the
+   whole tutorial session regardless of 'chip' state, leaving only the chip denominations live. */
+body.tutorial-hide-chrome #bottom-bar .bar-btn{pointer-events:none!important;opacity:.4}
 /* Tutorial text-box overlay. z-index is well above every known modal in this file (winner
    modal, odds modal, move modal, cap modal all sit under 1000) so Continue/Skip Lesson are
    never accidentally covered/blocked by one popping up mid-lesson. */
@@ -1114,7 +1130,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.43</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.44</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1957,7 +1973,12 @@ function spawnWinGhosts(rawLog){
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
-function openCapModal(){document.getElementById('modal-cap').classList.remove('hidden');}
+// Every modal that can open ON ITS OWN as a side effect of a roll/bankroll event (not a
+// direct player click on a settings/log/info button, which the tutorial already locks out by
+// hiding #left-col-header) is suppressed while the tutorial is active -- Deck: "suppress ALL
+// modal pop ups during the tutorial, as when they are needed, we'll be calling them on a
+// case-by-case basis anyway." Each lesson narrates outcomes through its own text box instead.
+function openCapModal(){if(tutorialActive)return;document.getElementById('modal-cap').classList.remove('hidden');}
 function closeCapModal(){document.getElementById('modal-cap').classList.add('hidden');}
 function openLogModal(){document.getElementById('modal-log').classList.remove('hidden');}
 function closeLogModal(){document.getElementById('modal-log').classList.add('hidden');}
@@ -2656,6 +2677,7 @@ window.addEventListener('resize',()=>{ if(typeof updateUI==='function')applyBetA
 
 // ── ODDS MODAL ────────────────────────────────────────────────────────────────
 function openOddsModal(type,cbIdx,flatAmt,num){
+  if(tutorialActive)return;
   oddsCtx={type,cbIdx,flatAmt,num};
   const isLay=type==='dp'||type==='dc';
   let curOdds=0;
@@ -2812,6 +2834,7 @@ function removeLay(n){
   if(G.bets['lay'+n]<=0)delete G.bets['lay'+n];updateUI();
 }
 function openMoveModal(fromNum,placeAmt,buyAmt,kind){
+  if(tutorialActive)return;
   moveCtx={fromNum,placeAmt,buyAmt};
   const label=kind==='come'?'The Come roll is '+fromNum+'.':'The Point is '+fromNum+'.';
   document.getElementById('modal-move-sub').textContent=label+' Would you like to move your bet?';
@@ -3271,7 +3294,10 @@ async function rollDice(){
     function afterWinnerCloses(){
       if(!maybeOpenMoveModal())maybeOpenOddsModal();
     }
-    if(data.returned>0){
+    // Every lesson step already narrates the win/loss through its own text box -- the winner
+    // celebration modal is suppressed the same as odds/move/cap during the tutorial (Deck:
+    // "suppress ALL modal pop ups during the tutorial").
+    if(data.returned>0&&!tutorialActive){
       // Chain the odds prompt off the winner modal's ACTUAL close (timeout or tap-dismiss),
       // instead of a fixed guessed delay that could fire before or well after it's gone.
       WinnerModal.show(data.returned,{big:bigWin,onClose:afterWinnerCloses});
@@ -4410,22 +4436,22 @@ const TUTORIAL_LESSONS=[
     id:'passline',title:'The Pass Line',reset:true,
     visible:['dice','roll','chip','pass'],enabled:['chip','pass'],
     steps:[
-      {title:'The Pass Line',body:"The Pass Line is the standard starting bet in Craps.",highlight:'#pass-main'},
-      {title:'Place Your Bet',body:'Place a chip on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main'},
+      {title:'The Pass Line',body:"The Pass Line is the standard starting bet in Craps.",highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'Place Your Bet',body:'Place a chip on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
       // Spec: "Enable the Roll button" -- roll stays off until here, unlike Lesson 1 where it
       // was on from the start.
-      {title:'The Come Out Roll',body:'The first roll of a new round is called the Come Out Roll.',enabled:['chip','pass','roll']},
-      {title:'Roll a Winner',body:'On the Come Out Roll, a 7 or 11 wins the Pass Line immediately.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',enabled:['chip','pass','roll']},
-      {title:'Winner',body:'A 7 on the Come Out Roll wins your Pass Line bet.',enabled:['chip','pass','roll']},
-      {title:'Try Again',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll']},
-      {title:'Another Winner',body:'An 11 also wins the Pass Line on the Come Out Roll.',requirement:'roll',forcedRoll:11,highlight:'#roll-btn',enabled:['chip','pass','roll']},
-      {title:'Craps Numbers',body:'On the Come Out Roll, 2, 3, and 12 lose the Pass Line bet.',enabled:['chip','pass','roll']},
+      {title:'The Come Out Roll',body:'The first roll of a new round is called the Come Out Roll.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Roll a Winner',body:'On the Come Out Roll, a 7 or 11 wins the Pass Line immediately.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Winner',body:'A 7 on the Come Out Roll wins your Pass Line bet.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Try Again',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Another Winner',body:'An 11 also wins the Pass Line on the Come Out Roll.',requirement:'roll',forcedRoll:11,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Craps Numbers',body:'On the Come Out Roll, 2, 3, and 12 lose the Pass Line bet.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       // Spec's step 9 ("place a bet, then roll, force a 3") bundles two actions in one text
       // box -- split here into its own bet step + roll step instead, per the spec's own rule
       // to keep each box to a single action.
-      {title:'See a Losing Roll',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll']},
-      {title:'Roll It',body:'Roll the dice.',requirement:'roll',forcedRoll:3,highlight:'#roll-btn',enabled:['chip','pass','roll']},
-      {title:'Craps',body:'A 3 on the Come Out Roll loses the Pass Line bet.',enabled:['chip','pass','roll']},
+      {title:'See a Losing Roll',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Roll It',body:'Roll the dice.',requirement:'roll',forcedRoll:3,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Craps',body:'A 3 on the Come Out Roll loses the Pass Line bet.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Lesson Complete',body:'The Come Out Roll now has two clear outcomes: 7 or 11 wins, while 2, 3, or 12 loses.',complete:true,enabled:['chip','pass','roll']}
     ]
   },
@@ -4433,22 +4459,22 @@ const TUTORIAL_LESSONS=[
     id:'point',title:'Establishing a Point',reset:true,
     visible:['dice','roll','chip','pass','numberboxes','pointmarker'],enabled:['chip','pass','roll','numberboxes'],
     steps:[
-      {title:'Point Numbers',body:'A Come Out Roll of 4, 5, 6, 8, 9, or 10 establishes a Point.',highlight:'#num-zone'},
-      {title:'Start a Round',body:'Place a bet on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main'},
-      {title:'Set the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
-      {title:'The Point Is 6',body:'The Point marker moves to 6. The round now continues until either 6 or 7 is rolled.',highlight:'#numbox-6'},
-      {title:'Make the Point',body:'Your Pass Line bet wins if the Point rolls again before a 7.'},
-      {title:'Other Numbers',body:'Other dice totals do not resolve the Pass Line bet. The Point stays active.',requirement:'roll',forcedRoll:9,highlight:'#roll-btn'},
-      {title:'The Round Continues',body:'A 9 does not affect this Pass Line bet. The Point is still 6.'},
-      {title:'Hit the Point',body:'Roll again.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn'},
-      {title:'Point Made',body:'You rolled the Point before a 7, so the Pass Line wins.'},
-      {title:'Seven Out',body:'If a 7 rolls before the Point, the Pass Line loses. This is called a Seven Out.'},
+      {title:'Point Numbers',body:'A Come Out Roll of 4, 5, 6, 8, 9, or 10 establishes a Point.',highlight:'#num-zone',expectPhase:'comeout'},
+      {title:'Start a Round',body:'Place a bet on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'Set the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn',expectPhase:'comeout'},
+      {title:'The Point Is 6',body:'The Point marker moves to 6. The round now continues until either 6 or 7 is rolled.',highlight:'#numbox-6',expectPhase:'point',expectPoint:6},
+      {title:'Make the Point',body:'Your Pass Line bet wins if the Point rolls again before a 7.',expectPhase:'point',expectPoint:6},
+      {title:'Other Numbers',body:'Other dice totals do not resolve the Pass Line bet. The Point stays active.',requirement:'roll',forcedRoll:9,highlight:'#roll-btn',expectPhase:'point',expectPoint:6},
+      {title:'The Round Continues',body:'A 9 does not affect this Pass Line bet. The Point is still 6.',expectPhase:'point',expectPoint:6},
+      {title:'Hit the Point',body:'Roll again.',requirement:'roll',forcedRoll:6,highlight:'#roll-btn',expectPhase:'point',expectPoint:6},
+      {title:'Point Made',body:'You rolled the Point before a 7, so the Pass Line wins.',expectPhase:'comeout'},
+      {title:'Seven Out',body:'If a 7 rolls before the Point, the Pass Line loses. This is called a Seven Out.',expectPhase:'comeout'},
       // Spec's step 11 bundles a bet + two forced rolls into one text box -- split into three
       // steps for the same single-action-per-box reason as Lesson 2.
-      {title:'See a Seven Out',body:'Place another Pass Line bet and establish a new Point.',requirement:'bet',betKey:'pass',highlight:'#pass-main'},
-      {title:'Roll the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn'},
-      {title:'Roll a Seven',body:'Roll again.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn'},
-      {title:'Seven Out',body:'The 7 arrived before the Point. The Pass Line loses, and a new round begins.'},
+      {title:'See a Seven Out',body:'Place another Pass Line bet and establish a new Point.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'Roll the Point',body:'Roll the dice.',requirement:'roll',forcedRoll:8,highlight:'#roll-btn',expectPhase:'comeout'},
+      {title:'Roll a Seven',body:'Roll again.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',expectPhase:'point',expectPoint:8},
+      {title:'Seven Out',body:'The 7 arrived before the Point. The Pass Line loses, and a new round begins.',expectPhase:'comeout'},
       {title:'Lesson Complete',body:"Pass Line play follows one cycle: make a Come Out Roll, establish a Point, then roll the Point again before a 7.",complete:true}
     ]
   }
@@ -4509,6 +4535,18 @@ function tutorialRenderStep(){
   const lesson=tutorialCurrentLesson(),step=tutorialCurrentStep();
   if(!lesson||!step){tutorialEnd(false);return;}
   if(tutorialStepIdx===0&&lesson.reset)tutorialResetTable();
+  // Checkpoint: every step (other than a plain Continue-only one) declares the table state
+  // it expects to already be in -- Deck: "build into the script where we are expected to be
+  // after every player input other than 'continue'." If the actual state doesn't match
+  // (whatever the cause -- a desynced roll, a stray click that slipped through, anything),
+  // force-correct it back to what this step needs before it renders, instead of letting a
+  // silent mismatch cascade into a later step's bet/roll being rejected with no explanation.
+  if(step.expectPhase&&(G.phase!==step.expectPhase||(step.expectPoint!=null&&G.point!==step.expectPoint))){
+    addLog('[tutorial] Table state was phase="'+G.phase+'" point='+G.point+', correcting to phase="'+step.expectPhase+'"'+(step.expectPoint!=null?' point='+step.expectPoint:'')+' for "'+step.title+'".','info');
+    G.phase=step.expectPhase;
+    G.point=step.expectPhase==='point'?(step.expectPoint!=null?step.expectPoint:G.point):null;
+    updateUI();
+  }
   // Roll is only ever enabled on the exact step that wants a roll (requirement==='roll'), or
   // throughout a lesson explicitly flagged freeRoll (Lesson 1 -- no bets exist yet, so an
   // early/extra roll has no game-state side effects). Never trust a lesson's or step's own
