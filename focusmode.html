@@ -35,6 +35,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* Left col header (matches left col width) */
 #left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:3px}
 .mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);cursor:pointer;font-size:19px;font-weight:700;color:rgba(255,255,255,.6)}
+/* Hardways/Hop Bets tab buttons: one row with name + $ value inline instead of stacked lines,
+   so the button itself needs less height (Deck: "make them one row with both the name and
+   $value") -- lets the shorter box sit closer to the art above it. */
+#tab-hw,#tab-hop{flex-direction:row!important;gap:6px!important;justify-content:center}
 .mode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
 .mode-btn-amt{font-size:17px;color:#ffd700;font-weight:600}
 
@@ -1154,7 +1158,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.49</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.50</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1475,7 +1479,9 @@ const FELT_LAYOUT=[
   ['@eleven',          34.844,74.722, 6.563,11.056,null],
   ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
-  ['#left-col-header', 0.40, 0.70,12.60,17.00,null],
+  // Shrunk from 17.00 -> 12.00 now that the game selector is a single-button dropdown instead
+  // of a 5-button grid (Deck: "move the game selector... so Hard Ways can move up").
+  ['#left-col-header', 0.40, 0.70,12.60,12.00,null],
   ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
   ['#info-panel',     87.00, 0.70,12.60,17.00,null],
   ['#bottom-section',  0.30,86.70,99.40,13.00,null],
@@ -1483,20 +1489,22 @@ const FELT_LAYOUT=[
   // Hop Bets buttons off the upper left element and put them over the Hard Ways/Hoppin Hard
   // Ways") -- sit directly above that shared art slot as a left/right pair, always visible
   // (not tab-gated, since you need to be able to tap either one regardless of which is
-  // currently showing). Positioned with a 10px gap above Hard Ways' own y:327.
-  ['#tab-hw',   0.250,14.278,17.5625,3.333,null],
-  ['#tab-hop', 17.828,14.278,17.5625,3.333,null],
+  // currently showing). Shifted up with Hard Ways (10px gap above its new y:287) and made
+  // shorter (one row, name+value inline, instead of two stacked lines) per Deck's request.
+  ['#tab-hw',   0.250,12.056,17.5625,2.222,null],
+  ['#tab-hop', 17.828,12.056,17.5625,2.222,null],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
-  // from reference images again; this is ground truth.
-  ['@any7',            3.781,48.722,28.000,10.778,'hw'],
-  ['@aces',            3.875,60.444, 7.219,10.278,'hw'],
-  ['@ace2',           24.281,60.500, 7.594,10.167,'hw'],
-  ['@horn',           11.188,66.222,13.188, 9.944,'hw'],
-  ['@midnight',        3.719,71.500, 7.438,10.167,'hw'],
-  ['@yo',             24.438,71.833, 7.375,10.111,'hw'],
-  ['@anyCraps',        3.625,82.833,28.219, 7.889,'hw'],
+  // from reference images again; this is ground truth. Shifted up 40px with the rest of the
+  // One Roll Bets cluster.
+  ['@any7',            3.781,46.500,28.000,10.778,'hw'],
+  ['@aces',            3.875,58.222, 7.219,10.278,'hw'],
+  ['@ace2',           24.281,58.278, 7.594,10.167,'hw'],
+  ['@horn',           11.188,64.000,13.188, 9.944,'hw'],
+  ['@midnight',        3.719,69.278, 7.438,10.167,'hw'],
+  ['@yo',             24.438,69.611, 7.375,10.111,'hw'],
+  ['@anyCraps',        3.625,80.611,28.219, 7.889,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
   ['@hop13',          4.625,53.500, 8.813, 6.222,'hop'],
   ['@hop16',         15.094,53.222, 8.750, 6.222,'hop'],
@@ -1553,14 +1561,17 @@ const CRAPLESS_LAYOUT=[
 const STANDARD_LAYOUT=[
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- ground
   // truth, do not re-derive from reference images again.
-  ['@hard6',           0.531,23.889,14.000, 7.500,'hw'],
-  ['@hard10',         20.906,23.889,14.219, 8.000,'hw'],
-  ['@hard8',           0.531,31.722,14.063, 7.833,'hw'],
-  ['@hard4',          20.938,31.889,14.219, 7.667,'hw'],
-  ['@hop22',          21.031,36.222,14.250, 7.889,'hop'],
-  ['@hop44',           0.313,36.167,14.250, 7.889,'hop'],
-  ['@hop33',           0.313,28.056,14.250, 7.889,'hop'],
-  ['@hop55',          21.063,28.167,14.250, 7.889,'hop'],
+  // Shifted up 40px along with the Hard Ways art (see FM_ART) now that the game selector
+  // dropdown freed headroom -- hop22/33/44/55 (the 'hop' tab's twin cells, same physical slot)
+  // moved by the same amount so tab-switching doesn't jump.
+  ['@hard6',           0.531,21.667,14.000, 7.500,'hw'],
+  ['@hard10',         20.906,21.667,14.219, 8.000,'hw'],
+  ['@hard8',           0.531,29.500,14.063, 7.833,'hw'],
+  ['@hard4',          20.938,29.667,14.219, 7.667,'hw'],
+  ['@hop22',          21.031,34.000,14.250, 7.889,'hop'],
+  ['@hop44',           0.313,33.944,14.250, 7.889,'hop'],
+  ['@hop33',           0.313,25.833,14.250, 7.889,'hop'],
+  ['@hop55',          21.063,25.944,14.250, 7.889,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
   // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
   // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
@@ -3722,12 +3733,16 @@ const FM_ART=[
   //   propbets.y+698: bigred.y = pill-top-bigred.h, anycraps.y = pill-bottom, both touching
   //   with zero space (Deck: "no gap between Any Seven and the Horn Bet ... no gap between Any
   //   Craps and the horn bet").
-  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:327, w:1125,h:393, tab:'hw'},
+  // Whole Hard Ways/One Roll Bets cluster (art + click targets together) shifted up 40px now
+  // that shrinking the game selector into a dropdown freed real headroom (Deck: "move Hard Ways
+  // and One Roll Bets up now that there's room, move all the selector boxes with it").
+  // Hop Bets grid (hopbets) intentionally left where it is -- not part of this request.
+  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:287, w:1125,h:393, tab:'hw'},
   {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:981, h:710, tab:'hop'},
-  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:334, w:1125,h:466, tab:'hop'},
-  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:867, w:913, h:218, tab:'hw'},
-  {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:781, w:913, h:698, tab:'hw'},
-  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1479,w:913, h:218, tab:'hw'},
+  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:294, w:1125,h:466, tab:'hop'},
+  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:827, w:913, h:218, tab:'hw'},
+  {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:741, w:913, h:698, tab:'hw'},
+  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1439,w:913, h:218, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
 ];
 function fmPct(px,total){return px/total*100;}
