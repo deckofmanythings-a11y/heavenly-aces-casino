@@ -62,12 +62,16 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px}
 #table-panel{position:relative;aspect-ratio:3200/1800;max-width:100%;max-height:100%;width:100%;margin:auto;background-image:url('iLuvSuits_Felt.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
 
-/* Card rows -- hidden (but space-reserving) until a hand is dealt */
-.card-region{position:absolute;display:flex;flex-direction:column;align-items:center;gap:0.6cqh}
+/* Card rows -- hidden (but space-reserving) until a hand is dealt. Cards are
+   absolutely positioned within their row (not flex) so the "sweat" reveal can
+   slide each one individually from a shared stack spot out into a fanned hand --
+   see sweatReveal() in the script below. */
+.card-region{position:absolute;display:flex;flex-direction:column;align-items:stretch;gap:0.6cqh}
 #dealer-region{left:5%;top:1%;width:90%;height:28%;justify-content:flex-start}
 #player-region{left:2%;top:34%;width:52%;height:26%;justify-content:center}
-.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:0.8cqh;--pc-w:15cqh;opacity:0;transition:opacity .3s}
+.card-row{position:relative;width:100%;height:calc(var(--pc-w)*1.447);--pc-w:15cqh;opacity:0;transition:opacity .3s}
 .card-row.active{opacity:1}
+.card-row .pc-card{position:absolute;top:0;left:0;transition:left .5s cubic-bezier(.4,.2,.2,1)}
 .panel-hand-text{font-size:2.3cqh;color:#ffd700;font-weight:700;text-align:center;min-height:2.8cqh;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 
 /* Bet-spot overlays -- invisible hit-regions positioned exactly over the printed
@@ -81,7 +85,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #play-spot{left:56.69%;top:67.94%;width:5.50%;height:9.78%;--chip:7cqh}
 #flushrush-spot{left:56.78%;top:44.33%;width:5.28%;height:9.39%;--chip:6.5cqh}
 #superflushrush-spot{left:63.81%;top:39.69%;width:5.28%;height:9.39%;--chip:6.5cqh}
-.panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
+.panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:0.3cqh;font-size:1.8cqh;font-weight:700;color:#ffd700}
+
+/* Ante/Flush Rush/Super Flush Rush are contract bets once dealt -- no chip images
+   (Play is the only spot that shows real stacked chips), just the amount and a
+   small lock badge, matching the craps .chip-lock convention. */
+.panel-amt-text{white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.panel-lock-badge{font-size:0.8em}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -306,16 +316,16 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
       </div>
 
       <div class="panel-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
-        <span class="panel-spot-stk uth-spot-stk" id="stk-ante"></span>
+        <span class="panel-spot-stk" id="stk-ante"></span>
       </div>
       <div class="panel-spot" id="flushrush-spot" onclick="placeBet('flushRush')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('flushRush')">
-        <span class="panel-spot-stk uth-spot-stk" id="stk-flushrush"></span>
+        <span class="panel-spot-stk" id="stk-flushrush"></span>
       </div>
       <div class="panel-spot" id="superflushrush-spot" onclick="placeBet('superFlushRush')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superFlushRush')">
-        <span class="panel-spot-stk uth-spot-stk" id="stk-superflushrush"></span>
+        <span class="panel-spot-stk" id="stk-superflushrush"></span>
       </div>
       <div class="panel-spot inert" id="play-spot" onclick="placePlayBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayBet()">
-        <span class="panel-spot-stk uth-spot-stk" id="stk-play"></span>
+        <span class="panel-spot-stk" id="stk-play"></span>
       </div>
 
     </div>
@@ -670,40 +680,85 @@ function buildCardSlots(){
   player.forEach(el=>playerRow.appendChild(el));
   G.cardEls={dealer,player};
 }
-// Static render (no animation) -- used only when resuming an abandoned hand.
+// ── FAN GEOMETRY ──────────────────────────────────────────────────────────────
+// Each 7-card hand fans out left-to-right, slightly overlapping, centered within
+// its region. Widths are in cqh (matching --pc-w) so they scale with the panel
+// regardless of viewport -- see panel-art skill reference. Region widths below are
+// the dealer/player regions' own %-of-panel-width converted to cqh (panel is
+// 3200x1800, so 100cqh-of-height == 177.78cqh-of-width-equivalent).
+const FAN_STEP_CQH=11;     // horizontal offset between consecutive fanned cards
+const PLAYER_REGION_WIDTH_CQH=92.4;  // 52% of panel width
+const DEALER_REGION_WIDTH_CQH=160;   // 90% of panel width
+function computeFanLefts(n,regionWidthCqh){
+  const cardW=15; // matches --pc-w
+  const total=cardW+(n-1)*FAN_STEP_CQH;
+  const start=Math.max(0,(regionWidthCqh-total)/2);
+  return Array.from({length:n},(_,i)=>start+i*FAN_STEP_CQH);
+}
+const PLAYER_FAN_LEFTS=computeFanLefts(7,PLAYER_REGION_WIDTH_CQH);
+const DEALER_FAN_LEFTS=computeFanLefts(7,DEALER_REGION_WIDTH_CQH);
+function resetCardPosition(el){el.style.transition='';el.style.left='';el.style.zIndex='';}
+
+// Static render (no animation) -- used only when resuming an abandoned hand. Player's
+// hand is already fully known so it's shown fanned immediately; dealer's stays a
+// hidden face-down stack, same as mid-decision state.
 function renderHandCardsStatic(){
-  G.cardEls.player.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.playerHand[i]);Cards.flipUp(el);});
-  G.cardEls.dealer.forEach(el=>Cards.reset(el));
+  G.cardEls.player.forEach((el,i)=>{
+    Cards.reset(el);resetCardPosition(el);
+    Cards.setFront(el,G.hand.playerHand[i]);Cards.flipUp(el);
+    el.style.left=PLAYER_FAN_LEFTS[i]+'cqh';el.style.zIndex=i+1;
+  });
+  G.cardEls.dealer.forEach((el,i)=>{
+    Cards.reset(el);resetCardPosition(el);
+    el.style.left=DEALER_FAN_LEFTS[0]+'cqh';el.style.zIndex=7-i;
+  });
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
 }
-// Animated deal: alternates player/dealer cards sliding into place, same per-card pace
-// as Ultimate Texas Hold'em. Player cards arrive with fronts already set but face down,
-// revealed afterwards one at a time by revealPlayerCardsSlowly().
+// Animated deal: alternates player/dealer cards sliding into their hand's shared
+// STACK spot (not individual slots -- they land in one pile, face down, per hand),
+// same per-card pace as Ultimate Texas Hold'em. The "sweat" reveal (below) is what
+// later flips and fans each stack out.
 const DEAL_STAGGER_MS=170;
 function dealCardsAnimated(){
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
   const order=[];
   for(let i=0;i<7;i++){
-    order.push({el:G.cardEls.player[i],front:G.hand.playerHand[i]});
-    order.push({el:G.cardEls.dealer[i],front:null});
+    order.push({el:G.cardEls.player[i],stackLeft:PLAYER_FAN_LEFTS[0]});
+    order.push({el:G.cardEls.dealer[i],stackLeft:DEALER_FAN_LEFTS[0]});
   }
   order.forEach((item,i)=>{
     Cards.reset(item.el);
-    if(item.front)Cards.setFront(item.el,item.front);
+    item.el.style.transition='none';
+    item.el.style.left=item.stackLeft+'cqh';
+    item.el.style.zIndex=1;
+    void item.el.offsetWidth;
+    item.el.style.transition='';
     Cards.dealIn(item.el,i*DEAL_STAGGER_MS);
   });
   return order.length*DEAL_STAGGER_MS+450;
 }
-const HOLE_REVEAL_GAP_MS=650; // same pace as UTH's hole-card reveal, applied per card here
-function revealPlayerCardsSlowly(startDelay){
-  const n=G.cardEls.player.length;
-  G.cardEls.player.forEach((el,i)=>{
+// The "sweat": flips the whole stack face up at once (so only the top card shows),
+// then fans each card out to the right, one at a time, until the full hand is
+// spread. onAllRevealed fires only once the last card has finished sliding --
+// callers use it to reveal the hand-strength text, never before every card is up.
+const SWEAT_STAGGER_MS=430;
+function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
+  cardEls.forEach((el,i)=>{
+    el.style.transition='none';
+    el.style.left=fanLefts[0]+'cqh';
+    el.style.zIndex=cardEls.length-i; // card 0 sits on top of the pile
+  });
+  void cardEls[0].offsetWidth;
+  cardEls.forEach(el=>{el.style.transition='';});
+  cardEls.forEach((el,i)=>{Cards.setFront(el,cards[i]);Cards.flipUp(el);});
+  cardEls.forEach((el,i)=>{
     setTimeout(()=>{
-      Cards.flipUp(el);
-      if(i===n-1)onHandFullyRevealed();
-    },startDelay+i*HOLE_REVEAL_GAP_MS);
+      el.style.zIndex=i+1; // later cards overlap on top, standard fanned-hand order
+      el.style.left=fanLefts[i]+'cqh';
+      if(i===cardEls.length-1)setTimeout(()=>{if(onAllRevealed)onAllRevealed();},550);
+    },i*SWEAT_STAGGER_MS);
   });
 }
 // Called once all 7 of the player's cards are face up (or immediately, on a resumed
@@ -783,7 +838,7 @@ async function dealHand(){
   document.getElementById('repeat-btn').disabled=false;
   updateUI();
   const dealMs=dealCardsAnimated();
-  revealPlayerCardsSlowly(dealMs);
+  setTimeout(()=>{sweatReveal(G.cardEls.player,G.hand.playerHand,PLAYER_FAN_LEFTS,onHandFullyRevealed);},dealMs);
 }
 
 // ── PLAY / FOLD (server-resolved) ─────────────────────────────────────────────
@@ -809,22 +864,20 @@ async function commitDecision(decision,playBet){
   if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
   finishHand(data);
 }
-const DEALER_REVEAL_STAGGER_MS=140;
 function finishHand(data){
-  G.cardEls.dealer.forEach((el,i)=>{
-    Cards.setFront(el,data.dealerHand[i]);
-    setTimeout(()=>Cards.flipUp(el),i*DEALER_REVEAL_STAGGER_MS);
+  // Sweat the dealer's hand now (it's sat as a hidden face-down stack since the deal) --
+  // the hand-strength text is set only once every dealer card has fanned into view.
+  sweatReveal(G.cardEls.dealer,data.dealerHand,DEALER_FAN_LEFTS,()=>{
+    if(!data.folded){
+      const dealerFinal=evalHand(data.dealerHand);
+      document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
+    }
   });
-  let playerFinal=null;
+  const playerFinal=data.folded?null:evalHand(G.hand.playerHand);
   if(data.folded){
-    document.getElementById('dealer-hand-name').textContent='';
     document.getElementById('player-hand-name').textContent='Folded';
-  }else{
-    playerFinal=evalHand(G.hand.playerHand);
-    const dealerFinal=evalHand(data.dealerHand);
-    document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
-    document.getElementById('player-hand-name').textContent=describeHandTier(playerFinal);
   }
+  // (player-hand-name already shows its live description from the initial sweat when not folded)
   (data.log||[]).forEach(line=>{
     const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
     addLog(line,cls);
@@ -849,7 +902,7 @@ function finishHand(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.locked={ante:0,flushRush:0,superFlushRush:0};G.playBet=0;
-  [...G.cardEls.player,...G.cardEls.dealer].forEach(el=>Cards.reset(el));
+  [...G.cardEls.player,...G.cardEls.dealer].forEach(el=>{Cards.reset(el);resetCardPosition(el);});
   resetCardRows();
   document.getElementById('play-spot').classList.remove('inert');
   document.getElementById('dealer-hand-name').textContent='';
@@ -883,16 +936,27 @@ function updateUI(){
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
   renderRollHistory();
 
-  const anteAmt=G.bets.ante||0,frAmt=G.bets.flushRush||0,sfrAmt=G.bets.superFlushRush||0;
-  document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
-  document.getElementById('stk-flushrush').textContent=frAmt?fmt(frAmt):'';
-  document.getElementById('stk-superflushrush').textContent=sfrAmt?fmt(sfrAmt):'';
+  // Ante/Flush Rush/Super Flush Rush are contract bets: once dealt, their amount comes
+  // from G.locked (G.bets is cleared right after a successful deal), and they show a
+  // lock badge instead of a chip stack -- see setStakeLabel().
+  const locked=G.phase!=='betting';
+  const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
+  const frAmt=locked?G.locked.flushRush:(G.bets.flushRush||0);
+  const sfrAmt=locked?G.locked.superFlushRush:(G.bets.superFlushRush||0);
+  setStakeLabel('stk-ante',anteAmt,locked);
+  setStakeLabel('stk-flushrush',frAmt,locked);
+  setStakeLabel('stk-superflushrush',sfrAmt,locked);
   document.getElementById('stk-play').textContent=G.playBet?fmt(G.playBet):'';
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('flushrush-spot').classList.toggle('active',frAmt>0);
   document.getElementById('superflushrush-spot').classList.toggle('active',sfrAmt>0);
   document.getElementById('play-spot').classList.toggle('active',G.playBet>0);
   renderChipStacks();
+}
+function setStakeLabel(id,amt,locked){
+  const el=document.getElementById(id);
+  if(!amt){el.innerHTML='';return;}
+  el.innerHTML='<span class="panel-amt-text">'+fmt(amt)+'</span>'+(locked?'<span class="panel-lock-badge">🔒</span>':'');
 }
 
 // ── CHIP STACKS ON BET SPOTS ──────────────────────────────────────────────────
@@ -909,16 +973,16 @@ function chipStackHTML(amt){
   h+='</span>';
   return h;
 }
-const UTH_STK_SEL='.uth-spot-stk';
+// Only the Play spot shows real stacked chips -- Ante/Flush Rush/Super Flush Rush are
+// contract bets rendered as plain text + a lock badge by setStakeLabel() instead.
 function renderChipStacks(){
-  document.querySelectorAll(UTH_STK_SEL).forEach(el=>{
-    const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
-    if(!m){el.classList.remove('has-stack');return;}
-    const amt=parseFloat(m[1].replace(/,/g,''));
-    if(!(amt>0)){el.classList.remove('has-stack');return;}
-    el.innerHTML=chipStackHTML(amt);
-    el.classList.add('has-stack');
-  });
+  const el=document.getElementById('stk-play');
+  const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
+  if(!m){el.classList.remove('has-stack');return;}
+  const amt=parseFloat(m[1].replace(/,/g,''));
+  if(!(amt>0)){el.classList.remove('has-stack');return;}
+  el.innerHTML=chipStackHTML(amt);
+  el.classList.add('has-stack');
 }
 document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
 
