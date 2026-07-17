@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Rated Hex Ultimate Texas Hold'em</title>
+<title>Rated Hex I Luv Suits Poker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
 
-/* ── AUTH (ported wholesale from sicbo/craps) ── */
+/* ── AUTH (ported wholesale from sicbo/craps/uth) ── */
 #auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;padding:20px}
 .auth-box{background:#1a1a1a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:28px 24px;width:100%;max-width:340px}
 .auth-box h1{font-size:34px;font-weight:700;color:#ffd700;margin-bottom:3px}
@@ -48,7 +48,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .hud-lbl{font-size:17px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
 .hud-val{font-size:19px;font-weight:600;line-height:1.3}
 
-/* Status zone (replaces the dice-canvas of the dice games with a phase/result readout) */
+/* Status zone */
 #status-zone{flex:1;background:rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;gap:4px;padding:4px}
 #status-phase{font-size:min(30px,4.4vw);font-weight:800;letter-spacing:.05em;color:#ffd700;text-transform:uppercase}
 #status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
@@ -62,13 +62,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .uth-spot{position:relative;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .1s;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.25)}
 .uth-spot:hover{background:rgba(255,255,255,.08)}
 .uth-spot.active{border-color:#ffd700;background:rgba(255,215,0,.12)}
-.uth-spot.readonly{cursor:default}
-.uth-spot.readonly:hover{background:rgba(0,0,0,.25)}
 #ante-spot{width:min(30vw,190px);height:min(30vw,190px)}
-#trips-spot{width:min(20vw,130px);height:min(20vw,130px);border-color:rgba(210,150,210,.4)}
-#trips-spot.active{border-color:#d060d0;background:rgba(180,0,180,.15)}
-#blind-spot{width:min(20vw,130px);height:min(20vw,130px);border-style:dashed;border-color:rgba(255,255,255,.18)}
-.uth-spot-label{font-size:min(20px,3.2vw);font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.85)}
+#flushrush-spot{width:min(20vw,130px);height:min(20vw,130px);border-color:rgba(90,200,210,.4)}
+#flushrush-spot.active{border-color:#4fd0e0;background:rgba(0,150,170,.15)}
+#superflushrush-spot{width:min(20vw,130px);height:min(20vw,130px);border-color:rgba(210,150,210,.4)}
+#superflushrush-spot.active{border-color:#d060d0;background:rgba(180,0,180,.15)}
+.uth-spot-label{font-size:min(18px,3vw);font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.85);text-align:center;line-height:1.15}
 .uth-spot-sub{font-size:min(13px,2.2vw);color:rgba(255,255,255,.4)}
 .uth-spot-stk{font-size:min(20px,3vw);color:#ffd700;font-weight:700;margin-top:2px}
 .uth-corner-btn{display:none;position:absolute;top:4px;right:6px;width:20px;height:20px;border-radius:4px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:18px;text-align:center;cursor:pointer;z-index:5;padding:0}
@@ -76,20 +75,19 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .uth-corner-btn:hover{background:rgba(180,0,0,.7)}
 #bet-hint{font-size:min(15px,2.6vw);color:rgba(255,255,255,.4);text-align:center;max-width:80vw}
 
-/* Paytable panel -- printed-on-the-felt reference for the Blind/Trips side bets */
+/* Paytable panel -- printed-on-the-felt reference for the two side bets */
 #uth-paytables{display:flex;flex-direction:row;gap:min(4vw,24px);justify-content:center}
 .uth-paytable{background:rgba(0,0,0,.32);border:0.5px solid rgba(255,215,0,.3);border-radius:6px;padding:5px 10px;min-width:min(42vw,170px)}
 .upt-title{font-size:min(13px,2.2vw);font-weight:700;letter-spacing:.06em;color:#ffd700;text-transform:uppercase;text-align:center;margin-bottom:3px;border-bottom:0.5px solid rgba(255,215,0,.25);padding-bottom:2px}
 .upt-row{display:flex;justify-content:space-between;gap:10px;font-size:min(12px,2vw);color:rgba(255,255,255,.75);line-height:1.5}
 .upt-row span:last-child{color:#ffe066;font-weight:700}
 
-/* Play screen (dealt hand) */
+/* Play screen (dealt hand) -- just two rows (dealer/player), 7 cards each, no community */
 #play-screen{flex:1;display:none;flex-direction:column;justify-content:space-around;align-items:center;padding:0.5vh 1vw;gap:0.5vh;min-height:0}
 .card-row-wrap{display:flex;flex-direction:column;align-items:center;gap:min(0.6vh,4px)}
-.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:min(1.6vw,14px);--pc-w:min(120px,15vw,15vh)}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:min(1vw,10px);--pc-w:min(130px,11.2vw,17vh)}
 .crl-title{font-size:min(14px,2.2vw);font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.4);text-transform:uppercase}
 .crl-hand{font-size:min(19px,3vw);color:#ffd700;font-weight:700;min-height:1.3em;text-align:center}
-#community-row.card-row{--pc-w:min(112px,14vw,14vh)}
 #locked-bets-strip{display:flex;flex-direction:row;gap:min(3vw,20px);justify-content:center;flex-shrink:0}
 .lb-item{display:flex;flex-direction:column;align-items:center}
 .lb-lbl{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em}
@@ -115,7 +113,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .log-line.lose{color:#f08080}
 #log-btn-uth{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
-.nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.png')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.png')}
@@ -133,14 +130,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
 #hud-pnl{font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px}
 
-/* Action buttons (Deal / Check / Bet / Fold) -- share the same DOM slot, one subset visible per phase */
+/* Action buttons (Deal / Raise / Fold) -- share the same DOM slot */
 #action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch}
 .action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(22px,3.2vw);font-weight:900;padding:6px 14px;cursor:pointer;flex-shrink:0;letter-spacing:.05em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
 .action-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%)}
 .action-btn:active{filter:brightness(.9)}
 .action-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
-.action-btn.secondary{background:linear-gradient(180deg,#e8e8e8 0%,#a8a8a8 100%);box-shadow:inset -2px 0 0 #666;border-left-color:#666}
-.action-btn.secondary:hover{background:linear-gradient(180deg,#fff 0%,#ccc 100%)}
 .action-btn.danger{background:linear-gradient(180deg,#ff8a80 0%,#b71c1c 100%);box-shadow:inset -2px 0 0 #7a0000;border-left-color:#7a0000;color:#fff}
 .action-btn.danger:hover{background:linear-gradient(180deg,#ffb0a8 0%,#d32f2f 100%)}
 
@@ -164,7 +159,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #modal-log .log-entries p.lose{color:#f08080}
 #modal-log .log-entries p.info{color:#ffe066}
 
-/* Bet-box chip stacks -- ported wholesale from craps/sicbo */
+/* Bet-box chip stacks -- ported wholesale from craps/sicbo/uth */
 body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 #ante-spot{--chip:78px}
 .has-stack{position:absolute;left:50%;top:66%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block}
@@ -174,7 +169,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
 
-/* Win/loss chip-ghost sweep -- ported wholesale from craps/sicbo */
+/* Win/loss chip-ghost sweep -- ported wholesale from craps/sicbo/uth */
 .chip-ghost{position:fixed;z-index:150;pointer-events:none;filter:none;opacity:1;transition:filter .35s ease-out}
 .chip-ghost.dim{filter:grayscale(1) brightness(.55)}
 .chip-ghost.sweep{transform:translateY(-130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
@@ -221,7 +216,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 <!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
-    <h1>🃏 Rated Hex Hold'em</h1>
+    <h1>🃏 Rated Hex I Luv Suits</h1>
     <p>Hosted by Deck</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Log In</button>
@@ -279,15 +274,15 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
         <button class="gmode-btn" onclick="window.location.href='sicbo.html'">SIC-BO<span class="gmode-sub">3 dice</span></button>
         <button class="gmode-btn" onclick="window.location.href='destroyer.html'">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
-        <button class="gmode-btn active">HOLD'EM<span class="gmode-sub">Ultimate Texas</span></button>
-        <button class="gmode-btn" onclick="window.location.href='iluvsuits.html'">I LUV SUITS<span class="gmode-sub">Max-flush poker</span></button>
+        <button class="gmode-btn" onclick="window.location.href='uth.html'">HOLD'EM<span class="gmode-sub">Ultimate Texas</span></button>
+        <button class="gmode-btn active">I LUV SUITS<span class="gmode-sub">Max-flush poker</span></button>
         <button class="gmode-btn" onclick="window.location.href='focusmode.html'" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span></button>
       </div>
     </div>
     <!-- Status zone -->
     <div id="status-zone">
       <div id="status-phase">Place Your Ante</div>
-      <div id="status-sub">Blind bet auto-matches your Ante. Trips is optional.</div>
+      <div id="status-sub">Flush Rush and Super Flush Rush are optional side bets.</div>
     </div>
     <!-- Info panel -->
     <div id="info-panel">
@@ -314,11 +309,11 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     <!-- BET SCREEN (pre-deal) -->
     <div id="bet-screen">
       <div class="uth-bet-row">
-        <div class="uth-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
-          <span class="uth-spot-label">TRIPS</span>
+        <div class="uth-spot" id="flushrush-spot" onclick="placeBet('flushRush')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('flushRush')">
+          <span class="uth-spot-label">FLUSH<br>RUSH</span>
           <span class="uth-spot-sub">optional</span>
-          <span class="uth-spot-stk" id="stk-trips"></span>
-          <button class="uth-corner-btn" id="m-trips" onclick="event.stopPropagation();removeBet('trips')">−</button>
+          <span class="uth-spot-stk" id="stk-flushrush"></span>
+          <button class="uth-corner-btn" id="m-flushrush" onclick="event.stopPropagation();removeBet('flushRush')">−</button>
         </div>
         <div class="uth-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
           <span class="uth-spot-label">ANTE</span>
@@ -326,32 +321,29 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
           <span class="uth-spot-stk" id="stk-ante"></span>
           <button class="uth-corner-btn" id="m-ante" onclick="event.stopPropagation();removeBet('ante')">−</button>
         </div>
-        <div class="uth-spot readonly" id="blind-spot">
-          <span class="uth-spot-label">BLIND</span>
-          <span class="uth-spot-sub">= Ante</span>
-          <span class="uth-spot-stk" id="stk-blind"></span>
+        <div class="uth-spot" id="superflushrush-spot" onclick="placeBet('superFlushRush')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superFlushRush')">
+          <span class="uth-spot-label">SUPER<br>FLUSH RUSH</span>
+          <span class="uth-spot-sub">optional</span>
+          <span class="uth-spot-stk" id="stk-superflushrush"></span>
+          <button class="uth-corner-btn" id="m-superflushrush" onclick="event.stopPropagation();removeBet('superFlushRush')">−</button>
         </div>
       </div>
-      <div id="bet-hint">Ante required to deal. Blind auto-matches Ante. Trips is an optional side bet on your own best 5-card hand.</div>
+      <div id="bet-hint">Ante required to deal. Ranking is by your best flush -- most cards of one suit wins; ties broken by rank. Dealer needs a 3-card flush, 9-high or better, to qualify.</div>
       <div id="uth-paytables">
         <div class="uth-paytable">
-          <div class="upt-title">Blind Pays</div>
-          <div class="upt-row"><span>Royal Flush</span><span>500 : 1</span></div>
-          <div class="upt-row"><span>Straight Flush</span><span>50 : 1</span></div>
-          <div class="upt-row"><span>Four of a Kind</span><span>10 : 1</span></div>
-          <div class="upt-row"><span>Full House</span><span>3 : 1</span></div>
-          <div class="upt-row"><span>Flush</span><span>3 : 2</span></div>
-          <div class="upt-row"><span>Straight</span><span>1 : 1</span></div>
+          <div class="upt-title">Flush Rush Pays</div>
+          <div class="upt-row"><span>7-Card Flush</span><span>300 : 1</span></div>
+          <div class="upt-row"><span>6-Card Flush</span><span>75 : 1</span></div>
+          <div class="upt-row"><span>5-Card Flush</span><span>5 : 1</span></div>
+          <div class="upt-row"><span>4-Card Flush</span><span>2 : 1</span></div>
         </div>
         <div class="uth-paytable">
-          <div class="upt-title">Trips Pays</div>
-          <div class="upt-row"><span>Royal Flush</span><span>50 : 1</span></div>
-          <div class="upt-row"><span>Straight Flush</span><span>40 : 1</span></div>
-          <div class="upt-row"><span>Four of a Kind</span><span>30 : 1</span></div>
-          <div class="upt-row"><span>Full House</span><span>8 : 1</span></div>
-          <div class="upt-row"><span>Flush</span><span>7 : 1</span></div>
-          <div class="upt-row"><span>Straight</span><span>4 : 1</span></div>
-          <div class="upt-row"><span>Three of a Kind</span><span>3 : 1</span></div>
+          <div class="upt-title">Super Flush Rush Pays</div>
+          <div class="upt-row"><span>7-Card Str. Flush</span><span>8000 : 1</span></div>
+          <div class="upt-row"><span>6-Card Str. Flush</span><span>1000 : 1</span></div>
+          <div class="upt-row"><span>5-Card Str. Flush</span><span>100 : 1</span></div>
+          <div class="upt-row"><span>4-Card Str. Flush</span><span>60 : 1</span></div>
+          <div class="upt-row"><span>3-Card Str. Flush</span><span>7 : 1</span></div>
         </div>
       </div>
     </div>
@@ -364,18 +356,15 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
         <span class="crl-hand" id="dealer-hand-name"></span>
       </div>
       <div class="card-row-wrap">
-        <div class="card-row" id="community-row"></div>
-      </div>
-      <div class="card-row-wrap">
         <span class="crl-title">You</span>
         <div class="card-row" id="player-row"></div>
         <span class="crl-hand" id="player-hand-name"></span>
       </div>
       <div id="locked-bets-strip">
         <div class="lb-item"><span class="lb-lbl">Ante</span><span class="lb-val" id="lb-ante">$0</span></div>
-        <div class="lb-item"><span class="lb-lbl">Blind</span><span class="lb-val" id="lb-blind">$0</span></div>
-        <div class="lb-item"><span class="lb-lbl">Trips</span><span class="lb-val" id="lb-trips">$0</span></div>
-        <div class="lb-item"><span class="lb-lbl">Play</span><span class="lb-val" id="lb-play">—</span></div>
+        <div class="lb-item"><span class="lb-lbl">Flush Rush</span><span class="lb-val" id="lb-flushrush">$0</span></div>
+        <div class="lb-item"><span class="lb-lbl">Super F.R.</span><span class="lb-val" id="lb-superflushrush">$0</span></div>
+        <div class="lb-item"><span class="lb-lbl">Raise</span><span class="lb-val" id="lb-raise">—</span></div>
       </div>
     </div>
 
@@ -405,12 +394,8 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     </div>
     <div id="action-row">
       <button class="action-btn" id="btn-deal" onclick="dealHand()">DEAL</button>
-      <button class="action-btn secondary" id="btn-check" onclick="uthCheck()" style="display:none">CHECK</button>
-      <button class="action-btn" id="btn-bet4" onclick="uthBet('bet4')" style="display:none">BET 4X</button>
-      <button class="action-btn" id="btn-bet3" onclick="uthBet('bet3')" style="display:none">BET 3X</button>
-      <button class="action-btn" id="btn-bet2" onclick="uthBet('bet2')" style="display:none">BET 2X</button>
-      <button class="action-btn" id="btn-bet1" onclick="uthBet('bet1')" style="display:none">BET 1X</button>
-      <button class="action-btn danger" id="btn-fold" onclick="uthFold()" style="display:none">FOLD</button>
+      <button class="action-btn" id="btn-raise" onclick="doRaise()" style="display:none">RAISE</button>
+      <button class="action-btn danger" id="btn-fold" onclick="doFold()" style="display:none">FOLD</button>
     </div>
   </div>
 
@@ -458,10 +443,10 @@ const FN_HEADERS={'Content-Type':'application/json','Authorization':'Bearer '+SU
 function makeInitialG(){
   return {
     bankroll:0,startingBankroll:0,chip:25,
-    bets:{ante:0,trips:0},
-    phase:'betting', // betting|preflop|flop|river|showdown
-    hand:null,       // {playerHole,community,dealerHole}
-    locked:{ante:0,blind:0,trips:0},
+    bets:{ante:0,flushRush:0,superFlushRush:0},
+    phase:'betting', // betting|dealt|showdown
+    hand:null,       // {playerHand:[7 cards], dealerHand:null|[7 cards]}
+    locked:{ante:0,flushRush:0,superFlushRush:0},
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
     history:[],
     cardEls:null,
@@ -481,79 +466,45 @@ function closeLogModal(){document.getElementById('modal-log').classList.add('hid
 function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.prepend(p);while(el.children.length>80)el.removeChild(el.lastChild);}
 
 // ── HAND EVALUATION (display only -- the server is authoritative for payouts; this
-// mirrors roll-uth's evaluator so the "your hand" banner can update live as cards
-// are revealed, without waiting on a round trip) ─────────────────────────────────
+// mirrors roll-iluvsuits' evaluator so the hand banners can update without a round
+// trip). Ranking: most cards of one suit wins; ties broken by that suit's ranks. ──
 const RANK_NAME={14:'Ace',13:'King',12:'Queen',11:'Jack',10:'10',9:'9',8:'8',7:'7',6:'6',5:'5',4:'4',3:'3',2:'2'};
-const RANK_PLURAL={14:'Aces',13:'Kings',12:'Queens',11:'Jacks',10:'10s',9:'9s',8:'8s',7:'7s',6:'6s',5:'5s',4:'4s',3:'3s',2:'2s'};
-function evaluate5(cards){
-  const ranks=cards.map(c=>c.r).sort((a,b)=>b-a);
-  const suits=cards.map(c=>c.s);
-  const isFlush=suits.every(s=>s===suits[0]);
-  const uniq=Array.from(new Set(ranks)).sort((a,b)=>b-a);
-  let straightHigh=0;
-  if(uniq.length===5){
-    if(uniq[0]-uniq[4]===4)straightHigh=uniq[0];
-    else if(uniq.join(',')==='14,5,4,3,2')straightHigh=5;
-  }
-  const counts={};
-  for(const r of ranks)counts[r]=(counts[r]||0)+1;
-  const groups=Object.entries(counts).map(([r,c])=>({r:+r,c})).sort((a,b)=>b.c-a.c||b.r-a.r);
-  if(straightHigh&&isFlush)return{cat:8,kick:[straightHigh]};
-  if(groups[0].c===4)return{cat:7,kick:[groups[0].r,groups[1].r]};
-  if(groups[0].c===3&&groups[1].c===2)return{cat:6,kick:[groups[0].r,groups[1].r]};
-  if(isFlush)return{cat:5,kick:ranks};
-  if(straightHigh)return{cat:4,kick:[straightHigh]};
-  if(groups[0].c===3)return{cat:3,kick:[groups[0].r,...groups.slice(1).map(g=>g.r)]};
-  if(groups[0].c===2&&groups[1].c===2)return{cat:2,kick:[groups[0].r,groups[1].r,groups[2].r]};
-  if(groups[0].c===2)return{cat:1,kick:[groups[0].r,...groups.slice(1).map(g=>g.r)]};
-  return{cat:0,kick:ranks};
-}
-function compareScore(a,b){
-  if(a.cat!==b.cat)return a.cat-b.cat;
-  const len=Math.max(a.kick.length,b.kick.length);
-  for(let i=0;i<len;i++){const av=a.kick[i]||0,bv=b.kick[i]||0;if(av!==bv)return av-bv;}
+const SUITS=['S','H','D','C'];
+function compareRankArrays(a,b){
+  const len=Math.max(a.length,b.length);
+  for(let i=0;i<len;i++){const av=a[i]||0,bv=b[i]||0;if(av!==bv)return av-bv;}
   return 0;
 }
-function combinations5(cards7){
-  const res=[];const n=cards7.length;
-  for(let a=0;a<n;a++)for(let b=a+1;b<n;b++)for(let c=b+1;c<n;c++)for(let d=c+1;d<n;d++)for(let e=d+1;e<n;e++)
-    res.push([cards7[a],cards7[b],cards7[c],cards7[d],cards7[e]]);
-  return res;
-}
-function best7(cards7){
-  let best=null;
-  for(const combo of combinations5(cards7)){const score=evaluate5(combo);if(!best||compareScore(score,best)>0)best=score;}
-  return best;
-}
-function isRoyal(score){return score.cat===8&&score.kick[0]===14;}
-const CAT_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
-function categoryName(score){return isRoyal(score)?'Royal Flush':CAT_NAMES[score.cat];}
-function describeScore(score){
-  const k=score.kick;
-  switch(score.cat){
-    case 8: return isRoyal(score)?'Royal Flush':'Straight Flush, '+RANK_NAME[k[0]]+' High';
-    case 7: return 'Four of a Kind, '+RANK_PLURAL[k[0]];
-    case 6: return 'Full House, '+RANK_PLURAL[k[0]]+' over '+RANK_PLURAL[k[1]];
-    case 5: return 'Flush, '+RANK_NAME[k[0]]+' High';
-    case 4: return 'Straight, '+RANK_NAME[k[0]]+' High';
-    case 3: return 'Three of a Kind, '+RANK_PLURAL[k[0]];
-    case 2: return 'Two Pair, '+RANK_PLURAL[k[0]]+' and '+RANK_PLURAL[k[1]];
-    case 1: return 'Pair of '+RANK_PLURAL[k[0]];
-    default: return RANK_NAME[k[0]]+' High';
+function evalHand(cards){
+  const bySuit={S:[],H:[],D:[],C:[]};
+  cards.forEach(c=>bySuit[c.s].push(c.r));
+  let bestSuit='S',bestCount=0;
+  for(const s of SUITS){
+    const ranks=bySuit[s].slice().sort((a,b)=>b-a);
+    if(ranks.length>bestCount){bestCount=ranks.length;bestSuit=s;}
+    else if(ranks.length===bestCount&&ranks.length>0){
+      const cur=bySuit[bestSuit].slice().sort((a,b)=>b-a);
+      if(compareRankArrays(ranks,cur)>0)bestSuit=s;
+    }
   }
+  const ranks=bySuit[bestSuit].slice().sort((a,b)=>b-a);
+  return{count:bestCount,ranks,suit:bestSuit};
 }
-function describeHole(cards){
-  const a=cards[0],b=cards[1];
-  if(a.r===b.r)return 'Pair of '+RANK_PLURAL[a.r];
-  const hi=a.r>b.r?a:b,lo=a.r>b.r?b:a;
-  return RANK_NAME[hi.r]+'-'+RANK_NAME[lo.r]+' High';
+function compareHands(h1,h2){
+  if(h1.count!==h2.count)return h1.count-h2.count;
+  return compareRankArrays(h1.ranks,h2.ranks);
+}
+function dealerQualifies(score){
+  if(score.count>3)return true;
+  if(score.count===3)return score.ranks[0]>=9;
+  return false;
+}
+function describeHandTier(score){
+  return score.count+'-Card Flush, '+RANK_NAME[score.ranks[0]]+' High';
 }
 function updateLiveHandDisplay(){
   if(!G.hand)return;
-  const el=document.getElementById('player-hand-name');
-  if(G.phase==='preflop'){el.textContent=describeHole(G.hand.playerHole);return;}
-  if(G.phase==='flop'){el.textContent=describeScore(evaluate5([...G.hand.playerHole,...G.hand.community.slice(0,3)]));return;}
-  if(G.phase==='river'){el.textContent=describeScore(best7([...G.hand.playerHole,...G.hand.community]));return;}
+  document.getElementById('player-hand-name').textContent=describeHandTier(evalHand(G.hand.playerHand));
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -605,13 +556,12 @@ function startSession(player){
   G.bankroll=parseFloat(player.bankroll)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   const gs=player.game_state||{};
-  if(gs.uth&&gs.uth.lastBetSnapshot){G.lastBetSnapshot=gs.uth.lastBetSnapshot;document.getElementById('repeat-btn').disabled=false;}
-  if(gs.uth&&gs.uth.phase==='preflop'){
+  if(gs.iluvsuits&&gs.iluvsuits.phase==='dealt'){
     // An abandoned hand from a previous session (refresh mid-decision): resume at the
-    // earliest decision point rather than lose track of the already-committed Ante/Blind/Trips.
-    G.locked={ante:gs.uth.ante,blind:gs.uth.blind,trips:gs.uth.trips};
-    G.hand={playerHole:gs.uth.playerHole,community:gs.uth.community,dealerHole:null};
-    G.phase='preflop';
+    // decision point rather than lose track of the already-committed Ante/side bets.
+    G.locked={ante:gs.iluvsuits.ante,flushRush:gs.iluvsuits.flushRush,superFlushRush:gs.iluvsuits.superFlushRush};
+    G.hand={playerHand:gs.iluvsuits.playerHand,dealerHand:null};
+    G.phase='dealt';
     showPlayScreen();renderHandCardsStatic();renderLockedBets();updateLiveHandDisplay();
   }
   renderActionButtons();updateUI();
@@ -678,7 +628,7 @@ async function redeemVoucher(code){document.getElementById('redeem-input').value
 // ── CHIP SELECTION ────────────────────────────────────────────────────────────
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
 
-// ── PRE-DEAL BET ACTIONS (ante/trips only -- blind always mirrors ante) ──────
+// ── PRE-DEAL BET ACTIONS ───────────────────────────────────────────────────────
 function placeBet(key){
   if(G.phase!=='betting')return;
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
@@ -699,60 +649,47 @@ function clearBets(){
   if(G.phase!=='betting')return;
   let ret=0;
   for(const k in G.bets)ret=r2(ret+G.bets[k]);
-  G.bets={ante:0,trips:0};G.bankroll=r2(G.bankroll+ret);
+  G.bets={ante:0,flushRush:0,superFlushRush:0};G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
 function repeatLastBet(){
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
-  const cost=r2((snap.ante||0)+(snap.trips||0));
+  const cost=r2((snap.ante||0)+(snap.flushRush||0)+(snap.superFlushRush||0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
-  G.bets.ante=snap.ante||0;G.bets.trips=snap.trips||0;
+  G.bets.ante=snap.ante||0;G.bets.flushRush=snap.flushRush||0;G.bets.superFlushRush=snap.superFlushRush||0;
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
 }
 
-// ── CARD SLOTS ────────────────────────────────────────────────────────────────
+// ── CARD SLOTS (7 each -- no community row in this game) ─────────────────────
 function buildCardSlots(){
   if(G.cardEls)return;
   const dealerRow=document.getElementById('dealer-row');
-  const communityRow=document.getElementById('community-row');
   const playerRow=document.getElementById('player-row');
-  const dealer=[Cards.makeSlot(),Cards.makeSlot()];
-  const community=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
-  const player=[Cards.makeSlot(),Cards.makeSlot()];
+  const dealer=Array.from({length:7},()=>Cards.makeSlot());
+  const player=Array.from({length:7},()=>Cards.makeSlot());
   dealer.forEach(el=>dealerRow.appendChild(el));
-  community.forEach(el=>communityRow.appendChild(el));
   player.forEach(el=>playerRow.appendChild(el));
-  G.cardEls={dealer,community,player};
+  G.cardEls={dealer,player};
 }
-// Static render (no animation) -- used only when resuming an abandoned hand after a
-// refresh, where a suspenseful deal would be strange since the player already knows
-// their cards from before.
+// Static render (no animation) -- used only when resuming an abandoned hand.
 function renderHandCardsStatic(){
-  G.cardEls.player.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.playerHole[i]);Cards.flipUp(el);});
-  G.cardEls.community.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.community[i]);});
+  G.cardEls.player.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.playerHand[i]);Cards.flipUp(el);});
   G.cardEls.dealer.forEach(el=>Cards.reset(el));
 }
-// Animated deal: slides each card into place in turn (player/dealer alternating, then
-// the community), face down except the player's hole cards which arrive with their
-// fronts already set (revealed separately afterwards, one at a time). Returns the total
-// duration in ms so the caller can schedule what happens next.
+// Animated deal: alternates player/dealer cards sliding into place, same per-card pace
+// as Ultimate Texas Hold'em. Player cards arrive with fronts already set but face down,
+// revealed afterwards one at a time by revealPlayerCardsSlowly().
 const DEAL_STAGGER_MS=170;
 function dealCardsAnimated(){
-  const order=[
-    {el:G.cardEls.player[0],front:G.hand.playerHole[0]},
-    {el:G.cardEls.dealer[0],front:null},
-    {el:G.cardEls.player[1],front:G.hand.playerHole[1]},
-    {el:G.cardEls.dealer[1],front:null},
-    {el:G.cardEls.community[0],front:G.hand.community[0]},
-    {el:G.cardEls.community[1],front:G.hand.community[1]},
-    {el:G.cardEls.community[2],front:G.hand.community[2]},
-    {el:G.cardEls.community[3],front:G.hand.community[3]},
-    {el:G.cardEls.community[4],front:G.hand.community[4]},
-  ];
+  const order=[];
+  for(let i=0;i<7;i++){
+    order.push({el:G.cardEls.player[i],front:G.hand.playerHand[i]});
+    order.push({el:G.cardEls.dealer[i],front:null});
+  }
   order.forEach((item,i)=>{
     Cards.reset(item.el);
     if(item.front)Cards.setFront(item.el,item.front);
@@ -760,11 +697,21 @@ function dealCardsAnimated(){
   });
   return order.length*DEAL_STAGGER_MS+450;
 }
+const HOLE_REVEAL_GAP_MS=650; // same pace as UTH's hole-card reveal, applied per card here
+function revealPlayerCardsSlowly(startDelay){
+  const n=G.cardEls.player.length;
+  G.cardEls.player.forEach((el,i)=>{
+    setTimeout(()=>{
+      Cards.flipUp(el);
+      if(i===n-1){updateLiveHandDisplay();renderActionButtons();}
+    },startDelay+i*HOLE_REVEAL_GAP_MS);
+  });
+}
 function renderLockedBets(){
   document.getElementById('lb-ante').textContent=fmtS(G.locked.ante);
-  document.getElementById('lb-blind').textContent=fmtS(G.locked.blind);
-  document.getElementById('lb-trips').textContent=fmtS(G.locked.trips);
-  document.getElementById('lb-play').textContent='—';
+  document.getElementById('lb-flushrush').textContent=fmtS(G.locked.flushRush);
+  document.getElementById('lb-superflushrush').textContent=fmtS(G.locked.superFlushRush);
+  document.getElementById('lb-raise').textContent='—';
 }
 
 // ── SCREEN TOGGLE ─────────────────────────────────────────────────────────────
@@ -772,8 +719,8 @@ function showBetScreen(){document.getElementById('bet-screen').style.display='fl
 function showPlayScreen(){document.getElementById('bet-screen').style.display='none';document.getElementById('play-screen').style.display='flex';}
 
 // ── ACTION BUTTONS ────────────────────────────────────────────────────────────
-const ACTION_BTN_IDS=['btn-deal','btn-check','btn-bet4','btn-bet3','btn-bet2','btn-bet1','btn-fold'];
-const PHASE_BUTTONS={betting:['btn-deal'],preflop:['btn-check','btn-bet3','btn-bet4'],flop:['btn-check','btn-bet2'],river:['btn-bet1','btn-fold'],showdown:[]};
+const ACTION_BTN_IDS=['btn-deal','btn-raise','btn-fold'];
+const PHASE_BUTTONS={betting:['btn-deal'],dealt:['btn-raise','btn-fold'],showdown:[]};
 function renderActionButtons(){
   const show=new Set(PHASE_BUTTONS[G.phase]||[]);
   ACTION_BTN_IDS.forEach(id=>{document.getElementById(id).style.display=show.has(id)?'':'none';});
@@ -782,10 +729,8 @@ function setActionButtonsEnabled(en){ACTION_BTN_IDS.forEach(id=>document.getElem
 
 function updateStatusZone(){
   const map={
-    betting:['Place Your Ante','Blind bet auto-matches your Ante. Trips is optional.'],
-    preflop:['Check or Bet 3X/4X','Bet now to skip straight to showdown, or check to see the flop.'],
-    flop:['Check or Bet 2X','Community flop is up. Bet now or check to see the turn &amp; river.'],
-    river:['Bet 1X or Fold','All five community cards are up. This is your last chance to bet.'],
+    betting:['Place Your Ante','Flush Rush and Super Flush Rush are optional side bets on your own 7-card hand.'],
+    dealt:['Raise or Fold','Your Raise size is set automatically by the strength of your best flush.'],
     showdown:['Showdown','']
   };
   const m=map[G.phase]||['',''];
@@ -794,98 +739,78 @@ function updateStatusZone(){
 }
 
 // ── DEAL ──────────────────────────────────────────────────────────────────────
-const HOLE_REVEAL_GAP_MS=650; // pause between flipping the player's two hole cards
 async function dealHand(){
   const ante=G.bets.ante||0;
   if(ante<=0){addLog('Place an Ante bet before dealing.','info');return;}
-  const trips=G.bets.trips||0;
+  const flushRush=G.bets.flushRush||0;
+  const superFlushRush=G.bets.superFlushRush||0;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll-uth',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,trips})});
+    const res=await fetch(FUNCTIONS_URL+'/roll-iluvsuits',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,flushRush,superFlushRush})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
   if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
-  G.locked={ante:data.ante,blind:data.blind,trips:data.trips};
-  G.lastBetSnapshot={ante:data.ante,trips:data.trips};
-  G.hand={playerHole:data.playerHole,community:data.community,dealerHole:null};
+  G.locked={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush};
+  G.lastBetSnapshot={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush};
+  G.hand={playerHand:data.playerHand,dealerHand:null};
   G.bankroll=data.newBankroll;
-  G.bets={ante:0,trips:0};
-  G.phase='preflop';
+  G.bets={ante:0,flushRush:0,superFlushRush:0};
+  G.phase='dealt';
   showPlayScreen();
   renderLockedBets();
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
-  ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until the deal+reveal finishes
+  ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until deal+reveal finishes
   updateStatusZone();
   document.getElementById('repeat-btn').disabled=false;
   updateUI();
   const dealMs=dealCardsAnimated();
-  setTimeout(()=>{
-    Cards.flipUp(G.cardEls.player[0]);
-    setTimeout(()=>{
-      Cards.flipUp(G.cardEls.player[1]);
-      updateLiveHandDisplay();
-      renderActionButtons();
-    },HOLE_REVEAL_GAP_MS);
-  },dealMs);
+  revealPlayerCardsSlowly(dealMs);
 }
 
-// ── CHECK (client-side phase advance, no server call) ────────────────────────
-const COMMUNITY_FLIP_STAGGER_MS=220;
-function uthCheck(){
-  ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none');
-  if(G.phase==='preflop'){
-    [0,1,2].forEach((ci,i)=>setTimeout(()=>Cards.flipUp(G.cardEls.community[ci]),i*COMMUNITY_FLIP_STAGGER_MS));
-    G.phase='flop';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();},2*COMMUNITY_FLIP_STAGGER_MS+500);
-  }else if(G.phase==='flop'){
-    [3,4].forEach((ci,i)=>setTimeout(()=>Cards.flipUp(G.cardEls.community[ci]),i*COMMUNITY_FLIP_STAGGER_MS));
-    G.phase='river';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();},1*COMMUNITY_FLIP_STAGGER_MS+500);
-  }
-  updateStatusZone();
-}
-
-// ── BET / FOLD (server-resolved) ──────────────────────────────────────────────
-function uthBet(decision){commitDecision(decision);}
-function uthFold(){commitDecision('fold');}
+// ── RAISE / FOLD (server-resolved) ────────────────────────────────────────────
+function doRaise(){commitDecision('raise');}
+function doFold(){commitDecision('fold');}
 async function commitDecision(decision){
   setActionButtonsEnabled(false);
   const token=localStorage.getItem('craps_session');
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll-uth',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'resolve',decision})});
+    const res=await fetch(FUNCTIONS_URL+'/roll-iluvsuits',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'resolve',decision})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   setActionButtonsEnabled(true);
   if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
   finishHand(data);
 }
+const DEALER_REVEAL_STAGGER_MS=140;
 function finishHand(data){
-  G.cardEls.community.forEach(el=>Cards.flipUp(el));
-  G.cardEls.dealer.forEach((el,i)=>{Cards.setFront(el,data.dealerHole[i]);Cards.flipUp(el);});
+  G.cardEls.dealer.forEach((el,i)=>{
+    Cards.setFront(el,data.dealerHand[i]);
+    setTimeout(()=>Cards.flipUp(el),i*DEALER_REVEAL_STAGGER_MS);
+  });
   let playerFinal=null;
   if(data.folded){
     document.getElementById('dealer-hand-name').textContent='';
     document.getElementById('player-hand-name').textContent='Folded';
   }else{
-    playerFinal=best7([...G.hand.playerHole,...G.hand.community]);
-    const dealerFinal=best7([...data.dealerHole,...G.hand.community]);
-    document.getElementById('dealer-hand-name').textContent=describeScore(dealerFinal)+(dealerFinal.cat>=1?'':' (no qualify)');
-    document.getElementById('player-hand-name').textContent=describeScore(playerFinal);
+    playerFinal=evalHand(G.hand.playerHand);
+    const dealerFinal=evalHand(data.dealerHand);
+    document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
+    document.getElementById('player-hand-name').textContent=describeHandTier(playerFinal);
   }
-  document.getElementById('lb-play').textContent=data.folded?'Folded':fmtS(data.playBet);
+  document.getElementById('lb-raise').textContent=data.folded?'Folded':fmtS(data.raiseBet);
   (data.log||[]).forEach(line=>{
     const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
     addLog(line,cls);
   });
   G.bankroll=data.newBankroll;
   G.lastWin=data.payout||0;
-  G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
-  const histLabel=data.folded?'Fold':categoryName(playerFinal);
+  G.lastBetDisplay=r2(G.locked.ante+G.locked.flushRush+G.locked.superFlushRush+(data.raiseBet||0));
+  const histLabel=data.folded?'Fold':(playerFinal.count+'-Flush');
   G.history.unshift({result:data.result,payout:data.payout,label:histLabel});
   if(G.history.length>20)G.history.length=20;
   G.phase='showdown';
@@ -901,8 +826,8 @@ function finishHand(data){
   if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
 }
 function resetToBetScreen(){
-  G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0};
-  [...G.cardEls.player,...G.cardEls.community,...G.cardEls.dealer].forEach(el=>Cards.reset(el));
+  G.phase='betting';G.hand=null;G.locked={ante:0,flushRush:0,superFlushRush:0};
+  [...G.cardEls.player,...G.cardEls.dealer].forEach(el=>Cards.reset(el));
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
   showBetScreen();
@@ -935,15 +860,16 @@ function updateUI(){
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
   renderRollHistory();
 
-  const anteAmt=G.bets.ante||0,tripsAmt=G.bets.trips||0;
+  const anteAmt=G.bets.ante||0,frAmt=G.bets.flushRush||0,sfrAmt=G.bets.superFlushRush||0;
   document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
-  document.getElementById('stk-blind').textContent=anteAmt?fmt(anteAmt):'';
-  document.getElementById('stk-trips').textContent=tripsAmt?fmt(tripsAmt):'';
+  document.getElementById('stk-flushrush').textContent=frAmt?fmt(frAmt):'';
+  document.getElementById('stk-superflushrush').textContent=sfrAmt?fmt(sfrAmt):'';
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
-  document.getElementById('blind-spot').classList.toggle('active',anteAmt>0);
-  document.getElementById('trips-spot').classList.toggle('active',tripsAmt>0);
+  document.getElementById('flushrush-spot').classList.toggle('active',frAmt>0);
+  document.getElementById('superflushrush-spot').classList.toggle('active',sfrAmt>0);
   document.getElementById('m-ante').classList.toggle('vis',anteAmt>0);
-  document.getElementById('m-trips').classList.toggle('vis',tripsAmt>0);
+  document.getElementById('m-flushrush').classList.toggle('vis',frAmt>0);
+  document.getElementById('m-superflushrush').classList.toggle('vis',sfrAmt>0);
   renderChipStacks();
 }
 
