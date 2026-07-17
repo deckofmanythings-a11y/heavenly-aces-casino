@@ -351,6 +351,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" id="clear-btn" onclick="clearBets()">Clear</button>
         <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
+        <button class="bar-btn" id="sweat-speed-btn" onclick="cycleSweatSpeed()" title="Cycles Slow/Normal/Fast">Sweat: Normal</button>
       </div>
     </div>
     <div id="action-row">
@@ -743,12 +744,33 @@ function dealCardsAnimated(){
 // then fans each card out to the right, one at a time, until the full hand is
 // spread. onAllRevealed fires only once the last card has finished sliding --
 // callers use it to reveal the hand-strength text, never before every card is up.
-const SWEAT_STAGGER_MS=430;
+//
+// z-index: only card 0 needs to outrank the (still identical-position, still hidden)
+// rest of the pile at the start -- everything else starts at 0. Each card is bumped to
+// i+1 only at the moment ITS OWN fan-out begins. That guarantees a not-yet-revealed
+// card (still sitting at 0) can never outrank an already-fanned one, which an earlier
+// version got wrong: seeding the whole pile with a descending 7..1 order left stale
+// high z-indices on cards still waiting their turn, so a not-yet-revealed card could
+// briefly render on top of (obscure) one that had already fanned out next to it.
+const SWEAT_SPEEDS={slow:750,normal:500,fast:320};
+let sweatSpeedKey=localStorage.getItem('iluvsuits_sweat_speed')||'normal';
+function getSweatStaggerMs(){return SWEAT_SPEEDS[sweatSpeedKey]||SWEAT_SPEEDS.normal;}
+function cycleSweatSpeed(){
+  const keys=Object.keys(SWEAT_SPEEDS);
+  sweatSpeedKey=keys[(keys.indexOf(sweatSpeedKey)+1)%keys.length];
+  localStorage.setItem('iluvsuits_sweat_speed',sweatSpeedKey);
+  updateSweatSpeedButton();
+}
+function updateSweatSpeedButton(){
+  const btn=document.getElementById('sweat-speed-btn');
+  if(btn)btn.textContent='Sweat: '+sweatSpeedKey[0].toUpperCase()+sweatSpeedKey.slice(1);
+}
 function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
+  const stagger=getSweatStaggerMs();
   cardEls.forEach((el,i)=>{
     el.style.transition='none';
     el.style.left=fanLefts[0]+'cqh';
-    el.style.zIndex=cardEls.length-i; // card 0 sits on top of the pile
+    el.style.zIndex=i===0?100:0; // card 0 alone sits atop the still-hidden pile
   });
   void cardEls[0].offsetWidth;
   cardEls.forEach(el=>{el.style.transition='';});
@@ -758,7 +780,7 @@ function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
       el.style.zIndex=i+1; // later cards overlap on top, standard fanned-hand order
       el.style.left=fanLefts[i]+'cqh';
       if(i===cardEls.length-1)setTimeout(()=>{if(onAllRevealed)onAllRevealed();},550);
-    },i*SWEAT_STAGGER_MS);
+    },i*stagger);
   });
 }
 // Called once all 7 of the player's cards are face up (or immediately, on a resumed
@@ -865,14 +887,6 @@ async function commitDecision(decision,playBet){
   finishHand(data);
 }
 function finishHand(data){
-  // Sweat the dealer's hand now (it's sat as a hidden face-down stack since the deal) --
-  // the hand-strength text is set only once every dealer card has fanned into view.
-  sweatReveal(G.cardEls.dealer,data.dealerHand,DEALER_FAN_LEFTS,()=>{
-    if(!data.folded){
-      const dealerFinal=evalHand(data.dealerHand);
-      document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
-    }
-  });
   const playerFinal=data.folded?null:evalHand(G.hand.playerHand);
   if(data.folded){
     document.getElementById('player-hand-name').textContent='Folded';
@@ -891,14 +905,23 @@ function finishHand(data){
   G.phase='showdown';
   renderActionButtons();updateStatusZone();
   updateUI();checkBroke();
-  const totalWagered=G.lastBetDisplay||1;
-  if(data.payout>0){
-    const bigWin=(data.payout/totalWagered)>=7;
-    WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
-  }else{
-    setTimeout(resetToBetScreen,3500);
-  }
-  if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
+
+  // Sweat the dealer's hand now (it's sat as a hidden face-down stack since the deal) --
+  // described regardless of fold, since the player still wants to see what the dealer
+  // had. The winner modal (and the no-payout reset timer) waits for this to finish, so
+  // it never pops up before the dealer's hand is fully revealed and described.
+  sweatReveal(G.cardEls.dealer,data.dealerHand,DEALER_FAN_LEFTS,()=>{
+    const dealerFinal=evalHand(data.dealerHand);
+    document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
+    const totalWagered=G.lastBetDisplay||1;
+    if(data.payout>0){
+      const bigWin=(data.payout/totalWagered)>=7;
+      WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
+    }else{
+      setTimeout(resetToBetScreen,3500);
+    }
+    if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
+  });
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.locked={ante:0,flushRush:0,superFlushRush:0};G.playBet=0;
@@ -936,16 +959,23 @@ function updateUI(){
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
   renderRollHistory();
 
-  // Ante/Flush Rush/Super Flush Rush are contract bets: once dealt, their amount comes
-  // from G.locked (G.bets is cleared right after a successful deal), and they show a
-  // lock badge instead of a chip stack -- see setStakeLabel().
+  // Ante/Flush Rush/Super Flush Rush show real stacked chips while still freely
+  // editable (betting phase), same as Play. Once dealt, their amount comes from
+  // G.locked (G.bets is cleared right after a successful deal) and they become
+  // contract bets: no more chip stack, just plain text + a lock badge.
   const locked=G.phase!=='betting';
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
   const frAmt=locked?G.locked.flushRush:(G.bets.flushRush||0);
   const sfrAmt=locked?G.locked.superFlushRush:(G.bets.superFlushRush||0);
-  setStakeLabel('stk-ante',anteAmt,locked);
-  setStakeLabel('stk-flushrush',frAmt,locked);
-  setStakeLabel('stk-superflushrush',sfrAmt,locked);
+  if(locked){
+    setStakeLabel('stk-ante',anteAmt,true);
+    setStakeLabel('stk-flushrush',frAmt,true);
+    setStakeLabel('stk-superflushrush',sfrAmt,true);
+  }else{
+    document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
+    document.getElementById('stk-flushrush').textContent=frAmt?fmt(frAmt):'';
+    document.getElementById('stk-superflushrush').textContent=sfrAmt?fmt(sfrAmt):'';
+  }
   document.getElementById('stk-play').textContent=G.playBet?fmt(G.playBet):'';
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('flushrush-spot').classList.toggle('active',frAmt>0);
@@ -955,6 +985,7 @@ function updateUI(){
 }
 function setStakeLabel(id,amt,locked){
   const el=document.getElementById(id);
+  el.classList.remove('has-stack'); // clear any chip-stack visual left over from staging
   if(!amt){el.innerHTML='';return;}
   el.innerHTML='<span class="panel-amt-text">'+fmt(amt)+'</span>'+(locked?'<span class="panel-lock-badge">🔒</span>':'');
 }
@@ -973,10 +1004,16 @@ function chipStackHTML(amt){
   h+='</span>';
   return h;
 }
-// Only the Play spot shows real stacked chips -- Ante/Flush Rush/Super Flush Rush are
-// contract bets rendered as plain text + a lock badge by setStakeLabel() instead.
+// Play always shows real stacked chips. Ante/Flush Rush/Super Flush Rush do too while
+// still freely editable (betting phase); once locked as contract bets, updateUI()
+// renders them via setStakeLabel() (innerHTML with a lock badge) instead of plain
+// text, so the regex below simply won't match and has-stack gets cleared.
 function renderChipStacks(){
-  const el=document.getElementById('stk-play');
+  const ids=G.phase==='betting'?['stk-ante','stk-flushrush','stk-superflushrush','stk-play']:['stk-play'];
+  ids.forEach(applyChipStackVisual);
+}
+function applyChipStackVisual(id){
+  const el=document.getElementById(id);
   const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
   if(!m){el.classList.remove('has-stack');return;}
   const amt=parseFloat(m[1].replace(/,/g,''));
@@ -1018,6 +1055,7 @@ function closeCashoutModal(){document.getElementById('modal-cashout').classList.
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 renderActionButtons();
+updateSweatSpeedButton();
 tryRestoreSession();
 </script>
 <script src="winner-modal.js"></script>
