@@ -53,47 +53,44 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #status-phase{font-size:min(30px,4.4vw);font-weight:800;letter-spacing:.05em;color:#ffd700;text-transform:uppercase}
 #status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
 
-/* ── TABLE AREA ── */
-#table-area{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative;background-image:url('BlankFelt.png');background-size:cover;background-position:center}
+/* ── TABLE AREA / FELT PANEL ── */
+/* Baked-art panel: uth_bg.png has the Ante/Blind/Play circles, the Trips diamond,
+   all three paytables, and the "Ante pushes..." qualify line printed directly into
+   the art. Every interactive/informational element below is a %-positioned overlay
+   measured directly off the art's own 3200x1800 pixels (ffmpeg+flood-fill, not
+   eyeballed) -- see the panel-art pattern shared with iLuvSuits_Felt.png. */
+#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px;container-type:size}
+/* Contain-fit sizing (object-fit:contain equivalent) -- see iluvsuits.html for why
+   width:100%+max-height:100% stretches the art at wide aspect ratios. */
+#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('uth_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
 
-/* Bet screen (pre-deal) */
-#bet-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(1vh);padding:1vh}
-.uth-bet-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:min(4vw,28px)}
-.uth-spot{position:relative;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .1s;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.25)}
-.uth-spot:hover{background:rgba(255,255,255,.08)}
-.uth-spot.active{border-color:#ffd700;background:rgba(255,215,0,.12)}
-.uth-spot.readonly{cursor:default}
-.uth-spot.readonly:hover{background:rgba(0,0,0,.25)}
-#ante-spot{width:min(30vw,190px);height:min(30vw,190px)}
-#trips-spot{width:min(20vw,130px);height:min(20vw,130px);border-color:rgba(210,150,210,.4)}
-#trips-spot.active{border-color:#d060d0;background:rgba(180,0,180,.15)}
-#blind-spot{width:min(20vw,130px);height:min(20vw,130px);border-style:dashed;border-color:rgba(255,255,255,.18)}
-.uth-spot-label{font-size:min(20px,3.2vw);font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.85)}
-.uth-spot-sub{font-size:min(13px,2.2vw);color:rgba(255,255,255,.4)}
-.uth-spot-stk{font-size:min(20px,3vw);color:#ffd700;font-weight:700;margin-top:2px}
-.uth-corner-btn{display:none;position:absolute;top:4px;right:6px;width:20px;height:20px;border-radius:4px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:18px;text-align:center;cursor:pointer;z-index:5;padding:0}
-.uth-spot:hover .uth-corner-btn.vis{display:block}
-.uth-corner-btn:hover{background:rgba(180,0,0,.7)}
-#bet-hint{font-size:min(15px,2.6vw);color:rgba(255,255,255,.4);text-align:center;max-width:80vw}
+/* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows */
+.card-region{position:absolute;display:flex;flex-direction:column;align-items:center;gap:0.6cqh}
+#dealer-region{left:4%;top:1%;width:66%;height:16%;justify-content:flex-start}
+#community-region{left:2%;top:18%;width:41%;height:16%;justify-content:center}
+#player-region{left:2%;top:54%;width:41%;height:24%;justify-content:center}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqh;--pc-w:10cqh;opacity:0;transition:opacity .3s}
+.card-row.active{opacity:1}
+.crl-title{font-size:1.8cqh;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.5);text-transform:uppercase}
+.crl-hand{font-size:2.3cqh;color:#ffd700;font-weight:700;min-height:2.8cqh;text-align:center}
 
-/* Paytable panel -- printed-on-the-felt reference for the Blind/Trips side bets */
-#uth-paytables{display:flex;flex-direction:row;gap:min(4vw,24px);justify-content:center}
-.uth-paytable{background:rgba(0,0,0,.32);border:0.5px solid rgba(255,215,0,.3);border-radius:6px;padding:5px 10px;min-width:min(42vw,170px)}
-.upt-title{font-size:min(13px,2.2vw);font-weight:700;letter-spacing:.06em;color:#ffd700;text-transform:uppercase;text-align:center;margin-bottom:3px;border-bottom:0.5px solid rgba(255,215,0,.25);padding-bottom:2px}
-.upt-row{display:flex;justify-content:space-between;gap:10px;font-size:min(12px,2vw);color:rgba(255,255,255,.75);line-height:1.5}
-.upt-row span:last-child{color:#ffe066;font-weight:700}
+/* Bet-spot overlays -- invisible hit-regions positioned exactly over the printed
+   circles/diamond. The circle/diamond art + label ("ANTE","PLAY",etc) is baked in;
+   a chip stack dropped on top covers the label the same way a real chip covers
+   felt lettering. */
+.panel-spot{position:absolute;border-radius:50%;cursor:pointer}
+.panel-spot.locked{cursor:default}
+.panel-spot.inert{cursor:not-allowed}
+.panel-spot.active{box-shadow:0 0 0 0.5cqh rgba(255,215,0,.4)}
+#ante-spot{left:56.91%;top:56.17%;width:5.28%;height:9.39%;--chip:7cqh}
+#blind-spot{left:66.53%;top:56.17%;width:5.28%;height:9.39%;--chip:6.5cqh}
+#trips-spot{left:56.75%;top:43.83%;width:5.56%;height:9.89%;--chip:6.5cqh}
+#play-spot{left:56.91%;top:68.22%;width:5.28%;height:9.39%;--chip:7cqh}
+.panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 
-/* Play screen (dealt hand) */
-#play-screen{flex:1;display:none;flex-direction:column;justify-content:space-around;align-items:center;padding:0.5vh 1vw;gap:0.5vh;min-height:0}
-.card-row-wrap{display:flex;flex-direction:column;align-items:center;gap:min(0.6vh,4px)}
-.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:min(1.6vw,14px);--pc-w:min(120px,15vw,15vh)}
-.crl-title{font-size:min(14px,2.2vw);font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.4);text-transform:uppercase}
-.crl-hand{font-size:min(19px,3vw);color:#ffd700;font-weight:700;min-height:1.3em;text-align:center}
-#community-row.card-row{--pc-w:min(112px,14vw,14vh)}
-#locked-bets-strip{display:flex;flex-direction:row;gap:min(3vw,20px);justify-content:center;flex-shrink:0}
-.lb-item{display:flex;flex-direction:column;align-items:center}
-.lb-lbl{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em}
-.lb-val{font-size:16px;font-weight:700;color:#ffd700}
+/* Contract-bet lock badge -- ported wholesale from craps/I Luv Suits' chip-lock
+   convention (built into the chip-stack markup itself, see chipStackHTML()). */
+.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -164,10 +161,9 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #modal-log .log-entries p.lose{color:#f08080}
 #modal-log .log-entries p.info{color:#ffe066}
 
-/* Bet-box chip stacks -- ported wholesale from craps/sicbo */
+/* Bet-box chip stacks -- ported wholesale from craps/sicbo/I Luv Suits */
 body{--chip:70px;--edge:calc(var(--chip)*0.16)}
-#ante-spot{--chip:78px}
-.has-stack{position:absolute;left:50%;top:66%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block}
+.has-stack{position:absolute;left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block}
 .chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
 .chip-stack .chip-amt{user-select:none;-webkit-user-select:none}
@@ -273,7 +269,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.59</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.60</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -308,77 +304,38 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     </div>
   </div>
 
-  <!-- TABLE AREA -->
+  <!-- TABLE AREA / FELT PANEL -->
   <div id="table-area">
+    <div id="table-panel">
 
-    <!-- BET SCREEN (pre-deal) -->
-    <div id="bet-screen">
-      <div class="uth-bet-row">
-        <div class="uth-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
-          <span class="uth-spot-label">TRIPS</span>
-          <span class="uth-spot-sub">optional</span>
-          <span class="uth-spot-stk" id="stk-trips"></span>
-          <button class="uth-corner-btn" id="m-trips" onclick="event.stopPropagation();removeBet('trips')">−</button>
-        </div>
-        <div class="uth-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
-          <span class="uth-spot-label">ANTE</span>
-          <span class="uth-spot-sub">required</span>
-          <span class="uth-spot-stk" id="stk-ante"></span>
-          <button class="uth-corner-btn" id="m-ante" onclick="event.stopPropagation();removeBet('ante')">−</button>
-        </div>
-        <div class="uth-spot readonly" id="blind-spot">
-          <span class="uth-spot-label">BLIND</span>
-          <span class="uth-spot-sub">= Ante</span>
-          <span class="uth-spot-stk" id="stk-blind"></span>
-        </div>
-      </div>
-      <div id="bet-hint">Ante required to deal. Blind auto-matches Ante. Trips is an optional side bet on your own best 5-card hand.</div>
-      <div id="uth-paytables">
-        <div class="uth-paytable">
-          <div class="upt-title">Blind Pays</div>
-          <div class="upt-row"><span>Royal Flush</span><span>500 : 1</span></div>
-          <div class="upt-row"><span>Straight Flush</span><span>50 : 1</span></div>
-          <div class="upt-row"><span>Four of a Kind</span><span>10 : 1</span></div>
-          <div class="upt-row"><span>Full House</span><span>3 : 1</span></div>
-          <div class="upt-row"><span>Flush</span><span>3 : 2</span></div>
-          <div class="upt-row"><span>Straight</span><span>1 : 1</span></div>
-        </div>
-        <div class="uth-paytable">
-          <div class="upt-title">Trips Pays</div>
-          <div class="upt-row"><span>Royal Flush</span><span>50 : 1</span></div>
-          <div class="upt-row"><span>Straight Flush</span><span>40 : 1</span></div>
-          <div class="upt-row"><span>Four of a Kind</span><span>30 : 1</span></div>
-          <div class="upt-row"><span>Full House</span><span>8 : 1</span></div>
-          <div class="upt-row"><span>Flush</span><span>7 : 1</span></div>
-          <div class="upt-row"><span>Straight</span><span>4 : 1</span></div>
-          <div class="upt-row"><span>Three of a Kind</span><span>3 : 1</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PLAY SCREEN (dealt hand) -->
-    <div id="play-screen">
-      <div class="card-row-wrap">
+      <div class="card-region" id="dealer-region">
         <span class="crl-title">Dealer</span>
         <div class="card-row" id="dealer-row"></div>
         <span class="crl-hand" id="dealer-hand-name"></span>
       </div>
-      <div class="card-row-wrap">
+      <div class="card-region" id="community-region">
         <div class="card-row" id="community-row"></div>
       </div>
-      <div class="card-row-wrap">
+      <div class="card-region" id="player-region">
         <span class="crl-title">You</span>
         <div class="card-row" id="player-row"></div>
         <span class="crl-hand" id="player-hand-name"></span>
       </div>
-      <div id="locked-bets-strip">
-        <div class="lb-item"><span class="lb-lbl">Ante</span><span class="lb-val" id="lb-ante">$0</span></div>
-        <div class="lb-item"><span class="lb-lbl">Blind</span><span class="lb-val" id="lb-blind">$0</span></div>
-        <div class="lb-item"><span class="lb-lbl">Trips</span><span class="lb-val" id="lb-trips">$0</span></div>
-        <div class="lb-item"><span class="lb-lbl">Play</span><span class="lb-val" id="lb-play">—</span></div>
-      </div>
-    </div>
 
+      <div class="panel-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
+        <span class="panel-spot-stk" id="stk-trips"></span>
+      </div>
+      <div class="panel-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
+        <span class="panel-spot-stk" id="stk-ante"></span>
+      </div>
+      <div class="panel-spot locked" id="blind-spot">
+        <span class="panel-spot-stk" id="stk-blind"></span>
+      </div>
+      <div class="panel-spot inert" id="play-spot" onclick="placePlayBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayBet()">
+        <span class="panel-spot-stk" id="stk-play"></span>
+      </div>
+
+    </div>
   </div>
 
   <!-- BOTTOM SECTION -->
@@ -405,12 +362,9 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     </div>
     <div id="action-row">
       <button class="action-btn" id="btn-deal" onclick="dealHand()">DEAL</button>
-      <button class="action-btn secondary" id="btn-check" onclick="uthCheck()" style="display:none">CHECK</button>
-      <button class="action-btn" id="btn-bet4" onclick="uthBet('bet4')" style="display:none">BET 4X</button>
-      <button class="action-btn" id="btn-bet3" onclick="uthBet('bet3')" style="display:none">BET 3X</button>
-      <button class="action-btn" id="btn-bet2" onclick="uthBet('bet2')" style="display:none">BET 2X</button>
-      <button class="action-btn" id="btn-bet1" onclick="uthBet('bet1')" style="display:none">BET 1X</button>
-      <button class="action-btn danger" id="btn-fold" onclick="uthFold()" style="display:none">FOLD</button>
+      <button class="action-btn secondary" id="btn-check" onclick="doCheck()" style="display:none">CHECK</button>
+      <button class="action-btn danger" id="btn-fold" onclick="doFold()" style="display:none">FOLD</button>
+      <button class="action-btn" id="btn-play" onclick="doPlay()" style="display:none" disabled>PLAY</button>
     </div>
   </div>
 
@@ -459,6 +413,7 @@ function makeInitialG(){
   return {
     bankroll:0,startingBankroll:0,chip:25,
     bets:{ante:0,trips:0},
+    playBet:0,       // staged locally in the Play spot, only sent to the server on PLAY
     phase:'betting', // betting|preflop|flop|river|showdown
     hand:null,       // {playerHole,community,dealerHole}
     locked:{ante:0,blind:0,trips:0},
@@ -470,7 +425,7 @@ function makeInitialG(){
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login';
 
-function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0));}
+function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0)+G.playBet);}
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
 function checkBroke(){if(G.bankroll<=0&&tBets()===0)setTimeout(()=>openRedeemModal(true),300);}
 
@@ -612,7 +567,11 @@ function startSession(player){
     G.locked={ante:gs.uth.ante,blind:gs.uth.blind,trips:gs.uth.trips};
     G.hand={playerHole:gs.uth.playerHole,community:gs.uth.community,dealerHole:null};
     G.phase='preflop';
-    showPlayScreen();renderHandCardsStatic();renderLockedBets();updateLiveHandDisplay();
+    document.getElementById('dealer-row').classList.add('active');
+    document.getElementById('community-row').classList.add('active');
+    document.getElementById('player-row').classList.add('active');
+    document.getElementById('play-spot').classList.remove('inert');
+    renderHandCardsStatic();updateLiveHandDisplay();updatePlayButtonState();
   }
   renderActionButtons();updateUI();
 }
@@ -714,6 +673,42 @@ function repeatLastBet(){
   updateUI();
 }
 
+// ── PLAY BET (post-deal, odds-bet style: freely add/remove chips up to the cap set
+// by the current street's multiplier -- 4x preflop, 2x flop, 1x river. A 1x floor
+// applies once any amount is staked, so the river street (cap 1x) naturally forces
+// an all-or-nothing bet just like the real house rule, while preflop/flop allow any
+// amount between 1x and their cap.) ──────────────────────────────────────────────
+const STREET_MULT={preflop:4,flop:2,river:1};
+function playBetMax(){
+  if(!G.hand||!(G.phase in STREET_MULT))return 0;
+  return r2(G.locked.ante*STREET_MULT[G.phase]);
+}
+function placePlayBet(){
+  if(!(G.phase in STREET_MULT))return;
+  const max=playBetMax();
+  const room=r2(max-G.playBet);
+  if(room<=0){addLog('Play bet at max for this street.','info');return;}
+  const add=r2(Math.min(G.chip,room,G.bankroll));
+  if(add<=0)return;
+  G.playBet=r2(G.playBet+add);
+  G.bankroll=r2(G.bankroll-add);
+  updatePlayButtonState();
+  updateUI();
+}
+function removePlayBet(){
+  if(!(G.phase in STREET_MULT)||!G.playBet)return;
+  const rv=r2(Math.min(G.chip,G.playBet));
+  G.playBet=r2(G.playBet-rv);
+  G.bankroll=r2(G.bankroll+rv);
+  updatePlayButtonState();
+  updateUI();
+}
+function updatePlayButtonState(){
+  const btn=document.getElementById('btn-play');
+  if(!btn)return;
+  btn.disabled=!(G.phase in STREET_MULT&&G.locked.ante>0&&G.playBet>=G.locked.ante);
+}
+
 // ── CARD SLOTS ────────────────────────────────────────────────────────────────
 function buildCardSlots(){
   if(G.cardEls)return;
@@ -760,32 +755,21 @@ function dealCardsAnimated(){
   });
   return order.length*DEAL_STAGGER_MS+450;
 }
-function renderLockedBets(){
-  document.getElementById('lb-ante').textContent=fmtS(G.locked.ante);
-  document.getElementById('lb-blind').textContent=fmtS(G.locked.blind);
-  document.getElementById('lb-trips').textContent=fmtS(G.locked.trips);
-  document.getElementById('lb-play').textContent='—';
-}
-
-// ── SCREEN TOGGLE ─────────────────────────────────────────────────────────────
-function showBetScreen(){document.getElementById('bet-screen').style.display='flex';document.getElementById('play-screen').style.display='none';}
-function showPlayScreen(){document.getElementById('bet-screen').style.display='none';document.getElementById('play-screen').style.display='flex';}
-
 // ── ACTION BUTTONS ────────────────────────────────────────────────────────────
-const ACTION_BTN_IDS=['btn-deal','btn-check','btn-bet4','btn-bet3','btn-bet2','btn-bet1','btn-fold'];
-const PHASE_BUTTONS={betting:['btn-deal'],preflop:['btn-check','btn-bet3','btn-bet4'],flop:['btn-check','btn-bet2'],river:['btn-bet1','btn-fold'],showdown:[]};
+const ACTION_BTN_IDS=['btn-deal','btn-check','btn-fold','btn-play'];
+const PHASE_BUTTONS={betting:['btn-deal'],preflop:['btn-check','btn-play'],flop:['btn-check','btn-play'],river:['btn-fold','btn-play'],showdown:[]};
 function renderActionButtons(){
   const show=new Set(PHASE_BUTTONS[G.phase]||[]);
   ACTION_BTN_IDS.forEach(id=>{document.getElementById(id).style.display=show.has(id)?'':'none';});
+  if(show.has('btn-play'))updatePlayButtonState();
 }
-function setActionButtonsEnabled(en){ACTION_BTN_IDS.forEach(id=>document.getElementById(id).disabled=!en);}
 
 function updateStatusZone(){
   const map={
     betting:['Place Your Ante','Blind bet auto-matches your Ante. Trips is optional.'],
-    preflop:['Check or Bet 3X/4X','Bet now to skip straight to showdown, or check to see the flop.'],
-    flop:['Check or Bet 2X','Community flop is up. Bet now or check to see the turn &amp; river.'],
-    river:['Bet 1X or Fold','All five community cards are up. This is your last chance to bet.'],
+    preflop:['Check, or Stake the Play Spot','Add chips to Play (up to 4x Ante) then hit PLAY, or Check to see the flop.'],
+    flop:['Check, or Stake the Play Spot','Add chips to Play (up to 2x Ante) then hit PLAY, or Check to see the turn &amp; river.'],
+    river:['Stake the Play Spot, or Fold','All five community cards are up. Stake exactly 1x Ante and hit PLAY, or Fold.'],
     showdown:['Showdown','']
   };
   const m=map[G.phase]||['',''];
@@ -813,9 +797,11 @@ async function dealHand(){
   G.hand={playerHole:data.playerHole,community:data.community,dealerHole:null};
   G.bankroll=data.newBankroll;
   G.bets={ante:0,trips:0};
+  G.playBet=0;
   G.phase='preflop';
-  showPlayScreen();
-  renderLockedBets();
+  document.getElementById('dealer-row').classList.add('active');
+  document.getElementById('community-row').classList.add('active');
+  document.getElementById('player-row').classList.add('active');
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
   ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until the deal+reveal finishes
@@ -828,6 +814,7 @@ async function dealHand(){
     setTimeout(()=>{
       Cards.flipUp(G.cardEls.player[1]);
       updateLiveHandDisplay();
+      document.getElementById('play-spot').classList.remove('inert');
       renderActionButtons();
     },HOLE_REVEAL_GAP_MS);
   },dealMs);
@@ -835,32 +822,43 @@ async function dealHand(){
 
 // ── CHECK (client-side phase advance, no server call) ────────────────────────
 const COMMUNITY_FLIP_STAGGER_MS=220;
-function uthCheck(){
+function doCheck(){
+  if(G.playBet>0){G.bankroll=r2(G.bankroll+G.playBet);G.playBet=0;} // no bet was placed on a checked street
   ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none');
   if(G.phase==='preflop'){
     [0,1,2].forEach((ci,i)=>setTimeout(()=>Cards.flipUp(G.cardEls.community[ci]),i*COMMUNITY_FLIP_STAGGER_MS));
     G.phase='flop';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();},2*COMMUNITY_FLIP_STAGGER_MS+500);
+    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},2*COMMUNITY_FLIP_STAGGER_MS+500);
   }else if(G.phase==='flop'){
     [3,4].forEach((ci,i)=>setTimeout(()=>Cards.flipUp(G.cardEls.community[ci]),i*COMMUNITY_FLIP_STAGGER_MS));
     G.phase='river';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();},1*COMMUNITY_FLIP_STAGGER_MS+500);
+    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},1*COMMUNITY_FLIP_STAGGER_MS+500);
   }
-  updateStatusZone();
+  updateStatusZone();updateUI();
 }
 
-// ── BET / FOLD (server-resolved) ──────────────────────────────────────────────
-function uthBet(decision){commitDecision(decision);}
-function uthFold(){commitDecision('fold');}
-async function commitDecision(decision){
-  setActionButtonsEnabled(false);
+// ── PLAY / FOLD (server-resolved) ─────────────────────────────────────────────
+function doPlay(){
+  if(document.getElementById('btn-play').disabled)return;
+  commitDecision('play',G.playBet,G.phase);
+}
+function doFold(){
+  if(G.playBet>0){G.bankroll=r2(G.bankroll+G.playBet);G.playBet=0;} // refund staged-but-uncommitted Play chips
+  commitDecision('fold',0,G.phase);
+}
+async function commitDecision(decision,playBet,street){
+  document.getElementById('btn-check').disabled=true;
+  document.getElementById('btn-fold').disabled=true;
+  document.getElementById('btn-play').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll-uth',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'resolve',decision})});
+    const res=await fetch(FUNCTIONS_URL+'/roll-uth',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'resolve',decision,playBet,street})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
-  setActionButtonsEnabled(true);
+  document.getElementById('btn-check').disabled=false;
+  document.getElementById('btn-fold').disabled=false;
+  updatePlayButtonState();
   if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
   finishHand(data);
 }
@@ -877,7 +875,7 @@ function finishHand(data){
     document.getElementById('dealer-hand-name').textContent=describeScore(dealerFinal)+(dealerFinal.cat>=1?'':' (no qualify)');
     document.getElementById('player-hand-name').textContent=describeScore(playerFinal);
   }
-  document.getElementById('lb-play').textContent=data.folded?'Folded':fmtS(data.playBet);
+  G.playBet=data.playBet||0;
   (data.log||[]).forEach(line=>{
     const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
     addLog(line,cls);
@@ -891,21 +889,30 @@ function finishHand(data){
   G.phase='showdown';
   renderActionButtons();updateStatusZone();
   updateUI();checkBroke();
-  const totalWagered=G.lastBetDisplay||1;
-  if(data.payout>0){
-    const bigWin=(data.payout/totalWagered)>=7;
-    WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
-  }else{
-    setTimeout(resetToBetScreen,3500);
-  }
-  if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
+  // Give the dealer's hole-card flip (a .5s transition, see cards.js) a moment to settle
+  // before spawning ghosts / opening the modal, matching the reveal-before-payout timing
+  // established for I Luv Suits' dealer sweat.
+  setTimeout(()=>{
+    spawnUthGhosts(data.log||[],data.folded);
+    const totalWagered=G.lastBetDisplay||1;
+    if(data.payout>0){
+      const bigWin=(data.payout/totalWagered)>=7;
+      WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
+    }else{
+      setTimeout(resetToBetScreen,3500);
+    }
+    if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
+  },550);
 }
 function resetToBetScreen(){
-  G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0};
+  G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0};G.playBet=0;
   [...G.cardEls.player,...G.cardEls.community,...G.cardEls.dealer].forEach(el=>Cards.reset(el));
+  document.getElementById('dealer-row').classList.remove('active');
+  document.getElementById('community-row').classList.remove('active');
+  document.getElementById('player-row').classList.remove('active');
+  document.getElementById('play-spot').classList.add('inert');
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
-  showBetScreen();
   renderActionButtons();updateStatusZone();
   updateUI();
 }
@@ -935,15 +942,21 @@ function updateUI(){
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
   renderRollHistory();
 
-  const anteAmt=G.bets.ante||0,tripsAmt=G.bets.trips||0;
+  // Ante/Blind/Trips: their amount comes from G.locked once dealt (G.bets is cleared
+  // right after a successful deal). The chip stack itself never disappears -- it stays
+  // up the same way a craps Pass Line bet does -- a small lock badge is just added on
+  // top of it once they become contract (uneditable) bets. See chipStackHTML().
+  const locked=G.phase!=='betting';
+  const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
+  const tripsAmt=locked?G.locked.trips:(G.bets.trips||0);
   document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
   document.getElementById('stk-blind').textContent=anteAmt?fmt(anteAmt):'';
   document.getElementById('stk-trips').textContent=tripsAmt?fmt(tripsAmt):'';
+  document.getElementById('stk-play').textContent=G.playBet?fmt(G.playBet):'';
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('blind-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('trips-spot').classList.toggle('active',tripsAmt>0);
-  document.getElementById('m-ante').classList.toggle('vis',anteAmt>0);
-  document.getElementById('m-trips').classList.toggle('vis',tripsAmt>0);
+  document.getElementById('play-spot').classList.toggle('active',G.playBet>0);
   renderChipStacks();
 }
 
@@ -951,28 +964,95 @@ function updateUI(){
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
 function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
-function chipStackHTML(amt){
+function chipStackHTML(amt,locked){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
   const label=chipLabel(amt);
   const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
+  if(locked)h+='<span class="chip-lock" style="bottom:0">🔒</span>';
   h+='</span>';
   return h;
 }
-const UTH_STK_SEL='.uth-spot-stk';
+// Ante/Blind/Trips are locked (contract) once dealt; Play is locked once resolved
+// (showdown). The chip stack stays up the whole time either way -- only whether the
+// lock badge is appended changes.
 function renderChipStacks(){
-  document.querySelectorAll(UTH_STK_SEL).forEach(el=>{
-    const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
-    if(!m){el.classList.remove('has-stack');return;}
-    const amt=parseFloat(m[1].replace(/,/g,''));
-    if(!(amt>0)){el.classList.remove('has-stack');return;}
-    el.innerHTML=chipStackHTML(amt);
-    el.classList.add('has-stack');
-  });
+  const contractLocked=G.phase!=='betting';
+  applyChipStackVisual('stk-ante',contractLocked);
+  applyChipStackVisual('stk-blind',contractLocked);
+  applyChipStackVisual('stk-trips',contractLocked);
+  applyChipStackVisual('stk-play',G.phase==='showdown');
+}
+function applyChipStackVisual(id,locked){
+  const el=document.getElementById(id);
+  const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
+  if(!m){el.classList.remove('has-stack');return;}
+  const amt=parseFloat(m[1].replace(/,/g,''));
+  if(!(amt>0)){el.classList.remove('has-stack');return;}
+  el.innerHTML=chipStackHTML(amt,locked);
+  el.classList.add('has-stack');
 }
 document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
+
+// ── WIN/LOSS CHIP-GHOST SWEEP -- ported wholesale from craps/sicbo/I Luv Suits ───
+function spawnChipGhost(el,opts){
+  opts=opts||{};
+  if(!el)return;
+  const rect=el.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const amtSpan=el.querySelector('.chip-amt');
+  const label=amtSpan?amtSpan.textContent:'';
+  const chipImgs=el.querySelectorAll('.chip-img');
+  const topChip=chipImgs.length?chipImgs[chipImgs.length-1]:null;
+  const chipSrc=topChip?topChip.getAttribute('src'):null;
+  if(!label&&!chipSrc)return;
+  const ghost=document.createElement('div');
+  ghost.className='chip-ghost';
+  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
+  ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
+  const liveChipVar=getComputedStyle(el).getPropertyValue('--chip').trim();
+  ghost.style.setProperty('--chip',liveChipVar||'22px');
+  if(chipSrc){
+    const img=document.createElement('img');
+    img.src=chipSrc;img.draggable=false;
+    img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:auto;z-index:1';
+    ghost.appendChild(img);
+  }
+  if(label){
+    const amtFs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
+    const span=document.createElement('span');
+    span.textContent=label;
+    span.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*'+amtFs+');color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap;pointer-events:none';
+    ghost.appendChild(span);
+  }
+  document.body.appendChild(ghost);
+  const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
+  if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
+  setTimeout(()=>{ghost.classList.add(sweepClass);},900);
+  setTimeout(()=>{ghost.remove();},1450);
+}
+// Bet-name -> stake-element-id table, matched against roll-uth's exact log-line
+// prefixes. Win/loss is read off the same win|pays / lost keywords addLog() already
+// uses for line coloring, so this stays in sync with the server's wording for free.
+function uthGhostChecks(){
+  return [[/^Ante:/,'ante'],[/^Blind:/,'blind'],[/^Trips:/,'trips'],[/^Play/,'play']];
+}
+function spawnUthGhosts(rawLog,folded){
+  uthGhostChecks().forEach(([re,key])=>{
+    const line=rawLog.find(l=>re.test(l));
+    if(!line)return;
+    const el=document.getElementById('stk-'+key);
+    if(/lost/i.test(line))spawnChipGhost(el);
+    else if(/win|pays/i.test(line))spawnChipGhost(el,{direction:'down',noDim:true});
+  });
+  // "Folded — Ante & Blind lost." doesn't match the /^Ante:/ or /^Blind:/ prefixes above.
+  if(folded){
+    spawnChipGhost(document.getElementById('stk-ante'));
+    spawnChipGhost(document.getElementById('stk-blind'));
+  }
+}
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
 async function cashOut(){
