@@ -66,7 +66,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
 /* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows */
 .card-region{position:absolute;display:flex;flex-direction:column;align-items:center;gap:0.6cqh}
-#dealer-region{left:4%;top:1%;width:66%;height:16%;justify-content:flex-start}
+#dealer-region{left:0%;top:1%;width:100%;height:16%;justify-content:flex-start}
 #community-region{left:2%;top:18%;width:41%;height:16%;justify-content:center}
 #player-region{left:2%;top:54%;width:41%;height:24%;justify-content:center}
 .card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqh;--pc-w:10cqh;opacity:0;transition:opacity .3s}
@@ -269,7 +269,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.60</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.61</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
