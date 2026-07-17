@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Rated Hex Ultimate Texas Hold'em</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
+
+/* ── AUTH (ported wholesale from sicbo/craps) ── */
+#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;padding:20px}
+.auth-box{background:#1a1a1a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:28px 24px;width:100%;max-width:340px}
+.auth-box h1{font-size:34px;font-weight:700;color:#ffd700;margin-bottom:3px}
+.auth-box p{font-size:21px;color:rgba(255,255,255,.4);margin-bottom:20px}
+.auth-tabs{display:flex;margin-bottom:16px;border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+.auth-tab{flex:1;padding:7px;text-align:center;font-size:23px;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);border:none}
+.auth-tab.active{background:rgba(255,215,0,.15);color:#ffd700}
+.auth-field{margin-bottom:12px}
+.auth-field label{display:block;font-size:19px;color:rgba(255,255,255,.5);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.auth-field input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:24px;outline:none}
+.auth-field input:focus{border-color:rgba(255,215,0,.5)}
+.auth-btn{width:100%;background:#c8a200;border:none;border-radius:7px;color:#111;font-size:24px;font-weight:700;padding:10px;cursor:pointer;margin-top:4px}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed}
+.auth-error{background:rgba(180,0,0,.25);border:1px solid rgba(255,80,80,.3);border-radius:6px;padding:8px 10px;font-size:21px;color:#ff9a9a;margin-bottom:12px;display:none}
+
+/* ── GAME SCREEN ── */
+#game-screen{display:none;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a2218}
+
+/* ── TOP ROW ── */
+#top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 3 / 16);height:calc(100dvh * 3 / 16);border-bottom:1px solid rgba(255,255,255,.12)}
+#left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:0}
+#game-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0}
+.gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
+.gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
+.gmode-btn:disabled{opacity:.35;cursor:not-allowed}
+.gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(255,255,255,.4);display:block}
+.gmode-btn.active .gmode-sub{color:rgba(255,215,0,.6)}
+#info-panel{width:30vw;min-width:200px;max-width:325px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
+.info-row{display:flex;gap:4px;align-items:center}
+.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
+.info-btn:hover{background:rgba(255,255,255,.2)}
+.info-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
+.hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.hud-item{display:flex;flex-direction:column}
+.hud-lbl{font-size:17px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.hud-val{font-size:19px;font-weight:600;line-height:1.3}
+
+/* Status zone (replaces the dice-canvas of the dice games with a phase/result readout) */
+#status-zone{flex:1;background:rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;gap:4px;padding:4px}
+#status-phase{font-size:min(30px,4.4vw);font-weight:800;letter-spacing:.05em;color:#ffd700;text-transform:uppercase}
+#status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
+
+/* ── TABLE AREA ── */
+#table-area{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative}
+
+/* Bet screen (pre-deal) */
+#bet-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(1.2vh);padding:1vh}
+.uth-bet-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:min(4vw,28px)}
+.uth-spot{position:relative;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .1s;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.25)}
+.uth-spot:hover{background:rgba(255,255,255,.08)}
+.uth-spot.active{border-color:#ffd700;background:rgba(255,215,0,.12)}
+.uth-spot.readonly{cursor:default}
+.uth-spot.readonly:hover{background:rgba(0,0,0,.25)}
+#ante-spot{width:min(30vw,190px);height:min(30vw,190px)}
+#trips-spot{width:min(20vw,130px);height:min(20vw,130px);border-color:rgba(210,150,210,.4)}
+#trips-spot.active{border-color:#d060d0;background:rgba(180,0,180,.15)}
+#blind-spot{width:min(20vw,130px);height:min(20vw,130px);border-style:dashed;border-color:rgba(255,255,255,.18)}
+.uth-spot-label{font-size:min(20px,3.2vw);font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.85)}
+.uth-spot-sub{font-size:min(13px,2.2vw);color:rgba(255,255,255,.4)}
+.uth-spot-stk{font-size:min(20px,3vw);color:#ffd700;font-weight:700;margin-top:2px}
+.uth-corner-btn{display:none;position:absolute;top:4px;right:6px;width:20px;height:20px;border-radius:4px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:18px;text-align:center;cursor:pointer;z-index:5;padding:0}
+.uth-spot:hover .uth-corner-btn.vis{display:block}
+.uth-corner-btn:hover{background:rgba(180,0,0,.7)}
+#bet-hint{font-size:min(15px,2.6vw);color:rgba(255,255,255,.4);text-align:center;max-width:80vw}
+
+/* Play screen (dealt hand) */
+#play-screen{flex:1;display:none;flex-direction:column;justify-content:space-around;align-items:center;padding:0.5vh 1vw;gap:0.5vh;min-height:0}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:min(1.6vw,10px);--pc-w:min(60px,8.4vw)}
+.card-row-label{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:min(20vw,120px);text-align:center;gap:2px}
+.crl-title{font-size:min(16px,2.6vw);font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.55);text-transform:uppercase}
+.crl-hand{font-size:min(15px,2.4vw);color:#ffd700;font-weight:700;min-height:1.2em}
+#community-row{--pc-w:min(58px,7.6vw)}
+#locked-bets-strip{display:flex;flex-direction:row;gap:min(3vw,20px);justify-content:center;flex-shrink:0}
+.lb-item{display:flex;flex-direction:column;align-items:center}
+.lb-lbl{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em}
+.lb-val{font-size:16px;font-weight:700;color:#ffd700}
+
+/* ── BOTTOM SECTION ── */
+#bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
+#bottom-left{flex:1;display:flex;flex-direction:column;min-width:0}
+#history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.35);border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
+#roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
+#roll-history::-webkit-scrollbar{display:none}
+.roll-pip{min-width:36px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 4px;background:rgba(255,255,255,.1)}
+.roll-pip .rp-hand{font-size:10px;line-height:1;white-space:nowrap}
+.roll-pip .rp-amt{font-size:15px;line-height:1;margin-top:1px}
+.roll-pip.win{background:rgba(0,120,40,.35)}
+.roll-pip.win .rp-amt{color:#7ee87e}
+.roll-pip.lose{background:rgba(120,0,0,.3)}
+.roll-pip.lose .rp-amt{color:#f08080}
+.roll-pip.push .rp-amt{color:rgba(255,255,255,.6)}
+.roll-pip.fold{background:rgba(60,0,0,.35)}
+.log-line{font-size:11px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-line.win{color:#7ee87e}
+.log-line.lose{color:#f08080}
+#log-btn-uth{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
+.nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:13px}
+.chip:hover{transform:scale(1.1)}
+.chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
+.bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
+.bar-btn.danger{border-color:rgba(255,100,100,.4)}
+.bar-btn:hover{background:rgba(255,255,255,.2)}
+.bar-btn:disabled{opacity:.35;cursor:not-allowed}
+#hud-pnl{font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px}
+
+/* Action buttons (Deal / Check / Bet / Fold) -- share the same DOM slot, one subset visible per phase */
+#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch}
+.action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(22px,3.2vw);font-weight:900;padding:6px 14px;cursor:pointer;flex-shrink:0;letter-spacing:.05em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
+.action-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%)}
+.action-btn:active{filter:brightness(.9)}
+.action-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.action-btn.secondary{background:linear-gradient(180deg,#e8e8e8 0%,#a8a8a8 100%);box-shadow:inset -2px 0 0 #666;border-left-color:#666}
+.action-btn.secondary:hover{background:linear-gradient(180deg,#fff 0%,#ccc 100%)}
+.action-btn.danger{background:linear-gradient(180deg,#ff8a80 0%,#b71c1c 100%);box-shadow:inset -2px 0 0 #7a0000;border-left-color:#7a0000;color:#fff}
+.action-btn.danger:hover{background:linear-gradient(180deg,#ffb0a8 0%,#d32f2f 100%)}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
+.modal-overlay.hidden{display:none}
+.modal-box{background:#1a3a28;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:14px 16px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.modal-box.dark{background:#1a1a2e;border-color:rgba(255,215,0,.2)}
+.modal-title{font-size:24px;font-weight:700;color:#ffe066;margin-bottom:3px}
+.modal-sub{font-size:17px;color:rgba(255,255,255,.5);margin-bottom:10px}
+.modal-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:19px;padding:7px 4px;cursor:pointer;text-align:center}
+.modal-btn:hover{background:rgba(255,255,255,.22)}
+.modal-btn.cancel{background:rgba(180,0,0,.2);border-color:rgba(255,80,80,.3);margin-top:4px;width:100%}
+.modal-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:8px 10px;color:#fff;font-size:24px;outline:none;margin-bottom:8px;text-align:center;letter-spacing:.1em;text-transform:uppercase}
+.modal-input:focus{border-color:rgba(255,215,0,.5)}
+.modal-input-error{font-size:17px;color:#ff9a9a;margin-bottom:8px;min-height:13px;text-align:center}
+.modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
+#modal-log .log-entries{max-height:50vh;overflow-y:auto;font-size:17px}
+#modal-log .log-entries p{padding:2px 0;border-bottom:0.5px solid rgba(255,255,255,.08);line-height:1.5;color:rgba(255,255,255,.75)}
+#modal-log .log-entries p.win{color:#7ee87e}
+#modal-log .log-entries p.lose{color:#f08080}
+#modal-log .log-entries p.info{color:#ffe066}
+
+/* Bet-box chip stacks -- ported wholesale from craps/sicbo */
+body{--chip:70px;--edge:calc(var(--chip)*0.16)}
+#ante-spot{--chip:78px}
+.has-stack{position:absolute;left:50%;top:66%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block}
+.chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
+.chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
+.chip-stack .chip-amt{user-select:none;-webkit-user-select:none}
+.chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
+
+/* Win/loss chip-ghost sweep -- ported wholesale from craps/sicbo */
+.chip-ghost{position:fixed;z-index:150;pointer-events:none;filter:none;opacity:1;transition:filter .35s ease-out}
+.chip-ghost.dim{filter:grayscale(1) brightness(.55)}
+.chip-ghost.sweep{transform:translateY(-130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
+.chip-ghost.sweep-down{transform:translateY(130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
+#modal-cap .modal-box{text-align:center}
+
+/* ── CASHOUT VOUCHER MODAL ── */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
+#modal-cashout{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:12px}
+#modal-cashout.hidden{display:none}
+.voucher{background:#fff;color:#111;width:100%;max-width:420px;border-radius:4px;padding:20px 24px 16px;box-shadow:0 8px 40px rgba(0,0,0,.8);font-family:system-ui,sans-serif;position:relative;overflow:hidden}
+.voucher::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:repeating-linear-gradient(90deg,#111 0px,#111 3px,#fff 3px,#fff 6px)}
+.voucher::after{content:'';position:absolute;bottom:0;left:0;right:0;height:6px;background:repeating-linear-gradient(90deg,#111 0px,#111 3px,#fff 3px,#fff 6px)}
+.voucher-insert{position:absolute;left:-26px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:9px;font-weight:700;letter-spacing:.12em;color:#555;white-space:nowrap}
+.voucher-header{text-align:center;border-bottom:1px solid #ccc;padding-bottom:8px;margin-bottom:8px}
+.voucher-property{font-size:22px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;line-height:1.1}
+.voucher-address{font-size:10px;letter-spacing:.04em;color:#444;margin-top:2px}
+.voucher-type{font-size:28px;font-weight:900;letter-spacing:.08em;margin-top:6px;text-transform:uppercase}
+.voucher-barcode{font-family:'Libre Barcode 128 Text',monospace;font-size:56px;text-align:center;line-height:1;letter-spacing:0;color:#111;margin:6px 0 2px;overflow:hidden;white-space:nowrap}
+.voucher-validation{font-size:9px;text-align:center;letter-spacing:.04em;color:#333;line-height:1.7;margin-bottom:4px}
+.voucher-amount{font-size:48px;font-weight:900;text-align:center;letter-spacing:.02em;margin:4px 0}
+.voucher-footer{display:flex;justify-content:space-between;font-size:9px;color:#555;letter-spacing:.04em;margin-top:6px;padding-top:6px;border-top:1px solid #ccc}
+.voucher-btns{display:flex;gap:8px;margin-top:14px}
+.voucher-btn{flex:1;padding:9px;border-radius:5px;font-size:15px;font-weight:700;cursor:pointer;border:none;letter-spacing:.04em}
+.voucher-btn.print{background:#111;color:#fff}
+.voucher-btn.print:hover{background:#333}
+.voucher-btn.close{background:rgba(0,0,0,.08);color:#111;border:1px solid #ccc}
+.voucher-btn.close:hover{background:rgba(0,0,0,.15)}
+
+/* ── VOUCHER LIST IN REDEEM MODAL ── */
+.voucher-list{margin-bottom:12px}
+.voucher-list-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.voucher-list-empty{font-size:13px;color:rgba(255,255,255,.3);font-style:italic;margin-bottom:8px}
+.voucher-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:0.5px solid rgba(255,255,255,.15);border-radius:5px;padding:6px 8px;margin-bottom:4px}
+.voucher-row-amount{font-size:18px;font-weight:700;color:#ffd700;flex-shrink:0}
+.voucher-row-code{font-size:11px;color:rgba(255,255,255,.4);font-family:monospace;flex:1}
+.voucher-row-expiry{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
+.voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
+.voucher-row-btn:hover{background:rgba(255,215,0,.3)}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <h1>🃏 Rated Hex Hold'em</h1>
+    <p>Hosted by Deck</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Log In</button>
+      <button class="auth-tab" id="tab-register" onclick="showTab('register')">Create Account</button>
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+    <div class="auth-field"><label>Username</label><input type="text" id="auth-username" placeholder="your name"></div>
+    <div class="auth-field"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+    <button class="auth-btn" id="auth-btn" onclick="handleAuth()">Log In</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+
+  <!-- MODALS -->
+  <div class="modal-overlay hidden" id="modal-cap">
+    <div class="modal-box dark" style="text-align:center">
+      <div style="font-size:53px;margin-bottom:8px">🎰</div>
+      <div class="modal-title" style="font-size:27px;text-align:center">Bankroll Capped at $100</div>
+      <div style="font-size:21px;color:rgba(255,255,255,.6);margin:10px 0 16px">You've hit the seed money limit. Get a code from Deck to uncap your account and keep your winnings.</div>
+      <button class="modal-submit" onclick="closeCapModal();openRedeemModal(false)">Redeem a Code</button>
+      <button class="modal-btn cancel" onclick="closeCapModal()" style="margin-top:8px">Maybe Later</button>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="modal-redeem">
+    <div class="modal-box dark">
+      <div class="modal-title" id="redeem-title">Redeem a Code</div>
+      <div class="modal-sub" id="redeem-sub">Enter the code Deck sent you.</div>
+      <div class="voucher-list" id="voucher-list-section">
+        <div class="voucher-list-title">Your Vouchers</div>
+        <div id="voucher-list-items"><div class="voucher-list-empty">Loading...</div></div>
+      </div>
+      <input class="modal-input" id="redeem-input" type="text" placeholder="RH-XXXXXXXX" maxlength="11" oninput="this.value=this.value.toUpperCase()">
+      <div class="modal-input-error" id="redeem-error"></div>
+      <button class="modal-submit" id="redeem-btn" onclick="redeemCode()">Redeem</button>
+      <button class="modal-btn cancel" id="redeem-cancel" onclick="closeRedeemModal()" style="margin-top:8px">Cancel</button>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="modal-log">
+    <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column">
+      <div class="modal-title" style="margin-bottom:8px">Hand Log</div>
+      <div class="log-entries" id="log"></div>
+      <button class="modal-btn cancel" onclick="closeLogModal()" style="margin-top:8px">Close</button>
+    </div>
+  </div>
+
+  <!-- TOP ROW -->
+  <div id="top-row">
+    <!-- Game Selector -->
+    <div id="left-col-header">
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.49</div>
+      <div id="game-mode-toggle">
+        <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
+        <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
+        <button class="gmode-btn" onclick="window.location.href='sicbo.html'">SIC-BO<span class="gmode-sub">3 dice</span></button>
+        <button class="gmode-btn" onclick="window.location.href='destroyer.html'">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
+        <button class="gmode-btn active">HOLD'EM<span class="gmode-sub">Ultimate Texas</span></button>
+        <button class="gmode-btn" onclick="window.location.href='focusmode.html'" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span></button>
+      </div>
+    </div>
+    <!-- Status zone -->
+    <div id="status-zone">
+      <div id="status-phase">Place Your Ante</div>
+      <div id="status-sub">Blind bet auto-matches your Ante. Trips is optional.</div>
+    </div>
+    <!-- Info panel -->
+    <div id="info-panel">
+      <div class="info-row">
+        <span id="top-bar-username" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      </div>
+      <div class="info-row">
+        <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
+        <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
+        <button class="info-btn" onclick="logout()">Log Out</button>
+      </div>
+      <div class="hud-grid">
+        <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
+        <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
+        <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
+        <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE AREA -->
+  <div id="table-area">
+
+    <!-- BET SCREEN (pre-deal) -->
+    <div id="bet-screen">
+      <div class="uth-bet-row">
+        <div class="uth-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
+          <span class="uth-spot-label">TRIPS</span>
+          <span class="uth-spot-sub">optional</span>
+          <span class="uth-spot-stk" id="stk-trips"></span>
+          <button class="uth-corner-btn" id="m-trips" onclick="event.stopPropagation();removeBet('trips')">−</button>
+        </div>
+        <div class="uth-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
+          <span class="uth-spot-label">ANTE</span>
+          <span class="uth-spot-sub">required</span>
+          <span class="uth-spot-stk" id="stk-ante"></span>
+          <button class="uth-corner-btn" id="m-ante" onclick="event.stopPropagation();removeBet('ante')">−</button>
+        </div>
+        <div class="uth-spot readonly" id="blind-spot">
+          <span class="uth-spot-label">BLIND</span>
+          <span class="uth-spot-sub">= Ante</span>
+          <span class="uth-spot-stk" id="stk-blind"></span>
+        </div>
+      </div>
+      <div id="bet-hint">Ante required to deal. Blind auto-matches Ante. Trips is an optional side bet on your own best 5-card hand.</div>
+    </div>
+
+    <!-- PLAY SCREEN (dealt hand) -->
+    <div id="play-screen">
+      <div class="card-row" id="dealer-row">
+        <div class="card-row-label"><span class="crl-title">Dealer</span><span class="crl-hand" id="dealer-hand-name"></span></div>
+      </div>
+      <div class="card-row" id="community-row">
+        <div class="card-row-label" style="min-width:auto"></div>
+      </div>
+      <div class="card-row" id="player-row">
+        <div class="card-row-label"><span class="crl-title">You</span><span class="crl-hand" id="player-hand-name"></span></div>
+      </div>
+      <div id="locked-bets-strip">
+        <div class="lb-item"><span class="lb-lbl">Ante</span><span class="lb-val" id="lb-ante">$0</span></div>
+        <div class="lb-item"><span class="lb-lbl">Blind</span><span class="lb-val" id="lb-blind">$0</span></div>
+        <div class="lb-item"><span class="lb-lbl">Trips</span><span class="lb-val" id="lb-trips">$0</span></div>
+        <div class="lb-item"><span class="lb-lbl">Play</span><span class="lb-val" id="lb-play">—</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM SECTION -->
+  <div id="bottom-section">
+    <div id="bottom-left">
+      <div id="history-strip">
+        <div id="roll-history"></div>
+        <button id="log-btn-uth" onclick="openLogModal()">?</button>
+      </div>
+      <div id="bottom-bar">
+        <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
+        <div class="chip" data-val="2" onclick="selectChip(2)">$2</div>
+        <div class="chip" data-val="3" onclick="selectChip(3)">$3</div>
+        <div class="chip" data-val="5" onclick="selectChip(5)">$5</div>
+        <div class="chip" data-val="10" onclick="selectChip(10)">$10</div>
+        <div class="chip" data-val="25" onclick="selectChip(25)">$25</div>
+        <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
+        <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
+        <div style="flex:1"></div>
+        <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
+        <button class="bar-btn danger" id="clear-btn" onclick="clearBets()">Clear</button>
+        <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
+      </div>
+    </div>
+    <div id="action-row">
+      <button class="action-btn" id="btn-deal" onclick="dealHand()">DEAL</button>
+      <button class="action-btn secondary" id="btn-check" onclick="uthCheck()" style="display:none">CHECK</button>
+      <button class="action-btn" id="btn-bet4" onclick="uthBet('bet4')" style="display:none">BET 4X</button>
+      <button class="action-btn" id="btn-bet3" onclick="uthBet('bet3')" style="display:none">BET 3X</button>
+      <button class="action-btn" id="btn-bet2" onclick="uthBet('bet2')" style="display:none">BET 2X</button>
+      <button class="action-btn" id="btn-bet1" onclick="uthBet('bet1')" style="display:none">BET 1X</button>
+      <button class="action-btn danger" id="btn-fold" onclick="uthFold()" style="display:none">FOLD</button>
+    </div>
+  </div>
+
+  <!-- CASHOUT VOUCHER MODAL -->
+  <div id="modal-cashout" class="hidden">
+    <div class="voucher">
+      <div class="voucher-insert">INSERT THIS SIDE UP</div>
+      <div class="voucher-header">
+        <div class="voucher-property">⬡ Rated Hex</div>
+        <div class="voucher-address">Virtual Casino &nbsp;·&nbsp; Rated Hex Gaming Network</div>
+        <div class="voucher-type">Cashout Voucher</div>
+      </div>
+      <div class="voucher-barcode" id="voucher-barcode">RH-00000000</div>
+      <div class="voucher-validation" id="voucher-validation">
+        VALIDATION &nbsp;&nbsp; RH-00000000<br>
+        00/00/0000 &nbsp; 00:00:00 &nbsp;&nbsp; VOUCHER # 0000
+      </div>
+      <div class="voucher-amount" id="voucher-amount">$0.00</div>
+      <div class="voucher-footer">
+        <span>Void after 180 days</span>
+        <span id="voucher-asset">ASSET# 0000</span>
+      </div>
+      <div class="voucher-btns">
+        <button class="voucher-btn print" onclick="window.print()">Print</button>
+        <button class="voucher-btn close" onclick="closeCashoutModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end game-screen -->
+
+<script src="cards.js"></script>
+<script>
+const SUPABASE_URL='https://qgiksiauptrqmxsupwqe.supabase.co';
+const FUNCTIONS_URL='https://qgiksiauptrqmxsupwqe.supabase.co/functions/v1';
+const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{fetch:(url,options)=>fetch(url,{...options,cache:'no-store'})}});
+
+const r2=n=>Math.round(n*100)/100;
+const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtS=n=>'$'+Math.abs(n).toFixed(0);
+const FN_HEADERS={'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY};
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+function makeInitialG(){
+  return {
+    bankroll:0,startingBankroll:0,chip:25,
+    bets:{ante:0,trips:0},
+    phase:'betting', // betting|preflop|flop|river|showdown
+    hand:null,       // {playerHole,community,dealerHole}
+    locked:{ante:0,blind:0,trips:0},
+    lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
+    history:[],
+    cardEls:null,
+  };
+}
+let G=makeInitialG();
+let currentPlayer=null,_authMode='login';
+
+function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0));}
+function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
+function checkBroke(){if(G.bankroll<=0&&tBets()===0)setTimeout(()=>openRedeemModal(true),300);}
+
+function openCapModal(){document.getElementById('modal-cap').classList.remove('hidden');}
+function closeCapModal(){document.getElementById('modal-cap').classList.add('hidden');}
+function openLogModal(){document.getElementById('modal-log').classList.remove('hidden');}
+function closeLogModal(){document.getElementById('modal-log').classList.add('hidden');}
+function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.prepend(p);while(el.children.length>80)el.removeChild(el.lastChild);}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function showTab(tab){_authMode=tab;document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('auth-btn').textContent=tab==='login'?'Log In':'Create Account';document.getElementById('auth-error').style.display='none';}
+function showAuthError(msg){const el=document.getElementById('auth-error');el.textContent=msg;el.style.display='block';}
+async function handleAuth(){
+  const username=document.getElementById('auth-username').value.trim();
+  const password=document.getElementById('auth-password').value;
+  if(!username||!password){showAuthError('Please enter a username and password.');return;}
+  const btn=document.getElementById('auth-btn');btn.disabled=true;btn.textContent='Please wait...';
+  try{if(_authMode==='register')await registerPlayer(username,password);else await loginPlayer(username,password);}
+  catch(e){showAuthError(e.message||'Something went wrong.');}
+  btn.disabled=false;btn.textContent=_authMode==='login'?'Log In':'Create Account';
+}
+async function hashPassword(p){const e=new TextEncoder().encode(p);const b=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function generateToken(){return Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function registerPlayer(username,password){
+  const{data:ex}=await sb.from('players').select('id').eq('username',username).maybeSingle();
+  if(ex)throw new Error('That username is already taken.');
+  const hash=await hashPassword(password);const token=generateToken();
+  const expires=new Date(Date.now()+30*24*60*60*1000).toISOString();
+  const{data,error}=await sb.from('players').insert({username,password_hash:hash,bankroll:20,net_pnl:0,total_redeemed:0,session_token:token,session_expires:expires}).select().single();
+  if(error)throw new Error('Could not create account: '+error.message);
+  localStorage.setItem('craps_session',token);startSession(data);
+}
+async function loginPlayer(username,password){
+  const hash=await hashPassword(password);
+  const{data,error}=await sb.from('players').select('*').eq('username',username).single();
+  if(error||!data)throw new Error('Username not found.');
+  if(data.password_hash!==hash)throw new Error('Incorrect password.');
+  const token=generateToken();const expires=new Date(Date.now()+30*24*60*60*1000).toISOString();
+  await sb.from('players').update({session_token:token,session_expires:expires}).eq('id',data.id);
+  localStorage.setItem('craps_session',token);startSession({...data,session_token:token,session_expires:expires});
+}
+async function tryRestoreSession(){
+  const token=localStorage.getItem('craps_session');if(!token)return;
+  const{data,error}=await sb.from('players').select('*').eq('session_token',token).maybeSingle();
+  if(error||!data){localStorage.removeItem('craps_session');return;}
+  if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
+  startSession(data);
+}
+function startSession(player){
+  currentPlayer=player;
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('game-screen').style.display='flex';
+  document.getElementById('top-bar-username').textContent=player.username;
+  G=makeInitialG();
+  buildCardSlots();
+  G.bankroll=parseFloat(player.bankroll)||0;
+  G.startingBankroll=parseFloat(player.total_redeemed)||0;
+  const gs=player.game_state||{};
+  if(gs.uth&&gs.uth.lastBetSnapshot){G.lastBetSnapshot=gs.uth.lastBetSnapshot;document.getElementById('repeat-btn').disabled=false;}
+  if(gs.uth&&gs.uth.phase==='preflop'){
+    // An abandoned hand from a previous session (refresh mid-decision): resume at the
+    // earliest decision point rather than lose track of the already-committed Ante/Blind/Trips.
+    G.locked={ante:gs.uth.ante,blind:gs.uth.blind,trips:gs.uth.trips};
+    G.hand={playerHole:gs.uth.playerHole,community:gs.uth.community,dealerHole:null};
+    G.phase='preflop';
+    showPlayScreen();renderHandCards();renderLockedBets();
+  }
+  renderActionButtons();updateUI();
+}
+async function logout(){
+  if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
+  localStorage.removeItem('craps_session');currentPlayer=null;G=makeInitialG();
+  document.getElementById('game-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-username').value='';document.getElementById('auth-password').value='';
+}
+
+// ── REDEEM ────────────────────────────────────────────────────────────────────
+function openRedeemModal(broke){
+  document.getElementById('redeem-input').value='';document.getElementById('redeem-error').textContent='';
+  document.getElementById('redeem-btn').disabled=false;document.getElementById('redeem-btn').textContent='Redeem';
+  if(broke){document.getElementById('redeem-title').textContent='Out of Chips!';document.getElementById('redeem-sub').textContent='Get a code from Deck to continue playing.';document.getElementById('redeem-cancel').style.display='none';}
+  else{document.getElementById('redeem-title').textContent='Redeem a Code';document.getElementById('redeem-sub').textContent='Enter the code Deck sent you.';document.getElementById('redeem-cancel').style.display='block';}
+  document.getElementById('modal-redeem').classList.remove('hidden');loadVoucherList();
+}
+function closeRedeemModal(){document.getElementById('modal-redeem').classList.add('hidden');}
+async function redeemCode(){
+  const code=document.getElementById('redeem-input').value.trim().toUpperCase();
+  const errEl=document.getElementById('redeem-error');const btn=document.getElementById('redeem-btn');
+  errEl.textContent='';if(!code){errEl.textContent='Please enter a code.';return;}
+  btn.disabled=true;btn.textContent='Checking...';
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/redeem',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,code})});
+    data=await res.json();
+  }catch(e){errEl.textContent='Network error. Try again.';btn.disabled=false;btn.textContent='Redeem';return;}
+  if(!data.ok){errEl.textContent=data.message||'Could not redeem code.';btn.disabled=false;btn.textContent='Redeem';return;}
+  G.bankroll=data.newBankroll;G.startingBankroll=data.newTotalRedeemed;
+  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=data.newTotalRedeemed;
+  closeRedeemModal();addLog('Code redeemed! +'+fmt(data.value)+' added.','win');updateUI();
+  btn.disabled=false;btn.textContent='Redeem';
+}
+async function loadVoucherList(){
+  const token=localStorage.getItem('craps_session');
+  const container=document.getElementById('voucher-list-items');
+  if(!container)return;
+  container.innerHTML='<div class="voucher-list-empty">Loading...</div>';
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/redeem',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'list'})});
+    data=await res.json();
+  }catch(e){container.innerHTML='<div class="voucher-list-empty">Could not load vouchers.</div>';return;}
+  if(!data.ok||!data.vouchers||data.vouchers.length===0){container.innerHTML='<div class="voucher-list-empty">No unredeemed vouchers.</div>';return;}
+  container.innerHTML='';
+  data.vouchers.forEach(v=>{
+    const exp=new Date(v.expires_at);
+    const expStr='Exp '+(exp.getMonth()+1)+'/'+exp.getDate()+'/'+exp.getFullYear();
+    const row=document.createElement('div');row.className='voucher-row';
+    row.innerHTML='<span class="voucher-row-amount">$'+parseFloat(v.amount).toFixed(2)+'</span>'
+      +'<span class="voucher-row-code">'+v.code+'</span>'
+      +'<span class="voucher-row-expiry">'+expStr+'</span>'
+      +'<button class="voucher-row-btn" onclick="redeemVoucher(\''+v.code+'\')">Redeem</button>';
+    container.appendChild(row);
+  });
+}
+async function redeemVoucher(code){document.getElementById('redeem-input').value=code;await redeemCode();loadVoucherList();}
+
+// ── CHIP SELECTION ────────────────────────────────────────────────────────────
+function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
+
+// ── PRE-DEAL BET ACTIONS (ante/trips only -- blind always mirrors ante) ──────
+function placeBet(key){
+  if(G.phase!=='betting')return;
+  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  const a=r2(Math.min(G.chip,G.bankroll));
+  G.bets[key]=r2((G.bets[key]||0)+a);
+  G.bankroll=r2(G.bankroll-a);
+  updateUI();
+}
+function removeBet(key){
+  if(G.phase!=='betting')return;
+  const c=G.bets[key]||0;if(!c)return;
+  const rv=r2(Math.min(G.chip,c));
+  G.bets[key]=r2(c-rv);
+  G.bankroll=r2(G.bankroll+rv);
+  updateUI();
+}
+function clearBets(){
+  if(G.phase!=='betting')return;
+  let ret=0;
+  for(const k in G.bets)ret=r2(ret+G.bets[k]);
+  G.bets={ante:0,trips:0};G.bankroll=r2(G.bankroll+ret);
+  updateUI();
+}
+function repeatLastBet(){
+  if(G.phase!=='betting'||!G.lastBetSnapshot)return;
+  const snap=G.lastBetSnapshot;
+  const cost=r2((snap.ante||0)+(snap.trips||0));
+  if(cost<=0){addLog('Nothing to repeat.','info');return;}
+  if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
+  clearBets();
+  G.bets.ante=snap.ante||0;G.bets.trips=snap.trips||0;
+  G.bankroll=r2(G.bankroll-cost);
+  updateUI();
+}
+
+// ── CARD SLOTS ────────────────────────────────────────────────────────────────
+function buildCardSlots(){
+  if(G.cardEls)return;
+  const dealerRow=document.getElementById('dealer-row');
+  const communityRow=document.getElementById('community-row');
+  const playerRow=document.getElementById('player-row');
+  const dealer=[Cards.makeSlot(),Cards.makeSlot()];
+  const community=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
+  const player=[Cards.makeSlot(),Cards.makeSlot()];
+  dealer.forEach(el=>dealerRow.appendChild(el));
+  community.forEach(el=>communityRow.appendChild(el));
+  player.forEach(el=>playerRow.appendChild(el));
+  G.cardEls={dealer,community,player};
+}
+function renderHandCards(){
+  G.cardEls.player.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.playerHole[i]);Cards.flipUp(el);});
+  G.cardEls.community.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.community[i]);});
+  G.cardEls.dealer.forEach(el=>Cards.reset(el));
+}
+function renderLockedBets(){
+  document.getElementById('lb-ante').textContent=fmtS(G.locked.ante);
+  document.getElementById('lb-blind').textContent=fmtS(G.locked.blind);
+  document.getElementById('lb-trips').textContent=fmtS(G.locked.trips);
+  document.getElementById('lb-play').textContent='—';
+}
+
+// ── SCREEN TOGGLE ─────────────────────────────────────────────────────────────
+function showBetScreen(){document.getElementById('bet-screen').style.display='flex';document.getElementById('play-screen').style.display='none';}
+function showPlayScreen(){document.getElementById('bet-screen').style.display='none';document.getElementById('play-screen').style.display='flex';}
+
+// ── ACTION BUTTONS ────────────────────────────────────────────────────────────
+const ACTION_BTN_IDS=['btn-deal','btn-check','btn-bet4','btn-bet3','btn-bet2','btn-bet1','btn-fold'];
+const PHASE_BUTTONS={betting:['btn-deal'],preflop:['btn-check','btn-bet3','btn-bet4'],flop:['btn-check','btn-bet2'],river:['btn-bet1','btn-fold'],showdown:[]};
+function renderActionButtons(){
+  const show=new Set(PHASE_BUTTONS[G.phase]||[]);
+  ACTION_BTN_IDS.forEach(id=>{document.getElementById(id).style.display=show.has(id)?'':'none';});
+}
+function setActionButtonsEnabled(en){ACTION_BTN_IDS.forEach(id=>document.getElementById(id).disabled=!en);}
+
+function updateStatusZone(){
+  const map={
+    betting:['Place Your Ante','Blind bet auto-matches your Ante. Trips is optional.'],
+    preflop:['Check or Bet 3X/4X','Bet now to skip straight to showdown, or check to see the flop.'],
+    flop:['Check or Bet 2X','Community flop is up. Bet now or check to see the turn &amp; river.'],
+    river:['Bet 1X or Fold','All five community cards are up. This is your last chance to bet.'],
+    showdown:['Showdown','']
+  };
+  const m=map[G.phase]||['',''];
+  document.getElementById('status-phase').textContent=m[0];
+  document.getElementById('status-sub').innerHTML=m[1];
+}
+
+// ── DEAL ──────────────────────────────────────────────────────────────────────
+async function dealHand(){
+  const ante=G.bets.ante||0;
+  if(ante<=0){addLog('Place an Ante bet before dealing.','info');return;}
+  const trips=G.bets.trips||0;
+  document.getElementById('btn-deal').disabled=true;
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/roll-uth',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,trips})});
+    data=await res.json();
+  }catch(e){data={ok:false,message:'Network error. Try again.'};}
+  document.getElementById('btn-deal').disabled=false;
+  if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
+  G.locked={ante:data.ante,blind:data.blind,trips:data.trips};
+  G.lastBetSnapshot={ante:data.ante,trips:data.trips};
+  G.hand={playerHole:data.playerHole,community:data.community,dealerHole:null};
+  G.bankroll=data.newBankroll;
+  G.bets={ante:0,trips:0};
+  G.phase='preflop';
+  showPlayScreen();
+  renderHandCards();
+  renderLockedBets();
+  renderActionButtons();
+  updateStatusZone();
+  document.getElementById('repeat-btn').disabled=false;
+  updateUI();
+}
+
+// ── CHECK (client-side phase advance, no server call) ────────────────────────
+function uthCheck(){
+  if(G.phase==='preflop'){
+    [0,1,2].forEach(i=>Cards.flipUp(G.cardEls.community[i]));
+    G.phase='flop';
+  }else if(G.phase==='flop'){
+    [3,4].forEach(i=>Cards.flipUp(G.cardEls.community[i]));
+    G.phase='river';
+  }
+  renderActionButtons();updateStatusZone();
+}
+
+// ── BET / FOLD (server-resolved) ──────────────────────────────────────────────
+function uthBet(decision){commitDecision(decision);}
+function uthFold(){commitDecision('fold');}
+async function commitDecision(decision){
+  setActionButtonsEnabled(false);
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/roll-uth',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'resolve',decision})});
+    data=await res.json();
+  }catch(e){data={ok:false,message:'Network error. Try again.'};}
+  setActionButtonsEnabled(true);
+  if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
+  finishHand(data);
+}
+function finishHand(data){
+  G.cardEls.community.forEach(el=>Cards.flipUp(el));
+  G.cardEls.dealer.forEach((el,i)=>{Cards.setFront(el,data.dealerHole[i]);Cards.flipUp(el);});
+  document.getElementById('dealer-hand-name').textContent=data.dealerScore.name+(data.dealerScore.cat>=1?'':' (no qualify)');
+  document.getElementById('player-hand-name').textContent=data.folded?'Folded':data.playerScore.name;
+  document.getElementById('lb-play').textContent=data.folded?'Folded':fmtS(data.playBet);
+  (data.log||[]).forEach(line=>{
+    const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
+    addLog(line,cls);
+  });
+  G.bankroll=data.newBankroll;
+  G.lastWin=data.payout||0;
+  G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
+  const histLabel=data.folded?'Fold':data.playerScore.name;
+  G.history.unshift({result:data.result,payout:data.payout,label:histLabel});
+  if(G.history.length>20)G.history.length=20;
+  G.phase='showdown';
+  renderActionButtons();updateStatusZone();
+  updateUI();checkBroke();
+  const totalWagered=G.lastBetDisplay||1;
+  if(data.payout>0){
+    const bigWin=(data.payout/totalWagered)>=7;
+    WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
+  }else{
+    setTimeout(resetToBetScreen,3500);
+  }
+  if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
+}
+function resetToBetScreen(){
+  G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0};
+  [...G.cardEls.player,...G.cardEls.community,...G.cardEls.dealer].forEach(el=>Cards.reset(el));
+  document.getElementById('dealer-hand-name').textContent='';
+  document.getElementById('player-hand-name').textContent='';
+  showBetScreen();
+  renderActionButtons();updateStatusZone();
+  updateUI();
+}
+
+// ── HISTORY STRIP ─────────────────────────────────────────────────────────────
+function renderRollHistory(){
+  const hist=document.getElementById('roll-history');
+  if(!hist)return;
+  hist.innerHTML='';
+  G.history.forEach(h=>{
+    const pip=document.createElement('div');
+    pip.className='roll-pip '+(h.result||'');
+    const amt=h.result==='fold'?'−':(h.payout>0?'+'+fmtS(h.payout):'−');
+    pip.innerHTML='<span class="rp-hand">'+h.label+'</span><span class="rp-amt">'+amt+'</span>';
+    hist.appendChild(pip);
+  });
+  hist.scrollLeft=0;
+}
+
+// ── UPDATE UI ─────────────────────────────────────────────────────────────────
+function updateUI(){
+  const net=calcNet();
+  const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
+  document.getElementById('hud-bankroll').textContent=fmtS(G.bankroll);
+  document.getElementById('hud-bet').textContent=fmtS(tBets());
+  document.getElementById('hud-lastbet').textContent=G.lastBetDisplay>0?fmtS(G.lastBetDisplay):'—';
+  document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
+  renderRollHistory();
+
+  const anteAmt=G.bets.ante||0,tripsAmt=G.bets.trips||0;
+  document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
+  document.getElementById('stk-blind').textContent=anteAmt?fmt(anteAmt):'';
+  document.getElementById('stk-trips').textContent=tripsAmt?fmt(tripsAmt):'';
+  document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
+  document.getElementById('blind-spot').classList.toggle('active',anteAmt>0);
+  document.getElementById('trips-spot').classList.toggle('active',tripsAmt>0);
+  document.getElementById('m-ante').classList.toggle('vis',anteAmt>0);
+  document.getElementById('m-trips').classList.toggle('vis',tripsAmt>0);
+  renderChipStacks();
+}
+
+// ── CHIP STACKS ON BET SPOTS ──────────────────────────────────────────────────
+const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
+function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
+function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
+function chipStackHTML(amt){
+  const chips=chipBreakdown(amt),n=chips.length;
+  let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
+  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
+  const label=chipLabel(amt);
+  const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
+  h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
+  h+='</span>';
+  return h;
+}
+const UTH_STK_SEL='.uth-spot-stk';
+function renderChipStacks(){
+  document.querySelectorAll(UTH_STK_SEL).forEach(el=>{
+    const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
+    if(!m){el.classList.remove('has-stack');return;}
+    const amt=parseFloat(m[1].replace(/,/g,''));
+    if(!(amt>0)){el.classList.remove('has-stack');return;}
+    el.innerHTML=chipStackHTML(amt);
+    el.classList.add('has-stack');
+  });
+}
+document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
+
+// ── CASHOUT ───────────────────────────────────────────────────────────────────
+async function cashOut(){
+  if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
+  const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/cashout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token})});
+    data=await res.json();
+  }catch(e){data={ok:false,message:'Network error.'};}
+  if(btn)btn.disabled=false;
+  if(!data.ok){const msg=data.message||'Cash out failed. Is the cashout function deployed?';addLog(msg,'info');alert(msg);return;}
+  G.bankroll=0;
+  if(currentPlayer)currentPlayer.bankroll=0;
+  const code=data.code;
+  const amount=parseFloat(data.amount);
+  const now=new Date(data.created_at||Date.now());
+  const dateStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'+now.getDate().toString().padStart(2,'0')+'/'+now.getFullYear();
+  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+  const voucherNum=Math.floor(Math.random()*9000+1000);
+  const assetNum=Math.floor(Math.random()*9000+1000);
+  document.getElementById('voucher-barcode').textContent=code;
+  document.getElementById('voucher-validation').innerHTML='VALIDATION &nbsp;&nbsp; '+code+'<br>'+dateStr+' &nbsp; '+timeStr+' &nbsp;&nbsp; VOUCHER # '+voucherNum;
+  document.getElementById('voucher-amount').textContent='$'+amount.toFixed(2);
+  document.getElementById('voucher-asset').textContent='ASSET# '+assetNum;
+  document.getElementById('modal-cashout').classList.remove('hidden');
+  updateUI();
+}
+function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderActionButtons();
+tryRestoreSession();
+</script>
+<script src="winner-modal.js"></script>
+</body>
+</html>
