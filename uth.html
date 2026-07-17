@@ -64,13 +64,18 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    width:100%+max-height:100% stretches the art at wide aspect ratios. */
 #table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('uth_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
 
-/* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows */
+/* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows.
+   Regions sized to the actual empty felt: dealer/player are height-bound (title+row+
+   hand-name stacked in the open space above/below the "ante pushes" text line);
+   community is width-bound (must stay clear of the Trips paytable's left edge at
+   44.06%), which is why its cards land smaller than dealer/player's. */
 .card-region{position:absolute;display:flex;flex-direction:column;align-items:center;gap:0.6cqh}
-#dealer-region{left:0%;top:1%;width:100%;height:16%;justify-content:flex-start}
-#community-region{left:2%;top:18%;width:41%;height:16%;justify-content:center}
-#player-region{left:2%;top:54%;width:41%;height:24%;justify-content:center}
-.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqh;--pc-w:10cqh;opacity:0;transition:opacity .3s}
+#dealer-region{left:0%;top:0.5%;width:100%;height:33.5%;justify-content:flex-start}
+#community-region{left:0.5%;top:38%;width:43%;height:23%;justify-content:center}
+#player-region{left:0.5%;top:62%;width:43%;height:34%;justify-content:center}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqh;--pc-w:18.5cqh;opacity:0;transition:opacity .3s}
 .card-row.active{opacity:1}
+#community-row.card-row{--pc-w:14cqh}
 .crl-title{font-size:1.8cqh;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.5);text-transform:uppercase}
 .crl-hand{font-size:2.3cqh;color:#ffd700;font-weight:700;min-height:2.8cqh;text-align:center}
 
@@ -269,7 +274,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.62</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.63</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
