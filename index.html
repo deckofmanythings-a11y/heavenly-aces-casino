@@ -35,7 +35,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* Left col header (matches left col width) */
 #left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:3px}
 .mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);cursor:pointer;font-size:19px;font-weight:700;color:rgba(255,255,255,.6)}
-#tab-hw,#tab-hop{flex-direction:row!important;gap:6px!important;justify-content:center}
 .mode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
 .mode-btn-amt{font-size:17px;color:#ffd700;font-weight:600}
 
@@ -907,7 +906,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.51</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.52</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1211,47 +1210,43 @@ const FELT_IMG={
 // Items whose position is identical on both felt sheets (measured on the crapless art;
 // the standard sheet's Hard Ways / One Roll Bets / Hop panels line up the same way).
 const FELT_LAYOUT=[
-  ['@anyCraps-circle', 34.844,52.556, 6.563,11.056,null],
-  ['@cande',           34.844,63.611, 6.563,11.056,null],
-  ['@eleven',          34.844,74.722, 6.563,11.056,null],
+  ['.circle-stack',  34.84,52.575, 6.56,33.181,null],
   ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
-  ['#left-col-header', 0.40, 0.70,12.60,12.00,null],
+  ['#left-col-header', 0.40, 0.70,12.60,17.00,null],
   ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
   ['#info-panel',     87.00, 0.70,12.60,17.00,null],
   ['#bottom-section',  0.30,86.70,99.40,13.00,null],
-  ['#tab-hw',   0.250,13.278,17.5625,2.222,null],
-  ['#tab-hop', 17.828,13.278,17.5625,2.222,null],
   // HARDWAYS view: one roll pills
-  ['@any7',            3.781,42.944,28.000,10.778,'hw'],
-  ['@aces',            3.875,54.667, 7.219,10.278,'hw'],
-  ['@ace2',           24.281,54.722, 7.594,10.167,'hw'],
-  ['@horn',           11.188,60.444,13.188, 9.944,'hw'],
-  ['@midnight',        3.719,65.722, 7.438,10.167,'hw'],
-  ['@yo',             24.438,66.056, 7.375,10.111,'hw'],
-  ['@anyCraps',        3.625,76.389,28.219, 7.889,'hw'],
+  ['@any7',           5.39,54.055,28.22, 7.89,'hw'],
+  ['@aces',           5.22,62.41, 7.44, 7.06,'hw'],
+  ['@ace2',          25.86,62.41, 7.34, 7.06,'hw'],
+  ['@horn',          12.86,66.19,13.28, 7.28,'hw'],
+  ['@midnight',       5.22,70.335, 7.44, 7.11,'hw'],
+  ['@yo',            25.86,70.335, 7.34, 7.11,'hw'],
+  ['@anyCraps',       5.39,77.725,28.22, 7.89,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3)
-  ['@hop13',          4.625,53.500, 8.813, 6.222,'hop'],
-  ['@hop16',         15.094,53.222, 8.750, 6.222,'hop'],
-  ['@hop26',         25.563,53.611, 8.813, 6.222,'hop'],
-  ['@hop14',          4.625,59.722, 8.813, 6.222,'hop'],
-  ['@hop25',         15.063,60.000, 8.750, 6.222,'hop'],
-  ['@hop35',         25.563,60.000, 8.813, 6.222,'hop'],
-  ['@hop23',          4.625,66.611, 8.813, 6.222,'hop'],
-  ['@hop34',         15.094,66.500, 8.750, 6.222,'hop'],
-  ['@hop36',         25.563,66.500, 8.813, 6.222,'hop'],
-  ['@hop24',          4.625,73.000, 8.813, 6.222,'hop'],
-  ['@hop45',         25.563,73.333, 8.813, 6.222,'hop'],
-  ['@hop15',          4.594,79.722, 8.813, 6.222,'hop'],
-  ['@hop46',         25.563,79.722, 8.813, 6.222,'hop']
+  ['@hop13',          6.315,54.5, 8.81, 6.22,'hop'],
+  ['@hop16',         15.125,54.5, 8.75, 6.22,'hop'],
+  ['@hop26',         23.565,54.5, 8.81, 6.22,'hop'],
+  ['@hop14',          6.315,61.06, 8.81, 6.22,'hop'],
+  ['@hop25',         15.125,61.06, 8.75, 6.22,'hop'],
+  ['@hop35',         23.565,61.06, 8.81, 6.22,'hop'],
+  ['@hop23',          6.315,67.61, 8.81, 6.22,'hop'],
+  ['@hop34',         15.125,67.61, 8.75, 6.22,'hop'],
+  ['@hop36',         23.565,67.61, 8.81, 6.22,'hop'],
+  ['@hop24',          6.315,74.17, 8.81, 6.22,'hop'],
+  ['@hop45',         23.565,74.17, 8.81, 6.22,'hop'],
+  ['@hop15',          6.315,80.72, 8.81, 6.22,'hop'],
+  ['@hop46',         23.565,80.72, 8.81, 6.22,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
 const LR_LAYOUT=[
   // Measured directly from Deck's marked reference image, exact percentages of the Lucky
   // Roller region itself, not a computed/estimated value.
-  ['low',    5.440,51.111,27.778,39.506],
-  ['all',   35.966,51.111,27.778,39.506],
-  ['high',  66.638,51.111,27.778,39.506],
+  ['low',    5.47,50.99,27.79,39.63],
+  ['all',   36.01,51.07,27.79,39.63],
+  ['high',  66.58,51.07,27.79,39.63],
   ['#bnums-low',  6.20,31.50,27.70,13.00],
   ['#bnums-high',65.30,31.60,28.50,12.80],
   ['#dice-zone', 34.50, 1.00,31.00,49.00]
@@ -1284,38 +1279,26 @@ const CRAPLESS_LAYOUT=[
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
 // these coordinates are shared with crapless.
 const STANDARD_LAYOUT=[
-  ['@hard6',           0.531,21.500,14.000, 7.500,'hw'],
-  ['@hard10',         20.906,21.500,14.219, 8.000,'hw'],
-  ['@hard8',           0.531,29.333,14.063, 7.833,'hw'],
-  ['@hard4',          20.938,29.500,14.219, 7.667,'hw'],
-  ['@hop22',          21.031,33.833,14.250, 7.889,'hop'],
-  ['@hop44',           0.313,33.778,14.250, 7.889,'hop'],
-  ['@hop33',           0.313,25.667,14.250, 7.889,'hop'],
-  ['@hop55',          21.063,25.778,14.250, 7.889,'hop'],
+  // Same panel, measured directly on the standard felt art -- different x-position than
+  // crapless's version, confirmed by dots on both tables.
+  ['@hard6',           1.815,28.055,14.25, 7.89,'hw'],
+  ['@hard10',         22.405,28.055,14.25, 7.89,'hw'],
+  ['@hard8',           1.815,35.995,14.25, 7.89,'hw'],
+  ['@hard4',          22.405,35.995,14.25, 7.89,'hw'],
+  ['@hop22',           1.815,28.055,14.25, 7.89,'hop'],
+  ['@hop44',          22.405,28.055,14.25, 7.89,'hop'],
+  ['@hop33',           1.815,35.995,14.25, 7.89,'hop'],
+  ['@hop55',          22.405,35.995,14.25, 7.89,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
-  ['#dc-wait-wrap',   90.875,22.722, 8.563,25.167,null],
-  ['#come-bar',       56.656,38.833,42.750,11.556,null],
-  ['#field-bar',      56.656,50.389,42.750,15.389,null],
-  ['#dp-bar',         56.656,65.778,42.750, 9.389,null],
-  ['#pass-bar',       56.656,75.167,42.750,11.556,null],
-  ['#nb-lay-4',       41.906,22.500, 4.469, 5.500,null],
-  ['#nb-place-4',     37.438,42.333, 4.469, 5.722,null],
-  ['#nb-buy-4',       41.906,42.333, 4.469, 5.722,null],
-  ['#nb-lay-5',       50.813,22.500, 4.469, 5.500,null],
-  ['#nb-place-5',     46.344,42.333, 4.469, 5.722,null],
-  ['#nb-buy-5',       50.813,42.333, 4.469, 5.722,null],
-  ['#nb-lay-6',       59.719,22.500, 4.469, 5.500,null],
-  ['#nb-place-6',     55.250,42.333, 4.469, 5.722,null],
-  ['#nb-buy-6',       59.719,42.333, 4.469, 5.722,null],
-  ['#nb-lay-8',       68.625,22.500, 4.469, 5.500,null],
-  ['#nb-place-8',     64.156,42.333, 4.469, 5.722,null],
-  ['#nb-buy-8',       68.625,42.333, 4.469, 5.722,null],
-  ['#nb-lay-9',       77.531,22.500, 4.469, 5.500,null],
-  ['#nb-place-9',     73.063,42.333, 4.469, 5.722,null],
-  ['#nb-buy-9',       77.531,42.333, 4.469, 5.722,null],
-  ['#nb-lay-10',      86.438,22.500, 4.469, 5.500,null],
-  ['#nb-place-10',    81.969,42.333, 4.469, 5.722,null],
-  ['#nb-buy-10',      86.438,42.333, 4.469, 5.722,null]
+  ['#dc-wait-wrap',  87.31,22.22, 8.16,25.00,null],
+  // Come/Field/DP/Pass widths corrected: the original measurement clipped its scan window at
+  // x=2790 (right where the Don't Come Bar starts overhead) and never checked past it. All four
+  // bars actually extend to the same right margin as the Don't Come Bar itself, ~x=3055.
+  // Re-measured across 5 independent samples, all agreeing at 42.44% width.
+  ['#come-bar',      52.97,49.50,42.44, 8.89,null],
+  ['#field-bar',     53.03,57.00,42.44,12.00,null],
+  ['#dp-bar',        53.03,69.33,42.44, 7.11,null],
+  ['#pass-bar',      53.12,76.83,42.44, 7.11,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 let feltActive=false,feltTab='hw';
