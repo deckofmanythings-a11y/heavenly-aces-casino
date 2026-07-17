@@ -269,7 +269,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.61</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.62</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -425,7 +425,14 @@ function makeInitialG(){
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login';
 
-function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0)+G.playBet);}
+// Blind always mirrors Ante 1:1 but has no entry of its own in G.bets, so its cost has
+// to be added in here explicitly while still staging (once dealt, G.bets is cleared and
+// the locked Ante/Blind/Trips live in G.locked instead, outside tBets' job).
+function tBets(){
+  const betsTotal=Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0);
+  const blindMirror=G.phase==='betting'?(G.bets.ante||0):0;
+  return r2(betsTotal+blindMirror+G.playBet);
+}
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
 function checkBroke(){if(G.bankroll<=0&&tBets()===0)setTimeout(()=>openRedeemModal(true),300);}
 
@@ -638,33 +645,40 @@ async function redeemVoucher(code){document.getElementById('redeem-input').value
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
 
 // ── PRE-DEAL BET ACTIONS (ante/trips only -- blind always mirrors ante) ──────
+// Ante's matching Blind (always equal, never staged separately) has to be reserved
+// from the bankroll right along with it, or a player can stage more Ante than they
+// can actually afford once Blind is added at deal time.
+function anteReserveMult(key){return key==='ante'?2:1;}
 function placeBet(key){
   if(G.phase!=='betting')return;
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
-  const a=r2(Math.min(G.chip,G.bankroll));
+  const mult=anteReserveMult(key);
+  const room=r2(G.bankroll/mult);
+  const a=r2(Math.min(G.chip,room));
+  if(a<=0){addLog('Not enough bankroll to also cover the matching Blind bet.','info');return;}
   G.bets[key]=r2((G.bets[key]||0)+a);
-  G.bankroll=r2(G.bankroll-a);
+  G.bankroll=r2(G.bankroll-a*mult);
   updateUI();
 }
 function removeBet(key){
   if(G.phase!=='betting')return;
   const c=G.bets[key]||0;if(!c)return;
+  const mult=anteReserveMult(key);
   const rv=r2(Math.min(G.chip,c));
   G.bets[key]=r2(c-rv);
-  G.bankroll=r2(G.bankroll+rv);
+  G.bankroll=r2(G.bankroll+rv*mult);
   updateUI();
 }
 function clearBets(){
   if(G.phase!=='betting')return;
-  let ret=0;
-  for(const k in G.bets)ret=r2(ret+G.bets[k]);
+  const ret=r2((G.bets.ante||0)*2+(G.bets.trips||0));
   G.bets={ante:0,trips:0};G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
 function repeatLastBet(){
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
-  const cost=r2((snap.ante||0)+(snap.trips||0));
+  const cost=r2((snap.ante||0)*2+(snap.trips||0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
