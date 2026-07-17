@@ -85,13 +85,17 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #play-spot{left:56.69%;top:67.94%;width:5.50%;height:9.78%;--chip:7cqh}
 #flushrush-spot{left:56.78%;top:44.33%;width:5.28%;height:9.39%;--chip:6.5cqh}
 #superflushrush-spot{left:63.81%;top:39.69%;width:5.28%;height:9.39%;--chip:6.5cqh}
-.panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:0.3cqh;font-size:1.8cqh;font-weight:700;color:#ffd700}
+.panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 
-/* Ante/Flush Rush/Super Flush Rush are contract bets once dealt -- no chip images
-   (Play is the only spot that shows real stacked chips), just the amount and a
-   small lock badge, matching the craps .chip-lock convention. */
-.panel-amt-text{white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-.panel-lock-badge{font-size:0.8em}
+/* Contract-bet lock badge -- ported wholesale from craps' chip-lock convention (built
+   into the chip-stack markup itself, see chipStackHTML()) rather than a separately
+   floating element, which kept landing on the wrong ancestor box. */
+.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
+
+/* Brief celebratory pulse for a bet spot that just hit (e.g. Super Flush Rush) --
+   distinct from the persistent .active glow used while a bet is simply staked. */
+@keyframes panel-spot-hit-pulse{0%,100%{box-shadow:0 0 0 0.3cqh rgba(255,215,0,.5)}50%{box-shadow:0 0 0 1.6cqh rgba(255,215,0,.9)}}
+.panel-spot.spot-hit{animation:panel-spot-hit-pulse .6s ease-in-out 3}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -267,7 +271,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.55</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.56</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -669,6 +673,16 @@ function updatePlayButtonState(){
   if(!btn)return;
   btn.disabled=!(G.locked.ante>0&&G.playBet>=G.locked.ante);
 }
+// Brief celebratory pulse on a bet spot that just hit (e.g. a Super Flush Rush win) --
+// separate from the persistent .active glow a staked spot always shows.
+function flashSpotHit(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.remove('spot-hit');
+  void el.offsetWidth;
+  el.classList.add('spot-hit');
+  setTimeout(()=>el.classList.remove('spot-hit'),2000);
+}
 
 // ── CARD SLOTS (7 each -- no community row in this game) ─────────────────────
 function buildCardSlots(){
@@ -914,13 +928,27 @@ function finishHand(data){
     const dealerFinal=evalHand(data.dealerHand);
     document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
     const totalWagered=G.lastBetDisplay||1;
-    if(data.payout>0){
-      const bigWin=(data.payout/totalWagered)>=7;
-      WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
+    const sfrWin=data.superFlushRushWin||0;
+    const remaining=r2((data.payout||0)-sfrWin);
+
+    const showMainPayout=()=>{
+      if(remaining>0){
+        const bigWin=(remaining/totalWagered)>=7;
+        WinnerModal.show(remaining,{big:bigWin,onClose:resetToBetScreen});
+      }else{
+        setTimeout(resetToBetScreen,3500);
+      }
+      if(data.capped)setTimeout(openCapModal,remaining>0?4200:900);
+    };
+
+    if(sfrWin>0){
+      // Super Flush Rush can pay up to 8000:1 -- easy to miss as one line among several
+      // in the scrolling log, so it gets its own flash + modal before the hand's total.
+      flashSpotHit('superflushrush-spot');
+      WinnerModal.show(sfrWin,{big:true,onClose:showMainPayout});
     }else{
-      setTimeout(resetToBetScreen,3500);
+      showMainPayout();
     }
-    if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
   });
 }
 function resetToBetScreen(){
@@ -959,23 +987,18 @@ function updateUI(){
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
   renderRollHistory();
 
-  // Ante/Flush Rush/Super Flush Rush show real stacked chips while still freely
-  // editable (betting phase), same as Play. Once dealt, their amount comes from
-  // G.locked (G.bets is cleared right after a successful deal) and they become
-  // contract bets: no more chip stack, just plain text + a lock badge.
+  // Ante/Flush Rush/Super Flush Rush: their amount comes from G.locked once dealt
+  // (G.bets is cleared right after a successful deal). The chip stack itself never
+  // disappears -- it stays up the same way a craps Pass Line bet does -- a small
+  // lock badge is just added on top of it once they become contract (uneditable)
+  // bets. See chipStackHTML()'s locked parameter.
   const locked=G.phase!=='betting';
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
   const frAmt=locked?G.locked.flushRush:(G.bets.flushRush||0);
   const sfrAmt=locked?G.locked.superFlushRush:(G.bets.superFlushRush||0);
-  if(locked){
-    setStakeLabel('stk-ante',anteAmt,true);
-    setStakeLabel('stk-flushrush',frAmt,true);
-    setStakeLabel('stk-superflushrush',sfrAmt,true);
-  }else{
-    document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
-    document.getElementById('stk-flushrush').textContent=frAmt?fmt(frAmt):'';
-    document.getElementById('stk-superflushrush').textContent=sfrAmt?fmt(sfrAmt):'';
-  }
+  document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
+  document.getElementById('stk-flushrush').textContent=frAmt?fmt(frAmt):'';
+  document.getElementById('stk-superflushrush').textContent=sfrAmt?fmt(sfrAmt):'';
   document.getElementById('stk-play').textContent=G.playBet?fmt(G.playBet):'';
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('flushrush-spot').classList.toggle('active',frAmt>0);
@@ -983,42 +1006,41 @@ function updateUI(){
   document.getElementById('play-spot').classList.toggle('active',G.playBet>0);
   renderChipStacks();
 }
-function setStakeLabel(id,amt,locked){
-  const el=document.getElementById(id);
-  el.classList.remove('has-stack'); // clear any chip-stack visual left over from staging
-  if(!amt){el.innerHTML='';return;}
-  el.innerHTML='<span class="panel-amt-text">'+fmt(amt)+'</span>'+(locked?'<span class="panel-lock-badge">🔒</span>':'');
-}
 
 // ── CHIP STACKS ON BET SPOTS ──────────────────────────────────────────────────
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
 function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
-function chipStackHTML(amt){
+function chipStackHTML(amt,locked){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
   const label=chipLabel(amt);
   const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
+  // Same anchor/build-into-the-stack approach as craps' chip-lock badge (see index.html) --
+  // a separately-positioned floating badge kept landing on the wrong ancestor box.
+  if(locked)h+='<span class="chip-lock" style="bottom:0">🔒</span>';
   h+='</span>';
   return h;
 }
-// Play always shows real stacked chips. Ante/Flush Rush/Super Flush Rush do too while
-// still freely editable (betting phase); once locked as contract bets, updateUI()
-// renders them via setStakeLabel() (innerHTML with a lock badge) instead of plain
-// text, so the regex below simply won't match and has-stack gets cleared.
+// Ante/Flush Rush/Super Flush Rush are locked (contract) once dealt; Play is locked
+// once resolved (showdown). The chip stack stays up the whole time either way --
+// only whether the lock badge is appended changes.
 function renderChipStacks(){
-  const ids=G.phase==='betting'?['stk-ante','stk-flushrush','stk-superflushrush','stk-play']:['stk-play'];
-  ids.forEach(applyChipStackVisual);
+  const contractLocked=G.phase!=='betting';
+  applyChipStackVisual('stk-ante',contractLocked);
+  applyChipStackVisual('stk-flushrush',contractLocked);
+  applyChipStackVisual('stk-superflushrush',contractLocked);
+  applyChipStackVisual('stk-play',G.phase==='showdown');
 }
-function applyChipStackVisual(id){
+function applyChipStackVisual(id,locked){
   const el=document.getElementById(id);
   const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
   if(!m){el.classList.remove('has-stack');return;}
   const amt=parseFloat(m[1].replace(/,/g,''));
   if(!(amt>0)){el.classList.remove('has-stack');return;}
-  el.innerHTML=chipStackHTML(amt);
+  el.innerHTML=chipStackHTML(amt,locked);
   el.classList.add('has-stack');
 }
 document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
