@@ -214,7 +214,13 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 #pass-main.active-bar{background:rgba(255,215,0,.15)}
 
 /* ── GAME MODE TOGGLE ── */
-#game-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;width:100%;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0}
+#game-mode-toggle{padding:3px;width:100%;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0;position:relative}
+#gmode-current-btn{width:100%;padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+#gmode-current-btn:hover{background:rgba(255,255,255,.14)}
+#gmode-caret{font-size:11px;opacity:.7;transition:transform .15s}
+#gmode-current-btn.open #gmode-caret{transform:rotate(180deg)}
+#gmode-dropdown{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:3px}
+#gmode-dropdown.hidden{display:none}
 .gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
 .gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
 .gmode-btn:disabled{opacity:.35;cursor:not-allowed}
@@ -1055,21 +1061,26 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
       <div id="game-mode-toggle">
-        <button class="gmode-btn" onclick="navigateAway('index.html')">
-          CRAPS<span class="gmode-sub">Standard/Crapless</span>
+        <button id="gmode-current-btn" onclick="toggleGameModeDropdown()">
+          <span>FOCUS MODE</span><span id="gmode-caret">▾</span>
         </button>
-        <button class="gmode-btn active" id="gmode-focus" disabled>
-          FOCUS MODE<span class="gmode-sub">Standard rules</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
-          SIC-BO<span class="gmode-sub">3 dice</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
-          DESTROYER<span class="gmode-sub">Naval Strike</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('uth.html')">
-          HOLD'EM<span class="gmode-sub">Ultimate Texas</span>
-        </button>
+        <div id="gmode-dropdown" class="hidden">
+          <button class="gmode-btn" onclick="navigateAway('index.html')">
+            CRAPS<span class="gmode-sub">Standard/Crapless</span>
+          </button>
+          <button class="gmode-btn active" id="gmode-focus" disabled>
+            FOCUS MODE<span class="gmode-sub">Standard rules</span>
+          </button>
+          <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
+            SIC-BO<span class="gmode-sub">3 dice</span>
+          </button>
+          <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
+            DESTROYER<span class="gmode-sub">Naval Strike</span>
+          </button>
+          <button class="gmode-btn" onclick="navigateAway('uth.html')" style="grid-column:1/-1">
+            HOLD'EM<span class="gmode-sub">Ultimate Texas</span>
+          </button>
+        </div>
       </div>
       <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
         <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
@@ -1457,7 +1468,11 @@ const FELT_IMG={
 // Items whose position is identical on both felt sheets (measured on the crapless art;
 // the standard sheet's Hard Ways / One Roll Bets / Hop panels line up the same way).
 const FELT_LAYOUT=[
-  ['.circle-stack',  34.84,52.575, 6.56,33.181,null],
+  // C / C&E / E circles -- each now its own real, individually calibrated position (Deck's
+  // export) instead of one shared draggable stack.
+  ['@anyCraps-circle', 34.844,52.556, 6.563,11.056,null],
+  ['@cande',           34.844,63.611, 6.563,11.056,null],
+  ['@eleven',          34.844,74.722, 6.563,11.056,null],
   ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
   ['#left-col-header', 0.40, 0.70,12.60,17.00,null],
@@ -1475,35 +1490,35 @@ const FELT_LAYOUT=[
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
   // from reference images again; this is ground truth.
-  ['@any7',           5.344,51.944,28.219, 7.889,'hw'],
-  ['@aces',           5.531,60.556, 7.438, 7.056,'hw'],
-  ['@ace2',          26.344,60.444, 7.344, 7.056,'hw'],
-  ['@horn',          12.875,64.056,13.281, 7.278,'hw'],
-  ['@midnight',       5.531,68.056, 7.438, 7.111,'hw'],
-  ['@yo',            26.250,68.000, 7.344, 7.111,'hw'],
-  ['@anyCraps',       5.438,75.611,28.219, 7.889,'hw'],
+  ['@any7',            3.781,48.722,28.000,10.778,'hw'],
+  ['@aces',            3.875,60.444, 7.219,10.278,'hw'],
+  ['@ace2',           24.281,60.500, 7.594,10.167,'hw'],
+  ['@horn',           11.188,66.222,13.188, 9.944,'hw'],
+  ['@midnight',        3.719,71.500, 7.438,10.167,'hw'],
+  ['@yo',             24.438,71.833, 7.375,10.111,'hw'],
+  ['@anyCraps',        3.625,82.833,28.219, 7.889,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
-  ['@hop13',          4.625,53.500, 8.812, 6.222,'hop'],
+  ['@hop13',          4.625,53.500, 8.813, 6.222,'hop'],
   ['@hop16',         15.094,53.222, 8.750, 6.222,'hop'],
-  ['@hop26',         25.562,53.611, 8.812, 6.222,'hop'],
-  ['@hop14',          4.625,59.722, 8.812, 6.222,'hop'],
-  ['@hop25',         15.062,60.000, 8.750, 6.222,'hop'],
-  ['@hop35',         25.562,60.000, 8.812, 6.222,'hop'],
-  ['@hop23',          4.625,66.611, 8.812, 6.222,'hop'],
+  ['@hop26',         25.563,53.611, 8.813, 6.222,'hop'],
+  ['@hop14',          4.625,59.722, 8.813, 6.222,'hop'],
+  ['@hop25',         15.063,60.000, 8.750, 6.222,'hop'],
+  ['@hop35',         25.563,60.000, 8.813, 6.222,'hop'],
+  ['@hop23',          4.625,66.611, 8.813, 6.222,'hop'],
   ['@hop34',         15.094,66.500, 8.750, 6.222,'hop'],
-  ['@hop36',         25.562,66.500, 8.812, 6.222,'hop'],
-  ['@hop24',          4.625,73.000, 8.812, 6.222,'hop'],
-  ['@hop45',         25.562,73.333, 8.812, 6.222,'hop'],
-  ['@hop15',          4.594,79.722, 8.812, 6.222,'hop'],
-  ['@hop46',         25.562,79.722, 8.812, 6.222,'hop']
+  ['@hop36',         25.563,66.500, 8.813, 6.222,'hop'],
+  ['@hop24',          4.625,73.000, 8.813, 6.222,'hop'],
+  ['@hop45',         25.563,73.333, 8.813, 6.222,'hop'],
+  ['@hop15',          4.594,79.722, 8.813, 6.222,'hop'],
+  ['@hop46',         25.563,79.722, 8.813, 6.222,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
 const LR_LAYOUT=[
   // Measured directly from Deck's marked reference image, exact percentages of the Lucky
   // Roller region itself, not a computed/estimated value.
-  ['low',    5.47,50.99,27.79,39.63],
-  ['all',   36.01,51.07,27.79,39.63],
-  ['high',  66.58,51.07,27.79,39.63],
+  ['low',    5.440,51.111,27.778,39.506],
+  ['all',   35.966,51.111,27.778,39.506],
+  ['high',  66.638,51.111,27.778,39.506],
   ['#bnums-low',  6.20,31.50,27.70,13.00],
   ['#bnums-high',65.30,31.60,28.50,12.80],
   ['#dice-zone', 34.50, 1.00,31.00,49.00]
@@ -1538,18 +1553,18 @@ const CRAPLESS_LAYOUT=[
 const STANDARD_LAYOUT=[
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- ground
   // truth, do not re-derive from reference images again.
-  ['@hard6',           0.438,28.389,14.000, 7.500,'hw'],
-  ['@hard10',         21.000,28.111,14.219, 8.000,'hw'],
-  ['@hard8',           0.406,36.167,14.062, 7.833,'hw'],
-  ['@hard4',          21.031,36.278,14.219, 7.667,'hw'],
+  ['@hard6',           0.531,23.889,14.000, 7.500,'hw'],
+  ['@hard10',         20.906,23.889,14.219, 8.000,'hw'],
+  ['@hard8',           0.531,31.722,14.063, 7.833,'hw'],
+  ['@hard4',          20.938,31.889,14.219, 7.667,'hw'],
   ['@hop22',          21.031,36.222,14.250, 7.889,'hop'],
-  ['@hop44',           0.312,36.167,14.250, 7.889,'hop'],
-  ['@hop33',           0.312,28.056,14.250, 7.889,'hop'],
-  ['@hop55',          21.062,28.167,14.250, 7.889,'hop'],
+  ['@hop44',           0.313,36.167,14.250, 7.889,'hop'],
+  ['@hop33',           0.313,28.056,14.250, 7.889,'hop'],
+  ['@hop55',          21.063,28.167,14.250, 7.889,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
   // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
   // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
-  ['#dc-wait-wrap',   90.875,23.667, 8.562,25.167,null],
+  ['#dc-wait-wrap',   90.875,22.722, 8.563,25.167,null],
   // Come/Field/Don't Pass/Pass Line stacked with zero gap between rows (Deck: "should all be
   // perfectly stacked with no space between them") -- matches the FM_ART bar images exactly
   // (same x/w/h/seams as pass/dp/come/field below), not Deck's raw drag-tool export, so the
@@ -1557,7 +1572,28 @@ const STANDARD_LAYOUT=[
   ['#come-bar',       56.656,48.167,42.438, 8.889,null],
   ['#field-bar',      56.656,57.056,42.438,12.000,null],
   ['#dp-bar',         56.656,69.056,42.438, 7.111,null],
-  ['#pass-bar',       56.656,76.167,42.438, 8.889,null]
+  ['#pass-bar',       56.656,76.167,42.438, 8.889,null],
+  // Buy/Place/Lay per number -- now individually calibrated real positions (Deck's drag-tool
+  // export) instead of the CSS flex-split #num-zone used to size them into. Pulled directly
+  // into #felt-stage by enterFeltMode() same as everything else here.
+  ['#nb-lay-4',       41.906,22.500, 4.469, 5.500,null],
+  ['#nb-place-4',     37.438,42.333, 4.469, 5.722,null],
+  ['#nb-buy-4',       41.906,42.333, 4.469, 5.722,null],
+  ['#nb-lay-5',       50.813,22.500, 4.469, 5.500,null],
+  ['#nb-place-5',     46.344,42.333, 4.469, 5.722,null],
+  ['#nb-buy-5',       50.813,42.333, 4.469, 5.722,null],
+  ['#nb-lay-6',       59.719,22.500, 4.469, 5.500,null],
+  ['#nb-place-6',     55.250,42.333, 4.469, 5.722,null],
+  ['#nb-buy-6',       59.719,42.333, 4.469, 5.722,null],
+  ['#nb-lay-8',       68.625,22.500, 4.469, 5.500,null],
+  ['#nb-place-8',     64.156,42.333, 4.469, 5.722,null],
+  ['#nb-buy-8',       68.625,42.333, 4.469, 5.722,null],
+  ['#nb-lay-9',       77.531,22.500, 4.469, 5.500,null],
+  ['#nb-place-9',     73.063,42.333, 4.469, 5.722,null],
+  ['#nb-buy-9',       77.531,42.333, 4.469, 5.722,null],
+  ['#nb-lay-10',      86.438,22.500, 4.469, 5.500,null],
+  ['#nb-place-10',    81.969,42.333, 4.469, 5.722,null],
+  ['#nb-buy-10',      86.438,42.333, 4.469, 5.722,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 let feltActive=false,feltTab='hw';
@@ -2121,6 +2157,10 @@ function exitFocusPracticeForNav(){
   if(!G.practiceMode)return;
   G_practiceState=G;
   G=G_realState||G;
+}
+function toggleGameModeDropdown(){
+  document.getElementById('gmode-dropdown').classList.toggle('hidden');
+  document.getElementById('gmode-current-btn').classList.toggle('open');
 }
 async function navigateAway(url){
   exitFocusPracticeForNav();
@@ -3759,22 +3799,14 @@ let calibState=null; // {selector: {x,y,w,h,tab}} in % of canvas, keyed by the l
 // calibration-tool-only (calibBuildLayer() never binds them to a real element -- it's a pure
 // visual ruler), seeded so they start roughly in the right spot; drag to refine, then hand the
 // exported values back for the real position to be coded in wherever each one actually lives.
+// Lay/Place/Buy per-number and the C/C&E/E circles are now real STANDARD_LAYOUT/FELT_LAYOUT
+// entries (#nb-lay-N/#nb-place-N/#nb-buy-N, @anyCraps-circle/@cande/@eleven) per Deck's
+// calibrated export, so calibBaseEntries() picks them up on its own -- no synthetic markers
+// needed for them here anymore. Lucky Roller Low/All/High are the only ones still not real
+// STANDARD_LAYOUT entries (LR_LAYOUT positions them relative to the Lucky Roller box, not the
+// felt stage), so they're still synthesized below.
 function calibExtraEntries(){
   const out=[];
-  const colW=NUMLINE_ART.w/6, topH=NUMLINE_ART.h*0.2159, botY=NUMLINE_ART.y+NUMLINE_ART.h*0.7768, botH=NUMLINE_ART.h*0.2232;
-  ALL_NUMS.forEach((n,i)=>{
-    const cx=NUMLINE_ART.x+colW*i, leftW=colW/2, rightX=cx+leftW, rightW=colW-leftW;
-    out.push(['@lay'+n,   fmPct(rightX,FM_CANVAS_W),fmPct(NUMLINE_ART.y,FM_CANVAS_H),fmPct(rightW,FM_CANVAS_W),fmPct(topH,FM_CANVAS_H),null]);
-    out.push(['@place'+n, fmPct(cx,FM_CANVAS_W),    fmPct(botY,FM_CANVAS_H),         fmPct(leftW,FM_CANVAS_W), fmPct(botH,FM_CANVAS_H),null]);
-    out.push(['@buy'+n,   fmPct(rightX,FM_CANVAS_W),fmPct(botY,FM_CANVAS_H),         fmPct(rightW,FM_CANVAS_W),fmPct(botH,FM_CANVAS_H),null]);
-  });
-  const cs=FELT_LAYOUT.find(e=>e[0]==='.circle-stack');
-  if(cs){
-    const cx=cs[1],cy=cs[2],cw=cs[3],ch=cs[4],third=ch/3;
-    out.push(['@circle-c',    cx,cy,       cw,third,null]);
-    out.push(['@circle-cande',cx,cy+third, cw,third,null]);
-    out.push(['@circle-e',    cx,cy+third*2,cw,third,null]);
-  }
   const lr=FELT_LAYOUT.find(e=>e[0]==='#lucky-roller');
   if(lr){
     const lx=lr[1],ly=lr[2],lw=lr[3],lh=lr[4];
