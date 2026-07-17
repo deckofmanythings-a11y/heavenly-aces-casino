@@ -40,9 +40,20 @@ function setFront(el,card){
 }
 function flipUp(el){el.classList.add('flipped');}
 function reset(el){
-  el.classList.remove('flipped');
+  el.classList.remove('flipped','deal-in');
+  el.style.animationDelay='';
   const img=el.querySelector('.pc-front img');
   if(img)img.removeAttribute('src');
+}
+
+// dealIn(el, delayMs): plays the "card slides/pops into place" animation, staggered by
+// delayMs. Re-triggerable across hands (forces a reflow so the class re-applies cleanly
+// even if the element already carries it from a previous deal).
+function dealIn(el,delayMs){
+  el.classList.remove('deal-in');
+  void el.offsetWidth;
+  el.style.animationDelay=(delayMs||0)+'ms';
+  el.classList.add('deal-in');
 }
 
 function injectStyle(){
@@ -56,10 +67,12 @@ function injectStyle(){
     '.pc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:8%;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.45);background:#fff}'+
     '.pc-face img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;user-drag:none}'+
     '.pc-front{transform:rotateY(180deg)}'+
-    '.pc-card.empty .pc-face{visibility:hidden}';
+    '.pc-card.empty .pc-face{visibility:hidden}'+
+    '@keyframes pc-deal-in{from{opacity:0;transform:translateY(-30px) scale(.78)}to{opacity:1;transform:translateY(0) scale(1)}}'+
+    '.pc-card.deal-in{animation:pc-deal-in .4s cubic-bezier(.25,.7,.3,1) both}';
   document.head.appendChild(s);
 }
 injectStyle();
 
-window.Cards={makeSlot,setFront,flipUp,reset,rankLabel,suitSymbol,suitColor,cardImgSrc,backImgSrc};
+window.Cards={makeSlot,setFront,flipUp,reset,dealIn,rankLabel,suitSymbol,suitColor,cardImgSrc,backImgSrc};
 })();
