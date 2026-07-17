@@ -271,7 +271,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.57</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.58</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -724,7 +724,8 @@ function renderHandCardsStatic(){
     Cards.setFront(el,G.hand.playerHand[i]);Cards.flipUp(el);
     // Final rest position: the first-revealed card ends up pushed furthest right (see
     // sweatReveal below for why), so slot assignment runs in reverse of reveal order.
-    el.style.left=PLAYER_FAN_LEFTS[(n-1)-i]+'cqh';el.style.zIndex=i+1;
+    // z-index matches sweatReveal's rule too: further-right final slot -> higher layer.
+    el.style.left=PLAYER_FAN_LEFTS[(n-1)-i]+'cqh';el.style.zIndex=n-i;
   });
   G.cardEls.dealer.forEach((el,i)=>{
     Cards.reset(el);resetCardPosition(el);
@@ -769,11 +770,13 @@ function dealCardsAnimated(){
 // every card is up.
 //
 // z-index: only card 0 needs to outrank the (still identical-position, still hidden)
-// rest of the pile at the start -- everything else starts at 0. Each card is bumped to
-// i+1 only at the moment it's revealed, so a newer (further-left) card always renders
-// on top of the older (further-right) ones it's still in the process of passing --
-// matching how a real fanned hand reads, and guaranteeing a not-yet-revealed card
-// (still sitting at 0) can never outrank an already-revealed one.
+// rest of the pile at the start -- everything else starts at 0. Each card is assigned
+// its permanent z-index at the moment it's revealed, ranked so that whichever card
+// ends up furthest RIGHT in the final fan is always on top -- since a card's final
+// slot is already fixed the instant it's revealed (nothing revealed later can ever
+// land to its right), that assignment never needs to change again. This also
+// guarantees a not-yet-revealed card (still sitting at 0) can never outrank an
+// already-revealed one.
 const SWEAT_SPEEDS={slow:750,normal:500,fast:320};
 let sweatSpeedKey=localStorage.getItem('iluvsuits_sweat_speed')||'normal';
 function getSweatStaggerMs(){return SWEAT_SPEEDS[sweatSpeedKey]||SWEAT_SPEEDS.normal;}
@@ -807,7 +810,7 @@ function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
       for(let j=0;j<=revealIdx;j++){
         cardEls[j].style.left=fanLefts[revealIdx-j]+'cqh';
       }
-      cardEls[revealIdx].style.zIndex=revealIdx+1;
+      cardEls[revealIdx].style.zIndex=n-revealIdx; // further-right final slot -> higher layer
       if(revealIdx===n-1)setTimeout(()=>{if(onAllRevealed)onAllRevealed();},550);
     },revealIdx*stagger);
   }
