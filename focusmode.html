@@ -1158,7 +1158,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.50</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.51</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1489,22 +1489,24 @@ const FELT_LAYOUT=[
   // Hop Bets buttons off the upper left element and put them over the Hard Ways/Hoppin Hard
   // Ways") -- sit directly above that shared art slot as a left/right pair, always visible
   // (not tab-gated, since you need to be able to tap either one regardless of which is
-  // currently showing). Shifted up with Hard Ways (10px gap above its new y:287) and made
-  // shorter (one row, name+value inline, instead of two stacked lines) per Deck's request.
-  ['#tab-hw',   0.250,12.056,17.5625,2.222,null],
-  ['#tab-hop', 17.828,12.056,17.5625,2.222,null],
+  // currently showing). Made shorter (one row, name+value inline, instead of two stacked
+  // lines) per Deck's request, and pinned just under the header's own content rather than a
+  // fixed gap above Hard Ways -- there isn't room for both this turn, see the long FM_ART
+  // comment on propbets for the full explanation.
+  ['#tab-hw',   0.250,13.278,17.5625,2.222,null],
+  ['#tab-hop', 17.828,13.278,17.5625,2.222,null],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
-  // from reference images again; this is ground truth. Shifted up 40px with the rest of the
-  // One Roll Bets cluster.
-  ['@any7',            3.781,46.500,28.000,10.778,'hw'],
-  ['@aces',            3.875,58.222, 7.219,10.278,'hw'],
-  ['@ace2',           24.281,58.278, 7.594,10.167,'hw'],
-  ['@horn',           11.188,64.000,13.188, 9.944,'hw'],
-  ['@midnight',        3.719,69.278, 7.438,10.167,'hw'],
-  ['@yo',             24.438,69.611, 7.375,10.111,'hw'],
-  ['@anyCraps',        3.625,80.611,28.219, 7.889,'hw'],
+  // from reference images again; this is ground truth. Shifted up with the rest of the One
+  // Roll Bets cluster (see FM_ART's propbets comment for why not further).
+  ['@any7',            3.781,42.944,28.000,10.778,'hw'],
+  ['@aces',            3.875,54.667, 7.219,10.278,'hw'],
+  ['@ace2',           24.281,54.722, 7.594,10.167,'hw'],
+  ['@horn',           11.188,60.444,13.188, 9.944,'hw'],
+  ['@midnight',        3.719,65.722, 7.438,10.167,'hw'],
+  ['@yo',             24.438,66.056, 7.375,10.111,'hw'],
+  ['@anyCraps',        3.625,76.389,28.219, 7.889,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
   ['@hop13',          4.625,53.500, 8.813, 6.222,'hop'],
   ['@hop16',         15.094,53.222, 8.750, 6.222,'hop'],
@@ -1561,29 +1563,31 @@ const CRAPLESS_LAYOUT=[
 const STANDARD_LAYOUT=[
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- ground
   // truth, do not re-derive from reference images again.
-  // Shifted up 40px along with the Hard Ways art (see FM_ART) now that the game selector
-  // dropdown freed headroom -- hop22/33/44/55 (the 'hop' tab's twin cells, same physical slot)
-  // moved by the same amount so tab-switching doesn't jump.
-  ['@hard6',           0.531,21.667,14.000, 7.500,'hw'],
-  ['@hard10',         20.906,21.667,14.219, 8.000,'hw'],
-  ['@hard8',           0.531,29.500,14.063, 7.833,'hw'],
-  ['@hard4',          20.938,29.667,14.219, 7.667,'hw'],
-  ['@hop22',          21.031,34.000,14.250, 7.889,'hop'],
-  ['@hop44',           0.313,33.944,14.250, 7.889,'hop'],
-  ['@hop33',           0.313,25.833,14.250, 7.889,'hop'],
-  ['@hop55',          21.063,25.944,14.250, 7.889,'hop'],
+  // Shifted up with the Hard Ways art (see FM_ART for the full explanation of why this can't
+  // go further without shrinking the header's own content too) -- hop22/33/44/55 (the 'hop'
+  // tab's twin cells, same physical slot) moved by the same amount so tab-switching doesn't
+  // jump.
+  ['@hard6',           0.531,21.500,14.000, 7.500,'hw'],
+  ['@hard10',         20.906,21.500,14.219, 8.000,'hw'],
+  ['@hard8',           0.531,29.333,14.063, 7.833,'hw'],
+  ['@hard4',          20.938,29.500,14.219, 7.667,'hw'],
+  ['@hop22',          21.031,33.833,14.250, 7.889,'hop'],
+  ['@hop44',           0.313,33.778,14.250, 7.889,'hop'],
+  ['@hop33',           0.313,25.667,14.250, 7.889,'hop'],
+  ['@hop55',          21.063,25.778,14.250, 7.889,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
   // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
   // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
   ['#dc-wait-wrap',   90.875,22.722, 8.563,25.167,null],
   // Come/Field/Don't Pass/Pass Line stacked with zero gap between rows (Deck: "should all be
   // perfectly stacked with no space between them") -- matches the FM_ART bar images exactly
-  // (same x/w/h/seams as pass/dp/come/field below), not Deck's raw drag-tool export, so the
-  // clickable area and the visible bar always line up.
-  ['#come-bar',       56.656,48.167,42.438, 8.889,null],
-  ['#field-bar',      56.656,57.056,42.438,12.000,null],
-  ['#dp-bar',         56.656,69.056,42.438, 7.111,null],
-  ['#pass-bar',       56.656,76.167,42.438, 8.889,null],
+  // (same x/w/h/seams as pass/dp/come/field above, now corrected to their real 1368-wide
+  // asset size and re-anchored so Pass Line sits flush against #bottom-section), not Deck's
+  // raw drag-tool export, so the clickable area and the visible bar always line up.
+  ['#come-bar',       56.656,38.833,42.750,11.556,null],
+  ['#field-bar',      56.656,50.389,42.750,15.389,null],
+  ['#dp-bar',         56.656,65.778,42.750, 9.389,null],
+  ['#pass-bar',       56.656,75.167,42.750,11.556,null],
   // Buy/Place/Lay per number -- now individually calibrated real positions (Deck's drag-tool
   // export) instead of the CSS flex-split #num-zone used to size them into. Pulled directly
   // into #felt-stage by enterFeltMode() same as everything else here.
@@ -3709,13 +3713,18 @@ const NUMLINE_ART={x:1198,y:405,w:1710,h:460};
 // they occupy the exact same screen area. null = not tab-gated.
 const FM_ART=[
   // Come/Field/Don't Pass/Pass Line stacked with zero gap between them (Deck: "should all be
-  // perfectly stacked with no space between them") -- come's y is ground truth (867), the rest
-  // chain directly off the previous bar's bottom edge, each keeping its own already-correct
-  // height.
-  {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:867, w:1358,h:160},
-  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1027, w:1358,h:216},
-  {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1243,w:1358,h:128},
-  {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1371,w:1358,h:160},
+  // perfectly stacked with no space between them"). w/h were still the OLD pre-refresh asset
+  // sizes (1358x160/216/128/160) even though the regenerated art measures 1368x208/277/169/208
+  // -- same "stretched" bug as Prop Bets/Seven/Any Craps a few sessions back, just never caught
+  // here since these four are on the opposite side of the felt (Deck: "you're doing that
+  // stretch thing with Come, Field, Dont Pass, and Pass Line's arts"). Corrected to each
+  // asset's real size and re-anchored from the bottom -- Pass Line's bottom edge now sits flush
+  // against #bottom-section's top (1560.6px) same as Any Craps on the other side, and
+  // Come/Field/Don't Pass chain upward from there with zero gap, same as before.
+  {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:699, w:1368,h:208},
+  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:907, w:1368,h:277},
+  {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1184,w:1368,h:169},
+  {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1353,w:1368,h:208},
   // Adjacent to the number line's right edge with no gap (Deck: "should be adjacent to the
   // number line with no space in-between") -- x = NUMLINE_ART.x+NUMLINE_ART.w (2908), y matches
   // the number line's own (now y:405) top.
@@ -3733,16 +3742,25 @@ const FM_ART=[
   //   propbets.y+698: bigred.y = pill-top-bigred.h, anycraps.y = pill-bottom, both touching
   //   with zero space (Deck: "no gap between Any Seven and the Horn Bet ... no gap between Any
   //   Craps and the horn bet").
-  // Whole Hard Ways/One Roll Bets cluster (art + click targets together) shifted up 40px now
-  // that shrinking the game selector into a dropdown freed real headroom (Deck: "move Hard Ways
-  // and One Roll Bets up now that there's room, move all the selector boxes with it").
-  // Hop Bets grid (hopbets) intentionally left where it is -- not part of this request.
-  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:287, w:1125,h:393, tab:'hw'},
+  // Deck: "Any Craps is dipping into the shaded UI element [#bottom-section]. Move everything
+  // up so it runs flush against it." Turns out there isn't enough total vertical room to both
+  // (a) get Any Craps fully flush against #bottom-section AND (b) leave the #tab-hw/#tab-hop
+  // buttons room to sit above Hard Ways without touching the header -- the math: Hard Ways
+  // (393px) + zero-gap Prop Bets (698px) + Any Craps (218px) = 1309px of content that has to
+  // fit between the header's actual content bottom (~234px) and #bottom-section's top
+  // (1560.6px), a 1326px span, which is JUST enough on its own but leaves nothing for the tab
+  // buttons above Hard Ways. Compromise: hardways-to-propbets gap tightened to zero (was 20px)
+  // and the whole cluster moved up as far as it can while still leaving the tab buttons a
+  // small gap under the header -- this closes most of the overlap (was ~96px, now ~32px) but
+  // isn't fully flush. Closing the rest needs the header's own content (game-mode-toggle +
+  // Focus Settings row) compressed further, which wasn't part of this pass -- flag if that's
+  // wanted next.
+  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:284, w:1125,h:393, tab:'hw'},
   {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:981, h:710, tab:'hop'},
-  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:294, w:1125,h:466, tab:'hop'},
-  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:827, w:913, h:218, tab:'hw'},
-  {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:741, w:913, h:698, tab:'hw'},
-  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1439,w:913, h:218, tab:'hw'},
+  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:291, w:1125,h:466, tab:'hop'},
+  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:747, w:913, h:218, tab:'hw'},
+  {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:677, w:913, h:698, tab:'hw'},
+  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1375,w:913, h:218, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
 ];
 function fmPct(px,total){return px/total*100;}
