@@ -909,7 +909,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.64</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.65</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2928,11 +2928,14 @@ async function rollDice(){
     // doesn't matter here, per spec, so no act/betsOn check is applied.
     function maybeOpenMoveModal(){
       if(document.getElementById('modal-move')&&!document.getElementById('modal-move').classList.contains('hidden'))return false;
-      if(justEstablishedPoint&&G.phase==='point'&&G.point){
+      // Only worth prompting if a Pass Line bet is actually the thing riding onto this
+      // point number -- a Place/Buy bet sitting there on its own, with no Pass Line bet
+      // to create the overlap, has nothing to "move" out of the way of.
+      if(justEstablishedPoint&&G.phase==='point'&&G.point&&G.bets['pass']>0){
         const p=G.bets['place'+G.point]||0,b=G.bets['buy'+G.point]||0;
         if(p>0||b>0){moveModalCloseCB=maybeOpenOddsModal;openMoveModal(G.point,p,b,'point');return true;}
       }
-      const freshCome=G.comeBets.find(cb=>cb.num>0&&(!cb.odds||cb.odds===0));
+      const freshCome=G.comeBets.find(cb=>cb.num>0&&cb.flat>0&&(!cb.odds||cb.odds===0));
       if(freshCome){
         const p=G.bets['place'+freshCome.num]||0,b=G.bets['buy'+freshCome.num]||0;
         if(p>0||b>0){moveModalCloseCB=maybeOpenOddsModal;openMoveModal(freshCome.num,p,b,'come');return true;}

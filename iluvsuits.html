@@ -278,7 +278,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.64</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.65</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -727,7 +727,15 @@ function spawnChipGhost(el,opts){
   document.body.appendChild(ghost);
   const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
   if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
-  setTimeout(()=>{ghost.classList.add(sweepClass);},900);
+  setTimeout(()=>{
+    // Clear the real chip stack right as the ghost starts sliding away, not before --
+    // until this instant the ghost sits exactly on top of it so the swap is invisible,
+    // but leaving the original in place any longer means it's still sitting there once
+    // the ghost has moved off, looking like a duplicate got left behind.
+    el.innerHTML='';
+    el.classList.remove('has-stack');
+    ghost.classList.add(sweepClass);
+  },900);
   setTimeout(()=>{ghost.remove();},1450);
 }
 // Bet-name -> stake-element-id table, matched against roll-iluvsuits' exact log-line
@@ -819,6 +827,9 @@ function dealCardsAnimated(){
     void item.el.offsetWidth;
     item.el.style.transition='';
     Cards.dealIn(item.el,i*DEAL_STAGGER_MS);
+    // 400ms matches pc-deal-in's own animation length (cards.js) -- play the landing
+    // sound when the card actually settles, not when its staggered slide-in starts.
+    setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400);
   });
   return order.length*DEAL_STAGGER_MS+450;
 }
@@ -867,6 +878,7 @@ function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
   cardEls.forEach((el,i)=>{Cards.setFront(el,cards[i]);Cards.flipUp(el);});
   for(let revealIdx=0;revealIdx<n;revealIdx++){
     setTimeout(()=>{
+      playSfx(SFX_CARD_SLIDE,true);
       // Every card revealed so far now sits (revealIdx - itsOwnIndex) slots from the
       // stack origin: the just-revealed card (j===revealIdx) lands back at slot 0
       // (unmoved), and each older one gets pushed exactly one slot further right than
@@ -878,6 +890,32 @@ function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
       if(revealIdx===n-1)setTimeout(()=>{if(onAllRevealed)onAllRevealed();},550);
     },revealIdx*stagger);
   }
+}
+// Dealer's sweat fans all 7 cards out in one motion instead of one-at-a-time -- still
+// paced by the Sweat Speed setting, just used as the fan-out's own transition duration
+// here instead of a per-card stagger. Final positions match sweatReveal's end state
+// exactly (and renderHandCardsStatic's), so nothing looks different once it's settled.
+function sweatRevealAllAtOnce(cardEls,cards,fanLefts,onAllRevealed){
+  const duration=getSweatStaggerMs();
+  const n=cardEls.length;
+  cardEls.forEach((el,i)=>{
+    el.style.transition='none';
+    el.style.left=fanLefts[0]+'cqh';
+    el.style.zIndex=i===0?100:0;
+  });
+  void cardEls[0].offsetWidth;
+  cardEls.forEach(el=>{el.style.transition='left '+duration+'ms cubic-bezier(.4,.2,.2,1)';});
+  cardEls.forEach((el,i)=>{playSfx(SFX_CARD_FAN);Cards.setFront(el,cards[i]);Cards.flipUp(el);});
+  cardEls.forEach((el,i)=>{
+    el.style.left=fanLefts[(n-1)-i]+'cqh';
+    el.style.zIndex=n-i;
+  });
+  // The 3D flip (cards.js) always transitions over a fixed .5s regardless of Sweat
+  // Speed, so wait for whichever of that or the fan-out actually takes longer.
+  setTimeout(()=>{
+    cardEls.forEach(el=>{el.style.transition='';});
+    if(onAllRevealed)onAllRevealed();
+  },Math.max(duration,500)+50);
 }
 // Called once all 7 of the player's cards are face up (or immediately, on a resumed
 // hand): shows the live hand description, decides whether the Play spot/button is
@@ -942,6 +980,7 @@ async function dealHand(){
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
   if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
+  playSfx(SFX_CARD_SHUFFLE);
   G.locked={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush};
   G.lastBetSnapshot={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush};
   G.hand={playerHand:data.playerHand,dealerHand:null};
@@ -1006,7 +1045,7 @@ function finishHand(data){
   // described regardless of fold, since the player still wants to see what the dealer
   // had. The winner modal (and the no-payout reset timer) waits for this to finish, so
   // it never pops up before the dealer's hand is fully revealed and described.
-  sweatReveal(G.cardEls.dealer,data.dealerHand,DEALER_FAN_LEFTS,()=>{
+  sweatRevealAllAtOnce(G.cardEls.dealer,data.dealerHand,DEALER_FAN_LEFTS,()=>{
     const dealerFinal=evalHand(data.dealerHand);
     document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
     spawnILuvSuitsGhosts(data.log||[],data.folded);
@@ -1090,6 +1129,54 @@ function updateUI(){
   renderChipStacks();
 }
 
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+// Chip-counting sounds ported wholesale from craps (index.html) -- same files, same
+// count-based bucket selection. Shuffle/slide/fan sounds are new, from the same
+// Kenney "Casino Audio" pack (CC0/public domain, https://kenney.nl/assets/casino-audio)
+// already used for craps' chip-lay puck sound.
+const SFX_CHIP={
+  1:['1_chip.ogg'],
+  2:['2chips.ogg'],
+  3:['couple_chips_1.ogg','couple_chips_2.ogg','couple_chips_3.ogg','couple_chips_4.ogg'],
+  4:['few_chips_1.ogg','few_chips_2.ogg','few_chips_3.ogg','few_chips_4.ogg'],
+  5:['bunch_chips_1.ogg','bunch_chips_2.ogg','bunch_chips_3.ogg']
+};
+const SFX_CHIP_MANY='lots_of_chips.ogg';
+const SFX_CARD_SHUFFLE=['card-shuffle.ogg'];
+const SFX_CARD_SLIDE=['card-slide-1.ogg','card-slide-2.ogg','card-slide-3.ogg','card-slide-4.ogg','card-slide-5.ogg','card-slide-6.ogg','card-slide-7.ogg','card-slide-8.ogg'];
+const SFX_CARD_FAN=['card-fan-1.ogg','card-fan-2.ogg'];
+const _sfxCache={};
+function playChipSound(count){
+  if(!(count>0))return;
+  const bucket=count>=6?[SFX_CHIP_MANY]:SFX_CHIP[count];
+  if(!bucket)return;
+  const file=bucket[Math.floor(Math.random()*bucket.length)];
+  if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
+  _sfxCache[file].cloneNode().play().catch(()=>{});
+}
+function playSfx(bucket,pitchJitter){
+  if(!bucket||!bucket.length)return;
+  const file=bucket[Math.floor(Math.random()*bucket.length)];
+  if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
+  const inst=_sfxCache[file].cloneNode();
+  // A handful of card sounds playing the exact same handful of samples back-to-back
+  // reads as repetitive fast -- a slight random pitch shift per instance breaks that
+  // up without needing more source variants (same trick craps uses for coin clinks).
+  if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
+  inst.play().catch(()=>{});
+}
+const _chipSoundState=new Map();
+function maybeTriggerChipSound(key,amt){
+  if(!key)return;
+  const newAmt=amt>0?r2(amt):0;
+  const prevAmt=_chipSoundState.get(key)||0;
+  if(newAmt!==prevAmt){
+    const newCount=newAmt>0?chipBreakdown(newAmt).length:0;
+    if(newCount>0)playChipSound(newCount);
+    _chipSoundState.set(key,newAmt);
+  }
+}
+
 // ── CHIP STACKS ON BET SPOTS ──────────────────────────────────────────────────
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
@@ -1120,9 +1207,10 @@ function renderChipStacks(){
 function applyChipStackVisual(id,locked){
   const el=document.getElementById(id);
   const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
-  if(!m){el.classList.remove('has-stack');return;}
+  if(!m){maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
   const amt=parseFloat(m[1].replace(/,/g,''));
-  if(!(amt>0)){el.classList.remove('has-stack');return;}
+  if(!(amt>0)){maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
+  maybeTriggerChipSound(id,amt);
   el.innerHTML=chipStackHTML(amt,locked);
   el.classList.add('has-stack');
 }

@@ -280,7 +280,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.64</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.65</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -523,7 +523,7 @@ function updateLiveHandDisplay(){
   if(!G.hand)return;
   const el=document.getElementById('player-hand-name');
   if(G.phase==='preflop'){el.textContent=describeHole(G.hand.playerHole);return;}
-  if(G.phase==='flop'){el.textContent=describeScore(evaluate5([...G.hand.playerHole,...G.hand.community.slice(0,3)]));return;}
+  if(G.phase==='flop'){el.textContent=describeScore(evaluate5([...G.hand.playerHole,...G.hand.community.slice(2,5)]));return;}
   if(G.phase==='river'){el.textContent=describeScore(best7([...G.hand.playerHole,...G.hand.community]));return;}
 }
 
@@ -775,6 +775,9 @@ function dealCardsAnimated(){
     Cards.reset(item.el);
     if(item.front)Cards.setFront(item.el,item.front);
     Cards.dealIn(item.el,i*DEAL_STAGGER_MS);
+    // 400ms matches pc-deal-in's own animation length (cards.js) -- play the landing
+    // sound when the card actually settles, not when its staggered slide-in starts.
+    setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400);
   });
   return order.length*DEAL_STAGGER_MS+450;
 }
@@ -815,6 +818,7 @@ async function dealHand(){
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
   if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
+  playSfx(SFX_CARD_SHUFFLE);
   G.locked={ante:data.ante,blind:data.blind,trips:data.trips};
   G.lastBetSnapshot={ante:data.ante,trips:data.trips};
   G.hand={playerHole:data.playerHole,community:data.community,dealerHole:null};
@@ -833,8 +837,10 @@ async function dealHand(){
   updateUI();
   const dealMs=dealCardsAnimated();
   setTimeout(()=>{
+    playSfx(SFX_CARD_SLIDE,true);
     Cards.flipUp(G.cardEls.player[0]);
     setTimeout(()=>{
+      playSfx(SFX_CARD_SLIDE,true);
       Cards.flipUp(G.cardEls.player[1]);
       updateLiveHandDisplay();
       document.getElementById('play-spot').classList.remove('inert');
@@ -844,18 +850,22 @@ async function dealHand(){
 }
 
 // ── CHECK (client-side phase advance, no server call) ────────────────────────
+// Community slots are laid out left-to-right as [0,1,2,3,4], but the FLOP is the
+// rightmost 3 (indices 2,3,4) and the river group is the leftmost 2 (0,1) -- reversed
+// from the deal-order convention most tables use, per explicit design direction.
 const COMMUNITY_FLIP_STAGGER_MS=220;
+const FLOP_INDICES=[2,3,4],RIVER_INDICES=[0,1];
 function doCheck(){
   if(G.playBet>0){G.bankroll=r2(G.bankroll+G.playBet);G.playBet=0;} // no bet was placed on a checked street
   ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none');
   if(G.phase==='preflop'){
-    [0,1,2].forEach((ci,i)=>setTimeout(()=>Cards.flipUp(G.cardEls.community[ci]),i*COMMUNITY_FLIP_STAGGER_MS));
+    FLOP_INDICES.forEach((ci,i)=>setTimeout(()=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);},i*COMMUNITY_FLIP_STAGGER_MS));
     G.phase='flop';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},2*COMMUNITY_FLIP_STAGGER_MS+500);
+    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},FLOP_INDICES.length*COMMUNITY_FLIP_STAGGER_MS+500);
   }else if(G.phase==='flop'){
-    [3,4].forEach((ci,i)=>setTimeout(()=>Cards.flipUp(G.cardEls.community[ci]),i*COMMUNITY_FLIP_STAGGER_MS));
+    RIVER_INDICES.forEach((ci,i)=>setTimeout(()=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);},i*COMMUNITY_FLIP_STAGGER_MS));
     G.phase='river';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},1*COMMUNITY_FLIP_STAGGER_MS+500);
+    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},RIVER_INDICES.length*COMMUNITY_FLIP_STAGGER_MS+500);
   }
   updateStatusZone();updateUI();
 }
@@ -885,18 +895,45 @@ async function commitDecision(decision,playBet,street){
   if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
   finishHand(data);
 }
+const FLOP_TO_RIVER_PAUSE_MS=700; // brief beat between the two community groups when both
+                                   // are still hidden (i.e. the player bet Play at preflop,
+                                   // skipping the normal one-check-at-a-time reveal)
 function finishHand(data){
-  G.cardEls.community.forEach(el=>Cards.flipUp(el));
-  G.cardEls.dealer.forEach((el,i)=>{Cards.setFront(el,data.dealerHole[i]);Cards.flipUp(el);});
-  let playerFinal=null;
-  if(data.folded){
-    document.getElementById('dealer-hand-name').textContent='';
-    document.getElementById('player-hand-name').textContent='Folded';
-  }else{
+  const committedStreet=G.phase; // capture before it's overwritten to 'showdown' below
+  let playerFinal=null,dealerFinal=null;
+  if(!data.folded){
     playerFinal=best7([...G.hand.playerHole,...G.hand.community]);
-    const dealerFinal=best7([...data.dealerHole,...G.hand.community]);
-    document.getElementById('dealer-hand-name').textContent=describeScore(dealerFinal)+(dealerFinal.cat>=1?'':' (no qualify)');
-    document.getElementById('player-hand-name').textContent=describeScore(playerFinal);
+    dealerFinal=best7([...data.dealerHole,...G.hand.community]);
+  }
+  // Hand-strength text is deferred to whenever the cards actually finish revealing
+  // (rather than set synchronously up front) so it never spoils the result before the
+  // community/dealer cards have visually caught up -- matters a lot more now that the
+  // preflop-bet path stages its reveal instead of popping everything at once.
+  const showHandNames=()=>{
+    if(data.folded){
+      document.getElementById('dealer-hand-name').textContent='';
+      document.getElementById('player-hand-name').textContent='Folded';
+    }else{
+      document.getElementById('dealer-hand-name').textContent=describeScore(dealerFinal)+(dealerFinal.cat>=1?'':' (no qualify)');
+      document.getElementById('player-hand-name').textContent=describeScore(playerFinal);
+    }
+  };
+  const revealDealer=()=>{
+    G.cardEls.dealer.forEach((el,i)=>{playSfx(SFX_CARD_SLIDE,true);Cards.setFront(el,data.dealerHole[i]);Cards.flipUp(el);});
+    showHandNames();
+  };
+  if(committedStreet==='preflop'){
+    // Neither community group has been revealed yet (the player bet straight away
+    // instead of checking through) -- stage them with a brief pause instead of
+    // popping all 5 up at the same instant.
+    FLOP_INDICES.forEach(ci=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);});
+    setTimeout(()=>{
+      RIVER_INDICES.forEach(ci=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);});
+      revealDealer();
+    },FLOP_TO_RIVER_PAUSE_MS);
+  }else{
+    G.cardEls.community.forEach(el=>Cards.flipUp(el)); // already-revealed ones are a no-op
+    revealDealer();
   }
   G.playBet=data.playBet||0;
   (data.log||[]).forEach(line=>{
@@ -914,7 +951,9 @@ function finishHand(data){
   updateUI();checkBroke();
   // Give the dealer's hole-card flip (a .5s transition, see cards.js) a moment to settle
   // before spawning ghosts / opening the modal, matching the reveal-before-payout timing
-  // established for I Luv Suits' dealer sweat.
+  // established for I Luv Suits' dealer sweat. Add the flop->river pause too when it
+  // applied, so this always fires after revealDealer() has actually run.
+  const extraDelay=committedStreet==='preflop'?FLOP_TO_RIVER_PAUSE_MS:0;
   setTimeout(()=>{
     spawnUthGhosts(data.log||[],data.folded);
     const totalWagered=G.lastBetDisplay||1;
@@ -925,7 +964,7 @@ function finishHand(data){
       setTimeout(resetToBetScreen,3500);
     }
     if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
-  },550);
+  },550+extraDelay);
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0};G.playBet=0;
@@ -983,6 +1022,53 @@ function updateUI(){
   renderChipStacks();
 }
 
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+// Chip-counting sounds ported wholesale from craps (index.html) -- same files, same
+// count-based bucket selection. Shuffle/slide/fan sounds are new, from the same
+// Kenney "Casino Audio" pack (CC0/public domain, https://kenney.nl/assets/casino-audio)
+// already used for craps' chip-lay puck sound.
+const SFX_CHIP={
+  1:['1_chip.ogg'],
+  2:['2chips.ogg'],
+  3:['couple_chips_1.ogg','couple_chips_2.ogg','couple_chips_3.ogg','couple_chips_4.ogg'],
+  4:['few_chips_1.ogg','few_chips_2.ogg','few_chips_3.ogg','few_chips_4.ogg'],
+  5:['bunch_chips_1.ogg','bunch_chips_2.ogg','bunch_chips_3.ogg']
+};
+const SFX_CHIP_MANY='lots_of_chips.ogg';
+const SFX_CARD_SHUFFLE=['card-shuffle.ogg'];
+const SFX_CARD_SLIDE=['card-slide-1.ogg','card-slide-2.ogg','card-slide-3.ogg','card-slide-4.ogg','card-slide-5.ogg','card-slide-6.ogg','card-slide-7.ogg','card-slide-8.ogg'];
+const _sfxCache={};
+function playChipSound(count){
+  if(!(count>0))return;
+  const bucket=count>=6?[SFX_CHIP_MANY]:SFX_CHIP[count];
+  if(!bucket)return;
+  const file=bucket[Math.floor(Math.random()*bucket.length)];
+  if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
+  _sfxCache[file].cloneNode().play().catch(()=>{});
+}
+function playSfx(bucket,pitchJitter){
+  if(!bucket||!bucket.length)return;
+  const file=bucket[Math.floor(Math.random()*bucket.length)];
+  if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
+  const inst=_sfxCache[file].cloneNode();
+  // A handful of card sounds playing the exact same handful of samples back-to-back
+  // reads as repetitive fast -- a slight random pitch shift per instance breaks that
+  // up without needing more source variants (same trick craps uses for coin clinks).
+  if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
+  inst.play().catch(()=>{});
+}
+const _chipSoundState=new Map();
+function maybeTriggerChipSound(key,amt){
+  if(!key)return;
+  const newAmt=amt>0?r2(amt):0;
+  const prevAmt=_chipSoundState.get(key)||0;
+  if(newAmt!==prevAmt){
+    const newCount=newAmt>0?chipBreakdown(newAmt).length:0;
+    if(newCount>0)playChipSound(newCount);
+    _chipSoundState.set(key,newAmt);
+  }
+}
+
 // ── CHIP STACKS ON BET SPOTS ──────────────────────────────────────────────────
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
@@ -1004,16 +1090,19 @@ function chipStackHTML(amt,locked){
 function renderChipStacks(){
   const contractLocked=G.phase!=='betting';
   applyChipStackVisual('stk-ante',contractLocked);
-  applyChipStackVisual('stk-blind',contractLocked);
+  // Blind always mirrors Ante's amount -- it's not a separate player action, so its own
+  // visual update stays silent rather than doubling up Ante's chip sound.
+  applyChipStackVisual('stk-blind',contractLocked,true);
   applyChipStackVisual('stk-trips',contractLocked);
   applyChipStackVisual('stk-play',G.phase==='showdown');
 }
-function applyChipStackVisual(id,locked){
+function applyChipStackVisual(id,locked,silent){
   const el=document.getElementById(id);
   const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
-  if(!m){el.classList.remove('has-stack');return;}
+  if(!m){if(!silent)maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
   const amt=parseFloat(m[1].replace(/,/g,''));
-  if(!(amt>0)){el.classList.remove('has-stack');return;}
+  if(!(amt>0)){if(!silent)maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
+  if(!silent)maybeTriggerChipSound(id,amt);
   el.innerHTML=chipStackHTML(amt,locked);
   el.classList.add('has-stack');
 }
@@ -1053,7 +1142,15 @@ function spawnChipGhost(el,opts){
   document.body.appendChild(ghost);
   const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
   if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
-  setTimeout(()=>{ghost.classList.add(sweepClass);},900);
+  setTimeout(()=>{
+    // Clear the real chip stack right as the ghost starts sliding away, not before --
+    // until this instant the ghost sits exactly on top of it so the swap is invisible,
+    // but leaving the original in place any longer means it's still sitting there once
+    // the ghost has moved off, looking like a duplicate got left behind.
+    el.innerHTML='';
+    el.classList.remove('has-stack');
+    ghost.classList.add(sweepClass);
+  },900);
   setTimeout(()=>{ghost.remove();},1450);
 }
 // Bet-name -> stake-element-id table, matched against roll-uth's exact log-line
