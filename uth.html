@@ -65,19 +65,25 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('uth_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
 
 /* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows.
-   Regions sized to the actual empty felt: dealer/player are height-bound (title+row+
-   hand-name stacked in the open space above/below the "ante pushes" text line);
-   community is width-bound (must stay clear of the Trips paytable's left edge at
-   44.06%), which is why its cards land smaller than dealer/player's. */
-.card-region{position:absolute;display:flex;flex-direction:column;align-items:center;gap:0.6cqh}
-#dealer-region{left:0%;top:0.5%;width:100%;height:33.5%;justify-content:flex-start}
-#community-region{left:0.5%;top:38%;width:43%;height:23%;justify-content:center}
-#player-region{left:0.5%;top:62%;width:43%;height:34%;justify-content:center}
-.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqh;--pc-w:18.5cqh;opacity:0;transition:opacity .3s}
+   Positions and card scale (--pc-w:19.2cqh, uniform across all three rows) are
+   reproduced exactly from uth_CARD_POSITIONS.png, the designer-supplied placement
+   reference (measured via crops, not the flood-fill/ffmpeg approach used for the
+   circles below, since the reference has no flat felt color to key off). "Dealer's
+   Hand"/"Player's Hand" are now baked into uth_bg.png itself, so the dynamic
+   hand-strength text sits beside the cards (right of dealer's, left of player's)
+   in the open space there instead of below them. */
+.card-region{position:absolute;display:flex;align-items:center;gap:1.5cqh}
+#dealer-region{left:39%;top:3%;width:45%;height:30%;flex-direction:row;justify-content:flex-start}
+#community-region{left:3%;top:38%;width:56%;height:29%;justify-content:center}
+#player-region{left:17%;top:66.5%;width:52.5%;height:31%;flex-direction:row;justify-content:flex-end}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqh;--pc-w:19.2cqh;opacity:0;transition:opacity .3s}
 .card-row.active{opacity:1}
-#community-row.card-row{--pc-w:14cqh}
-.crl-title{font-size:1.8cqh;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.5);text-transform:uppercase}
-.crl-hand{font-size:2.3cqh;color:#ffd700;font-weight:700;min-height:2.8cqh;text-align:center}
+/* Player's hand is fanned with a heavy overlap in the reference (only a sliver of
+   the first card peeks out from behind the second) -- a plain flex `gap` can't go
+   negative, so the second card gets pulled back via margin instead. */
+#player-row.card-row{gap:0}
+#player-row .pc-card:nth-child(2){margin-left:-13.2cqh}
+.crl-hand{font-size:2.3cqh;color:#ffd700;font-weight:700;min-height:2.8cqh;text-align:center;white-space:nowrap}
 
 /* Bet-spot overlays -- invisible hit-regions positioned exactly over the printed
    circles/diamond. The circle/diamond art + label ("ANTE","PLAY",etc) is baked in;
@@ -87,10 +93,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .panel-spot.locked{cursor:default}
 .panel-spot.inert{cursor:not-allowed}
 .panel-spot.active{box-shadow:0 0 0 0.5cqh rgba(255,215,0,.4)}
-#ante-spot{left:56.91%;top:56.17%;width:5.28%;height:9.39%;--chip:7cqh}
-#blind-spot{left:66.53%;top:56.17%;width:5.28%;height:9.39%;--chip:6.5cqh}
-#trips-spot{left:56.75%;top:43.83%;width:5.56%;height:9.89%;--chip:6.5cqh}
-#play-spot{left:56.91%;top:68.22%;width:5.28%;height:9.39%;--chip:7cqh}
+#ante-spot{left:70.63%;top:72.22%;width:5.28%;height:9.39%;--chip:7cqh}
+#blind-spot{left:80.22%;top:72.22%;width:5.28%;height:9.39%;--chip:6.5cqh}
+#trips-spot{left:70.47%;top:59.89%;width:5.56%;height:9.89%;--chip:6.5cqh}
+#play-spot{left:70.63%;top:84.28%;width:5.28%;height:9.39%;--chip:7cqh}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 
 /* Contract-bet lock badge -- ported wholesale from craps/I Luv Suits' chip-lock
@@ -274,7 +280,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.63</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.64</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -314,7 +320,6 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     <div id="table-panel">
 
       <div class="card-region" id="dealer-region">
-        <span class="crl-title">Dealer</span>
         <div class="card-row" id="dealer-row"></div>
         <span class="crl-hand" id="dealer-hand-name"></span>
       </div>
@@ -322,9 +327,8 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
         <div class="card-row" id="community-row"></div>
       </div>
       <div class="card-region" id="player-region">
-        <span class="crl-title">You</span>
-        <div class="card-row" id="player-row"></div>
         <span class="crl-hand" id="player-hand-name"></span>
+        <div class="card-row" id="player-row"></div>
       </div>
 
       <div class="panel-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
