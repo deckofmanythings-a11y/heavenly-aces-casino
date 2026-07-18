@@ -1164,7 +1164,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.69</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.70</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1456,7 +1456,10 @@ let activeGame='standard'; // Focus Mode only ever plays standard-craps rules
 // unlike index.html (which always boots into crapless mode, so this branch was never hit
 // until well after the whole script had finished executing), Focus Mode boots straight into
 // 'standard' mode, exposing the temporal-dead-zone gap that only mattered on this path.
-let dualBetLoc={anyCraps:'bar',eleven:'circle'};
+// Any Craps bar and the C circle resolve the same underlying bet (G.bets.anyCraps) but are
+// two separate physical spots -- some players bet one exclusively, some both, so each spot's
+// displayed chip stack tracks only what was placed there, not a shared "last touched" total.
+let dualSplit={anyCraps:{bar:0,circle:0}};
 
 const HARD_NUMS=new Set([4,6,8,10]);
 const LOW_NUMS=[2,3,4,5,6],HIGH_NUMS=[8,9,10,11,12],ALL_BONUS=[2,3,4,5,6,8,9,10,11,12];
@@ -1502,8 +1505,9 @@ const FELT_LAYOUT=[
   // lines) per Deck's request, and pinned just under the header's own content rather than a
   // fixed gap above Hard Ways -- there isn't room for both this turn, see the long FM_ART
   // comment on propbets for the full explanation.
-  ['#tab-hw',   0.250,13.278,17.5625,2.222,null],
-  ['#tab-hop', 17.828,13.278,17.5625,2.222,null],
+  // Reshaped/repositioned via Deck's own drag-tool calibration pass (narrower, taller).
+  ['#tab-hw',   0.250,13.278,11.438,3.833,null],
+  ['#tab-hop', 24.063,13.278,11.313,3.889,null],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
@@ -1638,6 +1642,15 @@ const STANDARD_LAYOUT=[
   ['#nb-buy-10',      86.438,42.333, 4.469, 5.722,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
+// id -> tab ('hw'/'hop'/null) for every '@name' entry, derived from the layout arrays
+// themselves rather than a separately hand-kept list (Focus Mode is standard-only, so
+// this is built off feltLayoutFor('standard') specifically). Used by applyFocusVisibility()
+// so the Focus Settings toggles (which don't know about hw/hop at all) don't re-show a
+// hardways/hop-bets/prop item that the currently-active tab should be hiding.
+const BET_ID_TAB={};
+feltLayoutFor('standard').forEach(([sel,,,,,tab])=>{
+  if(sel.charAt(0)==='@')BET_ID_TAB['bet-'+sel.slice(1)]=tab;
+});
 let feltActive=false,feltTab='hw';
 const feltHomes=new Map();
 function feltEl(sel){
@@ -1718,6 +1731,15 @@ function enterFeltMode(){
   // by "if(!feltHomes.has(el))" so the ORIGINAL pre-felt home is never overwritten, and moving
   // an already-moved element again or re-setting the same inline styles is a no-op in effect.
   const st=document.getElementById('felt-stage');if(!st)return;
+  // The three "circle" prop spots (C / C&E / E) keep their stake-count display as a separate
+  // sibling <div class="circle-stk"> in the original list-mode markup instead of a true child
+  // (unlike Horn's stk-horn, which IS nested inside bet-horn) -- reparent them once so they get
+  // carried along automatically when their prop-circle parent moves into felt-stage below, and
+  // so .circle-stk{position:absolute;inset:0} has the positioned ancestor it expects.
+  ['anyCraps-circle','cande','eleven'].forEach(k=>{
+    const bet=document.getElementById('bet-'+k),stk=document.getElementById('stk-'+k);
+    if(bet&&stk&&stk.parentNode!==bet)bet.appendChild(stk);
+  });
   feltLayoutFor(mode).forEach(([sel,l,t,w,h])=>{
     const el=feltEl(sel);if(!el)return;
     if(!feltHomes.has(el))feltHomes.set(el,{parent:el.parentNode,next:el.nextSibling});
@@ -1901,6 +1923,7 @@ async function switchGameMode(mode){
     applyServerGameState({game_state:{[mode]:savedGs[mode]}},mode);
   }else{
     G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
+    dualSplit.anyCraps={bar:0,circle:0};
     G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
     G.bonus=makeInitialG().bonus;
     G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
@@ -2190,6 +2213,13 @@ function applyServerGameState(player,forcedMode){
   // Apply the mode constants before restoring state
   applyGameMode(mode);
   G.bets=gs.bets||{};
+  // The server has no notion of "bar vs circle" for Any Craps -- it just returns the resolved
+  // total. If that total no longer matches what the two spots' splits add up to (bet resolved,
+  // or this is a fresh page load), the split state is stale/unknown: clear it, or if a nonzero
+  // total survived a reload with no split recorded yet, attribute it to the bar spot (matches
+  // the old default).
+  {const total=G.bets.anyCraps||0;const sum=r2(dualSplit.anyCraps.bar+dualSplit.anyCraps.circle);
+    if(sum!==total)dualSplit.anyCraps=total?{bar:total,circle:0}:{bar:0,circle:0};}
   G.comeBets=gs.comeBets||[];
   G.dcBets=(gs.dcBets||[]).map((c)=>({num:c.num,flat:c.flat,odds:c.odds||0}));
   G.point=gs.point??null;
@@ -2798,7 +2828,7 @@ function applyBetAreaNudges(){
 window.addEventListener('resize',()=>{ if(typeof updateUI==='function')applyBetAreaNudges(); });
 
 // Moved to the end of this script block (see the matching comment there) -- calling it here
-// triggers updateUI() before several later-declared `let`s (dualBetLoc, puck3dEl, ...) have
+// triggers updateUI() before several later-declared `let`s (dualSplit, puck3dEl, ...) have
 // run, since index.html never hit this at load time (it always boots into crapless first,
 // by which point the whole script has long finished executing) but Focus Mode boots straight
 // into 'standard' mode.
@@ -3076,7 +3106,8 @@ function pushUndo(){
     bankroll:G.bankroll,
     comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
     dcBets:G.dcBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
-    bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high}
+    bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high},
+    dualSplit:{anyCraps:{bar:dualSplit.anyCraps.bar,circle:dualSplit.anyCraps.circle}}
   });
   if(window.G_undoStack.length>20)window.G_undoStack.shift();
 }
@@ -3084,11 +3115,12 @@ function clearLastBet(){
   const snap=window.G_undoStack.pop();
   if(!snap){addLog('Nothing to undo.','info');return;}
   G.bets=snap.bets;G.bankroll=snap.bankroll;G.comeBets=snap.comeBets;G.dcBets=snap.dcBets;
+  if(snap.dualSplit)dualSplit.anyCraps={bar:snap.dualSplit.anyCraps.bar,circle:snap.dualSplit.anyCraps.circle};
   // Lucky Roller bets are a locked contract once the roll starts -- undo never touches them while locked
   if(!G.bonus.locked){G.bonus.low=snap.bonus.low;G.bonus.all=snap.bonus.all;G.bonus.high=snap.bonus.high;}
   addLog('Last bet action undone.','info');updateUI();
 }
-function setDualLoc(key,loc){if(loc&&dualBetLoc.hasOwnProperty(key))dualBetLoc[key]=loc;}
+function addDualSplit(key,loc,amt){if(key==='anyCraps'&&loc&&dualSplit.anyCraps.hasOwnProperty(loc))dualSplit.anyCraps[loc]=r2(Math.max(0,dualSplit.anyCraps[loc]+amt));}
 const COMMISSION_ACK_KEY='rh_commission_ack';
 function needsCommissionAck(){return localStorage.getItem(COMMISSION_ACK_KEY)!=='1';}
 let pendingCommissionAction=null;
@@ -3113,7 +3145,7 @@ function cancelCommission(){
   document.getElementById('modal-commission').classList.add('hidden');
   pendingCommissionAction=null;
 }
-function placeBet(key,loc){setDualLoc(key,loc);
+function placeBet(key,loc){
   // Logic-level gate, not just CSS: a FOCUS_GROUPS bet area (Pass Line, Come, etc.) has no
   // "visible but not yet clickable" state of its own -- once its group is visible it's fully
   // interactive, so becoming visible for the whole lesson (per the spec's own "Visible: Pass
@@ -3131,10 +3163,10 @@ function placeBet(key,loc){setDualLoc(key,loc);
   if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
   if(key==='dp'){if(activeGame!=='standard'){addLog('Don\'t Pass: standard mode only.','info');return;}if(G.phase==='point'){addLog('Don\'t Pass: come-out only.','info');return;}}
   if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
-  const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);updateUI();
+  const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
   if(tutorialActive)tutorialOnBetPlaced(key);
 }
-function removeBet(key,loc){setDualLoc(key,loc);if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];updateUI();}
+function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}
 // Place bets on 6 or 8 must land in multiples of $6 for the 7-for-6 payout to resolve cleanly.
 // If the current chip denom isn't already a multiple of 6, the player pays the rounded-up cost,
 // same denom selected, slightly more taken from the bankroll, regardless of what that denom is.
@@ -3572,13 +3604,13 @@ function updateUI(){
   // Field
   {const a=G.bets['field']||0;const st=document.getElementById('stk-field');if(st)st.textContent=a?fmt(a):'';const fb=document.getElementById('field-bar');if(fb)fb.classList.toggle('active-bar',a>0);const mb=document.getElementById('m-field');if(mb)mb.classList.toggle('vis',a>0);}
   // Prop bars (outline style)
-  ['anyCraps','aces','ace2','midnight','yo'].forEach(k=>{const el=document.getElementById('bet-'+k),st=document.getElementById('stk-'+k),mb=document.getElementById('m-'+k);if(!el||!st)return;const a=G.bets[k]||0;
-    // Any Craps shares its bet with circle C -- only show the chip stack in whichever spot
-    // was most recently used, not both at once, even though the underlying amount is identical.
-    const showHere=!(k==='anyCraps'&&dualBetLoc.anyCraps!=='bar');
-    st.textContent=(a&&showHere)?fmt(a):'';el.style.outline=a>0?'2px solid #ffd700':'none';if(mb)mb.classList.toggle('vis',a>0);});
+  ['anyCraps','aces','ace2','midnight','yo'].forEach(k=>{const el=document.getElementById('bet-'+k),st=document.getElementById('stk-'+k),mb=document.getElementById('m-'+k);if(!el||!st)return;
+    // Any Craps bar and the C circle share one underlying bet (G.bets.anyCraps) but each spot
+    // shows only its own split so both read correctly no matter which one (or both) got chips.
+    const a=(k==='anyCraps')?dualSplit.anyCraps.bar:(G.bets[k]||0);
+    st.textContent=a?fmt(a):'';el.style.outline=a>0?'2px solid #ffd700':'none';if(mb)mb.classList.toggle('vis',a>0);});
   // C circle
-  {const a=G.bets['anyCraps']||0;const cel=document.getElementById('bet-anyCraps-circle');const cst=document.getElementById('stk-anyCraps-circle');const cmb=document.getElementById('m-anyCraps-circle');const showHere=dualBetLoc.anyCraps==='circle';if(cel)cel.classList.toggle('active',a>0);if(cst)cst.textContent=(a&&showHere)?fmt(a):'';if(cmb)cmb.classList.toggle('vis',a>0);}
+  {const a=dualSplit.anyCraps.circle;const cel=document.getElementById('bet-anyCraps-circle');const cst=document.getElementById('stk-anyCraps-circle');const cmb=document.getElementById('m-anyCraps-circle');if(cel)cel.classList.toggle('active',a>0);if(cst)cst.textContent=a?fmt(a):'';if(cmb)cmb.classList.toggle('vis',a>0);}
   // Come
   {const ca=G.bets['come']||0;const st=document.getElementById('stk-come');if(st)st.textContent=ca?fmt(ca):'';const cb=document.getElementById('come-bar');if(cb)cb.classList.toggle('active-bar',!!ca);}
   // Don't Come waiting zone
@@ -4061,7 +4093,7 @@ function applyFocusVisibility(){
       if(target)target.style.display=focusVisible[type][n]?'':'none';
     });
   });
-  const showHide=(ids,visible)=>ids.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=visible?'':'none';});
+  const showHide=(ids,visible)=>ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;let v=visible;const tab=BET_ID_TAB[id];if(v&&tab&&tab!==feltTab)v=false;el.style.display=v?'':'none';});
   showHide(FOCUS_HARDWAYS_IDS,focusVisible.hardways);
   showHide(FOCUS_HOPBETS_IDS,focusVisible.hopbets);
   showHide(FOCUS_PROPS_IDS,focusVisible.props);
@@ -5016,6 +5048,7 @@ function tutorialCurrentStep(){const l=tutorialCurrentLesson();return l?l.steps[
 // from a previous lesson (or from before the tutorial started) never bleed into a fresh one.
 function tutorialResetTable(){
   G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
+  dualSplit.anyCraps={bar:0,circle:0};
   G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
   updateUI();
 }

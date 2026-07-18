@@ -909,7 +909,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.69</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.70</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1366,6 +1366,15 @@ function enterFeltMode(){
   // by "if(!feltHomes.has(el))" so the ORIGINAL pre-felt home is never overwritten, and moving
   // an already-moved element again or re-setting the same inline styles is a no-op in effect.
   const st=document.getElementById('felt-stage');if(!st)return;
+  // The three "circle" prop spots (C / C&E / E) keep their stake-count display as a separate
+  // sibling <div class="circle-stk"> in the original list-mode markup instead of a true child
+  // (unlike Horn's stk-horn, which IS nested inside bet-horn) -- reparent them once so they get
+  // carried along automatically when their prop-circle parent moves into felt-stage below, and
+  // so .circle-stk{position:absolute;inset:0} has the positioned ancestor it expects.
+  ['anyCraps-circle','cande','eleven'].forEach(k=>{
+    const bet=document.getElementById('bet-'+k),stk=document.getElementById('stk-'+k);
+    if(bet&&stk&&stk.parentNode!==bet)bet.appendChild(stk);
+  });
   feltLayoutFor(mode).forEach(([sel,l,t,w,h])=>{
     const el=feltEl(sel);if(!el)return;
     if(!feltHomes.has(el))feltHomes.set(el,{parent:el.parentNode,next:el.nextSibling});
@@ -1535,6 +1544,7 @@ async function switchGameMode(mode){
     applyServerGameState({game_state:{[mode]:savedGs[mode]}},mode);
   }else{
     G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
+    dualSplit.anyCraps={bar:0,circle:0};
     G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
     G.bonus=makeInitialG().bonus;
     G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
@@ -1812,6 +1822,13 @@ function applyServerGameState(player,forcedMode){
   // Apply the mode constants before restoring state
   applyGameMode(mode);
   G.bets=gs.bets||{};
+  // The server has no notion of "bar vs circle" for Any Craps -- it just returns the resolved
+  // total. If that total no longer matches what the two spots' splits add up to (bet resolved,
+  // or this is a fresh page load), the split state is stale/unknown: clear it, or if a nonzero
+  // total survived a reload with no split recorded yet, attribute it to the bar spot (matches
+  // the old default).
+  {const total=G.bets.anyCraps||0;const sum=r2(dualSplit.anyCraps.bar+dualSplit.anyCraps.circle);
+    if(sum!==total)dualSplit.anyCraps=total?{bar:total,circle:0}:{bar:0,circle:0};}
   G.comeBets=gs.comeBets||[];
   G.dcBets=(gs.dcBets||[]).map((c)=>({num:c.num,flat:c.flat,odds:c.odds||0}));
   G.point=gs.point??null;
@@ -2618,7 +2635,8 @@ function pushUndo(){
     bankroll:G.bankroll,
     comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
     dcBets:G.dcBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
-    bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high}
+    bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high},
+    dualSplit:{anyCraps:{bar:dualSplit.anyCraps.bar,circle:dualSplit.anyCraps.circle}}
   });
   if(window.G_undoStack.length>20)window.G_undoStack.shift();
 }
@@ -2626,12 +2644,16 @@ function clearLastBet(){
   const snap=window.G_undoStack.pop();
   if(!snap){addLog('Nothing to undo.','info');return;}
   G.bets=snap.bets;G.bankroll=snap.bankroll;G.comeBets=snap.comeBets;G.dcBets=snap.dcBets;
+  if(snap.dualSplit)dualSplit.anyCraps={bar:snap.dualSplit.anyCraps.bar,circle:snap.dualSplit.anyCraps.circle};
   // Lucky Roller bets are a locked contract once the roll starts -- undo never touches them while locked
   if(!G.bonus.locked){G.bonus.low=snap.bonus.low;G.bonus.all=snap.bonus.all;G.bonus.high=snap.bonus.high;}
   addLog('Last bet action undone.','info');updateUI();
 }
-let dualBetLoc={anyCraps:'bar',eleven:'circle'};
-function setDualLoc(key,loc){if(loc&&dualBetLoc.hasOwnProperty(key))dualBetLoc[key]=loc;}
+// Any Craps bar and the C circle resolve the same underlying bet (G.bets.anyCraps) but are
+// two separate physical spots -- some players bet one exclusively, some both, so each spot's
+// displayed chip stack tracks only what was placed there, not a shared "last touched" total.
+let dualSplit={anyCraps:{bar:0,circle:0}};
+function addDualSplit(key,loc,amt){if(key==='anyCraps'&&loc&&dualSplit.anyCraps.hasOwnProperty(loc))dualSplit.anyCraps[loc]=r2(Math.max(0,dualSplit.anyCraps[loc]+amt));}
 const COMMISSION_ACK_KEY='rh_commission_ack';
 function needsCommissionAck(){return localStorage.getItem(COMMISSION_ACK_KEY)!=='1';}
 let pendingCommissionAction=null;
@@ -2653,16 +2675,16 @@ function cancelCommission(){
   document.getElementById('modal-commission').classList.add('hidden');
   pendingCommissionAction=null;
 }
-function placeBet(key,loc){setDualLoc(key,loc);
+function placeBet(key,loc){
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
   if(key==='pass'){if(G.passLocked){addLog('Pass Line locked.','info');return;}if(G.phase==='point'){addLog('Pass Line: come-out only.','info');return;}}
   if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
   if(key==='dp'){if(activeGame!=='standard'){addLog('Don\'t Pass: standard mode only.','info');return;}if(G.phase==='point'){addLog('Don\'t Pass: come-out only.','info');return;}}
   if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
-  const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);updateUI();
+  const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
 }
-function removeBet(key,loc){setDualLoc(key,loc);if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];updateUI();}
+function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}
 // Place bets on 6 or 8 must land in multiples of $6 for the 7-for-6 payout to resolve cleanly.
 // If the current chip denom isn't already a multiple of 6, the player pays the rounded-up cost,
 // same denom selected, slightly more taken from the bankroll, regardless of what that denom is.
@@ -3056,13 +3078,13 @@ function updateUI(){
   // Field
   {const a=G.bets['field']||0;const st=document.getElementById('stk-field');if(st)st.textContent=a?fmt(a):'';const fb=document.getElementById('field-bar');if(fb)fb.classList.toggle('active-bar',a>0);const mb=document.getElementById('m-field');if(mb)mb.classList.toggle('vis',a>0);}
   // Prop bars (outline style)
-  ['anyCraps','aces','ace2','midnight','yo'].forEach(k=>{const el=document.getElementById('bet-'+k),st=document.getElementById('stk-'+k),mb=document.getElementById('m-'+k);if(!el||!st)return;const a=G.bets[k]||0;
-    // Any Craps shares its bet with circle C -- only show the chip stack in whichever spot
-    // was most recently used, not both at once, even though the underlying amount is identical.
-    const showHere=!(k==='anyCraps'&&dualBetLoc.anyCraps!=='bar');
-    st.textContent=(a&&showHere)?fmt(a):'';el.style.outline=a>0?'2px solid #ffd700':'none';if(mb)mb.classList.toggle('vis',a>0);});
+  ['anyCraps','aces','ace2','midnight','yo'].forEach(k=>{const el=document.getElementById('bet-'+k),st=document.getElementById('stk-'+k),mb=document.getElementById('m-'+k);if(!el||!st)return;
+    // Any Craps bar and the C circle share one underlying bet (G.bets.anyCraps) but each spot
+    // shows only its own split so both read correctly no matter which one (or both) got chips.
+    const a=(k==='anyCraps')?dualSplit.anyCraps.bar:(G.bets[k]||0);
+    st.textContent=a?fmt(a):'';el.style.outline=a>0?'2px solid #ffd700':'none';if(mb)mb.classList.toggle('vis',a>0);});
   // C circle
-  {const a=G.bets['anyCraps']||0;const cel=document.getElementById('bet-anyCraps-circle');const cst=document.getElementById('stk-anyCraps-circle');const cmb=document.getElementById('m-anyCraps-circle');const showHere=dualBetLoc.anyCraps==='circle';if(cel)cel.classList.toggle('active',a>0);if(cst)cst.textContent=(a&&showHere)?fmt(a):'';if(cmb)cmb.classList.toggle('vis',a>0);}
+  {const a=dualSplit.anyCraps.circle;const cel=document.getElementById('bet-anyCraps-circle');const cst=document.getElementById('stk-anyCraps-circle');const cmb=document.getElementById('m-anyCraps-circle');if(cel)cel.classList.toggle('active',a>0);if(cst)cst.textContent=a?fmt(a):'';if(cmb)cmb.classList.toggle('vis',a>0);}
   // Come
   {const ca=G.bets['come']||0;const st=document.getElementById('stk-come');if(st)st.textContent=ca?fmt(ca):'';const cb=document.getElementById('come-bar');if(cb)cb.classList.toggle('active-bar',!!ca);}
   // Don't Come waiting zone
