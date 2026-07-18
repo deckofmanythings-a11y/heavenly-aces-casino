@@ -759,7 +759,10 @@ body.felt-compact #felt-stage #info-panel #logout-btn::before{content:"⏻"}
    label to wrap onto two lines instead of clipping "DESTROYER" to "DESTROY". */
 body.felt-compact #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--chip)*0.3);padding:1px 2px;line-height:1.05}
 body.felt-compact #felt-stage #left-col-header .gmode-sub{display:none}
-body.felt-mode #felt-stage #bottom-section{height:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
+/* Bottom section now sits below the felt (inside #play-area, not reparented into
+   #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
+   the felt's own bottom edge instead of overlaid on top of the art. */
+body.felt-mode #bottom-section{position:absolute;height:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
 /* Lucky Roller art */
 body.felt-mode #felt-stage #lucky-roller{background:url('lucky-roller.png') center/100% 100% no-repeat;border:none;padding:0}
 body.felt-mode #felt-stage #lucky-roller>*:not(.felt-lr){display:none!important}
@@ -1161,7 +1164,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.65</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.66</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1487,7 +1490,10 @@ const FELT_LAYOUT=[
   ['#left-col-header', 0.40, 0.70,12.60,12.00,null],
   ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
   ['#info-panel',     87.00, 0.70,12.60,17.00,null],
-  ['#bottom-section',  0.30,86.70,99.40,13.00,null],
+  // #bottom-section is deliberately NOT in this list -- it no longer gets reparented
+  // into #felt-stage/positioned as % of the felt art. It now lives in #play-area
+  // instead, sized/positioned directly in sizeFeltStage() so it sits flush below the
+  // felt's actual rendered bottom edge rather than overlaid on the art itself.
   // Hardways/Hop Bets tab buttons pulled off #left-col-header (Deck: "Pull the Hardways and
   // Hop Bets buttons off the upper left element and put them over the Hard Ways/Hoppin Hard
   // Ways") -- sit directly above that shared art slot as a left/right pair, always visible
@@ -1624,15 +1630,33 @@ function feltEl(sel){
   }
   return document.querySelector(sel);
 }
+// Bottom section's height as a fraction of the felt's own height -- matches its old
+// on-felt sizing (FELT_LAYOUT used to give it 13.00% of felt height) so it reads the
+// same size as before, just relocated below the art instead of overlaid on it.
+const BOTTOM_SECTION_RATIO=0.13;
 function sizeFeltStage(){
   const pa=document.getElementById('play-area'),st=document.getElementById('felt-stage');
+  const bs=document.getElementById('bottom-section');
   if(!pa||!st)return;
   const W=pa.clientWidth,H=pa.clientHeight;if(!W||!H)return;
-  let w=W,h=W*9/16;if(h>H){h=H;w=H*16/9;}
+  // Felt-stage and bottom-section are sized as one contain-fit group (felt keeps its
+  // real 16:9 ratio; bottom-section is BOTTOM_SECTION_RATIO of the felt's own height,
+  // stacked immediately beneath it), then the whole group is centered in #play-area --
+  // same math as the old single-box contain-fit, just with bottom-section's height
+  // folded into the budget so there's always room for it below the felt with zero gap.
+  let w=W,h=w*9/16,groupH=h*(1+BOTTOM_SECTION_RATIO);
+  if(groupH>H){h=H/(1+BOTTOM_SECTION_RATIO);w=h*16/9;groupH=H;}
+  const bsH=h*BOTTOM_SECTION_RATIO;
+  const left=(W-w)/2,top=(H-groupH)/2;
+  st.style.left=left+'px';st.style.top=top+'px';st.style.transform='none';
   st.style.width=w+'px';st.style.height=h+'px';st.style.setProperty('--chip',Math.max(20,Math.round(h*0.052))+'px');
   // Below this width, #info-panel's fixed-percentage box (see FELT_LAYOUT) gets too narrow for
   // "Cash Out"/"Log Out" as text at any readable size -- see the body.felt-compact CSS rules.
   document.body.classList.toggle('felt-compact',w<520);
+  if(bs){
+    bs.style.left=left+'px';bs.style.top=(top+h)+'px';
+    bs.style.width=w+'px';bs.style.height=bsH+'px';
+  }
 }
 function feltApplyTab(t){
   feltTab=t;
@@ -1682,6 +1706,14 @@ function enterFeltMode(){
     st.appendChild(el);el.classList.add('felt-abs');
     el.style.left=l+'%';el.style.top=t+'%';el.style.width=w+'%';el.style.height=h+'%';
   });
+  // #bottom-section goes into #play-area (a sibling of #felt-stage), not into the felt
+  // itself -- its actual left/top/width/height (px, not %) are computed in
+  // sizeFeltStage() so it can sit flush against the felt's real bottom edge.
+  const pa=document.getElementById('play-area'),bs=document.getElementById('bottom-section');
+  if(pa&&bs){
+    if(!feltHomes.has(bs))feltHomes.set(bs,{parent:bs.parentNode,next:bs.nextSibling});
+    pa.appendChild(bs);
+  }
   const lr=document.getElementById('lucky-roller');
   if(lr){LR_LAYOUT.forEach(([sel,l,t,w,h])=>{
     const el=lrEl(sel);if(!el)return;
@@ -1720,6 +1752,13 @@ function exitFeltMode(){
     if(home.next&&home.next.parentNode===home.parent)home.parent.insertBefore(el,home.next);
     else home.parent.appendChild(el);
   });
+  const bs=document.getElementById('bottom-section');
+  const bsHome=bs&&feltHomes.get(bs);
+  if(bs&&bsHome){
+    bs.style.left=bs.style.top=bs.style.width=bs.style.height='';
+    if(bsHome.next&&bsHome.next.parentNode===bsHome.parent)bsHome.parent.insertBefore(bs,bsHome.next);
+    else bsHome.parent.appendChild(bs);
+  }
   document.body.classList.remove('felt-mode','game-crapless','game-standard');
   feltActive=false;
 }
