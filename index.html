@@ -909,7 +909,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.75</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.76</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2009,6 +2009,19 @@ function renderLoop(now){
 function buildStrip(){
   const strip=document.getElementById('num-strip-h'),pr=document.getElementById('puck-row-h');
   if(!strip||!pr)return;
+  // Standard's #nb-buy-N/#nb-place-N/#nb-lay-N are individually absolute-positioned by
+  // enterFeltMode() via STANDARD_LAYOUT (unlike crapless, which moves the whole #num-zone as
+  // one block) -- that plucks them out of #num-strip-h's subtree entirely, into #felt-stage,
+  // so strip.innerHTML='' below never reaches them on the next rebuild. Since the crapless
+  // number set (2,3,4,5,6,8,9,10,11,12) is a superset of standard's (4,5,6,8,9,10), remove any
+  // such leftovers -- wherever they currently live -- before creating fresh ones, or a stale
+  // standard box and a freshly-built crapless one can coexist with the same id (getElementById
+  // silently returns whichever's first in the document).
+  ALL_NUMS_STANDARD.forEach(n=>{
+    ['nb-buy-'+n,'nb-place-'+n,'nb-lay-'+n].forEach(id=>{
+      const stale=document.getElementById(id);if(stale)stale.remove();
+    });
+  });
   strip.innerHTML='';pr.innerHTML='';
   const isStd=activeGame==='standard';
   ALL_NUMS.forEach(n=>{
