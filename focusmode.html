@@ -1198,7 +1198,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.81</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.82</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2934,9 +2934,20 @@ function applyBetAreaNudges(){
       if(el)el.style.transform='translateX(-50%) translate('+(dxPx*sx)+'px,'+(dyPx*sy)+'px)';
     });
   };
-  nudgePlain(n=>'nb-place-'+n, 80,-15);
-  nudgePlain(n=>'nb-buy-'+n,   75,-15);
-  nudgePlain(n=>'nb-lay-'+n,   85,-70);
+  // nudgePlain's dx/dy and BET_AREA_DRIFT_X were hand-calibrated against STANDARD's Buy/Place/
+  // Lay cells specifically, which are individually absolute-positioned (STANDARD_LAYOUT) with
+  // real per-number width variance -- hence needing a manual per-number drift correction at all.
+  // Crapless's cells are plain CSS-flexed children of one #num-zone block (confirmed by pixel-
+  // scanning CraplessLineModeA.png: exactly 10 even columns), so their un-nudged flex position
+  // already lands correctly -- applying standard's correction on top pushed every Crapless
+  // Buy/Place cell ~75-90 canvas-px (visibly ~100px on screen) to the right of its real column
+  // for nothing (Deck: "PLACE and BUY bet areas are about 100px to the right of where they
+  // should be"). Only standard has real per-number drift to correct for.
+  if(activeGame==='standard'){
+    nudgePlain(n=>'nb-place-'+n, 80,-15);
+    nudgePlain(n=>'nb-buy-'+n,   75,-15);
+    nudgePlain(n=>'nb-lay-'+n,   85,-70);
+  }
   nudgeComeHalf(n=>'combox-flat-'+n,  90,-90);
   nudgeComeHalf(n=>'combox-odds-'+n,  90,-90);
   nudgeComeHalf(n=>'dcbox-flat-'+n,   150,-90);
