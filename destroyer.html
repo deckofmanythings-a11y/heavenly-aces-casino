@@ -617,7 +617,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.103</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.107</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -2028,6 +2028,7 @@ function showFiringScreen(){
   });
   const fs=document.getElementById('firing-screen');if(fs)fs.classList.add('active');
   if(!_fpGridBuilt)buildFiringGrid();
+  sizeDestroyerPanel();
 }
 function hideFiringScreen(){
   const fs=document.getElementById('firing-screen');if(fs)fs.classList.remove('active');
@@ -2062,6 +2063,7 @@ function showPlacementPanel(){
   });
   const ps=document.getElementById('placement-screen');if(ps)ps.classList.add('active');
   renderPlacementGrid();
+  sizeDestroyerPanel();
 }
 function hidePlacementPanel(){
   const ps=document.getElementById('placement-screen');if(ps)ps.classList.remove('active');
@@ -2570,6 +2572,32 @@ function playMissSound(){ MISS_SOUND.cloneNode().play().catch(()=>{}); }
 // die 1-6, driven through ClocheDice's 1-6 physics via faceImagesPerDie).
 ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM_3D,DIE_NUMBER_IMG_3D],soundTheme:'action'});
 initDestDice();
+// #firing-panel/#placement-panel rely on CSS aspect-ratio + width:100% + max-height:100% to
+// stay locked to the art's real 1672x940 ratio, but that combo has a real gap: aspect-ratio
+// only computes the AUTO dimension from the DEFINITE one. Width is definite (100%) here, so on
+// a wide window the width-derived height can exceed the panel's available height, max-height
+// clamps that overflow, but width is left exactly where it was -- the box stops being 1672:940
+// shaped, and background-size:100% 100% happily stretches the art to fill that wrong shape
+// (Deck: "Destroyer's art is stretching when the window is wide"). Same class of bug
+// sizeFeltStage() in focusmode.html already solves for its own felt-stage, ported here:
+// explicit inline px width/height computed from whichever of width/height is actually the
+// tighter constraint, so the box can never end up off-ratio regardless of window shape.
+function sizeDestroyerPanel(){
+  const RATIO=1672/940;
+  [['firing-screen'],['placement-screen']].forEach(([screenId])=>{
+    const screen=document.getElementById(screenId);
+    if(!screen||!screen.classList.contains('active'))return;
+    const panel=screen.firstElementChild;
+    if(!panel)return;
+    const W=screen.clientWidth,H=screen.clientHeight;
+    if(!W||!H)return;
+    let w=W,h=w/RATIO;
+    if(h>H){h=H;w=h*RATIO;}
+    panel.style.width=w+'px';
+    panel.style.height=h+'px';
+  });
+}
+window.addEventListener('resize',sizeDestroyerPanel);
 </script>
 </body>
 </html>
