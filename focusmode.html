@@ -1419,7 +1419,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.109</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.110</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3007,23 +3007,11 @@ updateUI=function(){_updateUI_orig();renderChipStacks();applyBetAreaNudges();};
 // zero risk of the reflow/collapse issues from the earlier (now-removed) custom positioning
 // system. Offsets are in px on the 3200x1800 reference canvas, scaled to the felt's actual
 // rendered size so they land the same regardless of window size.
-// Each number box renders ~5px wider than the last moving away from 4, so a single shared
-// nudge drifts progressively out of place further down the strip (Deck: "Box 4 is perfect...
-// the number boxes are about 5px wider than they were before"). Added on top of every type's
-// own dx below, per number.
-const BET_AREA_DRIFT_X={4:0,5:5,6:10,8:15,9:20,10:25};
 function applyBetAreaNudges(){
   const stage=document.getElementById('felt-stage');
   if(!stage||!document.body.classList.contains('felt-mode'))return;
   const sx=stage.clientWidth/FM_CANVAS_W,sy=stage.clientHeight/FM_CANVAS_H;
   if(!sx||!sy)return;
-  const nudgePlain=(idFn,dxPx,dyPx)=>{
-    ALL_NUMS.forEach(n=>{
-      const el=document.getElementById(idFn(n));
-      const dx=dxPx+(BET_AREA_DRIFT_X[n]||0);
-      if(el)el.style.transform='translate('+(dx*sx)+'px,'+(dyPx*sy)+'px)';
-    });
-  };
   // .come-half elements (combox-flat/odds, dcbox-flat/odds) already carry translateX(-50%) for
   // horizontal centering -- an inline style would otherwise clobber it, not add to it. No
   // per-number drift correction here -- Come/Don't Come are already correctly aligned without
@@ -3034,20 +3022,14 @@ function applyBetAreaNudges(){
       if(el)el.style.transform='translateX(-50%) translate('+(dxPx*sx)+'px,'+(dyPx*sy)+'px)';
     });
   };
-  // nudgePlain's dx/dy and BET_AREA_DRIFT_X were hand-calibrated against STANDARD's Buy/Place/
-  // Lay cells specifically, which are individually absolute-positioned (STANDARD_LAYOUT) with
-  // real per-number width variance -- hence needing a manual per-number drift correction at all.
-  // Crapless's cells are plain CSS-flexed children of one #num-zone block (confirmed by pixel-
-  // scanning CraplessLineModeA.png: exactly 10 even columns), so their un-nudged flex position
-  // already lands correctly -- applying standard's correction on top pushed every Crapless
-  // Buy/Place cell ~75-90 canvas-px (visibly ~100px on screen) to the right of its real column
-  // for nothing (Deck: "PLACE and BUY bet areas are about 100px to the right of where they
-  // should be"). Only standard has real per-number drift to correct for.
-  if(activeGame==='standard'){
-    nudgePlain(n=>'nb-place-'+n, 80,-15);
-    nudgePlain(n=>'nb-buy-'+n,   75,-15);
-    nudgePlain(n=>'nb-lay-'+n,   85,-70);
-  }
+  // Standard's Buy/Place/Lay cells used to need a manual per-number drift correction here
+  // (nudgePlain(), removed) on top of STANDARD_LAYOUT's own per-number x/y/w/h -- but
+  // STANDARD_LAYOUT's entries are themselves now individually hand-calibrated via the drag
+  // tool (whole pixels, already final positions), so the old nudge was stacking a second,
+  // now-stale offset on top of an already-correct position, shifting every Buy/Place/Lay cell
+  // ~75-90 canvas-px off (Deck: "Place/Buy/Lay bet placements are messed up, but the Calibrator
+  // makes them appear perfect" -- the Calibrator reads STANDARD_LAYOUT directly and never ran
+  // this nudge, only real gameplay's updateUI()->applyBetAreaNudges() did).
   nudgeComeHalf(n=>'combox-flat-'+n,  90,-90);
   nudgeComeHalf(n=>'combox-odds-'+n,  90,-90);
   nudgeComeHalf(n=>'dcbox-flat-'+n,   150,-90);
