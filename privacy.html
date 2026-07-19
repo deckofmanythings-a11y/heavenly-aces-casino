@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Heavenly Aces Casino</title>
+<style>
+  html,body{background:#0a0a0a;color:#fff;font-family:system-ui,sans-serif;margin:0;padding:0}
+  .wrap{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+  h1{color:#ffe066;font-size:28px;margin-bottom:4px}
+  .sub{color:rgba(255,255,255,.5);font-size:14px;margin-bottom:32px}
+  h2{color:#ffe066;font-size:18px;margin-top:32px}
+  p,li{color:rgba(255,255,255,.85);line-height:1.6;font-size:15px}
+  ul{padding-left:20px}
+  a{color:#ffe066}
+  .back{display:inline-block;margin-bottom:24px;color:rgba(255,255,255,.5);text-decoration:none;font-size:14px}
+  .back:hover{color:#ffe066}
+  code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Back to Heavenly Aces</a>
+  <h1>🎲 Privacy Policy</h1>
+  <div class="sub">Heavenly Aces Casino — Last updated July 19, 2026</div>
+
+  <h2>1. What We Collect</h2>
+  <p>Heavenly Aces Casino is a hobby project, not a commercial service. We collect only what's needed to run your account:</p>
+  <ul>
+    <li><strong>Website accounts:</strong> a username and a hashed password.</li>
+    <li><strong>Discord accounts:</strong> your Discord user ID and Discord display name, obtained via Discord's OAuth authorization when you launch the Casino as a Discord Activity. We do not receive your Discord email, friends list, or message history.</li>
+    <li><strong>Gameplay data:</strong> your virtual bankroll, bet history, and in-progress game state, stored so your session can be restored between visits.</li>
+  </ul>
+
+  <h2>2. How We Use It</h2>
+  <p>This data is used exclusively to operate your account and gameplay — identifying you on login, restoring your bankroll and game state, and (if you link a Discord identity to an existing website account) matching the two together. We do not sell, rent, or share this data with third parties, and we do not use it for advertising.</p>
+
+  <h2>3. Where It's Stored</h2>
+  <p>Account and gameplay data is stored in a Supabase-hosted database. Server-side logic (bet resolution, redemption codes, Discord authentication) runs on Supabase Edge Functions. No payment or financial information is ever collected, because the Casino uses play-money only.</p>
+
+  <h2>4. Discord Activity Specifics</h2>
+  <p>When you launch the Casino inside Discord, the Discord Embedded App SDK handles the OAuth handshake. The authorization <code>code</code> Discord issues is exchanged, server-side, for your Discord user ID and username — this exchange never exposes our Discord application's client secret to your browser. That identity is used to look up or create your Casino account.</p>
+
+  <h2>5. Data Retention & Deletion</h2>
+  <p>We retain account data for as long as the account exists. If you'd like your account and associated data deleted, contact the developer via Discord and it will be removed.</p>
+
+  <h2>6. Children's Privacy</h2>
+  <p>This application is intended for users aged 18 and over and is not directed at children.</p>
+
+  <h2>7. Changes</h2>
+  <p>This policy may be updated as the Casino evolves. Material changes will be reflected here with an updated date.</p>
+
+  <h2>8. Contact</h2>
+  <p>Questions can be directed to the developer via Discord.</p>
+</div>
+</body>
+</html>
