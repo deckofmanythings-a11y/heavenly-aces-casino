@@ -923,7 +923,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.104</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.105</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1199,8 +1199,17 @@ if(isDiscordActivity()){
       if(!el)return;
       const code=el.getAttribute(attr);
       if(!code)return;
+      // The invoked code may call event.stopPropagation() expecting classic native-inline-
+      // handler semantics (runs before the event ever reaches document, so stopPropagation
+      // there pre-empts any 'close on outside click' listener also on document). Since we're
+      // already AT document by the time this runs, plain stopPropagation is a no-op here --
+      // upgrade it to stopImmediatePropagation so it still pre-empts other document listeners.
+      let stopped=false;const origStop=e.stopPropagation.bind(e);
+      e.stopPropagation=function(){stopped=true;origStop();};
       try{new Function('event',code).call(el,e);}
       catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
+      finally{e.stopPropagation=origStop;}
+      if(stopped)e.stopImmediatePropagation();
     });
   });
 }
