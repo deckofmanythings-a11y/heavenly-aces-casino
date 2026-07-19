@@ -799,6 +799,16 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       </div>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="modal-forfeit">
+    <div class="modal-box" style="max-width:360px">
+      <div class="modal-title" style="margin-bottom:12px">Forfeit Locked Bets?</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">Your locked Pass Line, Come, and/or Lucky Roller bets can't be refunded once a point's been established. Leaving now forfeits <span id="forfeit-amount" style="color:#ffd700;font-weight:700"></span>. Everything else on the felt gets refunded as usual.</div>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn cancel" onclick="cancelForfeitLeave()">Cancel</button>
+        <button class="modal-btn" onclick="confirmForfeitLeave()">Forfeit &amp; Leave</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="modal-log">
     <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column">
       <div class="modal-title" style="margin-bottom:8px">Roll Log</div>
@@ -909,7 +919,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.79</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.80</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1488,14 +1498,54 @@ function applyGameMode(mode){
   enterFeltMode();
 }
 
-function canSwitchMode(){
-  // Block if any contracted Pass Line or Come bets exist
-  if(G.passLocked)return false;
-  if(G.comeBets.length>0)return false;
-  if(G.dcBets.length>0)return false;
-  // Block if any Lucky Roller bets are placed
-  if(G.bonus.low>0||G.bonus.all>0||G.bonus.high>0)return false;
-  return true;
+// Whether a roll is actively animating right now -- switching games/leaving mid-roll would
+// orphan the dice overlay and its chime sound (nothing else ever stops them once abandoned;
+// ClocheDice's own stopTumbleNotes() is only ever called from its own completion/error paths).
+function isRollInProgress(){
+  return !!(animating||tumbling||(typeof ClocheDice!=='undefined'&&ClocheDice.isRolling()));
+}
+// Bets that get FORFEITED (not refunded) by leaving right now -- matches clearRemovable()'s
+// own refund/forfeit split exactly: a locked Pass Line flat, an established Come bet's flat
+// (both already debited from bankroll, no server-side "undo"), and a LOCKED Lucky Roller bet.
+// Don't Come bets are deliberately excluded -- clearRemovable() always refunds them in full
+// regardless of lock state ("DC bets are free -- always clearable"), so they were never
+// actually a forfeiture case despite the old canSwitchMode() blocking on them as if they were.
+function hasForfeitableBets(){
+  if(G.passLocked&&(G.bets.pass||0)>0)return true;
+  if(G.comeBets.some(cb=>cb.flat>0))return true;
+  if(G.bonus.locked&&(G.bonus.low>0||G.bonus.all>0||G.bonus.high>0))return true;
+  return false;
+}
+function forfeitAmount(){
+  let amt=0;
+  if(G.passLocked)amt=r2(amt+(G.bets.pass||0));
+  G.comeBets.forEach(cb=>{amt=r2(amt+(cb.flat||0));});
+  if(G.bonus.locked)amt=r2(amt+G.bonus.low+G.bonus.all+G.bonus.high);
+  return amt;
+}
+// Gate for "leaving the table" (switching games, navigating away, logging out): never a hard
+// block except mid-roll (nothing to forfeit there, just wait a few seconds). Otherwise always
+// proceeds -- clearRemovable()/saveCleanState() already refund everything removable and forfeit
+// only true contract bets, so the only thing missing was consent before forfeiting real money.
+let pendingLeaveAction=null;
+function attemptLeave(actionFn){
+  if(isRollInProgress()){addLog('Wait for the current roll to finish before leaving the table.','info');return;}
+  if(hasForfeitableBets()){
+    pendingLeaveAction=actionFn;
+    document.getElementById('forfeit-amount').textContent=fmt(forfeitAmount());
+    document.getElementById('modal-forfeit').classList.remove('hidden');
+    return;
+  }
+  actionFn();
+}
+function confirmForfeitLeave(){
+  document.getElementById('modal-forfeit').classList.add('hidden');
+  const fn=pendingLeaveAction;pendingLeaveAction=null;
+  if(fn)fn();
+}
+function cancelForfeitLeave(){
+  document.getElementById('modal-forfeit').classList.add('hidden');
+  pendingLeaveAction=null;
 }
 
 // Saves a clean come-out state for the current mode to Supabase,
@@ -1535,37 +1585,38 @@ async function saveCleanState(mode){
 async function switchGameMode(mode){
   closeGameModeDropdown();
   if(activeGame===mode)return;
-  if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before switching.','info');return;}
-  const currentMode=activeGame;
-  await saveCleanState(currentMode);
-  applyGameMode(mode);
-  const savedGs=currentPlayer&&currentPlayer.game_state;
-  if(savedGs&&savedGs[mode]){
-    applyServerGameState({game_state:{[mode]:savedGs[mode]}},mode);
-  }else{
-    G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
-    dualSplit.anyCraps={bar:0,circle:0};
-    G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
-    G.bonus=makeInitialG().bonus;
-    G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
-  }
-  if(currentPlayer){
-    const existingGs=currentPlayer.game_state||{};
-    const newGs={...existingGs,activeGame:mode};
-    currentPlayer.game_state=newGs;
-    await sb.from('players').update({game_state:newGs}).eq('id',currentPlayer.id);
-    // Re-sync bankroll from the server's real value rather than trusting whatever the client
-    // currently has -- defense in depth against the two tables' balances ever drifting apart
-    // again (see the big comment on saveCleanState for how that happened before).
-    const{data:fresh}=await sb.from('players').select('bankroll,total_redeemed,net_pnl').eq('id',currentPlayer.id).maybeSingle();
-    if(fresh){
-      G.bankroll=parseFloat(fresh.bankroll)||0;
-      G.startingBankroll=parseFloat(fresh.total_redeemed)||0;
-      currentPlayer.bankroll=G.bankroll;
-      currentPlayer.total_redeemed=G.startingBankroll;
+  attemptLeave(async()=>{
+    const currentMode=activeGame;
+    await saveCleanState(currentMode);
+    applyGameMode(mode);
+    const savedGs=currentPlayer&&currentPlayer.game_state;
+    if(savedGs&&savedGs[mode]){
+      applyServerGameState({game_state:{[mode]:savedGs[mode]}},mode);
+    }else{
+      G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
+      dualSplit.anyCraps={bar:0,circle:0};
+      G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
+      G.bonus=makeInitialG().bonus;
+      G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
     }
-  }
-  updateUI();
+    if(currentPlayer){
+      const existingGs=currentPlayer.game_state||{};
+      const newGs={...existingGs,activeGame:mode};
+      currentPlayer.game_state=newGs;
+      await sb.from('players').update({game_state:newGs}).eq('id',currentPlayer.id);
+      // Re-sync bankroll from the server's real value rather than trusting whatever the client
+      // currently has -- defense in depth against the two tables' balances ever drifting apart
+      // again (see the big comment on saveCleanState for how that happened before).
+      const{data:fresh}=await sb.from('players').select('bankroll,total_redeemed,net_pnl').eq('id',currentPlayer.id).maybeSingle();
+      if(fresh){
+        G.bankroll=parseFloat(fresh.bankroll)||0;
+        G.startingBankroll=parseFloat(fresh.total_redeemed)||0;
+        currentPlayer.bankroll=G.bankroll;
+        currentPlayer.total_redeemed=G.startingBankroll;
+      }
+    }
+    updateUI();
+  });
 }
 
 function dieFaceImg(n,sz){return '<img src="data:image/png;base64,'+DIE_B64[n]+'" style="width:'+sz+';height:'+sz+';vertical-align:middle;display:inline-block">';}
@@ -1867,22 +1918,24 @@ function closeGameModeDropdown(){
   document.getElementById('gmode-current-btn').classList.remove('open');
 }
 async function navigateAway(url){
-  if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before leaving.','info');return;}
-  closeGameModeDropdown();
-  const mode=activeGame||'crapless';
-  await saveCleanState(mode);
-  window.location.href=url;
+  attemptLeave(async()=>{
+    closeGameModeDropdown();
+    const mode=activeGame||'crapless';
+    await saveCleanState(mode);
+    window.location.href=url;
+  });
 }
 
 async function logout(){
-  if(!canSwitchMode()){addLog('Clear Lucky Roller bets and contract bets before logging out.','info');return;}
-  const mode=activeGame||'crapless';
-  await saveCleanState(mode);
-  if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
-  localStorage.removeItem('craps_session');currentPlayer=null;G=makeInitialG();
-  document.getElementById('game-screen').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
-  document.getElementById('auth-username').value='';document.getElementById('auth-password').value='';
+  attemptLeave(async()=>{
+    const mode=activeGame||'crapless';
+    await saveCleanState(mode);
+    if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
+    localStorage.removeItem('craps_session');currentPlayer=null;G=makeInitialG();
+    document.getElementById('game-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('auth-username').value='';document.getElementById('auth-password').value='';
+  });
 }
 
 // ── REDEEM ────────────────────────────────────────────────────────────────────
@@ -3013,11 +3066,13 @@ function updateUI(){
   if(G.phase==='point'){betonBtn.textContent=G.betsOffThisRoll?'Bets On':'Bets Off';betonBtn.classList.toggle('on',!G.betsOffThisRoll);}
   else{betonBtn.textContent=G.betsOn?'Bets Off':'Bets On';betonBtn.classList.toggle('on',G.betsOn);}
   document.getElementById('repeat-btn').disabled=!G.canRepeat;
-  // Game mode toggle: disable when contract bets are live
-  const canSwitch=canSwitchMode();
+  // Game mode toggle: only disable mid-roll now -- contract bets no longer block switching,
+  // they just prompt a forfeit confirmation (attemptLeave()), so there's nothing to grey out
+  // for them anymore.
+  const rollBusy=isRollInProgress();
   const gmCl=document.getElementById('gmode-crapless');const gmSt=document.getElementById('gmode-standard');
-  if(gmCl)gmCl.disabled=!canSwitch||activeGame==='crapless';
-  if(gmSt)gmSt.disabled=!canSwitch||activeGame==='standard';
+  if(gmCl)gmCl.disabled=rollBusy||activeGame==='crapless';
+  if(gmSt)gmSt.disabled=rollBusy||activeGame==='standard';
   const dc=dblCost();document.getElementById('double-btn').disabled=!dc||dc>G.bankroll;
   // Mode totals
   const hwT=r2((G.bets['hard4']||0)+(G.bets['hard6']||0)+(G.bets['hard8']||0)+(G.bets['hard10']||0));
