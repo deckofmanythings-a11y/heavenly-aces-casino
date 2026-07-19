@@ -290,7 +290,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.84</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.85</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='focusmode.html?mode=crapless'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='focusmode.html?mode=standard'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -418,7 +418,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 
 </div><!-- end game-screen -->
 
-<script src="cards.js"></script>
+<script src="cards.js?v=0.4.85"></script>
 <script>
 const SUPABASE_URL='https://qgiksiauptrqmxsupwqe.supabase.co';
 const FUNCTIONS_URL='https://qgiksiauptrqmxsupwqe.supabase.co/functions/v1';
@@ -1278,6 +1278,6 @@ function closeCashoutModal(){document.getElementById('modal-cashout').classList.
 renderActionButtons();
 tryRestoreSession();
 </script>
-<script src="winner-modal.js"></script>
+<script src="winner-modal.js?v=0.4.85"></script>
 </body>
 </html>
