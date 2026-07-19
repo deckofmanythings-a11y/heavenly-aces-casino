@@ -111,6 +111,10 @@
   let activeResolve = null, activeReject = null;
   let rollT0 = 0;
   let resultCallbacks = [];
+  // Body-pair keys currently in contact, as of the last _checkCollisionsForKnock() call --
+  // lets a NEW collision be told apart from a die that's just resting/sliding in continuous
+  // contact (which would otherwise re-fire a knock on every single physics substep).
+  let _touchingPairs = new Set();
 
   // ---------- jovial random-note bell chime (dice tumble + coin waterfall both use this) ----------
   // Synthesized rather than sampled -- the real thing to match here (InterBlock/Easy
@@ -118,7 +122,7 @@
   // audio, not something legally available to source or reuse. A tiny Web Audio synth gets the
   // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
   // exactly to however long a given roll's preroll+resolving phases actually last.
-  let _actx = null, _noteTimer = null, _knockTimer = null, _reverbSend = null, _echoSend = null;
+  let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null;
   // Deck supplied a reference recording (CrapsRoll.ogg) and asked for the same TYPE OF TONE --
   // not the file itself, same licensing reason the earlier bell-chime version cites: a real
   // recording isn't something to source/reuse, but a synth nailing the same character has zero
@@ -389,28 +393,18 @@
   function startTumbleNotes() {
     stopTumbleNotes();
     if (CFG.soundTheme === 'action') { startActionHits(); return; }
-    // Melody and knock now run on two INDEPENDENT schedules -- Deck: "sounds super turbo fast"
-    // after the melody's tick was sped up. Turned out the fast rate was right for the melody
-    // (needed to overlap into a legato texture, see the comment on playMelodyNote's decay
-    // lengthening) but wrong to also apply to the knock: the ~37ms onset density measured
-    // earlier was detecting melody-note ATTACKS (each has its own fast 3ms onset transient
-    // that registers just like a percussive hit would), not real knocks. Isolating the
-    // percussive component specifically (proper HPSS mask, not raw onset detection) and
-    // re-running onset detection on THAT found only 4 real knock events across the whole
-    // 2.345s clip -- roughly one every 300-900ms, not a rapid rattle at all. Firing the knock
-    // at the melody's fast rate was a machine-gun clack the reference never has.
+    // Melody stays on its own fast tick -- needed to overlap into a legato singing texture,
+    // see the comment on playMelodyNote's decay lengthening. The knock no longer runs on a
+    // timer at all: Deck asked for it to be tied to real physics collisions instead of a
+    // guessed rhythm (dice-to-dice, to-wall, to-floor), so it's now driven directly by
+    // _checkCollisionsForKnock() in the main loop below, once per genuinely new contact.
     (function melodyTick() {
       playMelodyNote();
       _noteTimer = setTimeout(melodyTick, 22 + Math.random() * 30);
     })();
-    (function knockTick() {
-      playKnockSound();
-      _knockTimer = setTimeout(knockTick, 300 + Math.random() * 600);
-    })();
   }
   function stopTumbleNotes() {
     if (_noteTimer) { clearTimeout(_noteTimer); _noteTimer = null; }
-    if (_knockTimer) { clearTimeout(_knockTimer); _knockTimer = null; }
     stopActionHits();
   }
 
@@ -915,6 +909,32 @@
     }, CFG.revealHoldMs);
   }
 
+  // Deck: tie the knock sound to real physics collisions (dice-to-dice, to-wall, to-floor)
+  // instead of a random timer. world.contacts holds every ContactEquation active as of the
+  // world.step() that just ran; every contact necessarily involves at least one die (the
+  // floor/walls/ceiling are all static mass-0 bodies, so they can never collide with each
+  // other). Comparing this step's touching pairs against last step's picks out only NEW
+  // contacts -- a die resting/sliding in continuous contact keeps re-appearing in
+  // world.contacts every step but is NOT a new collision, so it's skipped. Impact velocity
+  // along the contact normal is thresholded so a die settling gently doesn't trigger a knock;
+  // harder hits also play a bit louder (capped) for some dynamic realism.
+  //
+  // Only called from the live preroll/resolving stepping in loop() below -- NOT from
+  // presimulate()'s silent search (which reuses the same resolveStep() but runs synchronously,
+  // invisibly, discarded and re-run per attempt -- it must never make sound).
+  const KNOCK_IMPACT_MIN = 1.2; // m/s along the contact normal; below this reads as a gentle settle
+  function _checkCollisionsForKnock() {
+    const nextPairs = new Set();
+    for (const c of world.contacts) {
+      const key = c.bi.id < c.bj.id ? (c.bi.id + '_' + c.bj.id) : (c.bj.id + '_' + c.bi.id);
+      nextPairs.add(key);
+      if (_touchingPairs.has(key)) continue; // still touching from last step -- not a new hit
+      const impact = Math.abs(c.getImpactVelocityAlongNormal ? c.getImpactVelocityAlongNormal() : 0);
+      if (impact >= KNOCK_IMPACT_MIN) playKnockSound(Math.min(1, impact / 6));
+    }
+    _touchingPairs = nextPairs;
+  }
+
   // ---------- main loop ----------
   function loop(now) {
     rafId = requestAnimationFrame(loop);
@@ -955,6 +975,7 @@
       }
       world.step(STEP, dt, 6);
       clampDice();
+      _checkCollisionsForKnock();
 
       const minDone = now - prerollT0 >= CFG.minAgitateMs;
       if (minDone && serverValues) beginResolve();
@@ -965,6 +986,7 @@
       let guard = 10;
       while (stepDebt >= STEP && !resolveCtx.done && guard-- > 0) {
         resolveStep(resolveCtx);
+        _checkCollisionsForKnock();
         stepDebt -= STEP;
       }
       platformMesh.position.y = resolveCtx.correcting
@@ -1024,6 +1046,7 @@
         prerollT0 = rollT0;
         prerollNextThump = rollT0 + CFG.buzzMs;
         resetDicePositions();
+        _touchingPairs = new Set(); // stale contacts from the last roll must not suppress this roll's first hit
         phase = 'preroll';
         labelEl.textContent = 'rolling';
         showOverlay();
