@@ -452,6 +452,12 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 @keyframes tutorialArrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 #tutorial-popup-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:center;justify-content:center}
 #tutorial-popup-backdrop.hidden{display:none}
+/* #calib-toolbar's own inline style bakes in display:flex (needed for its layout when it IS
+   shown) -- a plain class rule can never beat an inline style regardless of source order, so
+   without !important here .hidden never actually hid it: the toolbar has been visible on
+   every page load, for every player, since the day it was built, independent of calibActive's
+   real value (confirmed on a brand-new account with zero prior calibrate-mode interaction). */
+#calib-toolbar.hidden{display:none!important}
 #tutorial-popup{background:#181820;border:1px solid rgba(255,255,255,.2);border-radius:14px;
   padding:24px;width:min(90vw,420px);color:#fff;text-align:center}
 #tutorial-popup h3{margin:0 0 10px;font-size:20px}
@@ -1182,7 +1188,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.78</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.79</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
