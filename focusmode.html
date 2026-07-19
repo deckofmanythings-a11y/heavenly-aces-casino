@@ -1182,7 +1182,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.77</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.78</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1601,10 +1601,10 @@ const CRAPLESS_LAYOUT=[
   ['@hop44',          19.465,28.055,14.25, 7.89,'hop'],
   ['@hop33',           4.375,35.995,14.25, 7.89,'hop'],
   ['@hop55',          19.465,35.995,14.25, 7.89,'hop'],
-  // Shifted right (~40px off the felt's right edge) and down 100px per Deck's live-site
-  // feedback -- matches the 'craplessline-*' FM_ART entries' new x:1200,y:424. Width/height
-  // (61.25%/19.11%) unchanged, still fitted to the art's own aspect ratio.
-  ['#num-zone',      37.50,23.556,61.25,19.11,null],
+  // x/y match the 'craplessline-*' FM_ART entries' x:1200,y:424 (right edge ~40px off the
+  // felt, 100px down, per Deck's live-site feedback). Height re-derived for the art's updated
+  // native size (447px, was 344px -- see the matching FM_ART comment): 447/1800*100=24.833.
+  ['#num-zone',      37.50,23.556,61.25,24.83,null],
   // Come/Field/Pass share Pass Line's x/w and stay zero-gapped, same as standard, but with no
   // Don't Pass/Don't Come row: Field drops into Don't Pass's old slot (bottom flush against
   // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
@@ -4003,9 +4003,13 @@ const FM_ART=[
   // Position: right edge sits ~40px off the felt's right edge (3200-40=3160, 3160-1960=1200),
   // 100px down from the original Hard-Ways-top-aligned y:324 (now y:424) -- per Deck's direct
   // feedback on the live site.
-  {id:'craplessline-a', img:'CraplessLineModeA.png', group:null, x:1200,y:424,w:1960,h:344, mode:'crapless',lineMode:'lineA'},
-  {id:'craplessline-b', img:'CraplessLineModeB.png', group:null, x:1200,y:424,w:1960,h:344, mode:'crapless',lineMode:'lineB'},
-  {id:'craplessline-c', img:'CraplessLineModeC.png', group:null, x:1200,y:424,w:1960,h:344, mode:'crapless',lineMode:'lineC'},
+  // Height re-derived for the art's updated native size (2020x460, was 2023x355 -- Deck: "made
+  // them taller and fixed some lining issues") -- x/y/w unchanged (Deck: "positioning should
+  // remain exactly the same"), h recomputed from the new ratio to avoid stretching:
+  // 1960 * 460/2020 = 446.53 -> 447.
+  {id:'craplessline-a', img:'CraplessLineModeA.png', group:null, x:1200,y:424,w:1960,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'craplessline-b', img:'CraplessLineModeB.png', group:null, x:1200,y:424,w:1960,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'craplessline-c', img:'CraplessLineModeC.png', group:null, x:1200,y:424,w:1960,h:447, mode:'crapless',lineMode:'lineC'},
   // Standard number line: Number Line/Buy/Place/Lay stack -- moved into FM_ART (was 4 separate
   // addRegion() calls at the bottom of buildFocusFeltArt()) so mode-filtering applies to them
   // uniformly along with everything else.
