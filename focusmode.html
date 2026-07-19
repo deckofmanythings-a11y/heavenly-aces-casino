@@ -678,7 +678,11 @@ body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;paddin
    DC | Lay:  top=16.18%  height=17.38%   (DC: left 0-50%, Lay: left 50-100%)
    Number:    top=33.56%  height=47.86%
    Place|Buy: top=81.43%  height=18.57%   (Place: left 0-50%, Buy: left 50-100%) */
-body.felt-mode.game-standard #puck-row-h{height:17.1%;padding:0;gap:2px}
+/* Same treatment Crapless already got (Deck: "move the On/Off puck to live sitting on top of
+   the number line like we did with Crapless") -- pulled out of #num-zone's flex column
+   entirely and anchored fully above it instead of eating a fixed % out of the column's own
+   height. #num-strip-h's existing flex:1 picks up the freed space automatically. */
+body.felt-mode.game-standard #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px}
 body.felt-mode.game-standard #num-strip-h{flex:1;padding:0;gap:2px}
 body.felt-mode.game-standard #felt-stage .num-box{position:relative}
 /* .num-box's default 0.5px white border/dark background (see the plain .num-box rule) was
@@ -1419,7 +1423,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.110</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.111</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
