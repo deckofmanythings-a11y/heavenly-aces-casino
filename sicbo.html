@@ -477,6 +477,20 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 
 <script>
 function isDiscordActivity(){return new URLSearchParams(location.search).has('frame_id');}
+if(isDiscordActivity()){
+  const CS_ATTR={click:'onclick',contextmenu:'oncontextmenu',input:'oninput',change:'onchange'};
+  Object.keys(CS_ATTR).forEach(type=>{
+    document.addEventListener(type,function(e){
+      const attr=CS_ATTR[type];
+      const el=e.target.closest('['+attr+']');
+      if(!el)return;
+      const code=el.getAttribute(attr);
+      if(!code)return;
+      try{new Function('event',code).call(el,e);}
+      catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
+    });
+  });
+}
 const SUPABASE_URL=isDiscordActivity()?(location.origin+'/.proxy/supabase'):'https://qgiksiauptrqmxsupwqe.supabase.co';
 const FUNCTIONS_URL=SUPABASE_URL+'/functions/v1';
 const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
