@@ -1072,8 +1072,11 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           <span>FOCUS MODE</span><span id="gmode-caret">▾</span>
         </button>
         <div id="gmode-dropdown" class="hidden">
-          <button class="gmode-btn" onclick="navigateAway('index.html')">
-            CRAPS<span class="gmode-sub">Standard/Crapless</span>
+          <button class="gmode-btn" id="gmode-crapless" onclick="switchGameMode('crapless')">
+            CRAPLESS<span class="gmode-sub">No naturals</span>
+          </button>
+          <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
+            STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
           </button>
           <button class="gmode-btn active" id="gmode-focus" disabled>
             FOCUS MODE<span class="gmode-sub">Standard rules</span>
@@ -1106,6 +1109,11 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           <span>HOP BETS</span>
           <span class="mode-btn-amt" id="hop-total">$0.00</span>
         </button>
+      </div>
+      <div id="line-mode-toggle" style="display:none;gap:3px;width:100%;padding:0 3px 3px" title="Crapless number-line configuration">
+        <button class="mode-btn active" id="line-mode-a" onclick="switchLineMode('lineA')" style="flex:1;font-size:13px;padding:1px 2px;min-height:0" title="Buy + Place on every number">A</button>
+        <button class="mode-btn" id="line-mode-b" onclick="switchLineMode('lineB')" style="flex:1;font-size:13px;padding:1px 2px;min-height:0" title="Buy 2/3/4/5/9/10/11/12, Place 6/8">B</button>
+        <button class="mode-btn" id="line-mode-c" onclick="switchLineMode('lineC')" style="flex:1;font-size:13px;padding:1px 2px;min-height:0" title="Pass/Come only, no Buy/Place">C</button>
       </div>
     </div>
 
@@ -1164,7 +1172,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.72</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.73</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1450,12 +1458,12 @@ let ODDS_LABEL=ODDS_LABEL_CRAPLESS;
 let NUM_DEFS=NUM_DEFS_CRAPLESS;
 let ALL_NUMS=ALL_NUMS_CRAPLESS;
 let ALL_BOX_NUMS=ALL_NUMS_CRAPLESS;
-let activeGame='standard'; // Focus Mode only ever plays standard-craps rules
+let activeGame='standard'; // real value set once startSession()/applyServerGameState() run
 // Hoisted up from its original position further down the script: the initial
 // applyGameMode('standard') call below needs this during its first updateUI() pass, and
 // unlike index.html (which always boots into crapless mode, so this branch was never hit
 // until well after the whole script had finished executing), Focus Mode boots straight into
-// 'standard' mode, exposing the temporal-dead-zone gap that only mattered on this path.
+// a mode, exposing the temporal-dead-zone gap that only mattered on this path.
 // Any Craps bar and the C circle resolve the same underlying bet (G.bets.anyCraps) but are
 // two separate physical spots -- some players bet one exclusively, some both, so each spot's
 // displayed chip stack tracks only what was placed there, not a shared "last touched" total.
@@ -1470,10 +1478,13 @@ let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
 // ===================== FELT IMAGE MODE (crapless) =====================
 const FELT_IMG={
-  crapless:{hw:'Crapless-Felt-with-Horn.gif',hop:'Crapless-Felt-with-HopBets.gif'},
-  // Focus Mode always plays standard rules on the new blank felt -- BlankFelt.png has no
-  // baked-in Hardways/Hop art (that's now the separate HardWays.png/HopBets.png overlays in
-  // #fm-art-layer), so both tabs use the same base image, unlike the original two-GIF setup.
+  // Both games play on the same blank felt now -- BlankFelt.png has no baked-in art at all
+  // (Hardways/Hop/number-line/Field/Come/Pass/etc. are all separate overlays in #fm-art-layer),
+  // so all four combinations use the same base image. Crapless used to point at the old fully-
+  // baked Crapless-Felt-with-Horn.gif/-HopBets.gif -- left over from before crapless had its
+  // own #fm-art-layer content, that old art's own baked-in labels were showing up doubled
+  // underneath the new overlays once crapless became reachable in Focus Mode.
+  crapless:{hw:'BlankFelt.png',hop:'BlankFelt.png'},
   standard:{hw:'BlankFelt.png',hop:'BlankFelt.png'}
 };
 // [selector, leftPct, topPct, widthPct, heightPct, tab or null]
@@ -1508,6 +1519,11 @@ const FELT_LAYOUT=[
   // Reshaped/repositioned via Deck's own drag-tool calibration pass (narrower, taller).
   ['#tab-hw',   0.250,13.278,11.438,3.833,null],
   ['#tab-hop', 24.063,13.278,11.313,3.889,null],
+  // Crapless-only Line Mode A/B/C toggle -- same "pull it off #left-col-header" treatment as
+  // Hardways/Hop Bets above (that box is only sized for 2 rows, not 3), sitting directly under
+  // them spanning their combined width. Hidden via display:none in applyGameMode() outside
+  // crapless, but still positioned here unconditionally like everything else in FELT_LAYOUT.
+  ['#line-mode-toggle', 0.250,17.35,35.126,2.80,null],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
@@ -1575,10 +1591,18 @@ const CRAPLESS_LAYOUT=[
   ['@hop44',          19.465,28.055,14.25, 7.89,'hop'],
   ['@hop33',           4.375,35.995,14.25, 7.89,'hop'],
   ['@hop55',          19.465,35.995,14.25, 7.89,'hop'],
-  ['#num-zone',      34.25,18.60,61.25,28.90,null],
-  ['#come-bar',      52.97,49.56,42.47, 8.89,null],
-  ['#field-bar',     53.03,60.50,42.47,12.00,null],
-  ['#pass-bar',      53.03,73.00,42.47,10.50,null]
+  // Number line's top edge aligned with Hard Ways' top edge (Deck: "top edge of the Crapless
+  // number line should align with the top edge of the Hard 6 and Hard 10 boxes"), height
+  // fitted to the new art's own aspect ratio -- see the 'craplessline-*' FM_ART entries.
+  ['#num-zone',      34.25,18.00,61.25,19.11,null],
+  // Come/Field/Pass share Pass Line's x/w and stay zero-gapped, same as standard, but with no
+  // Don't Pass/Don't Come row: Field drops into Don't Pass's old slot (bottom flush against
+  // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
+  // same x/y/w/h as STANDARD_LAYOUT's own #pass-bar. See the 'come-crapless'/'field-crapless'
+  // FM_ART entries for the matching art positions.
+  ['#come-bar',      56.656,59.278,42.750,11.556,null],
+  ['#field-bar',     56.656,70.833,42.750,15.389,null],
+  ['#pass-bar',      56.656,86.223,42.750,11.556,null]
 ];
 // Standard-specific positions, measured directly on the standard felt art -- this sheet has
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
@@ -1652,6 +1676,10 @@ feltLayoutFor('standard').forEach(([sel,,,,,tab])=>{
   if(sel.charAt(0)==='@')BET_ID_TAB['bet-'+sel.slice(1)]=tab;
 });
 let feltActive=false,feltTab='hw';
+// Crapless-only: which Buy/Place bets the number line offers right now. See
+// LINE_MODE_ALLOWED/switchLineMode() further down. Independent of feltTab (hw/hop) -- both
+// can be active at once, they gate different, unrelated parts of the felt.
+let lineMode='lineA';
 const feltHomes=new Map();
 function feltEl(sel){
   if(sel.charAt(0)==='@'){
@@ -1850,8 +1878,7 @@ function applyGameMode(mode){
     if(fiC)fiC.innerHTML=d1+d1+' pays double &nbsp;·&nbsp; '+d6+d6+' pays double';
     if(fiS)fiS.innerHTML=d1+d1+' pays double &nbsp;·&nbsp; '+d6+d6+' pays triple';
   }
-  // Update mode toggle buttons (Focus Mode has no Crapless/Standard switcher -- these ids
-  // don't exist here, only in index.html -- so guard rather than assume they're present).
+  // Update mode toggle buttons
   const gmCl=document.getElementById('gmode-crapless');if(gmCl)gmCl.classList.toggle('active',mode==='crapless');
   const gmSt=document.getElementById('gmode-standard');if(gmSt)gmSt.classList.toggle('active',mode==='standard');
   // Show/hide Don't Pass (standard = real bar, crapless = hidden entirely)
@@ -1866,6 +1893,12 @@ function applyGameMode(mode){
   buildStrip();
   // Both games render on their own felt sheet now
   enterFeltMode();
+  // The felt art layer (Come/Field/Pass/number-line/etc.) is entirely mode-specific now --
+  // rebuild it fresh for the new mode rather than leaving the previous mode's art up.
+  if(typeof buildFocusFeltArt==='function')buildFocusFeltArt();
+  if(typeof applyFocusVisibility==='function')applyFocusVisibility(); // also runs applyLineModeGating()
+  // Line Mode toggle (Buy/Place configuration) only makes sense in crapless.
+  const lm=document.getElementById('line-mode-toggle');if(lm)lm.style.display=mode==='crapless'?'flex':'none';
 }
 
 function canSwitchMode(){
@@ -2246,10 +2279,11 @@ function startSession(player){
   G.bankroll=parseFloat(player.bankroll)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
-  // Focus Mode only ever plays the 'standard' bucket -- it's a filtered view onto the same
-  // Standard Craps game as index.html, not a separate game_state, so force the mode rather
-  // than trusting rawGs.activeGame (which could be 'crapless' if the player was last there).
-  applyServerGameState(player,'standard');
+  // Focus Mode now plays both buckets (same game_state shape as index.html) -- resume
+  // whichever mode the player was last in, unless a link into this page asked for a specific
+  // one (?mode=crapless / ?mode=standard, used by the site nav's CRAPLESS/STANDARD entries).
+  const forcedMode=new URLSearchParams(location.search).get('mode');
+  applyServerGameState(player,forcedMode==='crapless'||forcedMode==='standard'?forcedMode:null);
   updateUI();initDice();
 }
 // saveCleanState() writes whatever G currently holds into the real player's saved
@@ -3028,6 +3062,54 @@ function switchTab(t){
   if(typeof applyFocusVisibility==='function')applyFocusVisibility();
   if(typeof calibActive!=='undefined'&&calibActive)calibBuildLayer();
 }
+// ── CRAPLESS NUMBER-LINE MODE ─────────────────────────────────────────────────
+// Which Buy/Place bets a crapless table actually offers -- three real configurations, not
+// just a display preference: Line A offers Buy+Place on every number, Line B is the common
+// "house way" (Buy the outside numbers 2/3/4/5/9/10/11/12, Place the inside 6/8), Line C
+// offers neither, Pass/Come only. null in a list means "every number allowed."
+const LINE_MODE_ALLOWED={
+  lineA:{buy:null,                          place:null},
+  lineB:{buy:[2,3,4,5,9,10,11,12],          place:[6,8]},
+  lineC:{buy:[],                            place:[]}
+};
+function lineModeAllows(type,n){
+  if(activeGame!=='crapless')return true; // line mode only restricts crapless's number line
+  const list=LINE_MODE_ALLOWED[lineMode][type];
+  return list===null||list.includes(n);
+}
+function switchLineMode(m){
+  if(!LINE_MODE_ALLOWED[m]||lineMode===m)return;
+  lineMode=m;
+  ['lineA','lineB','lineC'].forEach(x=>{
+    const btn=document.getElementById('line-mode-'+x.slice(4).toLowerCase());
+    if(btn)btn.classList.toggle('active',x===m);
+  });
+  // A number that was allowed under the old mode may not be under the new one -- refund
+  // rather than leave money silently sitting on a bet the table no longer offers.
+  ALL_NUMS_CRAPLESS.forEach(n=>{
+    ['buy','place'].forEach(type=>{
+      if(lineModeAllows(type,n))return;
+      const key=type+n,amt=G.bets[key]||0;
+      if(amt<=0)return;
+      G.bankroll=r2(G.bankroll+amt);delete G.bets[key];
+      addLog((type==='buy'?'Buy':'Place')+' '+n+' refunded -- not offered in this line mode.','info');
+    });
+  });
+  if(typeof buildFocusFeltArt==='function')buildFocusFeltArt();
+  if(typeof applyFocusVisibility==='function')applyFocusVisibility(); // also runs applyLineModeGating()
+  updateUI();
+}
+// Hides (never re-shows -- applyFocusVisibility()'s own display logic already handles the
+// "should this be visible at all for this lesson" question) whichever #nb-buy-N/#nb-place-N
+// cells the current line mode doesn't offer. Always called from the tail of
+// applyFocusVisibility() so the two systems compose as an AND, never fight each other.
+function applyLineModeGating(){
+  if(activeGame!=='crapless')return;
+  ALL_NUMS_CRAPLESS.forEach(n=>{
+    if(!lineModeAllows('buy',n)){const el=document.getElementById('nb-buy-'+n);if(el)el.style.display='none';}
+    if(!lineModeAllows('place',n)){const el=document.getElementById('nb-place-'+n);if(el)el.style.display='none';}
+  });
+}
 function flashPuckGreen(){
   const p=document.getElementById('puck3d-wrap');
   if(p&&p.classList.contains('puck3d-visible')){
@@ -3163,6 +3245,11 @@ function placeBet(key,loc){
   if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
   if(key==='dp'){if(activeGame!=='standard'){addLog('Don\'t Pass: standard mode only.','info');return;}if(G.phase==='point'){addLog('Don\'t Pass: come-out only.','info');return;}}
   if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
+  if(activeGame==='crapless'&&(key.startsWith('buy')||key.startsWith('place'))){
+    const type=key.startsWith('buy')?'buy':'place';
+    const n=parseInt(key.slice(type.length),10);
+    if(!lineModeAllows(type,n)){addLog((type==='buy'?'Buy':'Place')+' '+n+': not offered in this line mode.','info');return;}
+  }
   const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
   if(tutorialActive)tutorialOnBetPlaced(key);
 }
@@ -3820,14 +3907,22 @@ const FM_ART=[
   // of the Pass Line and the edge of the felt") -- now that #bottom-section lives below
   // the felt instead of overlaid on it, there's room to push this whole zero-gap chain
   // down. Still zero-gapped in the same come->field->dp->pass order.
-  {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:898, w:1368,h:208},
-  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1106,w:1368,h:277},
-  {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1383,w:1368,h:169},
+  {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:898, w:1368,h:208, mode:'standard'},
+  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1106,w:1368,h:277, mode:'standard'},
+  {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1383,w:1368,h:169, mode:'standard'},
   {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1552,w:1368,h:208},
   // Adjacent to the number line's right edge with no gap (Deck: "should be adjacent to the
   // number line with no space in-between") -- x = NUMLINE_ART.x+NUMLINE_ART.w (2908), y matches
   // the number line's own (now y:405) top.
-  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2908, y:405, w:286, h:460},
+  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2908, y:405, w:286, h:460, mode:'standard'},
+  // Crapless has no Don't Pass / Don't Come at all (Deck: "Remove the Don't Come box. Remove
+  // the Don't Pass Line."), so Field and Come shift down to close the gap: Field sits where
+  // Don't Pass used to be (bottom flush against Pass Line's top, 1275+277=1552), and Come
+  // rests directly on top of Field's new position (1067+208=1275). Same x/w as Pass Line --
+  // the crapless stack stays centered under the same column. Field's art also swaps to the
+  // "pays double" version since crapless pays 2x on both 2 and 12 (no triple-pay 12 here).
+  {id:'come-crapless',  img:'ComeLine.png',        group:'come',  x:1813,y:1067,w:1368,h:208, mode:'crapless'},
+  {id:'field-crapless', img:'Field_PaysDouble.png',group:'field', x:1813,y:1275,w:1368,h:277, mode:'crapless'},
   // Hardways/SEVEN/Prop Bets/Any Craps ('hw' tab only -- HopHardWays/HopBets on the 'hop' tab
   // are a separate physical slot with no headroom to spare, so they're untouched here):
   // - propbets/bigred/anycraps x centered under Hardways (Hardways center = 8+1125/2 = 570.5;
@@ -3876,7 +3971,24 @@ const FM_ART=[
   // PropBets need to be adjacent with no space between them."
   {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:844, w:913, h:698, tab:'hw'},
   {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1542,w:913, h:218, tab:'hw'},
-  {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595}
+  {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595},
+  // Crapless number line: one combined image per configuration (Deck: "there are three
+  // versions. They are NOT meant to stack on one another, just wholesale replace the entire
+  // row"). Top edge aligned with Hard Ways' top edge (y:324, same as 'hardways' above, per
+  // Deck: "top edge of the Crapless number line should align with the top edge of the Hard 6
+  // and Hard 10 boxes"). Width/x fit #num-zone's own crapless hit-region box (34.25%-95.5% of
+  // felt width = 1096-3056px, 1960px wide), height derived from the art's own aspect ratio
+  // (2023x355 native) to avoid stretching.
+  {id:'craplessline-a', img:'CraplessLineModeA.png', group:null, x:1096,y:324,w:1960,h:344, mode:'crapless',lineMode:'lineA'},
+  {id:'craplessline-b', img:'CraplessLineModeB.png', group:null, x:1096,y:324,w:1960,h:344, mode:'crapless',lineMode:'lineB'},
+  {id:'craplessline-c', img:'CraplessLineModeC.png', group:null, x:1096,y:324,w:1960,h:344, mode:'crapless',lineMode:'lineC'},
+  // Standard number line: Number Line/Buy/Place/Lay stack -- moved into FM_ART (was 4 separate
+  // addRegion() calls at the bottom of buildFocusFeltArt()) so mode-filtering applies to them
+  // uniformly along with everything else.
+  {id:'numberline', img:'Number_Line.png', group:null,   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
+  {id:'buyall',      img:'BuyBox.png',     group:'buy',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
+  {id:'placeall',    img:'PlaceBox.png',   group:'place', x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
+  {id:'layall',      img:'LayBox.png',     group:'lay',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'}
 ];
 function fmPct(px,total){return px/total*100;}
 function buildFocusFeltArt(){
@@ -3899,25 +4011,28 @@ function buildFocusFeltArt(){
     el.appendChild(im);
     layer.appendChild(el);
   }
-  FM_ART.forEach(a=>addRegion(a.id,a.img,a.x,a.y,a.w,a.h,a.group,a.num!=null?a.num:null,a.tab));
   // Per-number DC "landed/travel-to" marker (DCNumberBox.png) removed entirely per Deck: "no
   // longer needed." The real per-number landed-DC indicator is #dc-slot-N (a live chip-stack
   // element driven by actual bet state, built in buildStrip()/updateUI()) -- that's untouched,
   // this was only ever a decorative art overlay on top of it.
-  // Number Line, Buy, Place, Lay are now each ONE full-width image spanning all 6 numbers,
-  // all exactly the same size/position (NUMLINE_ART) so they stack perfectly on top of each
-  // other and the number line itself. Built in this order (number line first) so #fm-art-
-  // layer's DOM-order stacking puts Buy/Place/Lay on top of the plain number line, matching
-  // the old "Number Box sits on top of Buy/Place/Lay/DC" intent.
+  // Number Line, Buy, Place, Lay are each ONE full-width image spanning all 6 numbers, all
+  // exactly the same size/position (NUMLINE_ART) so they stack perfectly on top of each other
+  // and the number line itself. DOM order (number line first, matching FM_ART's own order)
+  // puts Buy/Place/Lay on top of the plain number line, matching the old "Number Box sits on
+  // top of Buy/Place/Lay/DC" intent.
   // Visibility is all-or-nothing per type now, not per-number (there's only one image to
   // show/hide) -- if ANY number in that category is toggled on, the whole image shows, per
   // Deck: "If a player turns one on, just use the appropriate image... If they turn all three
   // on, you'll want to turn all three images on, so they all will stack." See
   // applyFocusVisibility()'s handling for the 'buy'/'place'/'lay' keys.
-  addRegion('numberline','Number_Line.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,null,null);
-  addRegion('buyall','BuyBox.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,'buy',null);
-  addRegion('placeall','PlaceBox.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,'place',null);
-  addRegion('layall','LayBox.png',NUMLINE_ART.x,NUMLINE_ART.y,NUMLINE_ART.w,NUMLINE_ART.h,'lay',null);
+  //
+  // mode ('standard'/'crapless'/absent=both) and lineMode ('lineA'/'lineB'/'lineC'/absent=
+  // n/a) gate which entries get built at all -- unlike the tab ('hw'/'hop') system, which
+  // builds everything and toggles display later, a mode/lineMode mismatch means the region
+  // doesn't belong to the current game at all (Deck: "NOT meant to stack on one another, just
+  // wholesale replace the entire row"), so it's simplest and safest to just not create it.
+  FM_ART.filter(a=>(!a.mode||a.mode===activeGame)&&(!a.lineMode||a.lineMode===lineMode))
+    .forEach(a=>addRegion(a.id,a.img,a.x,a.y,a.w,a.h,a.group,a.num!=null?a.num:null,a.tab));
 }
 
 // Buy/Place/Lay/DC/DC Odds/Come/Come Odds chip positions are handled entirely by pre-existing
@@ -4122,6 +4237,7 @@ function applyFocusVisibility(){
     if(visible&&el.dataset.fmTab&&el.dataset.fmTab!==feltTab)visible=false;
     el.style.display=visible?'':'none';
   });
+  applyLineModeGating();
 }
 function focusGroupRowHTML(g){
   if(g.items){
@@ -5274,7 +5390,9 @@ function tutorialDebugReset(){
   addLog('Tutorial progress reset.','info');
 }
 
-// Bootstraps straight into 'standard' mode (Focus Mode has no Crapless option). Deliberately
+// Placeholder pre-login state so there's something valid to render before tryRestoreSession()
+// resolves -- startSession() (real login) calls applyGameMode() again via applyServerGameState()
+// once it knows which mode the player was actually last in (or ?mode= from the URL). Deliberately
 // placed at the very end of the script, after every other top-level let/const/function here --
 // see the comment left at this call's original position for why.
 applyGameMode('standard');
