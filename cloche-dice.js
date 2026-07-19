@@ -119,21 +119,15 @@
   // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
   // exactly to however long a given roll's preroll+resolving phases actually last.
   let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null;
-  // C major pentatonic across two octaves (C5-A6, one octave up from the original C4-A5) -- no
-  // "wrong" notes in this scale, so hitting random ones back to back still sounds jovial rather
-  // than dissonant.
-  const NOTE_SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
-  // Real bells ring with several INHARMONIC partials (not clean integer multiples of the
-  // fundamental, unlike a plucked string or the earlier fundamental+octave version this
-  // replaces), and the higher partials decay noticeably faster than the fundamental -- that's
-  // what gives a bell its characteristic bright "strike" that quickly settles into a longer,
-  // duller hum. Ratios here are loosely modeled on classic bell FM-synthesis partial sets.
-  const BELL_PARTIALS = [
-    { mult: 1.00, vol: 1.00, decay: 0.85 },
-    { mult: 2.76, vol: 0.50, decay: 0.45 },
-    { mult: 5.40, vol: 0.24, decay: 0.28 },
-    { mult: 8.93, vol: 0.12, decay: 0.16 }
-  ];
+  // Deck supplied a reference recording (CrapsRoll.ogg) and asked for the same TYPE OF TONE --
+  // not the file itself, same licensing reason the earlier bell-chime version cites: a real
+  // recording isn't something to source/reuse, but a synth nailing the same character has zero
+  // licensing concerns. Analyzed it computationally (FFT per onset, spectral centroid/
+  // bandwidth, decay time): ~80% of its energy sits in a narrow 600-900Hz band (dominant peaks
+  // cluster 650-820Hz), decaying to -6dB in ~6ms, with almost nothing above 1.5kHz. That's a
+  // short, dark, DRY knock/clack -- real dice hitting a surface -- not a bright ringing bell
+  // with a wide melodic scale and a long tail, which is what this replaces.
+  const KNOCK_FREQS = [625, 656, 688, 719, 750, 781, 813];
   // Builds a synthetic impulse response for ConvolverNode -- decaying filtered noise, the
   // standard way to get a smooth algorithmic reverb tail without needing to source/license an
   // actual recorded impulse response file.
@@ -181,25 +175,36 @@
   function playChimeNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
-    const freq = NOTE_SCALE[Math.floor(Math.random() * NOTE_SCALE.length)];
+    const freq = KNOCK_FREQS[Math.floor(Math.random() * KNOCK_FREQS.length)];
     const t = ctx.currentTime;
     const master = ctx.createGain();
-    // Trimmed slightly vs. the pre-reverb version (was 0.2) to leave headroom now that the
-    // reverb/echo sends add their own audible energy on top of the dry signal.
-    master.gain.value = 0.16 * volume;
+    master.gain.value = 0.5 * volume;
     master.connect(ctx.destination); // dry
-    master.connect(_reverbSend);     // smooth chime-y tail
-    master.connect(_echoSend);       // discrete repeats
-    BELL_PARTIALS.forEach(p => {
-      const osc = ctx.createOscillator(), g = ctx.createGain();
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(p.vol, t + 0.004);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + p.decay);
-      osc.type = 'sine';
-      osc.frequency.value = freq * p.mult;
-      osc.connect(g); g.connect(master);
-      osc.start(t); osc.stop(t + p.decay + 0.02);
-    });
+    master.connect(_reverbSend);     // faint tail -- the reference itself has none, this just
+    master.connect(_echoSend);       // keeps rapid knocks from feeling completely disconnected
+
+    // Tonal body: one sine at the knock's resonant pitch, gone almost as fast as it starts --
+    // matches the reference's ~6ms decay-to-(-6dB), nothing like a bell's long ring.
+    const osc = ctx.createOscillator(), og = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    og.gain.setValueAtTime(0, t);
+    og.gain.linearRampToValueAtTime(1, t + 0.002);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.028);
+    osc.connect(og); og.connect(master);
+    osc.start(t); osc.stop(t + 0.04);
+
+    // Percussive click: a hair of noise bandpassed around the same center frequency, giving
+    // the "clack" of dice hitting a surface instead of a pure electronic beep -- matches the
+    // reference's moderate spectral flatness (not a clean tone, not noise either).
+    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.02), ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
+    const noise = ctx.createBufferSource(); noise.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 3;
+    const ng = ctx.createGain(); ng.gain.value = 0.5;
+    noise.connect(bp); bp.connect(ng); ng.connect(master);
+    noise.start(t);
   }
   // ---------- action-movie dramatic drums + brass (destroyer's missile-strike theme) ----------
   // Low taiko-style sub-bass thumps with a noise-crack attack, a bass brass stab on every 4th
