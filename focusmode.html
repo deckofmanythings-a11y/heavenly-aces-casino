@@ -1197,7 +1197,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.97</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.99</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1545,11 +1545,15 @@ const FELT_LAYOUT=[
   // Reshaped/repositioned via Deck's own drag-tool calibration pass (narrower, taller).
   ['#tab-hw',   0.250,13.278,11.438,3.833,null],
   ['#tab-hop', 24.063,13.278,11.313,3.889,null],
-  // Crapless-only Line Mode A/B/C toggle -- same "pull it off #left-col-header" treatment as
-  // Hardways/Hop Bets above (that box is only sized for 2 rows, not 3), sitting directly under
-  // them spanning their combined width. Hidden via display:none in applyGameMode() outside
-  // crapless, but still positioned here unconditionally like everything else in FELT_LAYOUT.
-  ['#line-mode-toggle', 0.250,17.35,35.126,2.80,null],
+  // Crapless-only Line Mode A/B/C toggle. Moved from under Hardways/Hop Bets to directly below
+  // the crapless number line instead (Deck's request) -- x/w now match CRAPLESS_LAYOUT's
+  // #num-zone exactly (1200,1960px on the 3200x1800 canvas), y sits just under its bottom edge
+  // (424+447=871px) with room to spare before #come-bar's top (1067px). Only matters visually
+  // in crapless -- still hidden via display:none in applyGameMode() outside crapless, and still
+  // kept in FELT_LAYOUT (not moved into CRAPLESS_LAYOUT) so enter/exit-felt-mode logic, which
+  // expects every mode-agnostic entry to be handled the same regardless of activeGame, doesn't
+  // need to change.
+  ['#line-mode-toggle', 37.50,49.444,61.25,2.80,null],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
