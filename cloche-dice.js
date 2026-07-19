@@ -193,51 +193,66 @@
   // volume scales the overall level -- used by the coin waterfall to read as louder/more
   // excited than the dice tumble without actually being a different instrument.
   //
-  // Every call now layers both components every time (no probability gate) -- the reference's
-  // clacks are a constant textural undercurrent, not an occasional accent. Gains (0.42 tonal /
-  // 0.48 percussive) look backwards for "quiet undercurrent" but aren't: the knock's ~30ms
-  // decay is ~7x shorter than the melody's ~200ms ring, so matching the source's 82.6/17.4
-  // energy split needs a comparable (even slightly higher) PEAK on the knock -- offline-
-  // rendered both layers and confirmed 82.7/17.3 energy at these gains. A short percussive
-  // transient can peak as loud as a sustained tone and still read as background texture.
+  // Deck's follow-up: the melody sounded "muted, like underwater," and the knock "dominates."
+  // The muddiness traced to the shared reverb/echo bus -- every note was sent in at full (1x)
+  // send gain, and with notes firing every 80-180ms into a 2s reverb tail, the wash piles up
+  // fast and blurs the pitch definition. And the previous knock/melody gains (0.48/0.42) were
+  // solved to match the REFERENCE clip's total energy ratio, which weights a short transient
+  // and a long tone very differently -- not the same thing as "melody sounds 80% louder,"
+  // which is what Deck actually wants now. Split into two fully independent functions (own
+  // sound, own routing, playable alone) with a direct, literal gain ratio instead.
+  const KNOCK_GAIN = 0.22;
+  const MELODY_GAIN = KNOCK_GAIN * 1.8; // "melody about 80% louder than the clacks"
   function playChimeNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
-    const t = ctx.currentTime;
-    _playMelodyNote(volume, ctx, t);
-    _playKnock(volume, ctx, t);
+    playMelodyNote(volume);
+    playKnockSound(volume);
   }
-  // The dominant voice: a real sustained sine ring at a weighted-random pitch from MELODY_NOTES
-  // (F5 most often, per the reference's own balance), ~150-200ms audible decay -- much shorter
-  // than the old bell chime's 0.85s tail, but a genuine ring, not a percussive transient.
-  function _playMelodyNote(volume, ctx, t) {
-    ctx = ctx || _ensureAudio(); if (!ctx) return;
-    t = t == null ? ctx.currentTime : t;
+  // The singing chime, entirely on its own. Two changes from the muddy version: a triangle
+  // fundamental (real harmonic content -- a bare sine reads as soft/dull) plus a quiet octave-up
+  // sine for shimmer, and the reverb/echo send cut to ~0.18x its old level (was the full dry
+  // signal) so the ring stays defined instead of smearing into a continuous underwater wash.
+  function playMelodyNote(volume) {
+    const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
     const freq = pickMelodyFreq();
+    const t = ctx.currentTime;
     const master = ctx.createGain();
-    master.gain.value = 0.42 * volume;
-    master.connect(ctx.destination);
-    master.connect(_reverbSend);
-    master.connect(_echoSend);
+    master.gain.value = MELODY_GAIN * volume;
+    master.connect(ctx.destination); // dry -- carries the definition
+    const wetSend = ctx.createGain(); wetSend.gain.value = 0.18; // light space, not a wash
+    master.connect(wetSend);
+    wetSend.connect(_reverbSend);
+    wetSend.connect(_echoSend);
+
     const osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.type = 'sine';
+    osc.type = 'triangle';
     osc.frequency.value = freq;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(1, t + 0.006);
+    g.gain.linearRampToValueAtTime(1, t + 0.003);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
     osc.connect(g); g.connect(master);
     osc.start(t); osc.stop(t + 0.22);
+
+    const osc2 = ctx.createOscillator(), g2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.value = freq * 2;
+    g2.gain.setValueAtTime(0, t);
+    g2.gain.linearRampToValueAtTime(0.25, t + 0.003);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    osc2.connect(g2); g2.connect(master);
+    osc2.start(t); osc2.stop(t + 0.17);
   }
-  // The quiet undercurrent: real dice-on-surface knock character (tonal thump + bandpassed
-  // noise click), decaying to -6dB in ~6ms -- present under every note, just no longer the lead.
-  function _playKnock(volume, ctx, t) {
-    ctx = ctx || _ensureAudio(); if (!ctx) return;
-    t = t == null ? ctx.currentTime : t;
+  // The dice-clack, entirely on its own: real dice-on-surface knock character (tonal thump +
+  // bandpassed noise click), decaying to -6dB in ~6ms.
+  function playKnockSound(volume) {
+    const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
     const freq = KNOCK_FREQS[Math.floor(Math.random() * KNOCK_FREQS.length)];
+    const t = ctx.currentTime;
     const master = ctx.createGain();
-    master.gain.value = 0.48 * volume;
+    master.gain.value = KNOCK_GAIN * volume;
     master.connect(ctx.destination);
     master.connect(_reverbSend);
     master.connect(_echoSend);
