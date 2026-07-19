@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces I Luv Suits Poker</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-</script>
+<script src="supabase-js.bundle.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
@@ -402,8 +401,9 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 
 <script src="cards.js?v=0.4.86"></script>
 <script>
-const SUPABASE_URL='https://qgiksiauptrqmxsupwqe.supabase.co';
-const FUNCTIONS_URL='https://qgiksiauptrqmxsupwqe.supabase.co/functions/v1';
+function isDiscordActivity(){return new URLSearchParams(location.search).has('frame_id');}
+const SUPABASE_URL=isDiscordActivity()?(location.origin+'/.proxy/supabase'):'https://qgiksiauptrqmxsupwqe.supabase.co';
+const FUNCTIONS_URL=SUPABASE_URL+'/functions/v1';
 const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{fetch:(url,options)=>fetch(url,{...options,cache:'no-store'})}});
 
