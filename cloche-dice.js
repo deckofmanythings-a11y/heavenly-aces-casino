@@ -255,19 +255,19 @@
   // visibly separated bursts in a side-by-side spectrogram; lengthening the decay too is what
   // actually closed the gap into one continuous singing texture like the reference's.
   //
-  // Timing here (attack/decay) scaled *1.25, then *2, then *2 again (three successive slow-down
-  // requests) -- net *5 on the original 3/320ms and 6/350ms, alongside the matching *5 on
-  // startTumbleNotes' tick interval -- scaling both together keeps the decay-to-onset-interval
-  // ratio the same, so the legato overlap character is preserved at the slower pace instead of
-  // reintroducing gaps.
+  // Timing here (attack/decay) scaled *1.25, *2, *2, then *(2/3) (a 50% speed-up after three
+  // successive slow-downs) -- net *3.333 on the original 3/320ms and 6/350ms, alongside the
+  // matching *3.333 on startTumbleNotes' tick interval -- scaling both together keeps the
+  // decay-to-onset-interval ratio the same, so the legato overlap character is preserved at
+  // whatever the current pace is instead of reintroducing gaps.
   function playMelodyNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
     const t = ctx.currentTime;
     MELODY_VOICES.forEach(v => {
-      if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 15, 1600, ctx, t, volume);
+      if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 10, 1066.7, ctx, t, volume);
     });
-    if (Math.random() < LOW_DRONE.prob) _playVoice(LOW_DRONE.freq, LOW_DRONE.gain, 30, 1750, ctx, t, volume);
+    if (Math.random() < LOW_DRONE.prob) _playVoice(LOW_DRONE.freq, LOW_DRONE.gain, 20, 1166.7, ctx, t, volume);
   }
   // The dice-clack, entirely on its own: real dice-on-surface knock character (tonal thump +
   // bandpassed noise click), decaying to -6dB in ~6ms.
@@ -404,13 +404,12 @@
     // timer at all: Deck asked for it to be tied to real physics collisions instead of a
     // guessed rhythm (dice-to-dice, to-wall, to-floor), so it's now driven directly by
     // _checkCollisionsForKnock() in the main loop below, once per genuinely new contact.
-    // Interval *1.25, then *2, then *2 again (three successive slow-down requests) -- net *5 on
-    // the original 22-52ms, matched by the same *5 on playMelodyNote's attack/decay so the
-    // legato overlap ratio stays the same, just paced slower overall rather than reintroducing
-    // gaps between notes.
+    // Interval *1.25, *2, *2, then *(2/3) (a 50% speed-up after three successive slow-downs) --
+    // net *3.333 on the original 22-52ms, matched by the same *3.333 on playMelodyNote's
+    // attack/decay so the legato overlap ratio stays the same regardless of the current pace.
     (function melodyTick() {
       playMelodyNote();
-      _noteTimer = setTimeout(melodyTick, 110 + Math.random() * 150);
+      _noteTimer = setTimeout(melodyTick, 73.3 + Math.random() * 100);
     })();
   }
   function stopTumbleNotes() {
