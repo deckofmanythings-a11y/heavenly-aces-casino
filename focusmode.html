@@ -69,11 +69,18 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .rollem-all-bar.has-bet{border-color:#ffd700}
 
 /* Info panel (upper right) */
-#info-panel{width:30vw;min-width:200px;max-width:325px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
+#info-panel{width:36vw;min-width:240px;max-width:420px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
 .info-row{display:flex;gap:4px;align-items:center}
 .info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
 .info-btn:hover{background:rgba(255,255,255,.2)}
 .info-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
+#finances-wrap{position:relative;flex:1;display:flex}
+#finances-btn{flex:1;display:flex;align-items:center;justify-content:space-between}
+#finances-caret{font-size:13px;opacity:.7;transition:transform .15s}
+#finances-btn.open #finances-caret{transform:rotate(180deg)}
+#finances-dropdown{position:absolute;top:100%;left:0;right:0;margin-top:3px;background:rgba(15,15,20,.98);border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:4px;display:flex;flex-direction:column;gap:4px;z-index:20}
+#finances-dropdown.hidden{display:none}
+#finances-dropdown .info-btn{width:100%}
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
 .hud-item{display:flex;flex-direction:column}
 .hud-lbl{font-size:17px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
@@ -764,9 +771,15 @@ body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--c
    desktop/tablet felt-mode keeps the existing readable text labels. */
 body.felt-compact #felt-stage #info-panel .info-row:nth-child(2) .info-btn{font-size:0;padding:calc(var(--chip)*0.12) 0}
 body.felt-compact #felt-stage #info-panel .info-row:nth-child(2) .info-btn::before{font-size:calc(var(--chip)*0.44);font-family:system-ui,sans-serif}
+body.felt-compact #felt-stage #info-panel #finances-btn::before{content:"💰"}
 body.felt-compact #felt-stage #info-panel #redeem-btn-top::before{content:"🎟️"}
 body.felt-compact #felt-stage #info-panel #cashout-btn::before{content:"💵"}
 body.felt-compact #felt-stage #info-panel #logout-btn::before{content:"⏻"}
+/* The caret's own text isn't part of the icon swap above (::before adds the icon glyph,
+   it doesn't remove the button's real text) -- font-size:0 on .info-btn already silences
+   "Finances", but #finances-caret is a separate inline span with its own font-size, so
+   without this it'd be the only visible character left in the button. */
+body.felt-compact #felt-stage #info-panel #finances-caret{display:none}
 /* Same cramped-box problem as the info-panel buttons, different element: .gmode-btn (the
    Crapless/Standard/Sic-Bo/Destroyer 2x2 grid) wasn't touched by the .mode-btn rules above --
    that's a different class entirely (.mode-btn is the Hardways/Hop Bets tab toggle in the left
@@ -1193,14 +1206,20 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
       </div>
       <div class="info-row">
-        <button class="info-btn gold" id="redeem-btn-top" onclick="openRedeemModal(false)">Redeem</button>
-        <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
-        <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
+        <div id="finances-wrap">
+          <button class="info-btn gold" id="finances-btn" onclick="toggleFinancesDropdown()">
+            <span>Finances</span><span id="finances-caret">▾</span>
+          </button>
+          <div id="finances-dropdown" class="hidden">
+            <button class="info-btn gold" id="redeem-btn-top" onclick="closeFinancesDropdown();openRedeemModal(false)">Redeem</button>
+            <button class="info-btn" id="cashout-btn" onclick="closeFinancesDropdown();cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
+          </div>
+        </div>
+        <button class="info-btn" id="logout-btn" onclick="logout()" style="flex:1">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.107</div>
+<div class="hud-item" id="hud-lastwin-row"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e;font-size:15px;line-height:1.25">—</div></div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
-        <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
         <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
       </div>
@@ -1402,7 +1421,9 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="25" onclick="selectChip(25)">$25</div>
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
-        <div style="flex:1"></div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center">
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.108</span>
+        </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
         <button class="bar-btn" id="double-btn" onclick="doubleBet()">Double</button>
@@ -1555,7 +1576,10 @@ const FELT_LAYOUT=[
   // of a 5-button grid (Deck: "move the game selector... so Hard Ways can move up").
   ['#left-col-header', 0.40, 0.70,12.60,12.00,null],
   ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
-  ['#info-panel',     87.00, 0.70,12.60,17.00,null],
+  // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
+  // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
+  // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
+  ['#info-panel',     82.50, 0.70,17.00,17.00,null],
   // #bottom-section is deliberately NOT in this list -- it no longer gets reparented
   // into #felt-stage/positioned as % of the felt art. It now lives in #play-area
   // instead, sized/positioned directly in sizeFeltStage() so it sits flush below the
@@ -2091,6 +2115,40 @@ const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,max
 const fmtS=n=>'$'+Math.abs(n).toFixed(0);
 const oddsLim=(flat,pt)=>r2(flat*(ODDS_MULT[pt]||1));
 
+// Turns a roll's raw per-bet log lines into the breakdown the Last Win HUD line shows
+// ("+$95 ($90 + $10 returned - $5 vig)"). No per-bet stake lookup needed -- every log line
+// already follows one of two fixed shapes from pP()/pR() (and the server mirrors the same
+// shapes, per the FOCUS_PRACTICE_NOTE hand-port comment): "<Bet>: +<profit> (stays)" prints
+// pure profit with the stake never touched, "<Bet>: +<profit> (returned)" prints profit only
+// too even though stake+profit both get credited -- so the stake portion for every returned
+// line, summed, is just whatever's left of the roll's total once every printed profit amount
+// (stays + returned) is subtracted back out. Buy bets are the one case where the printed
+// "profit" is already net-of-vig; reversing net=gr-r2(gr*0.05) (gr=net/0.95) recovers the vig.
+function computeLastWinBreakdown(rawLog,totalReturned){
+  if(!(totalReturned>0))return null;
+  let staysTotal=0,returnedProfitTotal=0,vigTotal=0;
+  (rawLog||[]).forEach(line=>{
+    let m=line.match(/^([^:]+):\s*\+([\d.]+)\s*\(stays\)/i);
+    if(m){staysTotal=r2(staysTotal+parseFloat(m[2]));return;}
+    m=line.match(/^([^:]+):\s*\+([\d.]+)\s*\(returned\)/i);
+    if(m){
+      const label=m[1].trim(),net=parseFloat(m[2]);
+      returnedProfitTotal=r2(returnedProfitTotal+net);
+      if(/^Buy\s/i.test(label)){const gr=r2(net/0.95);vigTotal=r2(vigTotal+r2(gr-net));}
+    }
+  });
+  const grossProfit=r2(staysTotal+returnedProfitTotal+vigTotal);
+  const stakeReturned=r2(Math.max(0,totalReturned-staysTotal-returnedProfitTotal));
+  return{total:totalReturned,grossProfit,stakeReturned,vig:vigTotal};
+}
+function fmtLastWin(b){
+  if(!b||!(b.total>0))return '—';
+  if(b.stakeReturned<=0.001&&b.vig<=0.001)return '+'+fmt(b.total)+' (bet stays)';
+  let s='+'+fmt(b.total)+' ('+fmt(b.grossProfit)+' + '+fmt(b.stakeReturned)+' returned';
+  if(b.vig>0.001)s+=' - '+fmt(b.vig)+' vig';
+  return s+')';
+}
+
 function makeInitialG(){return{bankroll:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false}};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
@@ -2405,6 +2463,14 @@ function exitFocusPracticeForNav(){
 function toggleGameModeDropdown(){
   document.getElementById('gmode-dropdown').classList.toggle('hidden');
   document.getElementById('gmode-current-btn').classList.toggle('open');
+}
+function toggleFinancesDropdown(){
+  document.getElementById('finances-dropdown').classList.toggle('hidden');
+  document.getElementById('finances-btn').classList.toggle('open');
+}
+function closeFinancesDropdown(){
+  document.getElementById('finances-dropdown').classList.add('hidden');
+  document.getElementById('finances-btn').classList.remove('open');
 }
 async function navigateAway(url){
   exitFocusPracticeForNav();
@@ -3632,7 +3698,7 @@ async function rollDice(){
     spawnLossGhosts(rawLog);
     spawnWinGhosts(rawLog);
     restoreFromServerState(data.newState);
-    if(data.returned>0)G.lastWin=data.returned;
+    if(data.returned>0){G.lastWin=data.returned;G.lastWinBreakdown=computeLastWinBreakdown(rawLog,data.returned);}
     G.rollHistory=data.newState.rollHistory||G.rollHistory;
     chkRepeat();
     document.getElementById('roll-btn').disabled=false;
@@ -3744,7 +3810,7 @@ function updateUI(){
   document.getElementById('hud-bankroll').textContent=fmt(G.bankroll);
   document.getElementById('hud-bet').textContent=fmt(tBets());
   document.getElementById('hud-lastbet').textContent=(G._lastBetDisplay&&G._lastBetDisplay>0)?fmt(G._lastBetDisplay):'—';
-  document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmt(G.lastWin):'—';
+  document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtLastWin(G.lastWinBreakdown):'—';
   const act=bActive();
   const bsEl=document.getElementById('bets-status-bar');bsEl.textContent=act?'ON':'OFF';bsEl.style.color=act?'rgba(100,255,150,.8)':'rgba(255,200,0,.8)';
   const betonBtn=document.getElementById('beton-btn');
