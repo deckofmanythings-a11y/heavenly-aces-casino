@@ -562,7 +562,8 @@ async function loginPlayer(username,password){
 async function tryRestoreSession(){
   const token=localStorage.getItem('craps_session');if(!token)return;
   const{data,error}=await sb.from('players').select('*').eq('session_token',token).maybeSingle();
-  if(error||!data){localStorage.removeItem('craps_session');return;}
+  if(error){console.error('tryRestoreSession: query failed, leaving session token intact',error);return;}
+  if(!data){localStorage.removeItem('craps_session');return;}
   if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
   startSession(data);
 }

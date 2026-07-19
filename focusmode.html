@@ -1136,9 +1136,9 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </button>
       </div>
       <div id="line-mode-toggle" style="display:none;gap:3px;width:100%;padding:0 3px 3px" title="Crapless number-line configuration">
-        <button class="mode-btn active" id="line-mode-a" onclick="switchLineMode('lineA')" style="flex:1;font-size:13px;padding:1px 2px;min-height:0" title="Buy + Place on every number">A</button>
-        <button class="mode-btn" id="line-mode-b" onclick="switchLineMode('lineB')" style="flex:1;font-size:13px;padding:1px 2px;min-height:0" title="Buy 2/3/4/5/9/10/11/12, Place 6/8">B</button>
-        <button class="mode-btn" id="line-mode-c" onclick="switchLineMode('lineC')" style="flex:1;font-size:13px;padding:1px 2px;min-height:0" title="Pass/Come only, no Buy/Place">C</button>
+        <button class="mode-btn active" id="line-mode-a" onclick="switchLineMode('lineA')" style="flex:1;font-size:10px;line-height:1.15;padding:2px 2px;min-height:0" title="Buy + Place on every number">Full Buy/Place</button>
+        <button class="mode-btn" id="line-mode-b" onclick="switchLineMode('lineB')" style="flex:1;font-size:10px;line-height:1.15;padding:2px 2px;min-height:0" title="Buy 2/3/4/5/9/10/11/12, Place 6/8">Limited Buy/Place</button>
+        <button class="mode-btn" id="line-mode-c" onclick="switchLineMode('lineC')" style="flex:1;font-size:10px;line-height:1.15;padding:2px 2px;min-height:0" title="Pass/Come only, no Buy/Place">No Buy/Place Bets</button>
       </div>
     </div>
 
@@ -2323,7 +2323,8 @@ async function loginPlayer(username,password){
 async function tryRestoreSession(){
   const token=localStorage.getItem('craps_session');if(!token)return;
   const{data,error}=await sb.from('players').select('*').eq('session_token',token).maybeSingle();
-  if(error||!data){localStorage.removeItem('craps_session');return;}
+  if(error){console.error('tryRestoreSession: query failed, leaving session token intact',error);return;}
+  if(!data){localStorage.removeItem('craps_session');return;}
   if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
   startSession(data);
 }

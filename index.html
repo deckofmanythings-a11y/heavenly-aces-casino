@@ -826,10 +826,14 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           <span id="gmode-current-label">CRAPLESS</span><span id="gmode-caret">▾</span>
         </button>
         <div id="gmode-dropdown" class="hidden">
-          <button class="gmode-btn active" id="gmode-crapless" onclick="switchGameMode('crapless')">
+          <!-- The original in-page Crapless/Standard table (switchGameMode-driven, still used by
+               Discord Activity entry + anyone landing on this page directly) is retired as a
+               user-facing destination: these two menu items now hand off to Focus Mode instead
+               of switching locally, same as every other entry in this dropdown. -->
+          <button class="gmode-btn active" id="gmode-crapless" onclick="navigateAway('focusmode.html?mode=crapless')">
             CRAPLESS<span class="gmode-sub">No naturals</span>
           </button>
-          <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
+          <button class="gmode-btn" id="gmode-standard" onclick="navigateAway('focusmode.html?mode=standard')">
             STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
           </button>
           <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
@@ -919,7 +923,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.101</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.102</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1884,7 +1888,11 @@ async function loginPlayer(username,password){
 async function tryRestoreSession(){
   const token=localStorage.getItem('craps_session');if(!token)return;
   const{data,error}=await sb.from('players').select('*').eq('session_token',token).maybeSingle();
-  if(error||!data){localStorage.removeItem('craps_session');return;}
+  // A failed request (network hiccup, Discord proxy misconfig, etc.) is not proof the session
+  // is invalid -- only clear the stored token on a clean "no such row" or genuine expiry, never
+  // on a query error, or a transient failure would permanently sign the player out.
+  if(error){console.error('tryRestoreSession: query failed, leaving session token intact',error);return;}
+  if(!data){localStorage.removeItem('craps_session');return;}
   if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
   startSession(data);
 }
@@ -1948,6 +1956,13 @@ async function navigateAway(url){
     closeGameModeDropdown();
     const mode=activeGame||'crapless';
     await saveCleanState(mode);
+    // A plain filename navigation drops Discord's frame_id/instance_id query params, which
+    // makes the destination page think it's a normal website visit and try direct (blocked)
+    // Supabase calls instead of going through the /.proxy/ mapping. Carry them forward.
+    if(isDiscordActivity()){
+      const sep=url.includes('?')?'&':'?';
+      url=url+sep+location.search.slice(1);
+    }
     window.location.href=url;
   });
 }
