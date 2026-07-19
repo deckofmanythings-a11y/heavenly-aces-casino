@@ -128,6 +128,15 @@
   // short, dark, DRY knock/clack -- real dice hitting a surface -- not a bright ringing bell
   // with a wide melodic scale and a long tail, which is what this replaces.
   const KNOCK_FREQS = [625, 656, 688, 719, 750, 781, 813];
+  // Deck's follow-up: there IS a musical layer in the reference, riding on top of the knock --
+  // that ~700Hz knock resonance is rock-steady in every single window across the whole 2.3s
+  // clip (matches KNOCK_FREQS almost exactly, confirming it's the knock's own pitch, not a
+  // melody), but three OTHER pitches -- G#4/415Hz, C#5/554Hz, G#5/830Hz -- fade in and out at
+  // different points in the clip with a much longer sustain (100-300ms, found via a
+  // sustained-bin scan: which frequency bins stay loud across many consecutive analysis frames
+  // rather than spiking once like the knock does). Real 12-TET pitches, a fourth and a fifth
+  // apart -- clearly an intentional soft chime layer, not resonance/noise bleed.
+  const MELODY_NOTES = [415.30, 554.37, 830.61];
   // Builds a synthetic impulse response for ConvolverNode -- decaying filtered noise, the
   // standard way to get a smooth algorithmic reverb tail without needing to source/license an
   // actual recorded impulse response file.
@@ -205,6 +214,33 @@
     const ng = ctx.createGain(); ng.gain.value = 0.5;
     noise.connect(bp); bp.connect(ng); ng.connect(master);
     noise.start(t);
+
+    // Melody layer: doesn't fire on every knock -- in the reference, each of the three pitches
+    // only occupies part of the clip at a time (never all three, never constantly), so a knock
+    // that's already firing every 80-180ms would wash it into a blur if it played every time.
+    // ~35% keeps it landing every 2-3 knocks, closer to the reference's actual note spacing.
+    if (Math.random() < 0.35) _playMelodyNote(volume);
+  }
+  // The softer, longer-ringing pitch layer found riding on top of the knock (see MELODY_NOTES).
+  // Much shorter than the old bell chime's 0.85s tail -- matches the ~100-300ms sustain actually
+  // measured in the reference -- but a real sine ring, not a percussive transient like the knock.
+  function _playMelodyNote(volume) {
+    const ctx = _ensureAudio(); if (!ctx) return;
+    const freq = MELODY_NOTES[Math.floor(Math.random() * MELODY_NOTES.length)];
+    const t = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.value = 0.14 * volume; // quieter than the knock -- it's an undertone, not the lead
+    master.connect(ctx.destination);
+    master.connect(_reverbSend);
+    master.connect(_echoSend);
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(1, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    osc.connect(g); g.connect(master);
+    osc.start(t); osc.stop(t + 0.22);
   }
   // ---------- action-movie dramatic drums + brass (destroyer's missile-strike theme) ----------
   // Low taiko-style sub-bass thumps with a noise-crack attack, a bass brass stab on every 4th
