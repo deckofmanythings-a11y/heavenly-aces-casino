@@ -242,14 +242,22 @@
   // brightened voice at a time. Each call now independently rolls every voice in MELODY_VOICES
   // (F5 is practically an always-on anchor) plus LOW_DRONE, so a real cluster forms instead of
   // a monophonic pick -- the "brightness" comes from real polyphony now, not synthetic overtones.
+  //
+  // Decay lengthened 200ms->320ms (drone 260ms->350ms) after a spectrogram comparison showed
+  // the actual staccato-vs-legato bug: bandpass-tracking the reference's F5 band across the
+  // whole clip found it stays above -20dB in 85% of all frames -- essentially continuous, not
+  // discrete blips -- because dense onsets (~37ms apart, see startTumbleNotes) heavily overlap
+  // each note's ring. Matching the onset density alone with the old short decay still produced
+  // visibly separated bursts in a side-by-side spectrogram; lengthening the decay too is what
+  // actually closed the gap into one continuous singing texture like the reference's.
   function playMelodyNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
     const t = ctx.currentTime;
     MELODY_VOICES.forEach(v => {
-      if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 3, 200, ctx, t, volume);
+      if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 3, 320, ctx, t, volume);
     });
-    if (Math.random() < LOW_DRONE.prob) _playVoice(LOW_DRONE.freq, LOW_DRONE.gain, 6, 260, ctx, t, volume);
+    if (Math.random() < LOW_DRONE.prob) _playVoice(LOW_DRONE.freq, LOW_DRONE.gain, 6, 350, ctx, t, volume);
   }
   // The dice-clack, entirely on its own: real dice-on-surface knock character (tonal thump +
   // bandpassed noise click), decaying to -6dB in ~6ms.
@@ -381,9 +389,17 @@
   function startTumbleNotes() {
     stopTumbleNotes();
     if (CFG.soundTheme === 'action') { startActionHits(); return; }
+    // Was 80-180ms (~130ms avg) -- far too sparse. Onset-detected the reference directly
+    // (~62 onsets over its 2.345s length) and got ~37ms average spacing, ~3.5x denser than
+    // this. Spectrogram comparison made the actual bug obvious: at the old interval, each
+    // melody voice's decay tail had mostly died out before the next one fired, so the pitch
+    // content showed up as separated staccato blips with silence between them -- not the
+    // reference's continuous, unbroken, overlapping "singing" bands. Matching the real onset
+    // density (plus playMelodyNote()'s longer decay, see MELODY_VOICES) is what actually
+    // makes consecutive notes overlap into a legato texture instead of individual chirps.
     (function tick() {
       playChimeNote();
-      _noteTimer = setTimeout(tick, 80 + Math.random() * 100);
+      _noteTimer = setTimeout(tick, 22 + Math.random() * 30);
     })();
   }
   function stopTumbleNotes() {
