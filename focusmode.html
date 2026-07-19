@@ -1043,7 +1043,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <button class="tt-continue" id="tt-continue" onclick="tutorialAdvance()">Continue</button>
     </div>
   </div>
-  <div id="tutorial-popup-backdrop" class="hidden">
+  <div id="tutorial-popup-backdrop" class="hidden" onclick="if(event.target===this)tutorialSkipFromPopup()">
     <div id="tutorial-popup">
       <h3>Learn Craps</h3>
       <p>Would you like to play a short guided tutorial before you start?</p>
@@ -1198,7 +1198,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.86</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.87</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -5463,6 +5463,19 @@ function tutorialMaybeShowPopup(){
     document.getElementById('tutorial-popup-backdrop').classList.remove('hidden');
   }
 }
+// tutorialProgress lives in localStorage, not the player's server-side account -- private
+// browsing, a cleared cache, or a different browser/device all reset it to "never seen,"
+// re-showing this popup for players who've played for months. It's a real, full-viewport,
+// pointer-events:auto backdrop (z-index 600) sitting over the whole game: if it's not
+// noticed or dismissed, EVERY click including ROLL silently hits the backdrop instead of the
+// real UI underneath, with no error anywhere (Deck: "the ROLL button is disconnected, zero
+// feedback"). Escape and click-outside (see the backdrop's own onclick) both skip it, so it
+// can never trap a session again regardless of why it appeared.
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!document.getElementById('tutorial-popup-backdrop').classList.contains('hidden')){
+    tutorialSkipFromPopup();
+  }
+});
 
 // ── Tutorial debug panel ──────────────────────────────────────────────────────
 function toggleTutorialDebug(){
