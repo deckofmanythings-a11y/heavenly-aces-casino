@@ -375,6 +375,15 @@
     const posA = geo.attributes.position;
     const half = size / 2 - radius;
     const v = new THREE.Vector3();
+    // Analytical normals instead of computeVertexNormals(): a face-interior vertex only ever
+    // gets pushed along ONE axis (straight out to the flat face plane, dx=dy=0), so its true
+    // normal is the exact axis direction (0,0,1) etc, not an average with its rounded-corner
+    // neighbors. computeVertexNormals() blends across that boundary regardless, which is what
+    // was making the flat faces look subtly bulged even though their vertex positions were
+    // already flat -- the smoothing was happening in the shading, not the geometry. Using the
+    // same (dx,dy,dz) push direction as the normal keeps every flat-face vertex's normal
+    // uniformly perpendicular (dead-flat shading) and only lets the actual rounded band curve.
+    const normals = new Float32Array(posA.count * 3);
     for (let i = 0; i < posA.count; i++) {
       v.fromBufferAttribute(posA, i);
       const cx = Math.max(-half, Math.min(half, v.x));
@@ -382,10 +391,14 @@
       const cz = Math.max(-half, Math.min(half, v.z));
       let dx = v.x - cx, dy = v.y - cy, dz = v.z - cz;
       const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      if (len > 0) { const k = radius / len; dx *= k; dy *= k; dz *= k; }
+      if (len > 0) {
+        const inv = 1 / len;
+        normals[i * 3] = dx * inv; normals[i * 3 + 1] = dy * inv; normals[i * 3 + 2] = dz * inv;
+        const k = radius / len; dx *= k; dy *= k; dz *= k;
+      }
       posA.setXYZ(i, cx + dx, cy + dy, cz + dz);
     }
-    geo.computeVertexNormals();
+    geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
     return geo;
   }
 
@@ -559,7 +572,12 @@
       const mats = faceValues.map(v => new THREE.MeshStandardMaterial({
         map: faceTexture(v, imgMap), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
       }));
-      const mesh = new THREE.Mesh(roundedBoxGeometry(s, edgeR, 4), mats);
+      // seg bumped 4 -> 10: the flat-face region only spans size-2*radius out of the full
+      // face, so at seg=4 very few of a face's own grid lines actually land in the truly-flat
+      // zone -- most of the visible curve near an edge was being drawn with just one or two
+      // polygons, which reads as faceted/sharp rather than smoothly rounded. More segments
+      // gives the rounded band enough polygons to look smooth without changing edgeR itself.
+      const mesh = new THREE.Mesh(roundedBoxGeometry(s, edgeR, 10), mats);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       scene.add(mesh);
