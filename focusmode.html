@@ -224,13 +224,12 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 #pass-main.active-bar{background:rgba(255,215,0,.15)}
 
 /* ── GAME MODE TOGGLE ── */
-#game-mode-toggle{padding:3px;width:100%;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0;position:relative}
-#gmode-current-btn{width:100%;padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
-#gmode-current-btn:hover{background:rgba(255,255,255,.14)}
-#gmode-caret{font-size:11px;opacity:.7;transition:transform .15s}
-#gmode-current-btn.open #gmode-caret{transform:rotate(180deg)}
-#gmode-dropdown{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:3px}
-#gmode-dropdown.hidden{display:none}
+/* Was a collapsed dropdown (click to reveal); switched to Destroyer's always-visible static
+   grid (Deck: "make all games' game selector work and look like Destroyer's") -- one fewer
+   click to switch games/modes, and no collapse state to get stuck hidden/open. Crapless/
+   Standard still switch in place (switchGameMode) since this page covers both; the other
+   four games navigate away entirely. */
+#game-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0}
 .gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
 .gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
 .gmode-btn:disabled{opacity:.35;cursor:not-allowed}
@@ -763,6 +762,12 @@ body.felt-mode #felt-stage #info-panel .hud-val{font-size:calc(var(--chip)*0.32)
 body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--chip)*0.34)!important}
 body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.34);padding:calc(var(--chip)*0.1) calc(var(--chip)*0.12)}
 body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.26)}
+/* Game selector went from one collapsed row to an always-visible 3-row grid (Deck: "make all
+   games' game selector work and look like Destroyer's") -- same off-chip scaling as the rest
+   of this header, sized smaller since it now has to fit 3 rows instead of 1 in the same box. */
+body.felt-mode #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--chip)*0.21);padding:calc(var(--chip)*0.035) calc(var(--chip)*0.05);line-height:1.1}
+body.felt-mode #felt-stage #left-col-header .gmode-sub{font-size:calc(var(--chip)*0.15)}
+body.felt-mode #felt-stage #left-col-header #game-mode-toggle{gap:calc(var(--chip)*0.03);padding:calc(var(--chip)*0.03)}
 /* On a genuinely cramped felt (short landscape phone, felt-stage width below ~520px -- see the
    felt-compact toggle in sizeFeltStage()), "Cash Out" and "Log Out" don't fit as text no matter
    how far the font shrinks. Below that threshold, swap the three account buttons to icons only,
@@ -1106,32 +1111,24 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
       <div id="game-mode-toggle">
-        <button id="gmode-current-btn" onclick="toggleGameModeDropdown()">
-          <span>FOCUS MODE</span><span id="gmode-caret">▾</span>
+        <button class="gmode-btn" id="gmode-crapless" onclick="switchGameMode('crapless')">
+          CRAPLESS<span class="gmode-sub">No naturals</span>
         </button>
-        <div id="gmode-dropdown" class="hidden">
-          <button class="gmode-btn" id="gmode-crapless" onclick="switchGameMode('crapless')">
-            CRAPLESS<span class="gmode-sub">No naturals</span>
-          </button>
-          <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
-            STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
-          </button>
-          <button class="gmode-btn active" id="gmode-focus" disabled>
-            FOCUS MODE<span class="gmode-sub">Standard rules</span>
-          </button>
-          <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
-            SIC-BO<span class="gmode-sub">3 dice</span>
-          </button>
-          <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
-            DESTROYER<span class="gmode-sub">Naval Strike</span>
-          </button>
-          <button class="gmode-btn" onclick="navigateAway('uth.html')">
-            HOLD'EM<span class="gmode-sub">Ultimate Texas</span>
-          </button>
-          <button class="gmode-btn" onclick="navigateAway('iluvsuits.html')" style="grid-column:1/-1">
-            I LUV SUITS<span class="gmode-sub">Max-flush poker</span>
-          </button>
-        </div>
+        <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
+          STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
+        </button>
+        <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
+          SIC-BO<span class="gmode-sub">3 dice</span>
+        </button>
+        <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
+          DESTROYER<span class="gmode-sub">Naval Strike</span>
+        </button>
+        <button class="gmode-btn" onclick="navigateAway('uth.html')">
+          HOLD'EM<span class="gmode-sub">Ultimate Texas</span>
+        </button>
+        <button class="gmode-btn" onclick="navigateAway('iluvsuits.html')">
+          I LUV SUITS<span class="gmode-sub">Max-flush poker</span>
+        </button>
       </div>
       <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
         <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
@@ -1422,7 +1419,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.108</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.109</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1574,7 +1571,10 @@ const FELT_LAYOUT=[
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
   // Shrunk from 17.00 -> 12.00 now that the game selector is a single-button dropdown instead
   // of a 5-button grid (Deck: "move the game selector... so Hard Ways can move up").
-  ['#left-col-header', 0.40, 0.70,12.60,12.00,null],
+  // Grown from 12.00 -> 15.50 (Deck: "make all games' game selector look like Destroyer's" --
+  // a static 3-row button grid instead of a 1-row collapsed dropdown, so the box needs more
+  // vertical room for the same content that used to fit collapsed).
+  ['#left-col-header', 0.40, 0.70,12.60,15.50,null],
   ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
@@ -2459,10 +2459,6 @@ function exitFocusPracticeForNav(){
   if(!G.practiceMode)return;
   G_practiceState=G;
   G=G_realState||G;
-}
-function toggleGameModeDropdown(){
-  document.getElementById('gmode-dropdown').classList.toggle('hidden');
-  document.getElementById('gmode-current-btn').classList.toggle('open');
 }
 function toggleFinancesDropdown(){
   document.getElementById('finances-dropdown').classList.toggle('hidden');
