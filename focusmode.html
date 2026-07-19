@@ -721,6 +721,25 @@ body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bott
    Every other zone (Pass, Field, DP) keeps the default 6% anchor -- only Come is overridden. */
 body.felt-mode.game-standard #felt-stage #come-bar .has-stack{bottom:35%}
 body.felt-mode.game-crapless #felt-stage #come-bar .has-stack{bottom:22%}
+/* Field/Pass/Don't Pass chips were landing well off Deck's calibrated marker (screenshot: "not
+   landing on the pink dots") -- #field-bar/#pass-bar/#dp-bar's own x/y/w/h were already correct
+   (confirmed pixel-for-pixel against Deck's calibrator export), so the marker is each bar's true
+   geometric center, not a separately-calibrated point. The generic bottom:6% anchor above was
+   never centering on that: #field-bar has no odds-cell split, so its chip only needed proper
+   vertical centering; #pass-main/#dp-main are each individually position:relative (the .zone-note
+   lock badge on Pass needs that), and only span the ~82.6% of their bar left AFTER Pass Line's
+   17.4%-wide #pass-odds-cell / BEFORE Don't Pass's #dp-odds-cell -- so their own 50% midpoint
+   misses the full bar's real center by half the odds-cell's width. 39.47%/60.53% are that same
+   50%-of-the-full-bar point, re-expressed as a percentage of just the narrower sub-box:
+   (50-17.4)/82.6=39.47% for Pass (odds-cell first), 50/82.6=60.53% for DP (odds-cell second). */
+body.felt-mode #felt-stage #field-bar .has-stack{top:50%;bottom:auto;transform:translate(-50%,-50%)}
+body.felt-mode #felt-stage #pass-main .has-stack{left:39.47%;top:50%;bottom:auto;transform:translate(-50%,-50%)}
+/* #pass-odds-cell is always present so #pass-main is always the same ~82.6%-of-bar width above,
+   but #dp-odds-cell only exists once a point's up with a DP bet (see updateUI()'s
+   dpMain.classList.toggle('has-oddscell',...)) -- #dp-main is the FULL bar the rest of the
+   time, so its chip belongs at plain 50%, not the odds-cell-adjusted 60.53%. */
+body.felt-mode #felt-stage #dp-main .has-stack{top:50%;bottom:auto;transform:translate(-50%,-50%)}
+body.felt-mode #felt-stage #dp-main.has-oddscell .has-stack{left:60.53%}
 
 .chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
@@ -1423,7 +1442,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.111</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.112</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3910,7 +3929,13 @@ function updateUI(){
     const dpMain=document.getElementById('dp-main');if(dpMain)dpMain.classList.toggle('active-bar',dpA>0);
     const dpMb=document.getElementById('m-dp');if(dpMb)dpMb.style.display=dpA?'block':'none';
     const dpOddsCell=document.getElementById('dp-odds-cell');
-    if(dpOddsCell)dpOddsCell.style.display=(dpA>0&&G.point)?'block':'none';
+    const dpOddsShown=dpA>0&&G.point;
+    if(dpOddsCell)dpOddsCell.style.display=dpOddsShown?'block':'none';
+    // Unlike Pass Line's #pass-odds-cell (always present, always splitting #pass-bar), Don't
+    // Pass's #dp-odds-cell only exists once a point's up -- #dp-main is the FULL bar width the
+    // rest of the time, so its chip's felt-mode anchor (see #dp-main.has-oddscell .has-stack)
+    // needs to know which layout is actually in effect right now.
+    if(dpMain)dpMain.classList.toggle('has-oddscell',dpOddsShown);
     if(dpOddsCell)dpOddsCell.classList.toggle('active',dpO>0);
     const dpOStk=document.getElementById('stk-dpodds');if(dpOStk)dpOStk.textContent=dpO?fmt(dpO):'';
     const dpOPay=document.getElementById('dp-odds-pay');
