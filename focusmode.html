@@ -1198,7 +1198,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.80</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.81</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3522,7 +3522,14 @@ async function rollDice(){
     const token=localStorage.getItem('craps_session');
     const requestBody=JSON.stringify({session_token:token,...gameStateForServer()});
     try{
-      const res=await fetch(FUNCTIONS_URL+'/roll-standard',{
+      // Was hardcoded to roll-standard regardless of mode -- crapless-exclusive numbers
+      // (2,3,11,12) aren't in roll-standard's ALL_NUMS/NUM_DEFS at all, so Buy/Place bets on
+      // them (and come-out rolls landing on them) were sent to a server that has no idea what
+      // to do with them: never swept as a loss, never paid as a win, just silently ignored.
+      // index.html's main table already branches on activeGame the same way (see its own
+      // rollEndpoint line) -- this just brings Focus Mode in line with it.
+      const rollEndpoint=activeGame==='standard'?'/roll-standard':'/roll-crapless';
+      const res=await fetch(FUNCTIONS_URL+rollEndpoint,{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
         body:requestBody
@@ -4139,8 +4146,8 @@ function buildFocusFeltArt(){
 // ── CALIBRATION MODE ─────────────────────────────────────────────────────────
 // Drag/resize every bet target directly on the real felt instead of eyeballing screenshots
 // and reporting pixel offsets back and forth (Deck: "faster for you maybe, pain in the ass
-// for me"). Only touches STANDARD_LAYOUT/FELT_LAYOUT entries -- Focus Mode never runs
-// crapless mode, so CRAPLESS_LAYOUT is out of scope here.
+// for me"). Touches STANDARD_LAYOUT/FELT_LAYOUT and (now that crapless is real in Focus Mode)
+// CRAPLESS_LAYOUT entries too, via calibBaseEntries()'s mode branch.
 let calibActive=false;
 let calibState=null; // {selector: {x,y,w,h,tab}} in % of canvas, keyed by the layout array's own selector string
 // Markers for bet areas that aren't individually positioned in real STANDARD_LAYOUT/FELT_LAYOUT
@@ -4175,12 +4182,17 @@ function calibBaseEntries(){
   // Buy/Place/Lay/DC/DC Odds/Come/Come Odds are NOT here for standard -- their positions are
   // handled by pre-existing felt-mode layout code (feltSplitStandardNumBox + CSS), not this
   // calibration system; per-number markers for them come from calibExtraEntries() instead.
-  // #num-zone is skipped in both modes for the same reason: crapless's own number-line hit-
-  // region is positioned in code (CRAPLESS_LAYOUT), not through this drag tool.
+  // #num-zone is skipped for STANDARD only: standard's own #nb-buy-N/#nb-place-N/#nb-lay-N
+  // entries already cover the number line individually and #num-zone there is just an inert
+  // background container, so showing it too would be a redundant, confusing overlapping box.
+  // Crapless has no such per-number entries (its whole strip moves as one #num-zone block via
+  // CRAPLESS_LAYOUT), so #num-zone IS the number line's only real calibratable hit-region there
+  // -- skipping it left crapless calibrate mode with zero boxes over the entire number line.
   // Was hardcoded to feltLayoutFor('standard') from back when Focus Mode was standard-only --
   // now that crapless is real, this must follow whichever mode is actually active, or
   // calibrate mode shows standard's boxes (wrong positions entirely) while playing crapless.
-  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#lucky-roller','#info-panel','#bottom-section','#num-zone']);
+  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#lucky-roller','#info-panel','#bottom-section']);
+  if(activeGame==='standard')skip.add('#num-zone');
   return feltLayoutFor(activeGame==='standard'?'standard':'crapless').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
 }
 function calibInitState(){
