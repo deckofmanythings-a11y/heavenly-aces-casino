@@ -254,14 +254,19 @@
   // each note's ring. Matching the onset density alone with the old short decay still produced
   // visibly separated bursts in a side-by-side spectrogram; lengthening the decay too is what
   // actually closed the gap into one continuous singing texture like the reference's.
+  //
+  // All timing here (attack/decay) scaled *1.25 (25% slower) per Deck's request, alongside the
+  // matching *1.25 on startTumbleNotes' tick interval -- scaling both together keeps the
+  // decay-to-onset-interval ratio the same, so the legato overlap character is preserved at the
+  // slower pace instead of reintroducing gaps.
   function playMelodyNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
     const t = ctx.currentTime;
     MELODY_VOICES.forEach(v => {
-      if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 3, 320, ctx, t, volume);
+      if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 3.75, 400, ctx, t, volume);
     });
-    if (Math.random() < LOW_DRONE.prob) _playVoice(LOW_DRONE.freq, LOW_DRONE.gain, 6, 350, ctx, t, volume);
+    if (Math.random() < LOW_DRONE.prob) _playVoice(LOW_DRONE.freq, LOW_DRONE.gain, 7.5, 437.5, ctx, t, volume);
   }
   // The dice-clack, entirely on its own: real dice-on-surface knock character (tonal thump +
   // bandpassed noise click), decaying to -6dB in ~6ms.
@@ -398,9 +403,12 @@
     // timer at all: Deck asked for it to be tied to real physics collisions instead of a
     // guessed rhythm (dice-to-dice, to-wall, to-floor), so it's now driven directly by
     // _checkCollisionsForKnock() in the main loop below, once per genuinely new contact.
+    // Interval *1.25 (25% slower) per Deck's request -- matched by the same *1.25 on
+    // playMelodyNote's attack/decay so the legato overlap ratio stays the same, just paced
+    // slower overall rather than reintroducing gaps between notes.
     (function melodyTick() {
       playMelodyNote();
-      _noteTimer = setTimeout(melodyTick, 22 + Math.random() * 30);
+      _noteTimer = setTimeout(melodyTick, 27.5 + Math.random() * 37.5);
     })();
   }
   function stopTumbleNotes() {
