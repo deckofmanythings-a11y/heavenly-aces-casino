@@ -640,6 +640,16 @@ body.felt-mode.game-crapless #felt-stage .nb-mid{flex:1}
 body.felt-mode.game-crapless #felt-stage .nb-place{flex:0 0 21%}
 body.felt-mode.game-crapless #prop-block>.bwrap{flex:0 0 21%}
 body.felt-mode.game-crapless #prop-block .horn-stack{flex:1}
+/* On/Off puck row: pulled out of #num-zone's own flex column entirely (was eating into its
+   top 11%, overlapping the Buy/number/Place boxes) and anchored fully above it instead, its
+   own bottom edge flush against #num-zone's top edge (Deck: "fully above the number line,
+   just touching the top"). #num-zone is already position:absolute (.felt-abs, added by
+   enterFeltMode()), so it's a valid containing block for this without any extra CSS. Height is
+   left to the content's own size (each .puck-anchor is a fixed 90x90px, set inline in
+   buildStrip()) rather than a %, since it no longer needs to divide num-zone's height with
+   #num-strip-h. #num-strip-h picks up the freed space automatically via its existing flex:1. */
+body.felt-mode.game-crapless #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px}
+body.felt-mode.game-crapless #num-strip-h{flex:1;padding:0;gap:2px}
 
 /* Standard: each number column is [blank|Lay] thin top row, big [digit+Come] middle, [Place|Buy] thin bottom row */
 body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;padding:0}
@@ -1172,7 +1182,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.76</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.77</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -4096,13 +4106,17 @@ function calibExtraEntries(){
   return out;
 }
 function calibBaseEntries(){
-  // Bet-relevant entries only -- skip pure UI chrome (#info-panel, #left-col-header, etc.)
-  // and the crapless-only zone bars, since Focus Mode is standard-only. Buy/Place/Lay/DC/DC
-  // Odds/Come/Come Odds are NOT here -- their positions are handled by pre-existing felt-mode
-  // layout code (feltSplitStandardNumBox + CSS), not this calibration system; per-number
-  // markers for them come from calibExtraEntries() instead.
+  // Bet-relevant entries only -- skip pure UI chrome (#info-panel, #left-col-header, etc.).
+  // Buy/Place/Lay/DC/DC Odds/Come/Come Odds are NOT here for standard -- their positions are
+  // handled by pre-existing felt-mode layout code (feltSplitStandardNumBox + CSS), not this
+  // calibration system; per-number markers for them come from calibExtraEntries() instead.
+  // #num-zone is skipped in both modes for the same reason: crapless's own number-line hit-
+  // region is positioned in code (CRAPLESS_LAYOUT), not through this drag tool.
+  // Was hardcoded to feltLayoutFor('standard') from back when Focus Mode was standard-only --
+  // now that crapless is real, this must follow whichever mode is actually active, or
+  // calibrate mode shows standard's boxes (wrong positions entirely) while playing crapless.
   const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#lucky-roller','#info-panel','#bottom-section','#num-zone']);
-  return feltLayoutFor('standard').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
+  return feltLayoutFor(activeGame==='standard'?'standard':'crapless').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
 }
 function calibInitState(){
   const st={};
