@@ -495,9 +495,10 @@ if(isDiscordActivity()){
       if(!code)return;
       let stopped=false;const origStop=e.stopPropagation.bind(e);
       e.stopPropagation=function(){stopped=true;origStop();};
+      Object.defineProperty(e,'currentTarget',{value:el,configurable:true});
       try{new Function('event',code).call(el,e);}
       catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
-      finally{e.stopPropagation=origStop;}
+      finally{e.stopPropagation=origStop;delete e.currentTarget;}
       if(stopped)e.stopImmediatePropagation();
     });
   });

@@ -923,7 +923,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.105</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.106</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1206,9 +1206,10 @@ if(isDiscordActivity()){
       // upgrade it to stopImmediatePropagation so it still pre-empts other document listeners.
       let stopped=false;const origStop=e.stopPropagation.bind(e);
       e.stopPropagation=function(){stopped=true;origStop();};
+      Object.defineProperty(e,'currentTarget',{value:el,configurable:true});
       try{new Function('event',code).call(el,e);}
       catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
-      finally{e.stopPropagation=origStop;}
+      finally{e.stopPropagation=origStop;delete e.currentTarget;}
       if(stopped)e.stopImmediatePropagation();
     });
   });

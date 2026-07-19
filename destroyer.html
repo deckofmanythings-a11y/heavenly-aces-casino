@@ -765,11 +765,16 @@ if(isDiscordActivity()){
       if(!el)return;
       const code=el.getAttribute(attr);
       if(!code)return;
+      // Native inline handlers also see event.currentTarget as the element the attribute is
+      // on -- some app code branches on it (e.g. toggleFiringGameSelect). Since we're calling
+      // from a document-level listener, currentTarget would otherwise always read as document.
+      // Shadow it with an own property for the duration of the call, then restore.
       let stopped=false;const origStop=e.stopPropagation.bind(e);
       e.stopPropagation=function(){stopped=true;origStop();};
+      Object.defineProperty(e,'currentTarget',{value:el,configurable:true});
       try{new Function('event',code).call(el,e);}
       catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
-      finally{e.stopPropagation=origStop;}
+      finally{e.stopPropagation=origStop;delete e.currentTarget;}
       if(stopped)e.stopImmediatePropagation();
     });
   });
