@@ -76,6 +76,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #dealer-region{left:39%;top:3%;width:45%;height:30%;flex-direction:row;justify-content:flex-start}
 #community-region{left:3%;top:38%;width:56%;height:29%;justify-content:center}
 #player-region{left:17%;top:66.5%;width:52.5%;height:31%;flex-direction:row;justify-content:flex-end}
+/* The muck: burned cards land here, face down, and never flip. Tucked in the wide
+   open patch of felt above-left of the community cards so it never competes with
+   the printed art (logo/paytables sit off to the right). */
+#burn-region{left:2%;top:4%;width:16%;height:15%;justify-content:flex-start}
 .card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqh;--pc-w:19.2cqh;opacity:0;transition:opacity .3s}
 .card-row.active{opacity:1}
 /* Player's hand is fanned with a heavy overlap in the reference (only a sliver of
@@ -83,6 +87,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    negative, so the second card gets pulled back via margin instead. */
 #player-row.card-row{gap:0}
 #player-row .pc-card:nth-child(2){margin-left:-13.2cqh}
+/* Burn pile: small, heavily overlapped, slightly askew per card -- a messy discard
+   pile rather than a neat row. */
+#burn-row.card-row{--pc-w:9cqh;gap:0}
+#burn-row .pc-card:nth-child(1){transform:rotate(-6deg)}
+#burn-row .pc-card:nth-child(2){margin-left:-6.5cqh;transform:rotate(4deg)}
+#burn-row .pc-card:nth-child(3){margin-left:-6.5cqh;transform:rotate(11deg)}
 .crl-hand{font-size:2.3cqh;color:#ffd700;font-weight:700;min-height:2.8cqh;text-align:center;white-space:nowrap}
 
 /* Bet-spot overlays -- invisible hit-regions positioned exactly over the printed
@@ -280,7 +290,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.70</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.71</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="window.location.href='index.html'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="window.location.href='index.html'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -319,6 +329,9 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="table-area">
     <div id="table-panel">
 
+      <div class="card-region" id="burn-region">
+        <div class="card-row" id="burn-row"></div>
+      </div>
       <div class="card-region" id="dealer-region">
         <div class="card-row" id="dealer-row"></div>
         <span class="crl-hand" id="dealer-hand-name"></span>
@@ -586,6 +599,7 @@ function startSession(player){
     document.getElementById('dealer-row').classList.add('active');
     document.getElementById('community-row').classList.add('active');
     document.getElementById('player-row').classList.add('active');
+    document.getElementById('burn-row').classList.add('active');
     document.getElementById('play-spot').classList.remove('inert');
     renderHandCardsStatic();updateLiveHandDisplay();updatePlayButtonState();
   }
@@ -738,48 +752,96 @@ function buildCardSlots(){
   const dealerRow=document.getElementById('dealer-row');
   const communityRow=document.getElementById('community-row');
   const playerRow=document.getElementById('player-row');
+  const burnRow=document.getElementById('burn-row');
   const dealer=[Cards.makeSlot(),Cards.makeSlot()];
   const community=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
   const player=[Cards.makeSlot(),Cards.makeSlot()];
+  const burn=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
   dealer.forEach(el=>dealerRow.appendChild(el));
   community.forEach(el=>communityRow.appendChild(el));
   player.forEach(el=>playerRow.appendChild(el));
-  G.cardEls={dealer,community,player};
+  burn.forEach(el=>burnRow.appendChild(el));
+  G.cardEls={dealer,community,player,burn};
+}
+// A slot with nothing dealt into it yet (not on the table at all, physically) --
+// 'empty' hides both faces (see cards.js) while still reserving its layout space,
+// so the row doesn't reflow as cards land street by street.
+function hideSlot(el){Cards.reset(el);el.classList.add('empty');}
+function hideUndealtSlots(){
+  G.cardEls.community.forEach(hideSlot);
+  G.cardEls.dealer.forEach(hideSlot);
+  G.cardEls.burn.forEach(hideSlot);
 }
 // Static render (no animation) -- used only when resuming an abandoned hand after a
 // refresh, where a suspenseful deal would be strange since the player already knows
-// their cards from before.
+// their cards from before. The server only ever persists an in-progress hand at
+// 'preflop' (see UthGameState), so nothing beyond the player's hole cards has been
+// dealt yet regardless -- community/dealer/burn all stay hidden, same as a fresh deal.
 function renderHandCardsStatic(){
   G.cardEls.player.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.playerHole[i]);Cards.flipUp(el);});
-  G.cardEls.community.forEach((el,i)=>{Cards.reset(el);Cards.setFront(el,G.hand.community[i]);});
-  G.cardEls.dealer.forEach(el=>Cards.reset(el));
+  hideUndealtSlots();
 }
-// Animated deal: slides each card into place in turn (player/dealer alternating, then
-// the community), face down except the player's hole cards which arrive with their
-// fronts already set (revealed separately afterwards, one at a time). Returns the total
-// duration in ms so the caller can schedule what happens next.
+// Animated deal: slides the player's two hole cards into place (arriving with their
+// fronts already set, revealed separately afterwards one at a time). The dealer's
+// hole cards and the community board are no longer dealt up front -- they land street
+// by street, each preceded by a burn, via burnCard()/dealAndRevealCards() below.
+// Returns the total duration in ms so the caller can schedule what happens next.
 const DEAL_STAGGER_MS=170;
 function dealCardsAnimated(){
   const order=[
     {el:G.cardEls.player[0],front:G.hand.playerHole[0]},
-    {el:G.cardEls.dealer[0],front:null},
     {el:G.cardEls.player[1],front:G.hand.playerHole[1]},
-    {el:G.cardEls.dealer[1],front:null},
-    {el:G.cardEls.community[0],front:G.hand.community[0]},
-    {el:G.cardEls.community[1],front:G.hand.community[1]},
-    {el:G.cardEls.community[2],front:G.hand.community[2]},
-    {el:G.cardEls.community[3],front:G.hand.community[3]},
-    {el:G.cardEls.community[4],front:G.hand.community[4]},
   ];
   order.forEach((item,i)=>{
     Cards.reset(item.el);
-    if(item.front)Cards.setFront(item.el,item.front);
+    Cards.setFront(item.el,item.front);
     Cards.dealIn(item.el,i*DEAL_STAGGER_MS);
     // 400ms matches pc-deal-in's own animation length (cards.js) -- play the landing
     // sound when the card actually settles, not when its staggered slide-in starts.
     setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400);
   });
   return order.length*DEAL_STAGGER_MS+450;
+}
+// ── BURN + STREET-BY-STREET DEALING ───────────────────────────────────────────
+// Real-dealer sequencing: burn a card face down to the muck, then deal+reveal the
+// next street's community cards; a third burn precedes the dealer's own hole cards
+// at showdown. burnIndex is 0/1/2 (one muck slot per street) so repeated hands don't
+// need to reuse/shuffle the muck pile mid-animation.
+const BURN_SETTLE_MS=650; // dealIn's .4s settle (cards.js) plus a beat before the next card starts
+function burnCard(burnIndex,onDone){
+  const el=G.cardEls.burn[burnIndex];
+  if(!el){if(onDone)onDone();return;}
+  el.classList.remove('empty');
+  Cards.reset(el);
+  Cards.dealIn(el,0);
+  setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),400);
+  if(onDone)setTimeout(onDone,BURN_SETTLE_MS);
+}
+// Deals `cards` into `els` in turn (staggered), each sliding in face down and then
+// flipping face up shortly after it lands -- used for both community subsets and the
+// dealer's two hole cards. Calls onDone once the whole group has finished revealing.
+const DEAL_REVEAL_STAGGER_MS=220;
+function dealAndRevealCards(els,cards,onDone){
+  els.forEach((el,i)=>{
+    setTimeout(()=>{
+      el.classList.remove('empty');
+      Cards.reset(el);
+      Cards.setFront(el,cards[i]);
+      Cards.dealIn(el,0);
+      setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),400);
+      setTimeout(()=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(el);},650);
+    },i*DEAL_REVEAL_STAGGER_MS);
+  });
+  if(onDone)setTimeout(onDone,(els.length-1)*DEAL_REVEAL_STAGGER_MS+650+500);
+}
+// Community slots are laid out left-to-right as [0,1,2,3,4]. The FLOP is the
+// rightmost 3 (indices 2,3,4); fourth street/river take the leftmost 2, with fourth
+// street (index 1) adjacent to the flop and the river (index 0) leftmost of all --
+// reversed from the deal-order convention most tables use, per explicit design
+// direction. Turn is dealt before river to match the order they're announced in.
+const FLOP_INDICES=[2,3,4],TURN_RIVER_INDICES=[1,0];
+function dealAndRevealCommunity(indices,onDone){
+  dealAndRevealCards(indices.map(ci=>G.cardEls.community[ci]),indices.map(ci=>G.hand.community[ci]),onDone);
 }
 // ── ACTION BUTTONS ────────────────────────────────────────────────────────────
 const ACTION_BTN_IDS=['btn-deal','btn-check','btn-fold','btn-play'];
@@ -829,6 +891,8 @@ async function dealHand(){
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('community-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
+  document.getElementById('burn-row').classList.add('active');
+  hideUndealtSlots(); // only the player's hole cards are dealt up front now
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
   ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until the deal+reveal finishes
@@ -850,22 +914,21 @@ async function dealHand(){
 }
 
 // ── CHECK (client-side phase advance, no server call) ────────────────────────
-// Community slots are laid out left-to-right as [0,1,2,3,4], but the FLOP is the
-// rightmost 3 (indices 2,3,4) and the river group is the leftmost 2 (0,1) -- reversed
-// from the deal-order convention most tables use, per explicit design direction.
-const COMMUNITY_FLIP_STAGGER_MS=220;
-const FLOP_INDICES=[2,3,4],RIVER_INDICES=[0,1];
+// A check burns the next muck card, then deals+reveals that street's community
+// cards (see FLOP_INDICES/TURN_RIVER_INDICES and burnCard() above).
 function doCheck(){
   if(G.playBet>0){G.bankroll=r2(G.bankroll+G.playBet);G.playBet=0;} // no bet was placed on a checked street
   ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none');
   if(G.phase==='preflop'){
-    FLOP_INDICES.forEach((ci,i)=>setTimeout(()=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);},i*COMMUNITY_FLIP_STAGGER_MS));
     G.phase='flop';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},FLOP_INDICES.length*COMMUNITY_FLIP_STAGGER_MS+500);
+    burnCard(0,()=>{
+      dealAndRevealCommunity(FLOP_INDICES,()=>{updateLiveHandDisplay();renderActionButtons();updateUI();});
+    });
   }else if(G.phase==='flop'){
-    RIVER_INDICES.forEach((ci,i)=>setTimeout(()=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);},i*COMMUNITY_FLIP_STAGGER_MS));
     G.phase='river';
-    setTimeout(()=>{updateLiveHandDisplay();renderActionButtons();updateUI();},RIVER_INDICES.length*COMMUNITY_FLIP_STAGGER_MS+500);
+    burnCard(1,()=>{
+      dealAndRevealCommunity(TURN_RIVER_INDICES,()=>{updateLiveHandDisplay();renderActionButtons();updateUI();});
+    });
   }
   updateStatusZone();updateUI();
 }
@@ -895,9 +958,6 @@ async function commitDecision(decision,playBet,street){
   if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
   finishHand(data);
 }
-const FLOP_TO_RIVER_PAUSE_MS=700; // brief beat between the two community groups when both
-                                   // are still hidden (i.e. the player bet Play at preflop,
-                                   // skipping the normal one-check-at-a-time reveal)
 function finishHand(data){
   const committedStreet=G.phase; // capture before it's overwritten to 'showdown' below
   let playerFinal=null,dealerFinal=null;
@@ -907,8 +967,7 @@ function finishHand(data){
   }
   // Hand-strength text is deferred to whenever the cards actually finish revealing
   // (rather than set synchronously up front) so it never spoils the result before the
-  // community/dealer cards have visually caught up -- matters a lot more now that the
-  // preflop-bet path stages its reveal instead of popping everything at once.
+  // community/dealer cards have visually caught up.
   const showHandNames=()=>{
     if(data.folded){
       document.getElementById('dealer-hand-name').textContent='';
@@ -918,60 +977,71 @@ function finishHand(data){
       document.getElementById('player-hand-name').textContent=describeScore(playerFinal);
     }
   };
-  const revealDealer=()=>{
-    G.cardEls.dealer.forEach((el,i)=>{playSfx(SFX_CARD_SLIDE,true);Cards.setFront(el,data.dealerHole[i]);Cards.flipUp(el);});
-    showHandNames();
+  // Whatever street the player committed on, a fold or a raise still ends with a third
+  // burn and the dealer's two hole cards hitting the table (real UTH always shows the
+  // dealer's hand down, win or lose).
+  const dealDealer=(onDone)=>{
+    burnCard(2,()=>{
+      dealAndRevealCards(G.cardEls.dealer,data.dealerHole,()=>{showHandNames();onDone();});
+    });
   };
-  if(committedStreet==='preflop'){
-    // Neither community group has been revealed yet (the player bet straight away
-    // instead of checking through) -- stage them with a brief pause instead of
-    // popping all 5 up at the same instant.
-    FLOP_INDICES.forEach(ci=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);});
+  const afterReveal=()=>{
+    G.playBet=data.playBet||0;
+    (data.log||[]).forEach(line=>{
+      const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
+      addLog(line,cls);
+    });
+    G.bankroll=data.newBankroll;
+    G.lastWin=data.payout||0;
+    G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
+    const histLabel=data.folded?'Fold':categoryName(playerFinal);
+    G.history.unshift({result:data.result,payout:data.payout,label:histLabel});
+    if(G.history.length>20)G.history.length=20;
+    G.phase='showdown';
+    renderActionButtons();updateStatusZone();
+    updateUI();checkBroke();
+    // Give the dealer's hole-card flip a moment to settle before spawning ghosts /
+    // opening the modal, matching the reveal-before-payout timing established for
+    // I Luv Suits' dealer sweat.
     setTimeout(()=>{
-      RIVER_INDICES.forEach(ci=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(G.cardEls.community[ci]);});
-      revealDealer();
-    },FLOP_TO_RIVER_PAUSE_MS);
+      spawnUthGhosts(data.log||[],data.folded);
+      const totalWagered=G.lastBetDisplay||1;
+      if(data.payout>0){
+        const bigWin=(data.payout/totalWagered)>=7;
+        WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
+      }else{
+        setTimeout(resetToBetScreen,3500);
+      }
+      if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
+    },550);
+  };
+  // Catch up on whichever streets weren't already checked through before the player
+  // committed (raised straight away instead of checking), then always finish with the
+  // burn+deal for the dealer's hand.
+  if(committedStreet==='preflop'){
+    burnCard(0,()=>{
+      dealAndRevealCommunity(FLOP_INDICES,()=>{
+        burnCard(1,()=>{
+          dealAndRevealCommunity(TURN_RIVER_INDICES,()=>{dealDealer(afterReveal);});
+        });
+      });
+    });
+  }else if(committedStreet==='flop'){
+    burnCard(1,()=>{
+      dealAndRevealCommunity(TURN_RIVER_INDICES,()=>{dealDealer(afterReveal);});
+    });
   }else{
-    G.cardEls.community.forEach(el=>Cards.flipUp(el)); // already-revealed ones are a no-op
-    revealDealer();
+    dealDealer(afterReveal);
   }
-  G.playBet=data.playBet||0;
-  (data.log||[]).forEach(line=>{
-    const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
-    addLog(line,cls);
-  });
-  G.bankroll=data.newBankroll;
-  G.lastWin=data.payout||0;
-  G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
-  const histLabel=data.folded?'Fold':categoryName(playerFinal);
-  G.history.unshift({result:data.result,payout:data.payout,label:histLabel});
-  if(G.history.length>20)G.history.length=20;
-  G.phase='showdown';
-  renderActionButtons();updateStatusZone();
-  updateUI();checkBroke();
-  // Give the dealer's hole-card flip (a .5s transition, see cards.js) a moment to settle
-  // before spawning ghosts / opening the modal, matching the reveal-before-payout timing
-  // established for I Luv Suits' dealer sweat. Add the flop->river pause too when it
-  // applied, so this always fires after revealDealer() has actually run.
-  const extraDelay=committedStreet==='preflop'?FLOP_TO_RIVER_PAUSE_MS:0;
-  setTimeout(()=>{
-    spawnUthGhosts(data.log||[],data.folded);
-    const totalWagered=G.lastBetDisplay||1;
-    if(data.payout>0){
-      const bigWin=(data.payout/totalWagered)>=7;
-      WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
-    }else{
-      setTimeout(resetToBetScreen,3500);
-    }
-    if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
-  },550+extraDelay);
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0};G.playBet=0;
-  [...G.cardEls.player,...G.cardEls.community,...G.cardEls.dealer].forEach(el=>Cards.reset(el));
+  G.cardEls.player.forEach(el=>Cards.reset(el));
+  hideUndealtSlots();
   document.getElementById('dealer-row').classList.remove('active');
   document.getElementById('community-row').classList.remove('active');
   document.getElementById('player-row').classList.remove('active');
+  document.getElementById('burn-row').classList.remove('active');
   document.getElementById('play-spot').classList.add('inert');
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
