@@ -1198,7 +1198,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.82</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.83</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1609,14 +1609,21 @@ const CRAPLESS_LAYOUT=[
   // Hard Ways / Hopping Hard Ways pills measured directly on the crapless felt art -- this
   // panel sits at a different x-position on crapless than on standard, confirmed by dots on
   // both tables, so it can no longer be one shared coordinate set for both games.
-  ['@hard6',           4.375,28.055,14.25, 7.89,'hw'],
-  ['@hard10',         19.465,28.055,14.25, 7.89,'hw'],
-  ['@hard8',           4.375,35.995,14.25, 7.89,'hw'],
-  ['@hard4',          19.465,35.995,14.25, 7.89,'hw'],
-  ['@hop22',           4.375,28.055,14.25, 7.89,'hop'],
-  ['@hop44',          19.465,28.055,14.25, 7.89,'hop'],
-  ['@hop33',           4.375,35.995,14.25, 7.89,'hop'],
-  ['@hop55',          19.465,35.995,14.25, 7.89,'hop'],
+  // Re-calibrated by Deck's drag tool (px on 3200x1800 canvas): hard6/10/8/4 moved up ~80px
+  // and hard6/8's column moved left while hard10/4's column moved right, widening the gap
+  // between the two columns. hop22/44/33/55 aren't independently draggable (calib tool only
+  // shows whichever tab is active) but occupy the exact same physical slot as their hard
+  // twin by design (see STANDARD_LAYOUT's matching comment -- "moved by the same amount so
+  // tab-switching doesn't jump"), so they're mirrored to the same new coordinates here rather
+  // than left pointing at hard's old, now-stale position.
+  ['@hard6',           0.4375,23.556,14.25, 7.89,'hw'],
+  ['@hard10',         21.031,23.500,14.25, 7.89,'hw'],
+  ['@hard8',           0.4375,31.611,14.25, 7.89,'hw'],
+  ['@hard4',          21.031,31.611,14.25, 7.89,'hw'],
+  ['@hop22',           0.4375,23.556,14.25, 7.89,'hop'],
+  ['@hop44',          21.031,23.500,14.25, 7.89,'hop'],
+  ['@hop33',           0.4375,31.611,14.25, 7.89,'hop'],
+  ['@hop55',          21.031,31.611,14.25, 7.89,'hop'],
   // x/y match the 'craplessline-*' FM_ART entries' x:1200,y:424 (right edge ~40px off the
   // felt, 100px down, per Deck's live-site feedback). Height re-derived for the art's updated
   // native size (447px, was 344px -- see the matching FM_ART comment): 447/1800*100=24.833.
