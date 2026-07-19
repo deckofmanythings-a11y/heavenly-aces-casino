@@ -118,7 +118,7 @@
   // audio, not something legally available to source or reuse. A tiny Web Audio synth gets the
   // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
   // exactly to however long a given roll's preroll+resolving phases actually last.
-  let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null;
+  let _actx = null, _noteTimer = null, _knockTimer = null, _reverbSend = null, _echoSend = null;
   // Deck supplied a reference recording (CrapsRoll.ogg) and asked for the same TYPE OF TONE --
   // not the file itself, same licensing reason the earlier bell-chime version cites: a real
   // recording isn't something to source/reuse, but a synth nailing the same character has zero
@@ -389,21 +389,28 @@
   function startTumbleNotes() {
     stopTumbleNotes();
     if (CFG.soundTheme === 'action') { startActionHits(); return; }
-    // Was 80-180ms (~130ms avg) -- far too sparse. Onset-detected the reference directly
-    // (~62 onsets over its 2.345s length) and got ~37ms average spacing, ~3.5x denser than
-    // this. Spectrogram comparison made the actual bug obvious: at the old interval, each
-    // melody voice's decay tail had mostly died out before the next one fired, so the pitch
-    // content showed up as separated staccato blips with silence between them -- not the
-    // reference's continuous, unbroken, overlapping "singing" bands. Matching the real onset
-    // density (plus playMelodyNote()'s longer decay, see MELODY_VOICES) is what actually
-    // makes consecutive notes overlap into a legato texture instead of individual chirps.
-    (function tick() {
-      playChimeNote();
-      _noteTimer = setTimeout(tick, 22 + Math.random() * 30);
+    // Melody and knock now run on two INDEPENDENT schedules -- Deck: "sounds super turbo fast"
+    // after the melody's tick was sped up. Turned out the fast rate was right for the melody
+    // (needed to overlap into a legato texture, see the comment on playMelodyNote's decay
+    // lengthening) but wrong to also apply to the knock: the ~37ms onset density measured
+    // earlier was detecting melody-note ATTACKS (each has its own fast 3ms onset transient
+    // that registers just like a percussive hit would), not real knocks. Isolating the
+    // percussive component specifically (proper HPSS mask, not raw onset detection) and
+    // re-running onset detection on THAT found only 4 real knock events across the whole
+    // 2.345s clip -- roughly one every 300-900ms, not a rapid rattle at all. Firing the knock
+    // at the melody's fast rate was a machine-gun clack the reference never has.
+    (function melodyTick() {
+      playMelodyNote();
+      _noteTimer = setTimeout(melodyTick, 22 + Math.random() * 30);
+    })();
+    (function knockTick() {
+      playKnockSound();
+      _knockTimer = setTimeout(knockTick, 300 + Math.random() * 600);
     })();
   }
   function stopTumbleNotes() {
     if (_noteTimer) { clearTimeout(_noteTimer); _noteTimer = null; }
+    if (_knockTimer) { clearTimeout(_knockTimer); _knockTimer = null; }
     stopActionHits();
   }
 
