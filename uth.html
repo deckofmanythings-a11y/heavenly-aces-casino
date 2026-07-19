@@ -291,13 +291,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     <div id="left-col-header">
       <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.103</div>
       <div id="game-mode-toggle">
-        <button class="gmode-btn" onclick="window.location.href='focusmode.html?mode=crapless'">CRAPLESS<span class="gmode-sub">No naturals</span></button>
-        <button class="gmode-btn" onclick="window.location.href='focusmode.html?mode=standard'">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
-        <button class="gmode-btn" onclick="window.location.href='sicbo.html'">SIC-BO<span class="gmode-sub">3 dice</span></button>
-        <button class="gmode-btn" onclick="window.location.href='destroyer.html'">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
+        <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
+        <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
+        <button class="gmode-btn" onclick="dNav('sicbo.html')">SIC-BO<span class="gmode-sub">3 dice</span></button>
+        <button class="gmode-btn" onclick="dNav('destroyer.html')">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
         <button class="gmode-btn active">HOLD'EM<span class="gmode-sub">Ultimate Texas</span></button>
-        <button class="gmode-btn" onclick="window.location.href='iluvsuits.html'">I LUV SUITS<span class="gmode-sub">Max-flush poker</span></button>
-        <button class="gmode-btn" onclick="window.location.href='focusmode.html'" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span></button>
+        <button class="gmode-btn" onclick="dNav('iluvsuits.html')">I LUV SUITS<span class="gmode-sub">Max-flush poker</span></button>
+        <button class="gmode-btn" onclick="dNav('focusmode.html')" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span></button>
       </div>
     </div>
     <!-- Status zone -->
@@ -420,6 +420,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 <script src="cards.js?v=0.4.86"></script>
 <script>
 function isDiscordActivity(){return new URLSearchParams(location.search).has('frame_id');}
+function dNav(url){
+  if(isDiscordActivity()){
+    const sep=url.includes('?')?'&':'?';
+    url=url+sep+location.search.slice(1);
+  }
+  window.location.href=url;
+}
 if(isDiscordActivity()){
   const CS_ATTR={click:'onclick',contextmenu:'oncontextmenu',input:'oninput',change:'onchange'};
   Object.keys(CS_ATTR).forEach(type=>{

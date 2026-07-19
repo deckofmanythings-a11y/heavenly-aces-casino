@@ -1444,6 +1444,13 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
 <script>
 function isDiscordActivity(){return new URLSearchParams(location.search).has('frame_id');}
+function dNav(url){
+  if(isDiscordActivity()){
+    const sep=url.includes('?')?'&':'?';
+    url=url+sep+location.search.slice(1);
+  }
+  window.location.href=url;
+}
 if(isDiscordActivity()){
   const CS_ATTR={click:'onclick',contextmenu:'oncontextmenu',input:'oninput',change:'onchange'};
   Object.keys(CS_ATTR).forEach(type=>{
@@ -2399,7 +2406,7 @@ async function navigateAway(url){
   attemptLeave(async()=>{
     const mode=activeGame||'standard';
     await saveCleanState(mode);
-    window.location.href=url;
+    dNav(url);
   });
 }
 
