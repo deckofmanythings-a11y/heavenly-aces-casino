@@ -132,19 +132,27 @@
   // confirmed by ear -- "the dominating sound in the file is sing-songy tones," clacks present
   // but secondary. Within that tonal energy, F5 (~698Hz) alone is ~58% of it, with G#5/C#5/G#4
   // as smaller supporting voices (a fourth, a major sixth, and an octave above G#4 -- a real,
-  // intentional chord, not noise). MELODY_WEIGHTS below mirrors those proportions.
-  const MELODY_NOTES = [
-    { freq: 698.46, weight: 55 }, // F5  -- the dominant sung pitch
-    { freq: 830.61, weight: 20 }, // G#5
-    { freq: 554.37, weight: 13 }, // C#5
-    { freq: 415.30, weight: 12 }  // G#4
+  // intentional chord, not noise).
+  //
+  // Second pass played ONE of these per chime event and faked brightness with an added octave
+  // overtone on that single note -- wrong on both counts. Rendered the synth and directly
+  // compared it against the reference's isolated harmonic audio: scanned every frame for the
+  // single "purest" (least-polyphonic) moment in the whole clip, and even THAT moment had its
+  // dominant pitch carrying only 24% of the frame's tonal energy -- the other three notes were
+  // still clearly sounding at the same time. The reference is a near-continuous CLUSTER of
+  // multiple pitches ringing together, not one voice at a time, and its brightness comes from
+  // that polyphony, not from added harmonics on a single note. There's also a recurring low
+  // ~108Hz layer (close to A2) present in about 1 in 6 frames that the synth had no equivalent
+  // of at all. `prob` below is each voice's chance of joining a given chime event -- F5 is
+  // effectively an always-on anchor, the rest layer on top the way they actually do in the
+  // source.
+  const MELODY_VOICES = [
+    { freq: 698.46, gain: 0.30, prob: 1.00 }, // F5  -- anchor, virtually always present
+    { freq: 830.61, gain: 0.18, prob: 0.55 }, // G#5
+    { freq: 554.37, gain: 0.15, prob: 0.40 }, // C#5
+    { freq: 415.30, gain: 0.13, prob: 0.35 }  // G#4
   ];
-  const MELODY_WEIGHT_TOTAL = MELODY_NOTES.reduce((s, n) => s + n.weight, 0);
-  function pickMelodyFreq() {
-    let r = Math.random() * MELODY_WEIGHT_TOTAL;
-    for (const n of MELODY_NOTES) { if ((r -= n.weight) <= 0) return n.freq; }
-    return MELODY_NOTES[0].freq;
-  }
+  const LOW_DRONE = { freq: 108, gain: 0.20, prob: 0.17 }; // ~A2, ~1-in-6 frames in the reference
   // The remaining 17.4%, percussive part -- real dice-on-surface knocks, dark and dry, decaying
   // to -6dB in ~6ms. Now the quiet undercurrent instead of the lead.
   const KNOCK_FREQS = [625, 656, 688, 719, 750, 781, 813];
@@ -196,53 +204,52 @@
   // Deck's follow-up: the melody sounded "muted, like underwater," and the knock "dominates."
   // The muddiness traced to the shared reverb/echo bus -- every note was sent in at full (1x)
   // send gain, and with notes firing every 80-180ms into a 2s reverb tail, the wash piles up
-  // fast and blurs the pitch definition. And the previous knock/melody gains (0.48/0.42) were
-  // solved to match the REFERENCE clip's total energy ratio, which weights a short transient
-  // and a long tone very differently -- not the same thing as "melody sounds 80% louder,"
-  // which is what Deck actually wants now. Split into two fully independent functions (own
-  // sound, own routing, playable alone) with a direct, literal gain ratio instead.
+  // fast and blurs the pitch definition. Split into two fully independent functions (own sound,
+  // own routing, playable alone). KNOCK_GAIN is the clacks' own level; the melody cluster below
+  // has no single equivalent "gain" anymore (see playMelodyNote) since it's several voices at
+  // once, but each voice's level was chosen relative to KNOCK_GAIN so the cluster as a whole
+  // reads as louder than the clacks, same intent as the old literal 1.8x ratio.
   const KNOCK_GAIN = 0.22;
-  const MELODY_GAIN = KNOCK_GAIN * 1.8; // "melody about 80% louder than the clacks"
   function playChimeNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
     playMelodyNote(volume);
     playKnockSound(volume);
   }
-  // The singing chime, entirely on its own. Two changes from the muddy version: a triangle
-  // fundamental (real harmonic content -- a bare sine reads as soft/dull) plus a quiet octave-up
-  // sine for shimmer, and the reverb/echo send cut to ~0.18x its old level (was the full dry
-  // signal) so the ring stays defined instead of smearing into a continuous underwater wash.
-  function playMelodyNote(volume) {
-    const ctx = _ensureAudio(); if (!ctx) return;
-    volume = volume == null ? 1 : volume;
-    const freq = pickMelodyFreq();
-    const t = ctx.currentTime;
+  function _playVoice(freq, gain, attackMs, decayMs, ctx, t, volume) {
     const master = ctx.createGain();
-    master.gain.value = MELODY_GAIN * volume;
+    master.gain.value = gain * volume;
     master.connect(ctx.destination); // dry -- carries the definition
     const wetSend = ctx.createGain(); wetSend.gain.value = 0.18; // light space, not a wash
     master.connect(wetSend);
     wetSend.connect(_reverbSend);
     wetSend.connect(_echoSend);
-
     const osc = ctx.createOscillator(), g = ctx.createGain();
     osc.type = 'triangle';
     osc.frequency.value = freq;
+    const a = attackMs / 1000, d = decayMs / 1000;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(1, t + 0.003);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    g.gain.linearRampToValueAtTime(1, t + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
     osc.connect(g); g.connect(master);
-    osc.start(t); osc.stop(t + 0.22);
-
-    const osc2 = ctx.createOscillator(), g2 = ctx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.value = freq * 2;
-    g2.gain.setValueAtTime(0, t);
-    g2.gain.linearRampToValueAtTime(0.25, t + 0.003);
-    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
-    osc2.connect(g2); g2.connect(master);
-    osc2.start(t); osc2.stop(t + 0.17);
+    osc.start(t); osc.stop(t + a + d + 0.02);
+  }
+  // The singing chime, entirely on its own -- and now actually polyphonic. Rendering the old
+  // single-note-plus-fake-shimmer version and directly comparing it against the reference's
+  // isolated harmonic audio showed it was structurally wrong: the source is a near-continuous
+  // CLUSTER of multiple pitches ringing together (even its most isolated single-pitch moment
+  // still had 3+ other notes sounding at 76% of that moment's total tonal energy), not one
+  // brightened voice at a time. Each call now independently rolls every voice in MELODY_VOICES
+  // (F5 is practically an always-on anchor) plus LOW_DRONE, so a real cluster forms instead of
+  // a monophonic pick -- the "brightness" comes from real polyphony now, not synthetic overtones.
+  function playMelodyNote(volume) {
+    const ctx = _ensureAudio(); if (!ctx) return;
+    volume = volume == null ? 1 : volume;
+    const t = ctx.currentTime;
+    MELODY_VOICES.forEach(v => {
+      if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 3, 200, ctx, t, volume);
+    });
+    if (Math.random() < LOW_DRONE.prob) _playVoice(LOW_DRONE.freq, LOW_DRONE.gain, 6, 260, ctx, t, volume);
   }
   // The dice-clack, entirely on its own: real dice-on-surface knock character (tonal thump +
   // bandpassed noise click), decaying to -6dB in ~6ms.
