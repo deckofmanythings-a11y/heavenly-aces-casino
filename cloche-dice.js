@@ -122,21 +122,32 @@
   // Deck supplied a reference recording (CrapsRoll.ogg) and asked for the same TYPE OF TONE --
   // not the file itself, same licensing reason the earlier bell-chime version cites: a real
   // recording isn't something to source/reuse, but a synth nailing the same character has zero
-  // licensing concerns. Analyzed it computationally (FFT per onset, spectral centroid/
-  // bandwidth, decay time): ~80% of its energy sits in a narrow 600-900Hz band (dominant peaks
-  // cluster 650-820Hz), decaying to -6dB in ~6ms, with almost nothing above 1.5kHz. That's a
-  // short, dark, DRY knock/clack -- real dice hitting a surface -- not a bright ringing bell
-  // with a wide melodic scale and a long tail, which is what this replaces.
+  // licensing concerns.
+  //
+  // First pass (FFT per short onset window) mistook the ~700Hz peak for a knock resonance and
+  // built a loud, ~6ms percussive "clack" as the dominant sound -- wrong. Redone with proper
+  // harmonic/percussive source separation (median-filtering HPSS: horizontal-in-time median
+  // isolates sustained tones, vertical-in-time median isolates broadband transients) on the
+  // FULL clip: 82.6% of the total energy is harmonic/tonal, only 17.4% is percussive. Deck
+  // confirmed by ear -- "the dominating sound in the file is sing-songy tones," clacks present
+  // but secondary. Within that tonal energy, F5 (~698Hz) alone is ~58% of it, with G#5/C#5/G#4
+  // as smaller supporting voices (a fourth, a major sixth, and an octave above G#4 -- a real,
+  // intentional chord, not noise). MELODY_WEIGHTS below mirrors those proportions.
+  const MELODY_NOTES = [
+    { freq: 698.46, weight: 55 }, // F5  -- the dominant sung pitch
+    { freq: 830.61, weight: 20 }, // G#5
+    { freq: 554.37, weight: 13 }, // C#5
+    { freq: 415.30, weight: 12 }  // G#4
+  ];
+  const MELODY_WEIGHT_TOTAL = MELODY_NOTES.reduce((s, n) => s + n.weight, 0);
+  function pickMelodyFreq() {
+    let r = Math.random() * MELODY_WEIGHT_TOTAL;
+    for (const n of MELODY_NOTES) { if ((r -= n.weight) <= 0) return n.freq; }
+    return MELODY_NOTES[0].freq;
+  }
+  // The remaining 17.4%, percussive part -- real dice-on-surface knocks, dark and dry, decaying
+  // to -6dB in ~6ms. Now the quiet undercurrent instead of the lead.
   const KNOCK_FREQS = [625, 656, 688, 719, 750, 781, 813];
-  // Deck's follow-up: there IS a musical layer in the reference, riding on top of the knock --
-  // that ~700Hz knock resonance is rock-steady in every single window across the whole 2.3s
-  // clip (matches KNOCK_FREQS almost exactly, confirming it's the knock's own pitch, not a
-  // melody), but three OTHER pitches -- G#4/415Hz, C#5/554Hz, G#5/830Hz -- fade in and out at
-  // different points in the clip with a much longer sustain (100-300ms, found via a
-  // sustained-bin scan: which frequency bins stay loud across many consecutive analysis frames
-  // rather than spiking once like the knock does). Real 12-TET pitches, a fourth and a fifth
-  // apart -- clearly an intentional soft chime layer, not resonance/noise bleed.
-  const MELODY_NOTES = [415.30, 554.37, 830.61];
   // Builds a synthetic impulse response for ConvolverNode -- decaying filtered noise, the
   // standard way to get a smooth algorithmic reverb tail without needing to source/license an
   // actual recorded impulse response file.
@@ -181,55 +192,31 @@
   }
   // volume scales the overall level -- used by the coin waterfall to read as louder/more
   // excited than the dice tumble without actually being a different instrument.
+  //
+  // Every call now layers both components every time (no probability gate) -- the reference's
+  // clacks are a constant textural undercurrent, not an occasional accent. Gains (0.42 tonal /
+  // 0.48 percussive) look backwards for "quiet undercurrent" but aren't: the knock's ~30ms
+  // decay is ~7x shorter than the melody's ~200ms ring, so matching the source's 82.6/17.4
+  // energy split needs a comparable (even slightly higher) PEAK on the knock -- offline-
+  // rendered both layers and confirmed 82.7/17.3 energy at these gains. A short percussive
+  // transient can peak as loud as a sustained tone and still read as background texture.
   function playChimeNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
     volume = volume == null ? 1 : volume;
-    const freq = KNOCK_FREQS[Math.floor(Math.random() * KNOCK_FREQS.length)];
     const t = ctx.currentTime;
-    const master = ctx.createGain();
-    master.gain.value = 0.5 * volume;
-    master.connect(ctx.destination); // dry
-    master.connect(_reverbSend);     // faint tail -- the reference itself has none, this just
-    master.connect(_echoSend);       // keeps rapid knocks from feeling completely disconnected
-
-    // Tonal body: one sine at the knock's resonant pitch, gone almost as fast as it starts --
-    // matches the reference's ~6ms decay-to-(-6dB), nothing like a bell's long ring.
-    const osc = ctx.createOscillator(), og = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    og.gain.setValueAtTime(0, t);
-    og.gain.linearRampToValueAtTime(1, t + 0.002);
-    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.028);
-    osc.connect(og); og.connect(master);
-    osc.start(t); osc.stop(t + 0.04);
-
-    // Percussive click: a hair of noise bandpassed around the same center frequency, giving
-    // the "clack" of dice hitting a surface instead of a pure electronic beep -- matches the
-    // reference's moderate spectral flatness (not a clean tone, not noise either).
-    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.02), ctx.sampleRate);
-    const nd = noiseBuf.getChannelData(0);
-    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
-    const noise = ctx.createBufferSource(); noise.buffer = noiseBuf;
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 3;
-    const ng = ctx.createGain(); ng.gain.value = 0.5;
-    noise.connect(bp); bp.connect(ng); ng.connect(master);
-    noise.start(t);
-
-    // Melody layer: doesn't fire on every knock -- in the reference, each of the three pitches
-    // only occupies part of the clip at a time (never all three, never constantly), so a knock
-    // that's already firing every 80-180ms would wash it into a blur if it played every time.
-    // ~35% keeps it landing every 2-3 knocks, closer to the reference's actual note spacing.
-    if (Math.random() < 0.35) _playMelodyNote(volume);
+    _playMelodyNote(volume, ctx, t);
+    _playKnock(volume, ctx, t);
   }
-  // The softer, longer-ringing pitch layer found riding on top of the knock (see MELODY_NOTES).
-  // Much shorter than the old bell chime's 0.85s tail -- matches the ~100-300ms sustain actually
-  // measured in the reference -- but a real sine ring, not a percussive transient like the knock.
-  function _playMelodyNote(volume) {
-    const ctx = _ensureAudio(); if (!ctx) return;
-    const freq = MELODY_NOTES[Math.floor(Math.random() * MELODY_NOTES.length)];
-    const t = ctx.currentTime;
+  // The dominant voice: a real sustained sine ring at a weighted-random pitch from MELODY_NOTES
+  // (F5 most often, per the reference's own balance), ~150-200ms audible decay -- much shorter
+  // than the old bell chime's 0.85s tail, but a genuine ring, not a percussive transient.
+  function _playMelodyNote(volume, ctx, t) {
+    ctx = ctx || _ensureAudio(); if (!ctx) return;
+    t = t == null ? ctx.currentTime : t;
+    volume = volume == null ? 1 : volume;
+    const freq = pickMelodyFreq();
     const master = ctx.createGain();
-    master.gain.value = 0.14 * volume; // quieter than the knock -- it's an undertone, not the lead
+    master.gain.value = 0.42 * volume;
     master.connect(ctx.destination);
     master.connect(_reverbSend);
     master.connect(_echoSend);
@@ -241,6 +228,37 @@
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
     osc.connect(g); g.connect(master);
     osc.start(t); osc.stop(t + 0.22);
+  }
+  // The quiet undercurrent: real dice-on-surface knock character (tonal thump + bandpassed
+  // noise click), decaying to -6dB in ~6ms -- present under every note, just no longer the lead.
+  function _playKnock(volume, ctx, t) {
+    ctx = ctx || _ensureAudio(); if (!ctx) return;
+    t = t == null ? ctx.currentTime : t;
+    volume = volume == null ? 1 : volume;
+    const freq = KNOCK_FREQS[Math.floor(Math.random() * KNOCK_FREQS.length)];
+    const master = ctx.createGain();
+    master.gain.value = 0.48 * volume;
+    master.connect(ctx.destination);
+    master.connect(_reverbSend);
+    master.connect(_echoSend);
+
+    const osc = ctx.createOscillator(), og = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    og.gain.setValueAtTime(0, t);
+    og.gain.linearRampToValueAtTime(1, t + 0.002);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.028);
+    osc.connect(og); og.connect(master);
+    osc.start(t); osc.stop(t + 0.04);
+
+    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.02), ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
+    const noise = ctx.createBufferSource(); noise.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 3;
+    const ng = ctx.createGain(); ng.gain.value = 0.5;
+    noise.connect(bp); bp.connect(ng); ng.connect(master);
+    noise.start(t);
   }
   // ---------- action-movie dramatic drums + brass (destroyer's missile-strike theme) ----------
   // Low taiko-style sub-bass thumps with a noise-crack attack, a bass brass stab on every 4th
