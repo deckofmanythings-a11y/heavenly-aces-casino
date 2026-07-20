@@ -1453,7 +1453,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.115</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.116</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4940,28 +4940,25 @@ updateMuteVoicesBtn();
 function withTimeout(promise,ms,label){
   return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out')),ms))]);
 }
+// Discord's launch-context query params include location_id, which is prefixed gc- for a
+// guild channel (voice/text) and pc- for a private channel (DM or group DM). ready() has
+// been confirmed to hang reliably -- not flakily -- on pc- launches (3/3 attempts failed,
+// twice in a row, with a fresh SDK instance each time), so there's no point spending 8+
+// seconds attempting it there. Skip straight to tryRestoreSession(), the fallback already
+// known to work off an existing localStorage session from an earlier guild-channel launch.
+function isDiscordDM(){
+  const loc=new URLSearchParams(location.search).get('location_id');
+  return !!loc&&loc.startsWith('pc-');
+}
 async function runDiscordEntry(){
   try{
+    // Only reached for guild-channel launches (isDiscordDM() already routed DM/private-
+    // channel launches straight to tryRestoreSession() before this ever runs). ready()
+    // works reliably there, so a single attempt with a timeout is enough -- a hang here
+    // would be a genuine one-off glitch, not the known DM limitation.
     const {DiscordSDK}=window.DiscordSDKLib;
-    // ready() has been observed to hang indefinitely on some launch surfaces (e.g. DMs)
-    // rather than reject. Rebuild the SDK instance fresh on each attempt -- if this is a
-    // flaky/racy handshake rather than a hard platform limitation, a clean instance gives
-    // the best shot at succeeding rather than re-awaiting a channel that already missed
-    // its window. Give up after a few tries and fall back to the normal login screen.
-    let discordSdk,readyErr;
-    const READY_ATTEMPTS=3;
-    for(let i=0;i<READY_ATTEMPTS;i++){
-      try{
-        discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
-        await withTimeout(discordSdk.ready(),8000,'Discord SDK ready()');
-        readyErr=null;
-        break;
-      }catch(err){
-        readyErr=err;
-        console.warn('Discord SDK ready() attempt '+(i+1)+'/'+READY_ATTEMPTS+' failed:',err);
-      }
-    }
-    if(readyErr)throw readyErr;
+    const discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
+    await withTimeout(discordSdk.ready(),8000,'Discord SDK ready()');
     const{code}=await discordSdk.commands.authorize({
       client_id:DISCORD_CLIENT_ID,response_type:'code',state:'',prompt:'none',scope:['identify']
     });
@@ -4980,7 +4977,11 @@ async function runDiscordEntry(){
   }
 }
 
-if(isDiscordActivity()){runDiscordEntry();}else{tryRestoreSession();}
+if(isDiscordActivity()){
+  if(isDiscordDM()){tryRestoreSession();}else{runDiscordEntry();}
+}else{
+  tryRestoreSession();
+}
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
 // "Debt" here is G.startingBankroll (== total_redeemed: the cumulative buy-in money Deck has
