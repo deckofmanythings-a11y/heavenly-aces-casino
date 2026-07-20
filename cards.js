@@ -3,10 +3,8 @@
 // convention: copy into a new game's root as-is, no build step required beyond the
 // cards/ image folder sitting alongside it.
 //
-// Card art: "SVG-cards" by David Bellot, fork by htdebeer
-// (https://github.com/htdebeer/SVG-cards), LGPL-2.1 -- see cards/LICENSE.
-// Faces/back are pre-rendered PNGs (cards/card-<RANK><SUIT>.png, cards/card-back.png),
-// not generated here.
+// Card art: original, made by Deck -- no external license. Faces/back are pre-rendered
+// PNGs (cards/card-<RANK><SUIT>.png, cards/card-back.png), not generated here.
 (function(){
 
 const RANK_CODE={14:'A',13:'K',12:'Q',11:'J',10:'10',9:'9',8:'8',7:'7',6:'6',5:'5',4:'4',3:'3',2:'2'};
