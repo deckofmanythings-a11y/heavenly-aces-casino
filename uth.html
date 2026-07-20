@@ -321,7 +321,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.123</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.124</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -756,6 +756,11 @@ async function redeemVoucher(code){document.getElementById('redeem-input').value
 // ── CHIP SELECTION ────────────────────────────────────────────────────────────
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
 
+// ── TABLE LIMITS (per player tier -- $1/$300 default, see tier_bet_limits) ────
+// Mirrors the server-authoritative check in roll-uth; this is UX only (clamp +
+// message before the request even goes out), the server rejects independently.
+const MIN_BET=1,MAX_BET=300;
+
 // ── PRE-DEAL BET ACTIONS (ante/trips only -- blind always mirrors ante) ──────
 // Ante's matching Blind (always equal, never staged separately) has to be reserved
 // from the bankroll right along with it, or a player can stage more Ante than they
@@ -764,11 +769,14 @@ function anteReserveMult(key){return key==='ante'?2:1;}
 function placeBet(key){
   if(G.phase!=='betting')return;
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  const cur=G.bets[key]||0;
+  if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
   const mult=anteReserveMult(key);
   const room=r2(G.bankroll/mult);
-  const a=r2(Math.min(G.chip,room));
+  const capRoom=r2(MAX_BET-cur);
+  const a=r2(Math.min(G.chip,room,capRoom));
   if(a<=0){addLog('Not enough bankroll to also cover the matching Blind bet.','info');return;}
-  G.bets[key]=r2((G.bets[key]||0)+a);
+  G.bets[key]=r2(cur+a);
   G.bankroll=r2(G.bankroll-a*mult);
   updateUI();
 }
@@ -847,7 +855,7 @@ function updateRaiseButtonStates(){
   opts.forEach(mult=>{
     const btn=document.getElementById(RAISE_BTN_ID[mult]);if(!btn)return;
     const amt=r2(G.locked.ante*mult);
-    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll);
+    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll&&amt<=MAX_BET);
   });
 }
 function doRaise(mult){
@@ -856,7 +864,7 @@ function doRaise(mult){
   const btn=document.getElementById(RAISE_BTN_ID[mult]);
   if(btn&&btn.disabled)return;
   const amt=r2(G.locked.ante*mult);
-  if(amt<=0||amt>G.bankroll)return;
+  if(amt<=0||amt>G.bankroll||amt>MAX_BET)return;
   G.playBet=amt;
   G.bankroll=r2(G.bankroll-amt);
   updateUI();

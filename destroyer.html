@@ -617,7 +617,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.123</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.124</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1238,11 +1238,16 @@ function updateBetDisplay(){
   renderShipStatusCompact('pp',bet);
   renderBetCircle(bet);
 }
+// Table limits (per player tier -- $1/$300 default, see tier_bet_limits). Mirrors the
+// server-authoritative check in roll-destroyer; this is UX only, the server rejects
+// independently.
+const MIN_BET=1,MAX_BET=300;
 function addBetChip(){
   if(G.phase!=='placement')return;
   const chip=G.chip||5;
   G.placementBet=Math.round(((G.placementBet||0)+chip)*100)/100;
   if(G.placementBet>G.bankroll)G.placementBet=Math.round(G.bankroll*100)/100;
+  if(G.placementBet>MAX_BET){G.placementBet=MAX_BET;addLog('Table max is '+fmt(MAX_BET)+'.','info');}
   updateBetDisplay();
 }
 function removeBetChip(){
@@ -1377,6 +1382,7 @@ async function startBattle(){
   const bet=G.placementBet||0;
   if(bet<=0){addLog('Place a bet before starting.','info');return;}
   if(bet>G.bankroll){addLog('Bet exceeds bankroll.','info');return;}
+  if(bet<MIN_BET||bet>MAX_BET){addLog('Bet must be between '+fmt(MIN_BET)+' and '+fmt(MAX_BET)+'.','info');return;}
   const btn=document.getElementById('start-battle-btn');btn.disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;

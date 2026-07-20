@@ -1498,7 +1498,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.123</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.124</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3497,6 +3497,13 @@ function cancelCommission(){
   document.getElementById('modal-commission').classList.add('hidden');
   pendingCommissionAction=null;
 }
+// ── TABLE LIMITS (per player tier -- $1/$300 default, see tier_bet_limits) ────
+// Mirrors the server-authoritative check in roll-standard/roll-crapless; this is UX
+// only (clamp + message before the request even goes out), the server rejects
+// independently. Odds bets (passodds/dpodds/comeBets[].odds/dcBets[].odds) are
+// deliberately exempt -- they're already bounded by their own 3-4-5x oddsLim()/
+// dcOddsLim() math off an already-capped flat bet.
+const MIN_BET=1,MAX_BET=300;
 function placeBet(key,loc){
   // Logic-level gate, not just CSS: a FOCUS_GROUPS bet area (Pass Line, Come, etc.) has no
   // "visible but not yet clickable" state of its own -- once its group is visible it's fully
@@ -3520,7 +3527,9 @@ function placeBet(key,loc){
     const n=parseInt(key.slice(type.length),10);
     if(!lineModeAllows(type,n)){addLog((type==='buy'?'Buy':'Place')+' '+n+': not offered in this line mode.','info');return;}
   }
-  const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
+  const cur=G.bets[key]||0;
+  if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
+  const a=r2(Math.min(G.chip,G.bankroll,MAX_BET-cur));G.bets[key]=r2(cur+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
   if(tutorialActive)tutorialOnBetPlaced(key);
 }
 function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}

@@ -339,7 +339,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.123</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.124</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -702,10 +702,16 @@ async function redeemCode(){
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
 
 // ── BET ACTIONS ───────────────────────────────────────────────────────────────
+// Table limits (per player tier -- $1/$300 default, see tier_bet_limits). Mirrors the
+// server-authoritative check in roll-sicbo; this is UX only, the server rejects
+// independently.
+const MIN_BET=1,MAX_BET=300;
 function placeBet(key){
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
-  const a=r2(Math.min(G.chip,G.bankroll));
-  G.bets[key]=r2((G.bets[key]||0)+a);
+  const cur=G.bets[key]||0;
+  if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
+  const a=r2(Math.min(G.chip,G.bankroll,MAX_BET-cur));
+  G.bets[key]=r2(cur+a);
   G.bankroll=r2(G.bankroll-a);
   updateUI();
 }

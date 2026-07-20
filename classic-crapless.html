@@ -920,7 +920,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.123</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.124</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2782,6 +2782,10 @@ function cancelCommission(){
   document.getElementById('modal-commission').classList.add('hidden');
   pendingCommissionAction=null;
 }
+// Table limits (per player tier -- $1/$300 default, see tier_bet_limits). Mirrors the
+// server-authoritative check in roll-standard/roll-crapless; this is UX only, the
+// server rejects independently.
+const MIN_BET=1,MAX_BET=300;
 function placeBet(key,loc){
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
@@ -2789,7 +2793,9 @@ function placeBet(key,loc){
   if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
   if(key==='dp'){if(activeGame!=='standard'){addLog('Don\'t Pass: standard mode only.','info');return;}if(G.phase==='point'){addLog('Don\'t Pass: come-out only.','info');return;}}
   if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
-  const a=r2(Math.min(G.chip,G.bankroll));G.bets[key]=r2((G.bets[key]||0)+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
+  const cur=G.bets[key]||0;
+  if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
+  const a=r2(Math.min(G.chip,G.bankroll,MAX_BET-cur));G.bets[key]=r2(cur+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
 }
 function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}
 // Place bets on 6 or 8 must land in multiples of $6 for the 7-for-6 payout to resolve cleanly.
