@@ -63,10 +63,16 @@ function injectStyle(){
   const s=document.createElement('style');
   s.id='pc-style';
   s.textContent=
-    '.pc-card{width:var(--pc-w,60px);height:calc(var(--pc-w,60px)*1.447);perspective:600px;flex-shrink:0}'+
+    // Card art is 750x1050 (a true 2.5x3.5in card, h/w=1.4 exactly) with a baked-in circular
+    // corner radius measured at ~6.2% of width (750x1050 -> ~46.5px radius). border-radius here
+    // is deliberately calc()'d off --pc-w alone (not a plain "%", which is independently
+    // percent-of-width horizontally and percent-of-height vertically -- on this non-square box
+    // that draws an ellipse, not the circle the art actually has) so both radii stay true
+    // circles that track the art's corner curve at any card size.
+    '.pc-card{width:var(--pc-w,60px);height:calc(var(--pc-w,60px)*1.4);perspective:600px;flex-shrink:0}'+
     '.pc-card-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}'+
     '.pc-card.flipped .pc-card-inner{transform:rotateY(180deg)}'+
-    '.pc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:8%;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.45);background:#fff}'+
+    '.pc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:calc(var(--pc-w,60px)*.062);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.45);background:#fff}'+
     '.pc-face img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;user-drag:none}'+
     '.pc-front{transform:rotateY(180deg)}'+
     '.pc-card.empty .pc-face{visibility:hidden}'+
