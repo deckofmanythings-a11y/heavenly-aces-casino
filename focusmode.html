@@ -1498,7 +1498,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.122</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.123</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3059,7 +3059,7 @@ function chipStackHTML(amt,off,locked){
   h+='</span>';
   return h;
 }
-const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,.dp-stk,.dp-odds-stk,#stk-pass,#stk-passodds,#stk-come,#stk-field,#stk-dc-wait,.lr-stake';
+const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,.dp-stk,.dp-odds-stk,#stk-pass,#stk-passodds,#stk-come,#stk-field,#stk-dc-wait,.lr-stake,#stk-light';
 function renderChipStacks(){
   if(!document.body.classList.contains('felt-mode')){
     document.querySelectorAll('.has-stack').forEach(e=>e.classList.remove('has-stack'));
@@ -3805,6 +3805,10 @@ async function rollDice(){
     spawnLossGhosts(rawLog);
     spawnWinGhosts(rawLog);
     const lightJustArmed=G.progressiveArmPending&&!!(data.newState&&data.newState.progressiveActive);
+    // Sweep the staged $5 chip away (not dimmed, per Deck's request -- same noDim ghost style
+    // as a win-side sweep) BEFORE restoreFromServerState() clears G.progressiveArmPending and
+    // the next updateUI() blanks #stk-light's text out from under it.
+    if(lightJustArmed)spawnChipGhost(document.getElementById('stk-light'),{noDim:true});
     restoreFromServerState(data.newState);
     if(lightJustArmed){
       const img=document.getElementById('light-on-img');

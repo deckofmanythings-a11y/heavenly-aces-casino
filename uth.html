@@ -321,7 +321,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.122</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.123</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -1017,6 +1017,9 @@ async function dealHand(){
   ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until the deal+reveal finishes
   updateStatusZone();
   document.getElementById('repeat-btn').disabled=false;
+  // Sweep the staged $5 chip away (not dimmed -- same noDim ghost style as a win-side
+  // sweep) BEFORE updateUI()/renderChipStacks() blanks #stk-light's text out from under it.
+  if(data.progressive)spawnChipGhost(document.getElementById('stk-light'),{noDim:true});
   updateUI();
   if(data.progressive){
     const img=document.getElementById('light-on-img');
@@ -1304,6 +1307,10 @@ function renderChipStacks(){
   applyChipStackVisual('stk-blind',contractLocked,true);
   applyChipStackVisual('stk-trips',contractLocked);
   applyChipStackVisual('stk-play',G.phase==='showdown');
+  // The Light: real chip stack while staged (pre-deal), same as Ante/Trips -- its own
+  // updateUI() block already blanks the text once locked, so there's nothing left to render
+  // by the time dealHand() sweeps the chip away and lightON.png takes over.
+  applyChipStackVisual('stk-light',false);
 }
 function applyChipStackVisual(id,locked,silent){
   const el=document.getElementById(id);
