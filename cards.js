@@ -14,8 +14,12 @@ const RANK_LABEL=RANK_CODE;
 const SUIT_SYMBOL={S:'♠',H:'♥',D:'♦',C:'♣'};
 const SUIT_COLOR={S:'#161616',C:'#161616',H:'#c41230',D:'#c41230'};
 
-function cardImgSrc(card){return 'cards/card-'+RANK_CODE[card.r]+card.s+'.png';}
-function backImgSrc(){return 'cards/card-back.png';}
+// Bump alongside cards.js?v= in every host page whenever the card art itself changes --
+// the images keep the same filenames, so without a cache-busting query string GitHub Pages
+// would keep serving the old cached PNGs for a while after a deploy.
+const CARD_ASSET_V='0.4.120';
+function cardImgSrc(card){return 'cards/card-'+RANK_CODE[card.r]+card.s+'.png?v='+CARD_ASSET_V;}
+function backImgSrc(){return 'cards/card-back.png?v='+CARD_ASSET_V;}
 
 function rankLabel(r){return RANK_LABEL[r];}
 function suitSymbol(s){return SUIT_SYMBOL[s];}
