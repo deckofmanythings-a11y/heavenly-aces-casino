@@ -109,7 +109,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.35);border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
 #roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
 #roll-history::-webkit-scrollbar{display:none}
-.roll-pip{min-width:36px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 4px;background:rgba(255,255,255,.1)}
+.roll-pip{min-width:36px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 4px;background:rgba(255,255,255,.1);cursor:help}
 .roll-pip .rp-hand{font-size:10px;line-height:1;white-space:nowrap}
 .roll-pip .rp-amt{font-size:15px;line-height:1;margin-top:1px}
 .roll-pip.win{background:rgba(0,120,40,.35)}
@@ -288,7 +288,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.118</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.119</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -520,6 +520,15 @@ function raiseMultiplier(count){if(count>=6)return 3;if(count===5)return 2;retur
 function describeHandTier(score){
   if(isRainbow(score))return 'Rainbow, No Flush';
   return score.count+'-Card Flush, '+RANK_NAME[score.ranks[0]]+' High';
+}
+// Adds the remaining ranks as a kicker suffix -- a flush's rank is fully determined by every
+// card in it (compareHands walks the whole ranks array), not just the high card, so two
+// same-count-same-high-card flushes can still differ deeper in. Used for the history pip's
+// hover tooltip, not the on-felt live display (which stays as describeHandTier()).
+function describeHandTierFull(score){
+  if(isRainbow(score))return 'Rainbow, No Flush';
+  const rest=score.ranks.slice(1);
+  return score.count+'-Card Flush, '+RANK_NAME[score.ranks[0]]+' High'+(rest.length?' ('+rest.map(r=>RANK_NAME[r]).join('-')+' kicker)':'');
 }
 function updateLiveHandDisplay(){
   if(!G.hand)return;
@@ -1071,7 +1080,11 @@ async function commitDecision(decision,playBet){
   finishHand(data);
 }
 function finishHand(data){
-  const playerFinal=data.folded?null:evalHand(G.hand.playerHand);
+  // Computed regardless of fold -- the dealer's hand always comes down (sweatRevealAllAtOnce
+  // below runs unconditionally), so the history tooltip can show what the dealer actually had
+  // even on a hand the player folded.
+  const playerFinal=evalHand(G.hand.playerHand);
+  const dealerFinal=evalHand(data.dealerHand);
   if(data.folded){
     document.getElementById('player-hand-name').textContent='Folded';
   }
@@ -1084,7 +1097,11 @@ function finishHand(data){
   G.lastWin=data.payout||0;
   G.lastBetDisplay=r2(G.locked.ante+G.locked.flushRush+G.locked.superFlushRush+(data.playBet||0));
   const histLabel=data.folded?'Fold':(isRainbow(playerFinal)?'Rainbow':playerFinal.count+'-Flush');
-  G.history.unshift({result:data.result,payout:data.payout,label:histLabel});
+  // Full hand descriptions (with kicker) for the history pip's hover tooltip -- shown even
+  // on a fold, so "what did the dealer have" doesn't require digging into the log.
+  const playerDesc=data.folded?'Folded':describeHandTierFull(playerFinal);
+  const dealerDesc=describeHandTierFull(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
+  G.history.unshift({result:data.result,payout:data.payout,label:histLabel,playerDesc,dealerDesc});
   if(G.history.length>20)G.history.length=20;
   G.phase='showdown';
   renderActionButtons();updateStatusZone();
@@ -1095,7 +1112,6 @@ function finishHand(data){
   // had. The winner modal (and the no-payout reset timer) waits for this to finish, so
   // it never pops up before the dealer's hand is fully revealed and described.
   sweatRevealAllAtOnce(G.cardEls.dealer,data.dealerHand,DEALER_FAN_LEFTS,()=>{
-    const dealerFinal=evalHand(data.dealerHand);
     document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
     spawnILuvSuitsGhosts(data.log||[],data.folded);
     const totalWagered=G.lastBetDisplay||1;
@@ -1146,6 +1162,7 @@ function renderRollHistory(){
     pip.className='roll-pip '+(h.result||'');
     const amt=h.result==='fold'?'−':(h.payout>0?'+'+fmtS(h.payout):'−');
     pip.innerHTML='<span class="rp-hand">'+h.label+'</span><span class="rp-amt">'+amt+'</span>';
+    if(h.playerDesc)pip.title='You: '+h.playerDesc+(h.dealerDesc?'\nDealer: '+h.dealerDesc:'');
     hist.appendChild(pip);
   });
   hist.scrollLeft=0;

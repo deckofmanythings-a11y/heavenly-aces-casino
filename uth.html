@@ -118,7 +118,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.35);border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
 #roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
 #roll-history::-webkit-scrollbar{display:none}
-.roll-pip{min-width:36px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 4px;background:rgba(255,255,255,.1)}
+.roll-pip{min-width:36px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 4px;background:rgba(255,255,255,.1);cursor:help}
 .roll-pip .rp-hand{font-size:10px;line-height:1;white-space:nowrap}
 .roll-pip .rp-amt{font-size:15px;line-height:1;margin-top:1px}
 .roll-pip.win{background:rgba(0,120,40,.35)}
@@ -300,7 +300,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.118</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.119</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -566,6 +566,23 @@ function describeScore(score){
     default: return RANK_NAME[k[0]]+' High';
   }
 }
+// Kicker suffix for categories whose named parts (e.g. "Two Pair, Kings and 5s") don't fully
+// capture the hand -- the remaining card(s) that would decide a tie against an identically-
+// categorized hand. Full House/Straight/Straight Flush/Royal are fully determined by their
+// named ranks already, so they get no suffix.
+function describeScoreKicker(score){
+  const k=score.kick;
+  switch(score.cat){
+    case 7: return k[1]?', '+RANK_NAME[k[1]]+' kicker':'';
+    case 5: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    case 3: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    case 2: return k[2]?', '+RANK_NAME[k[2]]+' kicker':'';
+    case 1: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    case 0: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    default: return '';
+  }
+}
+function describeScoreFull(score){return describeScore(score)+describeScoreKicker(score);}
 function describeHole(cards){
   const a=cards[0],b=cards[1];
   if(a.r===b.r)return 'Pair of '+RANK_PLURAL[a.r];
@@ -1002,11 +1019,12 @@ async function commitDecision(decision,playBet,street){
 }
 function finishHand(data){
   const committedStreet=G.phase; // capture before it's overwritten to 'showdown' below
-  let playerFinal=null,dealerFinal=null;
-  if(!data.folded){
-    playerFinal=best7([...G.hand.playerHole,...G.hand.community]);
-    dealerFinal=best7([...data.dealerHole,...G.hand.community]);
-  }
+  // Computed regardless of fold -- the community board is always fully dealt and the dealer's
+  // hole cards always come down by this point (real UTH always shows the dealer's hand, win,
+  // lose, or folded-against), so the history tooltip can show what the dealer actually had
+  // even on a hand the player folded.
+  const playerFinal=best7([...G.hand.playerHole,...G.hand.community]);
+  const dealerFinal=best7([...data.dealerHole,...G.hand.community]);
   // Hand-strength text is deferred to whenever the cards actually finish revealing
   // (rather than set synchronously up front) so it never spoils the result before the
   // community/dealer cards have visually caught up.
@@ -1037,7 +1055,11 @@ function finishHand(data){
     G.lastWin=data.payout||0;
     G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
     const histLabel=data.folded?'Fold':categoryName(playerFinal);
-    G.history.unshift({result:data.result,payout:data.payout,label:histLabel});
+    // Full hand descriptions (with kicker) for the history pip's hover tooltip -- shown even
+    // on a fold, so "what did the dealer have" doesn't require digging into the log.
+    const playerDesc=data.folded?'Folded':describeScoreFull(playerFinal);
+    const dealerDesc=describeScoreFull(dealerFinal)+(dealerFinal.cat>=1?'':' (no qualify)');
+    G.history.unshift({result:data.result,payout:data.payout,label:histLabel,playerDesc,dealerDesc});
     if(G.history.length>20)G.history.length=20;
     G.phase='showdown';
     renderActionButtons();updateStatusZone();
@@ -1105,6 +1127,7 @@ function renderRollHistory(){
     pip.className='roll-pip '+(h.result||'');
     const amt=h.result==='fold'?'−':(h.payout>0?'+'+fmtS(h.payout):'−');
     pip.innerHTML='<span class="rp-hand">'+h.label+'</span><span class="rp-amt">'+amt+'</span>';
+    if(h.playerDesc)pip.title='You: '+h.playerDesc+(h.dealerDesc?'\nDealer: '+h.dealerDesc:'');
     hist.appendChild(pip);
   });
   hist.scrollLeft=0;
