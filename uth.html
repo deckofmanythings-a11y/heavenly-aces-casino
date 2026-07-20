@@ -321,7 +321,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.124</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.125</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -995,6 +995,11 @@ const HOLE_REVEAL_GAP_MS=650; // pause between flipping the player's two hole ca
 async function dealHand(){
   const ante=G.bets.ante||0;
   if(ante<=0){addLog('Place an Ante bet before dealing.','info');return;}
+  // G.bankroll already has Ante/Blind/Trips/Light deducted (placeBet/toggleProgressive
+  // subtract as soon as chips are staged), so this is exactly the reserve left over --
+  // never let a hand start that can't afford even the smallest possible Play bet (1x
+  // Ante, at the river), or every street would force a Fold no matter what's drawn.
+  if(G.bankroll<ante-0.01){addLog('Not enough bankroll left to cover a 1x Play bet ('+fmt(ante)+') at the river. Lower your Ante/Trips or add funds.','info');return;}
   const trips=G.bets.trips||0;
   const progressive=(G.bets.progressive||0)>0;
   document.getElementById('btn-deal').disabled=true;
