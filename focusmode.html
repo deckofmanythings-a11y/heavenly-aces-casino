@@ -209,6 +209,18 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 .zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
+.progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
+.progressive-tier-row .prog-pay{color:#ffd700;font-weight:700}
+
+/* THE LIGHT: shared cross-game progressive. Position comes from FELT_LAYOUT (like every
+   other felt element) -- this just styles what's inside the box. */
+#light-spot{cursor:pointer;border-radius:12%;transition:box-shadow .15s}
+#light-spot.active{box-shadow:0 0 0 3px rgba(255,215,0,.55)}
+#stk-light{position:absolute;left:50%;top:78%;transform:translate(-50%,-50%);font-size:1.6cqh;font-weight:700;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:2}
+#light-streak-badge{display:none;position:absolute;left:50%;bottom:-6%;transform:translateX(-50%);background:#b02020;color:#fff;font-weight:800;font-size:11px;line-height:1.2;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap;z-index:3}
+#light-info-btn{position:absolute;right:2%;top:2%;width:18%;height:18%;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:9px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:4;padding:0}
+@keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
+#light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 
 #come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;background:rgba(0,80,180,.15);border:0.5px solid rgba(100,160,255,.3)}
 #field-bar{flex:2;min-height:0;background:rgba(60,40,0,.3);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;border:0.5px solid rgba(255,200,0,.2)}
@@ -1052,6 +1064,20 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <div style="display:flex;gap:8px;margin-top:8px"><button class="modal-btn" onclick="exportShooterCSV()">Export Rolls</button><button class="modal-btn cancel" onclick="closeLogModal()">Close</button></div>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="modal-progressive">
+    <div class="modal-box dark" style="max-height:80vh;overflow-y:auto">
+      <div class="modal-title" style="text-align:center">💡 The Light</div>
+      <div style="text-align:center;font-size:15px;color:rgba(255,255,255,.6);margin-bottom:10px">A shared jackpot across every table. $5 to play, active for the whole shooter's turn.</div>
+      <div style="text-align:center;font-size:34px;font-weight:900;color:#ffd700;margin:10px 0" id="progressive-pool-display">$1,000.00</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:14px">$2.50 of every $5 bet feeds the pool. The rest funds the fixed prizes below and the house.</div>
+      <div class="progressive-tier-row"><span>12 points in a row</span><span class="prog-pay">100% of pool</span></div>
+      <div class="progressive-tier-row"><span>9 points in a row</span><span class="prog-pay">10% of pool</span></div>
+      <div class="progressive-tier-row"><span>6 points in a row</span><span class="prog-pay">$15</span></div>
+      <div class="progressive-tier-row"><span>4 points in a row</span><span class="prog-pay">$5</span></div>
+      <div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;margin-top:8px">Crapless needs fewer in a row (10/8/5/4) — its extra numbers are individually harder to make.</div>
+      <button class="modal-btn cancel" onclick="closeProgressiveModal()" style="margin-top:12px">Close</button>
+    </div>
+  </div>
 
   <!-- FOCUS MODE SETTINGS -->
   <div class="modal-overlay hidden" id="modal-focus">
@@ -1429,9 +1455,23 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
               <div class="zone-name" style="font-size:40px">PASS LINE</div>
               <div class="zone-stk" id="stk-pass"></div>
               <div class="zone-note" id="lk-pass"></div>
-              
+
             </div>
           </div>
+        </div>
+        <!-- THE LIGHT: shared cross-game progressive, immediately left of the Pass Line
+             (Deck's placement request). No baked-in felt art here (unlike UTH), so both
+             ON/OFF sprites render as real DOM images, swapped by updateUI(). Everything
+             nests inside #light-spot so it inherits its position from FELT_LAYOUT the
+             same way panel-spot-stk does on the other bet spots -- #light-info-btn sits
+             just outside via a negative-offset absolute position, not a separate
+             FELT_LAYOUT entry of its own. -->
+        <div id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet, active for the whole shooter's turn">
+          <img id="light-off-img" class="fm-art-img" src="lightOFF.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+          <img id="light-on-img" class="fm-art-img" src="lightON.png" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+          <span id="stk-light"></span>
+          <span id="light-streak-badge"></span>
+          <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">ⓘ</button>
         </div>
       </div>
     </div>
@@ -1458,7 +1498,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.121</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.122</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1729,7 +1769,12 @@ const CRAPLESS_LAYOUT=[
   // FM_ART entries for the matching art positions.
   ['#come-bar',      56.656,59.278,42.750,11.556,null],
   ['#field-bar',     56.656,70.833,42.750,15.389,null],
-  ['#pass-bar',      56.656,86.223,42.750,11.556,null]
+  ['#pass-bar',      56.656,86.223,42.750,11.556,null],
+  // Immediately left of the Pass Line (Deck's placement request), same y/h so it sits
+  // flush against pass-bar's row. Width derived from height to keep the square 275x275
+  // light art proportionally square on screen despite the felt canvas itself (3200x1800)
+  // not being square: 11.556% of 1800px=208px tall -> 208/3200=6.5% wide.
+  ['#light-spot',     49.856,86.223, 6.5,11.556,null]
 ];
 // Standard-specific positions, measured directly on the standard felt art -- this sheet has
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
@@ -1770,6 +1815,8 @@ const STANDARD_LAYOUT=[
   ['#field-bar',      56.656,61.445,42.750,15.389,null],
   ['#dp-bar',         56.656,76.834,42.750, 9.389,null],
   ['#pass-bar',       56.656,86.223,42.750,11.556,null],
+  // Same placement/derivation as the crapless copy above -- see that comment.
+  ['#light-spot',     49.856,86.223, 6.5,11.556,null],
   // Buy/Place/Lay per number -- now individually calibrated real positions (Deck's drag-tool
   // export) instead of the CSS flex-split #num-zone used to size them into. Pulled directly
   // into #felt-stage by enterFeltMode() same as everything else here.
@@ -2193,7 +2240,7 @@ function fmtLastWin(b){
   return s+')';
 }
 
-function makeInitialG(){return{bankroll:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false}};}
+function makeInitialG(){return{bankroll:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
 let animating=false,animStart=0,tumbling=false,tumbleStart=0;
@@ -2234,6 +2281,9 @@ function hasWorkingBets(){
     if(G.bets['lay'+n])return true;
   }
   for(const k of['any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','field',...Object.keys(HOP_MAP),'hard4','hard6','hard8','hard10']){if(G.bets[k])return true;}
+  // The Light lives outside G.bets (see toggleProgressive()) -- a player should be able to
+  // roll with only it staged, no Pass Line required, same as a Hardways-only roll already works.
+  if(G.progressiveArmPending||G.progressiveActive)return true;
   return false;
 }
 
@@ -3474,6 +3524,35 @@ function placeBet(key,loc){
   if(tutorialActive)tutorialOnBetPlaced(key);
 }
 function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}
+
+// ── THE LIGHT (shared cross-game progressive) ─────────────────────────────────
+// Flat $5, no chip-denomination choice -- can only be armed fresh at come-out (before
+// the shooter's next come-out roll), same as a real Fire Bet. Once the roll that arms
+// it succeeds, the server takes over tracking progressiveActive/progressiveStreak for
+// the rest of the shooter's turn (see restoreFromServerState()) -- this toggle only
+// ever stages/unstages the ONE-TIME "arm it on the next roll" flag.
+const PROGRESSIVE_BET=5;
+function toggleProgressive(){
+  // The Light is server-tracked, shared, real-money state -- Practice Mode never touches
+  // Supabase (resolveFocusPractice() is a local port with no progressive/RPC logic), same
+  // reason redeeming a code is blocked there too.
+  if(G.practiceMode){addLog('Turn off Practice Mode to play the light.','info');return;}
+  if(G.phase!=='comeout'||G.progressiveActive)return;
+  if(G.progressiveArmPending){
+    G.progressiveArmPending=false;
+    G.bankroll=r2(G.bankroll+PROGRESSIVE_BET);
+  }else{
+    if(G.bankroll<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
+    G.progressiveArmPending=true;
+    G.bankroll=r2(G.bankroll-PROGRESSIVE_BET);
+  }
+  updateUI();
+}
+function openProgressiveModal(){
+  document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
+  document.getElementById('modal-progressive').classList.remove('hidden');
+}
+function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
 // Place bets on 6 or 8 must land in multiples of $6 for the 7-for-6 payout to resolve cleanly.
 // If the current chip denom isn't already a multiple of 6, the player pays the rounded-up cost,
 // same denom selected, slightly more taken from the bankroll, regardless of what that denom is.
@@ -3570,7 +3649,11 @@ function gameStateForServer(){
     comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
     dcBets:G.dcBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),
     bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high,lowMax:G.bonus.lowMax,allMax:G.bonus.allMax,highMax:G.bonus.highMax,lowHit:[...G.bonus.lowHit],highHit:[...G.bonus.highHit],open:G.bonus.open,locked:G.bonus.locked},
-    point:G.point,phase:G.phase,betsOn:G.betsOn,betsOffThisRoll:G.betsOffThisRoll,passLocked:G.passLocked
+    point:G.point,phase:G.phase,betsOn:G.betsOn,betsOffThisRoll:G.betsOffThisRoll,passLocked:G.passLocked,
+    // Only ever true for the ONE roll where the player just staged the light -- the server
+    // tracks progressiveActive/progressiveStreak itself thereafter (see restoreFromServerState),
+    // this flag is just the one-shot "arm it now" signal, same idea as UTH's deal-time flag.
+    progressive:!!G.progressiveArmPending,
   };
 }
 function restoreFromServerState(state){
@@ -3580,6 +3663,8 @@ function restoreFromServerState(state){
   G.dcBets=(state.dcBets||[]).map(c=>({num:c.num,flat:c.flat,odds:c.odds||0}));
   G.point=state.point??null;G.phase=state.phase||'comeout';
   G.betsOn=!!state.betsOn;G.betsOffThisRoll=!!state.betsOffThisRoll;G.passLocked=!!state.passLocked;
+  G.progressiveActive=!!state.progressiveActive;G.progressiveStreak=state.progressiveStreak||0;
+  G.progressiveArmPending=false;
   if(state.bonus){
     G.bonus.low=state.bonus.low||0;G.bonus.all=state.bonus.all||0;G.bonus.high=state.bonus.high||0;
     G.bonus.lowMax=state.bonus.lowMax||0;G.bonus.allMax=state.bonus.allMax||0;G.bonus.highMax=state.bonus.highMax||0;
@@ -3719,9 +3804,15 @@ async function rollDice(){
     });
     spawnLossGhosts(rawLog);
     spawnWinGhosts(rawLog);
+    const lightJustArmed=G.progressiveArmPending&&!!(data.newState&&data.newState.progressiveActive);
     restoreFromServerState(data.newState);
+    if(lightJustArmed){
+      const img=document.getElementById('light-on-img');
+      img.classList.remove('lit-in');void img.offsetWidth;img.classList.add('lit-in');
+    }
     if(data.returned>0){G.lastWin=data.returned;G.lastWinBreakdown=computeLastWinBreakdown(rawLog,data.returned);}
     G.rollHistory=data.newState.rollHistory||G.rollHistory;
+    if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
     chkRepeat();
     document.getElementById('roll-btn').disabled=false;
     updateUI();checkBroke();
@@ -3839,6 +3930,25 @@ function updateUI(){
   if(G.phase==='point'){betonBtn.textContent=G.betsOffThisRoll?'Bets On':'Bets Off';betonBtn.classList.toggle('on',!G.betsOffThisRoll);}
   else{betonBtn.textContent=G.betsOn?'Bets Off':'Bets On';betonBtn.classList.toggle('on',G.betsOn);}
   document.getElementById('repeat-btn').disabled=!G.canRepeat;
+  // THE LIGHT: staged (pre-roll) shows a $5 stake like any other spot; once the arming
+  // roll succeeds the stake sweeps away (no locked-chip display, matching UTH) and
+  // lightON.png takes over from lightOFF.png for the rest of the shooter's turn, with a
+  // small streak badge tracking progress toward the next tier.
+  {
+    const lsEl=document.getElementById('light-spot');
+    if(lsEl){
+      const staged=G.progressiveArmPending&&!G.progressiveActive;
+      document.getElementById('stk-light').textContent=staged?fmt(PROGRESSIVE_BET):'';
+      lsEl.classList.toggle('active',staged);
+      lsEl.style.opacity=G.practiceMode?'.35':'';
+      lsEl.style.cursor=G.practiceMode?'not-allowed':'';
+      document.getElementById('light-on-img').style.display=G.progressiveActive?'':'none';
+      document.getElementById('light-off-img').style.display=G.progressiveActive?'none':'';
+      const badge=document.getElementById('light-streak-badge');
+      badge.textContent=G.progressiveActive?(G.progressiveStreak+' in a row'):'';
+      badge.style.display=G.progressiveActive?'block':'none';
+    }
+  }
   // Game mode toggle: only disable mid-roll now -- contract bets no longer block switching,
   // they just prompt a forfeit confirmation (attemptLeave()), so there's nothing to grey out
   // for them anymore.
