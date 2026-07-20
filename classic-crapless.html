@@ -915,7 +915,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.113</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.114</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1165,7 +1165,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 // Discord's client proxies same-origin requests under /.proxy/<mapping> to whatever host
 // that mapping points to (see the app's Activities > URL Mappings), so Supabase calls have
 // to be rewritten through that prefix, or Discord's iframe sandbox blocks them outright.
-function isDiscordActivity(){return new URLSearchParams(location.search).has('frame_id');}
+function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 // Every cross-game link is a bare filename (e.g. 'destroyer.html'), which drops Discord's
 // frame_id/instance_id query params on navigation -- the destination page then can't tell
 // it's running inside Discord and tries direct (proxy-blocked) Supabase calls. Route every

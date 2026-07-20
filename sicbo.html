@@ -476,7 +476,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 </div><!-- end game-screen -->
 
 <script>
-function isDiscordActivity(){return new URLSearchParams(location.search).has('frame_id');}
+function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 function dNav(url){
   if(isDiscordActivity()){
     const sep=url.includes('?')?'&':'?';

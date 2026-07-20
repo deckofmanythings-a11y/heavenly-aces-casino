@@ -7,8 +7,13 @@
 <!-- The old Crapless table used to live at this URL directly; it's archived at
      classic-crapless.html now (still fully playable, just not the front door). Focus Mode
      Standard is the new default entry point -- redirect here instead of duplicating its
-     markup, so there's only ever one copy of the actual game to keep in sync. -->
-<meta http-equiv="refresh" content="0; url=focusmode.html?mode=standard">
+     markup, so there's only ever one copy of the actual game to keep in sync.
+
+     This file is also Discord's Activity root (the app's URL Mapping points "/" here), so
+     the redirect MUST forward the current query string as-is -- that's where Discord's
+     frame_id/instance_id/etc. launch-context params live, and focusmode.html's own
+     Discord-entry code depends on them still being present when it loads. A hardcoded
+     redirect target would silently strand every Discord launch on a plain login screen. -->
 <style>
   html,body{height:100%;margin:0;background:#0a0a12;color:#fff;font-family:system-ui,sans-serif;
     display:flex;align-items:center;justify-content:center}
@@ -16,7 +21,11 @@
 </style>
 </head>
 <body>
-  <p>Loading Heavenly Aces Casino&hellip; if you're not redirected, <a href="focusmode.html?mode=standard">click here</a>.</p>
-  <script>location.replace('focusmode.html?mode=standard');</script>
+  <p>Loading Heavenly Aces Casino&hellip; if you're not redirected, <a href="focusmode.html?mode=standard" id="fallback-link">click here</a>.</p>
+  <script>
+    const dest='focusmode.html?mode=standard'+(location.search?'&'+location.search.slice(1):'');
+    document.getElementById('fallback-link').href=dest;
+    location.replace(dest);
+  </script>
 </body>
 </html>

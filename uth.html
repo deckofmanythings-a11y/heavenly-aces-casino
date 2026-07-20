@@ -419,7 +419,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 
 <script src="cards.js?v=0.4.86"></script>
 <script>
-function isDiscordActivity(){return new URLSearchParams(location.search).has('frame_id');}
+function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 function dNav(url){
   if(isDiscordActivity()){
     const sep=url.includes('?')?'&':'?';
