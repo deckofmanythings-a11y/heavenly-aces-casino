@@ -1453,7 +1453,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.114</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.115</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4943,8 +4943,25 @@ function withTimeout(promise,ms,label){
 async function runDiscordEntry(){
   try{
     const {DiscordSDK}=window.DiscordSDKLib;
-    const discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
-    await withTimeout(discordSdk.ready(),8000,'Discord SDK ready()');
+    // ready() has been observed to hang indefinitely on some launch surfaces (e.g. DMs)
+    // rather than reject. Rebuild the SDK instance fresh on each attempt -- if this is a
+    // flaky/racy handshake rather than a hard platform limitation, a clean instance gives
+    // the best shot at succeeding rather than re-awaiting a channel that already missed
+    // its window. Give up after a few tries and fall back to the normal login screen.
+    let discordSdk,readyErr;
+    const READY_ATTEMPTS=3;
+    for(let i=0;i<READY_ATTEMPTS;i++){
+      try{
+        discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
+        await withTimeout(discordSdk.ready(),8000,'Discord SDK ready()');
+        readyErr=null;
+        break;
+      }catch(err){
+        readyErr=err;
+        console.warn('Discord SDK ready() attempt '+(i+1)+'/'+READY_ATTEMPTS+' failed:',err);
+      }
+    }
+    if(readyErr)throw readyErr;
     const{code}=await discordSdk.commands.authorize({
       client_id:DISCORD_CLIENT_ID,response_type:'code',state:'',prompt:'none',scope:['identify']
     });
