@@ -145,13 +145,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
 #hud-pnl{font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px}
 
-/* Action buttons (Deal / Play / Fold) -- share the same DOM slot, up to 2 visible at once.
-   #action-row sits beside #bottom-left (flex:1) inside #bottom-section, so if this row's width
-   tracked its own content, #bottom-left would shrink/grow as the button count changed and
-   everything inside it -- including the Repeat button -- would visibly shift. Fixed width (sized
-   for the widest case, Fold+Play) keeps #bottom-left's available space constant regardless of
-   phase; .action-btn's flex:1 then just spreads however many buttons are visible evenly. */
-#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch;width:min(240px,34vw)}
+/* Action buttons (Deal / Fold / Raise) -- share the same DOM slot, up to 4 visible at once
+   (Fold + 1X/2X/3X for a 6-or-7-card flush). #action-row sits beside #bottom-left (flex:1)
+   inside #bottom-section, so if this row's width tracked its own content, #bottom-left would
+   shrink/grow as the button count changed (1 to 4, depending on flush strength) and everything
+   inside it -- including the Repeat button -- would visibly shift. Fixed width (sized for the
+   widest case, Fold+1X+2X+3X) keeps #bottom-left's available space constant regardless of hand;
+   .action-btn's flex:1 then just spreads however many buttons are visible evenly. */
+#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch;width:min(480px,68vw)}
 .action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(22px,3.2vw);font-weight:900;padding:6px 14px;cursor:pointer;flex:1;letter-spacing:.05em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
 .action-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%)}
 .action-btn:active{filter:brightness(.9)}
@@ -287,7 +288,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.117</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.118</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -344,7 +345,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
       <div class="panel-spot" id="superflushrush-spot" onclick="placeBet('superFlushRush')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superFlushRush')">
         <span class="panel-spot-stk" id="stk-superflushrush"></span>
       </div>
-      <div class="panel-spot inert" id="play-spot" onclick="placePlayBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayBet()">
+      <div class="panel-spot inert" id="play-spot">
         <span class="panel-spot-stk" id="stk-play"></span>
       </div>
 
@@ -377,7 +378,9 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     <div id="action-row">
       <button class="action-btn" id="btn-deal" onclick="dealHand()">DEAL</button>
       <button class="action-btn danger" id="btn-fold" onclick="doFold()" style="display:none">FOLD</button>
-      <button class="action-btn" id="btn-play" onclick="doPlay()" style="display:none" disabled>PLAY</button>
+      <button class="action-btn" id="btn-raise-1x" onclick="doRaise(1)" style="display:none">1X</button>
+      <button class="action-btn" id="btn-raise-2x" onclick="doRaise(2)" style="display:none">2X</button>
+      <button class="action-btn" id="btn-raise-3x" onclick="doRaise(3)" style="display:none">3X</button>
     </div>
   </div>
 
@@ -690,40 +693,40 @@ function repeatLastBet(){
   updateUI();
 }
 
-// ── PLAY BET (post-deal, odds-bet style: freely add/remove chips up to the cap set
-// by the player's own flush strength; a Rainbow/2-card-flush hand has no Play option
-// at all, cap is 0) ────────────────────────────────────────────────────────────────
-function playBetMax(){
-  if(!G.hand||G.phase!=='dealt')return 0;
+// ── RAISE (post-deal, fixed-preset buttons -- the cap is set by the player's own
+// flush strength via raiseMultiplier(): 1X only for a 3/4-card flush, up to 2X for a
+// 5-card flush, up to 3X for a 6-or-7-card flush. A Rainbow/2-card-flush hand has no
+// Play option at all. Clicking a preset immediately stakes that exact amount and
+// commits in one step, no freeform chip staging.) ──────────────────────────────────
+const RAISE_BTN_ID={1:'btn-raise-1x',2:'btn-raise-2x',3:'btn-raise-3x'};
+function raiseOptions(){
+  if(!G.hand||G.phase!=='dealt')return[];
   const score=evalHand(G.hand.playerHand);
-  if(isRainbow(score))return 0;
-  return r2(G.locked.ante*raiseMultiplier(score.count));
+  if(isRainbow(score))return[];
+  const cap=raiseMultiplier(score.count);
+  const opts=[];for(let m=1;m<=cap;m++)opts.push(m);
+  return opts;
 }
-function placePlayBet(){
-  if(G.phase!=='dealt')return;
-  const max=playBetMax();
-  if(max<=0){addLog('No Play bet available on a Rainbow hand — Fold instead.','info');return;}
-  const room=r2(max-G.playBet);
-  if(room<=0){addLog('Play bet at max.','info');return;}
-  const add=r2(Math.min(G.chip,room,G.bankroll));
-  if(add<=0)return;
-  G.playBet=r2(G.playBet+add);
-  G.bankroll=r2(G.bankroll-add);
-  updatePlayButtonState();
+function updateRaiseButtonStates(){
+  const opts=raiseOptions();
+  Object.values(RAISE_BTN_ID).forEach(id=>{const btn=document.getElementById(id);if(btn)btn.disabled=false;});
+  opts.forEach(mult=>{
+    const btn=document.getElementById(RAISE_BTN_ID[mult]);if(!btn)return;
+    const amt=r2(G.locked.ante*mult);
+    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll);
+  });
+}
+function doRaise(mult){
+  const opts=raiseOptions();
+  if(!opts.includes(mult))return;
+  const btn=document.getElementById(RAISE_BTN_ID[mult]);
+  if(btn&&btn.disabled)return;
+  const amt=r2(G.locked.ante*mult);
+  if(amt<=0||amt>G.bankroll)return;
+  G.playBet=amt;
+  G.bankroll=r2(G.bankroll-amt);
   updateUI();
-}
-function removePlayBet(){
-  if(G.phase!=='dealt'||!G.playBet)return;
-  const rv=r2(Math.min(G.chip,G.playBet));
-  G.playBet=r2(G.playBet-rv);
-  G.bankroll=r2(G.bankroll+rv);
-  updatePlayButtonState();
-  updateUI();
-}
-function updatePlayButtonState(){
-  const btn=document.getElementById('btn-play');
-  if(!btn)return;
-  btn.disabled=!(G.locked.ante>0&&G.playBet>=G.locked.ante);
+  commitDecision('play',amt);
 }
 // Brief celebratory pulse on a bet spot that just hit (e.g. a Super Flush Rush win) --
 // separate from the persistent .active glow a staked spot always shows.
@@ -971,7 +974,7 @@ function onHandFullyRevealed(){
   const playSpot=document.getElementById('play-spot');
   playSpot.classList.toggle('inert',rainbow);
   renderActionButtons();
-  updatePlayButtonState();
+  updateRaiseButtonStates();
   updateUI();
 }
 
@@ -984,15 +987,19 @@ function resetCardRows(){
 // ── ACTION BUTTONS ────────────────────────────────────────────────────────────
 function setDisplay(id,show){document.getElementById(id).style.display=show?'':'none';}
 function renderActionButtons(){
+  const allRaiseIds=Object.values(RAISE_BTN_ID);
   if(G.phase==='betting'){
-    setDisplay('btn-deal',true);setDisplay('btn-play',false);setDisplay('btn-fold',false);
+    setDisplay('btn-deal',true);setDisplay('btn-fold',false);
+    allRaiseIds.forEach(id=>setDisplay(id,false));
   }else if(G.phase==='dealt'){
-    const rainbow=G.hand&&isRainbow(evalHand(G.hand.playerHand));
+    const opts=raiseOptions();
     setDisplay('btn-deal',false);
-    setDisplay('btn-play',!rainbow);
     setDisplay('btn-fold',true);
+    allRaiseIds.forEach(id=>setDisplay(id,false));
+    opts.forEach(mult=>setDisplay(RAISE_BTN_ID[mult],true));
   }else{
-    setDisplay('btn-deal',false);setDisplay('btn-play',false);setDisplay('btn-fold',false);
+    setDisplay('btn-deal',false);setDisplay('btn-fold',false);
+    allRaiseIds.forEach(id=>setDisplay(id,false));
   }
 }
 
@@ -1002,7 +1009,7 @@ function updateStatusZone(){
     betting:['Place Your Ante','Flush Rush and Super Flush Rush are optional side bets on your own 7-card hand.'],
     dealt: rainbow
       ? ['Rainbow — Fold Only','A bare 2-card flush has no Play option. Fold to end the hand.']
-      : ['Add Chips to Play, or Fold','Stake the Play spot up to your flush\'s max, then hit PLAY -- or Fold to give up the Ante.'],
+      : ['Raise, or Fold','Raise up to your flush\'s max (1X for 3-4 cards, 2X for 5, 3X for 6-7) -- or Fold to give up the Ante.'],
     showdown:['Showdown','']
   };
   const m=map[G.phase]||['',''];
@@ -1035,7 +1042,8 @@ async function dealHand(){
   G.phase='dealt';
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
-  setDisplay('btn-deal',false);setDisplay('btn-play',false);setDisplay('btn-fold',false); // hidden until deal+reveal finishes
+  setDisplay('btn-deal',false);setDisplay('btn-fold',false);
+  Object.values(RAISE_BTN_ID).forEach(id=>setDisplay(id,false)); // hidden until deal+reveal finishes
   updateStatusZone();
   document.getElementById('repeat-btn').disabled=false;
   updateUI();
@@ -1044,16 +1052,12 @@ async function dealHand(){
 }
 
 // ── PLAY / FOLD (server-resolved) ─────────────────────────────────────────────
-function doPlay(){
-  if(document.getElementById('btn-play').disabled)return;
-  commitDecision('play',G.playBet);
-}
 function doFold(){
   if(G.playBet>0){G.bankroll=r2(G.bankroll+G.playBet);G.playBet=0;} // refund staged-but-uncommitted Play chips
   commitDecision('fold',0);
 }
 async function commitDecision(decision,playBet){
-  document.getElementById('btn-play').disabled=true;
+  Object.values(RAISE_BTN_ID).forEach(id=>{const btn=document.getElementById(id);if(btn)btn.disabled=true;});
   document.getElementById('btn-fold').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
@@ -1062,7 +1066,7 @@ async function commitDecision(decision,playBet){
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-fold').disabled=false;
-  updatePlayButtonState();
+  updateRaiseButtonStates();
   if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
   finishHand(data);
 }
