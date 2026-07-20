@@ -367,15 +367,25 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .fm-numrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:0.5px solid rgba(255,255,255,.1)}
 .fm-numchip{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:3px 7px;font-size:15px;color:rgba(255,255,255,.8);cursor:pointer}
 .fm-numchip input{accent-color:#ffd700;cursor:pointer}
+/* Don't Pass/Don't Come/Lay grayed out while Crapless is active -- not offered in that mode,
+   so the toggle has nothing to control (Deck: "gray out in Crapless"). */
+.fm-group.fm-disabled{opacity:.45}
+.fm-group.fm-disabled .fm-group-name,.fm-group.fm-disabled .fm-checkbox,.fm-group.fm-disabled .fm-numchip{cursor:not-allowed}
 /* Hidden felt elements -- removed outright (display:none), not dimmed. Table doesn't reflow:
    every other #felt-stage element is positioned via its own fixed left/top/width/height %
    from FELT_LAYOUT, so an element disappearing never shifts anything else. */
 body.fm-hide-pass #pass-bar{display:none!important}
 body.fm-hide-dontpass #dp-bar,body.fm-hide-dontpass #dont-pass-stub{display:none!important}
-body.fm-hide-odds #pass-odds-cell,body.fm-hide-odds #dp-odds-cell{display:none!important}
+/* Odds/Come-DC-Odds no longer have their own settings-panel toggle (Deck: "have this turn on
+   and off with Pass & Don't Pass" / "with Come & Don't Come") -- #pass-odds-cell/#dp-odds-cell
+   are already DOM children of #pass-bar/#dp-bar, so hiding those two rules above already takes
+   Pass/DP's own odds with them for free. Come/DC's odds indicators (combox-odds-N/dcbox-odds-N)
+   live inside each NUMBER box instead, not #come-bar/#dc-wait-wrap, so they need their own
+   explicit coupling to the same fm-hide-come/fm-hide-dontcome classes. */
 body.fm-hide-come #come-bar{display:none!important}
+body.fm-hide-come .come-odds-btn,body.fm-hide-come [id^="combox-odds-"]{display:none!important}
 body.fm-hide-dontcome #dc-wait-wrap{display:none!important}
-body.fm-hide-comeodds .come-odds-btn,body.fm-hide-comeodds .dc-odds-btn,body.fm-hide-comeodds .come-half.odds-half{display:none!important}
+body.fm-hide-dontcome .dc-odds-btn,body.fm-hide-dontcome [id^="dcbox-odds-"]{display:none!important}
 body.fm-hide-field #field-bar{display:none!important}
 body.fm-hide-hardways #panel-hw .hw-grid{display:none!important}
 body.fm-hide-hopbets #panel-hop{display:none!important}
@@ -1442,7 +1452,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.112</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.113</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2009,6 +2019,10 @@ function applyGameMode(mode){
   if(typeof applyFocusVisibility==='function')applyFocusVisibility(); // also runs applyLineModeGating()
   // Line Mode toggle (Buy/Place configuration) only makes sense in crapless.
   const lm=document.getElementById('line-mode-toggle');if(lm)lm.style.display=mode==='crapless'?'flex':'none';
+  // Don't Pass/Don't Come/Lay gray out (and Place/Buy swap to a note) in the settings panel
+  // when Crapless is active -- re-render so that state stays correct if the panel is open
+  // across a mode switch, not just when it's freshly opened.
+  if(typeof renderFocusPanel==='function')renderFocusPanel();
 }
 
 // Whether a roll is actively animating right now -- switching games/leaving mid-roll would
@@ -4007,23 +4021,27 @@ function updateUI(){
 // elements and ones built dynamically per-roll, like Come Odds buttons). Place/Buy/Lay are
 // the one exception Deck asked for per-number granularity on, so those are toggled directly
 // per element instead of through a shared class.
+// craplessDisabled: not offered in Crapless at all -- the toggle itself is grayed out/inert
+// while Crapless is active (Deck: "gray out in Crapless"), rather than just hiding the bet.
+// craplessNote: Crapless already exposes this via #line-mode-toggle's Buy/Place variant
+// selector, so the row swaps to a plain note instead of a toggle while Crapless is active
+// (Deck: "replace Place and Buy Bets windows with 'Use mode selector under the number line
+// for Crapless Buy and Place variants'").
 const FOCUS_GROUPS=[
   {key:'pass',      name:'Pass Line',        desc:'Pass Line'},
-  {key:'dontpass',  name:'Don\'t Pass',      desc:'Don\'t Pass'},
-  {key:'odds',      name:'Odds',             desc:'Pass Line / Don\'t Pass odds'},
+  {key:'dontpass',  name:'Don\'t Pass',      desc:'Don\'t Pass', craplessDisabled:true},
   {key:'come',      name:'Come',             desc:'Come'},
-  {key:'dontcome',  name:'Don\'t Come',      desc:'Don\'t Come (waiting, pre-landed)'},
-  {key:'comeodds',  name:'Come / DC Odds',   desc:'Odds on working Come and Don\'t Come bets'},
+  {key:'dontcome',  name:'Don\'t Come',      desc:'Don\'t Come (waiting, pre-landed)', craplessDisabled:true},
   {key:'field',     name:'Field',            desc:'One-roll 2·3·4·9·10·11·12'},
-  {key:'place',     name:'Place Bets',       desc:'Bet a number directly', perNumber:true},
-  {key:'buy',       name:'Buy Bets',         desc:'Buy a number to roll', perNumber:true},
-  {key:'lay',       name:'Lay Bets',         desc:'Bet against a number', perNumber:true},
+  {key:'place',     name:'Place Bets',       desc:'Bet a number directly', craplessNote:'Use mode selector under the number line for Crapless Buy and Place variants'},
+  {key:'buy',       name:'Buy Bets',         desc:'Buy a number to roll', craplessNote:'Use mode selector under the number line for Crapless Buy and Place variants'},
+  {key:'lay',       name:'Lay Bets',         desc:'Bet against a number', perNumber:true, craplessDisabled:true},
   {key:'hardways',  name:'Hardways',         desc:'Hard 4 / 6 / 8 / 10'},
   {key:'hopbets',   name:'Hop Bets',         desc:'One-roll exact-dice-combo bets'},
-  // Any 7 and Any Craps pulled out of Proposition Bets into their own item-toggle group,
-  // same UI pattern as Place/Buy/Lay/DC's per-number checkboxes but keyed by name instead of
-  // number (items:[...] instead of perNumber:true).
-  {key:'oneroll',   name:'Any 7 / Any Craps', desc:'One-roll bets on the felt corners', items:[{key:'seven',label:'Any 7'},{key:'anycraps',label:'Any Craps'}]},
+  // Split back out into their own top-level rows (Deck: "make it its own line") -- used to be
+  // one combined 'oneroll' group with a sub-checkbox per item.
+  {key:'seven',     name:'Any 7',            desc:'One-roll bet on 7'},
+  {key:'anycraps',  name:'Any Craps',        desc:'One-roll bet on 2, 3, or 12'},
   {key:'props',     name:'Proposition Bets', desc:'Horn, C&E, Eleven, Aces, Ace-Deuce, Midnight'},
   {key:'ats',       name:'Lucky Roller (ATS)', desc:'All-Tall-Small bonus side bet'}
 ];
@@ -4047,7 +4065,11 @@ function loadFocusVisible(){
     // throwing when an older saved blob doesn't have that key yet.
     FOCUS_GROUPS.forEach(g=>{
       if(g.perNumber||g.items){if(saved[g.key])Object.assign(def[g.key],saved[g.key]);}
-      else if(saved[g.key]!==undefined)def[g.key]=saved[g.key];
+      // Place/Buy used to be perNumber (an object keyed by number) before Deck asked for the
+      // per-number toggles to go away -- guard against an old saved blob still having one of
+      // those objects sitting under a now-plain-boolean key, which'd otherwise read as always-
+      // truthy instead of the real on/off value.
+      else if(typeof saved[g.key]==='boolean')def[g.key]=saved[g.key];
     });
     return def;
   }catch(e){return defaultFocusVisible();}
@@ -4176,7 +4198,7 @@ const FM_ART=[
   // (1151), not @horn specifically. Aces/Ace2/Horn/Midnight/Yo/Any Craps all shifted
   // down 167px together (Deck: "40px space between the bottom of the Any Craps and the
   // edge of the felt"), preserving their existing internal gaps.
-  {id:'bigred',     img:'BigRed.png',         group:'oneroll', num:'seven', x:114, y:933, w:913, h:218, tab:'hw'},
+  {id:'bigred',     img:'BigRed.png',         group:'seven', x:114, y:933, w:913, h:218, tab:'hw'},
   // Shifted down 167px to catch up with Horn/Aces/Ace2/Midnight/Yo (Deck: "PropBets.png
   // contains Horn, Midnight, and Yo; that is the element I asked you to move" -- those
   // hit-regions moved with the earlier "Horn Bet" instruction but the backdrop image
@@ -4184,7 +4206,7 @@ const FM_ART=[
   // Craps' top -- zero gap, per Deck: "the top edge of AnyCraps and the bottom edge of
   // PropBets need to be adjacent with no space between them."
   {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:844, w:913, h:698, tab:'hw'},
-  {id:'anycraps',   img:'AnyCraps.png',       group:'oneroll', num:'anycraps', x:114, y:1542,w:913, h:218, tab:'hw'},
+  {id:'anycraps',   img:'AnyCraps.png',       group:'anycraps', x:114, y:1542,w:913, h:218, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595},
   // Crapless number line: one combined image per configuration (Deck: "there are three
   // versions. They are NOT meant to stack on one another, just wholesale replace the entire
@@ -4427,37 +4449,30 @@ function applyFocusVisibility(){
     if(g.perNumber||g.items)return;
     body.classList.toggle('fm-hide-'+g.key,!focusVisible[g.key]);
   });
-  ['place','buy','lay'].forEach(type=>{
-    ALL_NUMS.forEach(n=>{
-      // Buy's element is .nb-buy-left in standard felt mode and .nb-buy in classic mode, but
-      // the id is 'nb-buy-'+n either way, so one lookup covers both.
-      const target=document.getElementById('nb-'+type+'-'+n);
-      if(target)target.style.display=focusVisible[type][n]?'':'none';
-    });
+  // Place/Buy lost their per-number toggles (Deck: "remove the per number toggles") -- every
+  // Place cell follows the one 'place' group boolean, every Buy cell follows 'buy'. Lay kept
+  // its per-number granularity, so it still reads focusVisible.lay[n] per cell.
+  ALL_NUMS.forEach(n=>{
+    // Buy's element is .nb-buy-left in standard felt mode and .nb-buy in classic mode, but
+    // the id is 'nb-buy-'+n either way, so one lookup covers both.
+    const place=document.getElementById('nb-place-'+n);if(place)place.style.display=focusVisible.place?'':'none';
+    const buy=document.getElementById('nb-buy-'+n);if(buy)buy.style.display=focusVisible.buy?'':'none';
+    const lay=document.getElementById('nb-lay-'+n);if(lay)lay.style.display=focusVisible.lay[n]?'':'none';
   });
   const showHide=(ids,visible)=>ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;let v=visible;const tab=BET_ID_TAB[id];if(v&&tab&&tab!==feltTab)v=false;el.style.display=v?'':'none';});
   showHide(FOCUS_HARDWAYS_IDS,focusVisible.hardways);
   showHide(FOCUS_HOPBETS_IDS,focusVisible.hopbets);
   showHide(FOCUS_PROPS_IDS,focusVisible.props);
-  Object.keys(FOCUS_ONEROLL_IDS).forEach(itemKey=>showHide(FOCUS_ONEROLL_IDS[itemKey],focusVisible.oneroll[itemKey]));
-  // New art-layer regions: whole-group ones keyed by data-fm-group, per-number ones (buy/
-  // place/lay/dc) additionally keyed by data-fm-num. Number Boxes have no data-fm-group at
-  // all, so this loop never touches them -- they're always on, per Deck's instruction.
+  showHide(FOCUS_ONEROLL_IDS.seven,focusVisible.seven);
+  showHide(FOCUS_ONEROLL_IDS.anycraps,focusVisible.anycraps);
+  // New art-layer regions, keyed by data-fm-group. Buy/Place/Lay are each one stacked image
+  // for the whole number line (not per-number), so they read straight off the plain group
+  // boolean same as everything else now that Any 7/Any Craps also dropped their old per-item
+  // data-fm-num tagging (see the 'seven'/'anycraps' FM_ART entries). Number Boxes have no
+  // data-fm-group at all, so this loop never touches them -- they're always on.
   document.querySelectorAll('#fm-art-layer [data-fm-group]').forEach(el=>{
     const g=el.dataset.fmGroup;
-    const num=el.dataset.fmNum;
-    let visible;
-    if(num!=null){
-      visible=focusVisible[g]&&focusVisible[g][num];
-    }else if(g==='buy'||g==='place'||g==='lay'){
-      // Buy/Place/Lay are now ONE stacked image for the whole number line, not one per
-      // number -- show it if ANY number in that category is toggled on (Deck: "If a player
-      // turns one on, just use the appropriate image... turns all three on, turn all three
-      // images on, so they all will stack").
-      visible=ALL_NUMS.some(n=>focusVisible[g]&&focusVisible[g][n]);
-    }else{
-      visible=focusVisible[g];
-    }
+    let visible=focusVisible[g];
     // Hardways/Props ('hw') and Hop Bets ('hop') share the exact same felt real estate,
     // switched by the left-column tab -- both being toggle-on at once must still only show
     // whichever one matches the currently active tab.
@@ -4467,25 +4482,30 @@ function applyFocusVisibility(){
   applyLineModeGating();
 }
 function focusGroupRowHTML(g){
-  if(g.items){
-    const allOnI=g.items.every(it=>focusVisible[g.key][it.key]);
-    const chips=g.items.map(it=>'<label class="fm-numchip"><input type="checkbox" id="fm-chk-'+g.key+'-'+it.key+'" '+(focusVisible[g.key][it.key]?'checked':'')+' onchange="toggleFocusItem(\''+g.key+'\',\''+it.key+'\',this.checked)">'+it.label+'</label>').join('');
-    return '<div class="fm-group"><div class="fm-group-hdr" onclick="toggleFocusGroupAllItems(\''+g.key+'\')">'
-      +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc">'+g.desc+'</div></div>'
-      +'<input type="checkbox" class="fm-checkbox" id="fm-chk-'+g.key+'" '+(allOnI?'checked':'')+' onclick="event.stopPropagation();toggleFocusGroupAllItems(\''+g.key+'\')">'
-      +'</div><div class="fm-numrow">'+chips+'</div></div>';
+  const crapless=activeGame==='crapless';
+  // Place/Buy: Crapless already has its own Buy/Place variant picker (#line-mode-toggle under
+  // the number line), so their settings-panel row becomes a plain note instead of a toggle
+  // while Crapless is active, rather than offering a second, conflicting way to control them.
+  if(g.craplessNote&&crapless){
+    return '<div class="fm-group"><div class="fm-group-hdr" style="cursor:default">'
+      +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc" style="color:rgba(255,200,80,.8)">'+g.craplessNote+'</div></div>'
+      +'</div></div>';
   }
+  // Don't Pass/Don't Come/Lay aren't offered in Crapless at all -- gray the row out and make
+  // it inert rather than let a toggle change something with no effect while Crapless is active.
+  const disabled=!!(g.craplessDisabled&&crapless);
+  const descSuffix=disabled?' — not offered in Crapless':'';
   if(!g.perNumber){
-    return '<div class="fm-group"><div class="fm-group-hdr" onclick="toggleFocusGroup(\''+g.key+'\')">'
-      +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc">'+g.desc+'</div></div>'
-      +'<input type="checkbox" class="fm-checkbox" id="fm-chk-'+g.key+'" '+(focusVisible[g.key]?'checked':'')+' onclick="event.stopPropagation();toggleFocusGroup(\''+g.key+'\')">'
+    return '<div class="fm-group'+(disabled?' fm-disabled':'')+'"><div class="fm-group-hdr" '+(disabled?'style="cursor:default"':'onclick="toggleFocusGroup(\''+g.key+'\')"')+'>'
+      +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc">'+g.desc+descSuffix+'</div></div>'
+      +'<input type="checkbox" class="fm-checkbox" '+(disabled?'disabled ':'')+'id="fm-chk-'+g.key+'" '+(focusVisible[g.key]?'checked':'')+' onclick="event.stopPropagation();toggleFocusGroup(\''+g.key+'\')">'
       +'</div></div>';
   }
   const allOn=ALL_NUMS.every(n=>focusVisible[g.key][n]);
-  const nums=ALL_NUMS.map(n=>'<label class="fm-numchip"><input type="checkbox" id="fm-chk-'+g.key+'-'+n+'" '+(focusVisible[g.key][n]?'checked':'')+' onchange="toggleFocusNumber(\''+g.key+'\','+n+',this.checked)">'+n+'</label>').join('');
-  return '<div class="fm-group"><div class="fm-group-hdr" onclick="toggleFocusGroupAll(\''+g.key+'\')">'
-    +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc">'+g.desc+'</div></div>'
-    +'<input type="checkbox" class="fm-checkbox" id="fm-chk-'+g.key+'" '+(allOn?'checked':'')+' onclick="event.stopPropagation();toggleFocusGroupAll(\''+g.key+'\')">'
+  const nums=ALL_NUMS.map(n=>'<label class="fm-numchip'+(disabled?' fm-disabled':'')+'"><input type="checkbox" '+(disabled?'disabled ':'')+'id="fm-chk-'+g.key+'-'+n+'" '+(focusVisible[g.key][n]?'checked':'')+' onchange="toggleFocusNumber(\''+g.key+'\','+n+',this.checked)">'+n+'</label>').join('');
+  return '<div class="fm-group'+(disabled?' fm-disabled':'')+'"><div class="fm-group-hdr" '+(disabled?'style="cursor:default"':'onclick="toggleFocusGroupAll(\''+g.key+'\')"')+'>'
+    +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc">'+g.desc+descSuffix+'</div></div>'
+    +'<input type="checkbox" class="fm-checkbox" '+(disabled?'disabled ':'')+'id="fm-chk-'+g.key+'" '+(allOn?'checked':'')+' onclick="event.stopPropagation();toggleFocusGroupAll(\''+g.key+'\')">'
     +'</div><div class="fm-numrow">'+nums+'</div></div>';
 }
 function renderFocusPanel(){
@@ -4509,16 +4529,6 @@ function toggleFocusGroupAll(key){
 }
 function toggleFocusNumber(key,n,checked){
   focusVisible[key][n]=checked;
-  saveFocusVisible();applyFocusVisibility();renderFocusPanel();
-}
-function toggleFocusItem(key,itemKey,checked){
-  focusVisible[key][itemKey]=checked;
-  saveFocusVisible();applyFocusVisibility();renderFocusPanel();
-}
-function toggleFocusGroupAllItems(key){
-  const g=FOCUS_GROUPS.find(g=>g.key===key);
-  const allOn=g.items.every(it=>focusVisible[key][it.key]);
-  g.items.forEach(it=>focusVisible[key][it.key]=!allOn);
   saveFocusVisible();applyFocusVisibility();renderFocusPanel();
 }
 function focusShowAll(){
@@ -5122,7 +5132,7 @@ const TUTORIAL_LESSONS=[
   },
   {
     id:'passodds',title:'Pass Line Odds',reset:true,
-    visible:['dice','roll','chip','pass','odds','numberboxes','pointmarker'],enabled:['chip','odds','numberboxes'],
+    visible:['dice','roll','chip','pass','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
     steps:[
       {title:'Pass Line Odds',body:'After a Point is established, you may add an Odds bet behind your Pass Line bet.',expectPhase:'comeout'},
       {title:'Establish a Point',body:'Place a bet on the Pass Line.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
@@ -5137,7 +5147,7 @@ const TUTORIAL_LESSONS=[
   },
   {
     id:'come',title:'Come Bets',reset:true,
-    visible:['dice','roll','chip','pass','come','comeodds','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
+    visible:['dice','roll','chip','pass','come','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
     steps:[
       {title:'Come Bets',body:'A Come bet follows the same rules as the Pass Line, but it begins after the table Point is already active.',expectPhase:'comeout'},
       {title:'Establish the Table Point',body:'Place a Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
@@ -5233,7 +5243,7 @@ const TUTORIAL_LESSONS=[
   },
   {
     id:'props',title:'Proposition Bets',reset:true,
-    visible:['dice','roll','chip','props','oneroll'],enabled:['chip'],
+    visible:['dice','roll','chip','props','seven','anycraps'],enabled:['chip'],
     steps:[
       {title:'Proposition Bets',body:'Proposition bets predict the result of the next roll.'},
       {title:'One-Roll Bets',body:'Each proposition bet wins or loses immediately after one roll.'},
@@ -5287,7 +5297,7 @@ const TUTORIAL_LESSONS=[
   },
   {
     id:'dontcome',title:"Don't Come",reset:true,
-    visible:['dice','roll','chip','dontpass','dontcome','comeodds','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
+    visible:['dice','roll','chip','dontpass','dontcome','numberboxes','pointmarker'],enabled:['chip','numberboxes'],
     steps:[
       {title:"Don't Come",body:"A Don't Come bet works like Don't Pass after the table Point is already active.",expectPhase:'comeout'},
       {title:'Establish the Table Point',body:"Place a Don't Pass bet.",requirement:'bet',betKey:'dp',highlight:'#dp-main',expectPhase:'comeout'},
@@ -5318,7 +5328,7 @@ const TUTORIAL_LESSONS=[
   },
   {
     id:'fulltable',title:'The Full Table',reset:true,
-    visible:['dice','roll','chip','pass','dontpass','odds','come','dontcome','comeodds','field','place','buy','lay','hardways','hopbets','oneroll','props','ats','numberboxes','pointmarker','betonoff'],
+    visible:['dice','roll','chip','pass','dontpass','come','dontcome','field','place','buy','lay','hardways','hopbets','seven','anycraps','props','ats','numberboxes','pointmarker','betonoff'],
     enabled:['chip','numberboxes','betonoff'],
     steps:[
       {title:'The Full Craps Table',body:'The complete table contains every betting area introduced during the tutorial.'},
