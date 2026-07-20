@@ -183,6 +183,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
+/* winner-modal.js's #wm-modal-winner is a full-viewport z-index:200 overlay shown for the whole
+   payout sequence (coin waterfall + count-up + hold) -- without its own stacking above that,
+   Repeat would be unreachable for that entire window even though repeating a bet needs nothing
+   from the animation to finish (it's a local staging action, not server-dependent). */
+#repeat-btn{position:relative;z-index:201}
 .bar-btn.danger{border-color:rgba(255,100,100,.4)}
 .bar-btn:hover{background:rgba(255,255,255,.2)}
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
@@ -334,7 +339,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.113</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.117</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>

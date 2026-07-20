@@ -255,6 +255,20 @@
       const cb = _onClose; _onClose = null;
       if (cb) cb();
     },
+    // Same as close(), but discards the pending onClose callback instead of firing it --
+    // for a host page that wants to abandon the whole presentation chain and take over
+    // itself (e.g. a Repeat click skipping straight past a multi-modal payout sequence
+    // like Super Flush Rush -> main payout), rather than letting one more scripted step
+    // run first.
+    forceClose() {
+      if (!overlayEl) return;
+      overlayEl.classList.add('hidden');
+      overlayEl.classList.remove('big');
+      overlayEl.onclick = null;
+      if (winnerTimer) { clearTimeout(winnerTimer); winnerTimer = null; }
+      _winnerAnimating = false;
+      _onClose = null;
+    },
     isOpen: () => !!overlayEl && !overlayEl.classList.contains('hidden')
   };
 

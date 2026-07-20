@@ -135,14 +135,24 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
+/* winner-modal.js's #wm-modal-winner is a full-viewport z-index:200 overlay shown for the whole
+   payout sequence (coin waterfall + count-up + hold) -- without its own stacking above that,
+   Repeat would be unreachable for that entire window even though repeating a bet needs nothing
+   from the animation to finish (it's a local staging action, not server-dependent). */
+#repeat-btn{position:relative;z-index:201}
 .bar-btn.danger{border-color:rgba(255,100,100,.4)}
 .bar-btn:hover{background:rgba(255,255,255,.2)}
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
 #hud-pnl{font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px}
 
-/* Action buttons (Deal / Play / Fold) -- share the same DOM slot */
-#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch}
-.action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(22px,3.2vw);font-weight:900;padding:6px 14px;cursor:pointer;flex-shrink:0;letter-spacing:.05em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
+/* Action buttons (Deal / Play / Fold) -- share the same DOM slot, up to 2 visible at once.
+   #action-row sits beside #bottom-left (flex:1) inside #bottom-section, so if this row's width
+   tracked its own content, #bottom-left would shrink/grow as the button count changed and
+   everything inside it -- including the Repeat button -- would visibly shift. Fixed width (sized
+   for the widest case, Fold+Play) keeps #bottom-left's available space constant regardless of
+   phase; .action-btn's flex:1 then just spreads however many buttons are visible evenly. */
+#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch;width:min(240px,34vw)}
+.action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(22px,3.2vw);font-weight:900;padding:6px 14px;cursor:pointer;flex:1;letter-spacing:.05em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
 .action-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%)}
 .action-btn:active{filter:brightness(.9)}
 .action-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
@@ -277,7 +287,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.113</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.117</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -660,7 +670,15 @@ function clearBets(){
   G.bets={ante:0,flushRush:0,superFlushRush:0};G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
+// Tracks the pending post-round loss-sweep delay (see showMainPayout() above) so
+// repeatLastBet() can cancel it and fast-forward straight to the betting screen.
+let postRoundTimer=null;
 function repeatLastBet(){
+  if(G.phase==='showdown'){
+    if(postRoundTimer){clearTimeout(postRoundTimer);postRoundTimer=null;}
+    WinnerModal.forceClose();
+    resetToBetScreen();
+  }
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
   const cost=r2((snap.ante||0)+(snap.flushRush||0)+(snap.superFlushRush||0));
@@ -1085,7 +1103,10 @@ function finishHand(data){
         const bigWin=(remaining/totalWagered)>=7;
         WinnerModal.show(remaining,{big:bigWin,onClose:resetToBetScreen});
       }else{
-        setTimeout(resetToBetScreen,3500);
+        // postRoundTimer tracks this so repeatLastBet() can cancel it and fast-forward
+        // straight to the betting screen -- the round is already fully resolved
+        // server-side, this delay exists only so the player can watch the sweep.
+        postRoundTimer=setTimeout(()=>{postRoundTimer=null;resetToBetScreen();},3500);
       }
       if(data.capped)setTimeout(openCapModal,remaining>0?4200:900);
     };

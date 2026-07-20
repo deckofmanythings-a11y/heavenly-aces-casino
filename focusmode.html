@@ -315,6 +315,11 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
+/* winner-modal.js's #wm-modal-winner is a full-viewport z-index:200 overlay shown for the whole
+   payout sequence (coin waterfall + count-up + hold) -- without its own stacking above that,
+   Repeat would be unreachable for that entire window even though repeating a bet needs nothing
+   from the animation to finish (it's a local staging action, not server-dependent). */
+#repeat-btn{position:relative;z-index:201}
 .bar-btn:hover{background:rgba(255,255,255,.2)}
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
 .bar-btn.danger{border-color:rgba(255,100,100,.4)}
@@ -1453,7 +1458,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.116</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.117</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
