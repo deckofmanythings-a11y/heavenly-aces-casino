@@ -40,6 +40,14 @@ h1{font-size:22px;color:#ffd700;font-weight:800}
 #fp-progress{max-width:640px;margin:0 auto 4px;text-align:right;font-size:11px;color:rgba(255,255,255,.4)}
 #fp-bar-wrap{max-width:120px;margin-left:auto;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-top:4px}
 #fp-bar{height:100%;background:#ffd700;border-radius:3px;width:0%}
+#tier-box{background:linear-gradient(160deg,#1a1030,#161616);border:1px solid rgba(180,120,255,.45);border-radius:12px;padding:16px;margin-bottom:8px}
+#tier-name{font-size:24px;font-weight:900;color:#c99bff;letter-spacing:.03em}
+#tier-num{font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.tier-metric{margin-top:12px}
+.tier-metric-label{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px}
+.tier-bar-wrap{height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.tier-bar{height:100%;background:linear-gradient(90deg,#8a5cff,#c99bff);border-radius:4px;width:0%}
+#tier-maxed{font-size:13px;color:#4dff88;margin-top:10px}
 </style>
 </head>
 <body>
@@ -49,6 +57,14 @@ h1{font-size:22px;color:#ffd700;font-weight:800}
     <button id="back-btn" onclick="dNav('index.html')">&larr; Lobby</button>
     <h1>🗓️ Dailies</h1>
     <div id="fp-balance">Free Play<b id="fp-amt">$0.00</b></div>
+  </div>
+
+  <div class="section-title">Tier</div>
+  <div id="tier-box">
+    <div id="tier-num"></div>
+    <div id="tier-name"></div>
+    <div id="tier-metrics"></div>
+    <div id="tier-maxed" style="display:none">Maximum Tier reached.</div>
   </div>
 
   <div class="section-title">Tasks — $50 each</div>
@@ -75,7 +91,7 @@ h1{font-size:22px;color:#ffd700;font-weight:800}
     <span id="fp-progress-text"></span>
     <div id="fp-bar-wrap"><div id="fp-bar"></div></div>
   </div>
-  <div id="reset-note">Tasks &amp; Quest reset daily at midnight Pacific time.<br>Free Play is a gift — it doesn't count toward your redeemed balance, and any of it you haven't played through is lost at rollover.</div>
+  <div id="reset-note">Tasks &amp; Quest reset daily at midnight Pacific time.<br>Free Play is a gift — it doesn't count toward your redeemed balance, and any of it you haven't played through is lost at rollover.<br>Missing a day's Tasks breaks your streak and can drop your Tier; the weekly wager bar resets Monday 12:01am Pacific.</div>
 </div>
 
 <script>
@@ -120,6 +136,48 @@ const TASK_META={
   uth:{icon:'🃏',label:'Make one Hold\'em bet'},
   iluvsuits:{icon:'♠️',label:'Make one I Luv Suits bet'},
 };
+// Mirrors supabase/functions/_shared/dailies.ts computeTier() exactly -- display only,
+// the server is authoritative for the actual tier value (players.tier).
+const TIER_META=[
+  {name:'Mortal',    streak:0},
+  {name:'Nephilim',  streak:1},
+  {name:'Throne',    streak:7},
+  {name:'Seraphim',  streak:28},
+  {name:'Archangel', streak:28, wager:7000},
+  {name:'Horseman',  streak:90, wager:70000},
+];
+function renderTier(tier,dailies){
+  tier=Math.max(0,Math.min(5,tier||0));
+  const streak=dailies.task_streak||0;
+  const wk=(dailies.weekly_wager&&dailies.weekly_wager.amount)||0;
+  document.getElementById('tier-num').textContent='Tier '+tier;
+  document.getElementById('tier-name').textContent=TIER_META[tier].name;
+
+  const metricsEl=document.getElementById('tier-metrics');
+  metricsEl.innerHTML='';
+  const maxedEl=document.getElementById('tier-maxed');
+
+  if(tier>=5){
+    metricsEl.innerHTML=streakMetric(streak,90)+wagerMetric(wk,70000);
+    maxedEl.style.display='block';
+    return;
+  }
+  maxedEl.style.display='none';
+  const next=TIER_META[tier+1];
+  let html=streakMetric(streak,next.streak);
+  if(next.wager)html+=wagerMetric(wk,next.wager);
+  metricsEl.innerHTML=html;
+}
+function bar(pct){return '<div class="tier-bar-wrap"><div class="tier-bar" style="width:'+Math.min(100,pct)+'%"></div></div>';}
+function streakMetric(cur,goal){
+  const pct=goal?Math.round((cur/goal)*100):100;
+  return '<div class="tier-metric"><div class="tier-metric-label"><span>Task streak</span><span>'+cur+' / '+goal+' day'+(goal===1?'':'s')+'</span></div>'+bar(pct)+'</div>';
+}
+function wagerMetric(cur,goal){
+  const pct=goal?Math.round((cur/goal)*100):100;
+  return '<div class="tier-metric"><div class="tier-metric-label"><span>Weekly real-money wager</span><span>$'+cur.toFixed(0)+' / $'+goal.toLocaleString()+'</span></div>'+bar(pct)+'</div>';
+}
+
 const QUEST_META={
   craps:{game:'Craps',label:'Win a Hard Way bet',sub:'Any Hard 4, 6, 8 or 10 — pays as if you’d bet $100 on it.'},
   sicbo:{game:'Sic-Bo',label:'Win an Any Triple bet',sub:'Roll any triple (30:1) — pays as if you’d bet $100 on it.'},
@@ -128,10 +186,11 @@ const QUEST_META={
   destroyer:{game:'Destroyer: Naval Strike',label:'Sink a ship',sub:'Sink any ship in a battle — pays as if you’d bet $100 on it.'},
 };
 
-function render(dailies,freePlayBalance){
+function render(dailies,freePlayBalance,tier){
   document.getElementById('loading').style.display='none';
   document.getElementById('wrap').style.display='block';
   document.getElementById('fp-amt').textContent='$'+(parseFloat(freePlayBalance)||0).toFixed(2);
+  renderTier(tier,dailies);
 
   const list=document.getElementById('task-list');list.innerHTML='';
   Object.keys(TASK_META).forEach(g=>{
@@ -183,7 +242,7 @@ async function load(){
     });
     const data=await res.json();
     if(!data.ok){dNav('index.html');return;}
-    render(data.dailies,data.free_play_balance);
+    render(data.dailies,data.free_play_balance,data.tier);
   }catch(e){
     document.getElementById('loading').textContent='Could not load Dailies. Check your connection and reload.';
   }
