@@ -101,8 +101,77 @@
     const p = origFetch(input, init);
     if (!isDailiesSource) return p;
     return p.then(res => {
-      res.clone().json().then(json => DailiesPopup.handle(json)).catch(() => {});
+      res.clone().json().then(json => {
+        DailiesPopup.handle(json);
+        FreePlayBadge.handle(json);
+      }).catch(() => {});
       return res;
     });
   };
+
+  // ---------- persistent FP$ balance badge, shown on every game screen ----------
+  // A small always-visible pill (like a second bankroll readout) so a player never
+  // has to open the Dailies page just to check whether they still have Free Play to
+  // spend. Every roll-*/dailies-action response already carries free_play_balance
+  // (see the fetch hook above), so the badge just mirrors whatever the server last
+  // said -- never computed client-side. Also flashes "-$X used" for a couple seconds
+  // whenever a response reports free_play_used > 0, so a player can see which of
+  // their bets actually drew from it.
+  let fpBadgeEl, fpAmtEl, fpUsedEl, fpUsedTimer;
+
+  function buildFpBadge() {
+    const style = document.createElement('style');
+    style.textContent = [
+      '#fp-badge{position:fixed;top:8px;right:8px;z-index:120;background:rgba(10,10,10,.85);border:1px solid rgba(255,215,0,.45);border-radius:20px;padding:5px 12px;font:700 12px system-ui,sans-serif;color:#ffd700;display:flex;align-items:center;gap:6px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.4)}',
+      '#fp-badge.hidden{display:none}',
+      '#fp-used{color:#4dff88;font-weight:800;opacity:0;transition:opacity .2s}',
+      '#fp-used.show{opacity:1}',
+    ].join('');
+    document.head.appendChild(style);
+    fpBadgeEl = document.createElement('div');
+    fpBadgeEl.id = 'fp-badge'; fpBadgeEl.className = 'hidden';
+    fpBadgeEl.innerHTML = '<span>FP$</span><span id="fp-amt">0.00</span><span id="fp-used"></span>';
+    document.body.appendChild(fpBadgeEl);
+    fpAmtEl = document.getElementById('fp-amt');
+    fpUsedEl = document.getElementById('fp-used');
+  }
+
+  const FreePlayBadge = {
+    setBalance(balance) {
+      if (!fpBadgeEl) buildFpBadge();
+      const b = parseFloat(balance) || 0;
+      fpAmtEl.textContent = b.toFixed(2);
+      fpBadgeEl.classList.toggle('hidden', b <= 0 && !fpUsedEl.classList.contains('show'));
+    },
+    flashUsed(amount) {
+      if (!fpBadgeEl) buildFpBadge();
+      if (!(amount > 0)) return;
+      fpBadgeEl.classList.remove('hidden');
+      fpUsedEl.textContent = '-$' + amount.toFixed(2) + ' used';
+      fpUsedEl.classList.add('show');
+      clearTimeout(fpUsedTimer);
+      fpUsedTimer = setTimeout(() => { fpUsedEl.classList.remove('show'); fpUsedEl.textContent = ''; }, 3000);
+    },
+    handle(response) {
+      if (!response) return;
+      if (typeof response.free_play_balance === 'number') this.setBalance(response.free_play_balance);
+      if (typeof response.free_play_used === 'number' && response.free_play_used > 0) this.flashUsed(response.free_play_used);
+    },
+  };
+  global.FreePlayBadge = FreePlayBadge;
+
+  // Initial paint on page load: a player who hasn't rolled/dealt/fired anything yet
+  // this visit still deserves to see their balance, so fetch it once via the same
+  // read-only dailies-action('state') the lobby badge and dailies.html use.
+  function primeFpBadge() {
+    const token = global.localStorage && global.localStorage.getItem('craps_session');
+    if (!token || typeof global.FUNCTIONS_URL === 'undefined' || typeof global.SUPABASE_ANON_KEY === 'undefined') return;
+    origFetch(global.FUNCTIONS_URL + '/dailies-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + global.SUPABASE_ANON_KEY, 'apikey': global.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ session_token: token, action: 'state' }),
+    }).then(res => res.json()).then(data => { if (data && data.ok) FreePlayBadge.setBalance(data.free_play_balance); }).catch(() => {});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', primeFpBadge);
+  else primeFpBadge();
 })(window);

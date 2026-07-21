@@ -84,6 +84,31 @@ function dNav(url){
   if(isDiscordActivity()){const sep=url.includes('?')?'&':'?';url=url+sep+location.search.slice(1);}
   window.location.href=url;
 }
+// Discord's Activity CSP blocks the browser's native inline onclick="" (etc.) execution path
+// entirely -- it fails silently, so every inline handler in the page goes dead. The same CSP
+// DOES allow 'unsafe-eval', so instead of rewriting every inline handler, a single delegated
+// listener re-runs the attribute's code via new Function() at click/input time, matching how
+// the native attribute would have fired via event bubbling. (This page was missing this shim
+// entirely, which is why the Lobby button never worked inside Discord.)
+if(isDiscordActivity()){
+  const CS_ATTR={click:'onclick',contextmenu:'oncontextmenu',input:'oninput',change:'onchange'};
+  Object.keys(CS_ATTR).forEach(type=>{
+    document.addEventListener(type,function(e){
+      const attr=CS_ATTR[type];
+      const el=e.target.closest('['+attr+']');
+      if(!el)return;
+      const code=el.getAttribute(attr);
+      if(!code)return;
+      let stopped=false;const origStop=e.stopPropagation.bind(e);
+      e.stopPropagation=function(){stopped=true;origStop();};
+      Object.defineProperty(e,'currentTarget',{value:el,configurable:true});
+      try{new Function('event',code).call(el,e);}
+      catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
+      finally{e.stopPropagation=origStop;delete e.currentTarget;}
+      if(stopped)e.stopImmediatePropagation();
+    });
+  });
+}
 const SUPABASE_URL=isDiscordActivity()?(location.origin+'/.proxy/supabase'):'https://qgiksiauptrqmxsupwqe.supabase.co';
 const FUNCTIONS_URL=SUPABASE_URL+'/functions/v1';
 const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
@@ -165,5 +190,6 @@ async function load(){
 }
 load();
 </script>
+<script src="dailies-popup.js?v=2"></script>
 </body>
 </html>
