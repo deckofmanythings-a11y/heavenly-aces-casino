@@ -78,6 +78,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .card-row{position:relative;width:100%;height:calc(var(--pc-w)*1.447);--pc-w:15cqh;opacity:0;transition:opacity .3s}
 .card-row.active{opacity:1}
 .card-row .pc-card{position:absolute;top:0;left:0;transition:left .5s cubic-bezier(.4,.2,.2,1)}
+/* Cards not part of the player's shown-off result on a Play (see applyDiscardVisual) --
+   same grayscale+dim treatment as a swept chip-ghost, just held in place instead of
+   sliding away, since discarding here is about de-emphasizing, not removing. */
+.pc-card.discarded{filter:grayscale(1) brightness(.55);opacity:.6;transition:filter .5s ease-out,opacity .5s ease-out}
 .panel-hand-text{font-size:2.3cqh;color:#ffd700;font-weight:700;text-align:center;min-height:2.8cqh;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 
 /* Bet-spot overlays -- invisible hit-regions positioned exactly over the printed
@@ -288,7 +292,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.129</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.130</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -529,6 +533,49 @@ function describeHandTierFull(score){
   if(isRainbow(score))return 'Rainbow, No Flush';
   const rest=score.ranks.slice(1);
   return score.count+'-Card Flush, '+RANK_NAME[score.ranks[0]]+' High'+(rest.length?' ('+rest.map(r=>RANK_NAME[r]).join('-')+' kicker)':'');
+}
+// Mirrors roll-iluvsuits' maxStraightFlushLen exactly (same per-suit consecutive-rank
+// scan, same ace-low wheel handling) but also remembers which suit/ranks made up the
+// winning run, so applyDiscardVisual() can tell which specific cards to spare even
+// when that run lives in a different suit than the best (biggest-count) flush.
+function bestStraightFlushInfo(cards){
+  const bySuit={S:[],H:[],D:[],C:[]};
+  cards.forEach(c=>bySuit[c.s].push(c.r));
+  let best={suit:null,len:0,ranks:[]};
+  for(const s of SUITS){
+    const rawSet=new Set(bySuit[s]);
+    const hasAce=rawSet.has(14);
+    if(hasAce)rawSet.add(1);
+    const sorted=Array.from(rawSet).sort((a,b)=>a-b);
+    let runStart=0;
+    for(let i=1;i<=sorted.length;i++){
+      if(i<sorted.length&&sorted[i]===sorted[i-1]+1)continue;
+      const runLen=i-runStart;
+      if(runLen>best.len){
+        const ranks=sorted.slice(runStart,i).map(r=>(r===1&&hasAce)?14:r);
+        best={suit:s,len:runLen,ranks};
+      }
+      runStart=i;
+    }
+  }
+  return best;
+}
+// Discard (grey out in place) whichever of the player's 7 cards aren't needed to show
+// off the result of a Play: the best-hand flush's own suit always stays. If Super Flush
+// Rush was bet and a qualifying (3+) straight flush run exists -- even in a suit that
+// isn't the best hand -- those cards stay too, so there's still visual proof of what
+// just got paid on. Everything else fades.
+function applyDiscardVisual(playerFinal){
+  const cards=G.hand.playerHand;
+  const keep=new Set();
+  cards.forEach((c,i)=>{if(c.s===playerFinal.suit)keep.add(i);});
+  if((G.locked.superFlushRush||0)>0){
+    const sf=bestStraightFlushInfo(cards);
+    if(sf.suit&&sf.len>=3){
+      cards.forEach((c,i)=>{if(c.s===sf.suit&&sf.ranks.includes(c.r))keep.add(i);});
+    }
+  }
+  G.cardEls.player.forEach((el,i)=>{if(!keep.has(i))el.classList.add('discarded');});
 }
 function updateLiveHandDisplay(){
   if(!G.hand)return;
@@ -856,7 +903,7 @@ function resetCardPosition(el){el.style.transition='';el.style.left='';el.style.
 function renderHandCardsStatic(){
   const n=G.cardEls.player.length;
   G.cardEls.player.forEach((el,i)=>{
-    Cards.reset(el);resetCardPosition(el);
+    Cards.reset(el);resetCardPosition(el);el.classList.remove('discarded');
     Cards.setFront(el,G.hand.playerHand[i]);Cards.flipUp(el);
     // Final rest position: the first-revealed card ends up pushed furthest right (see
     // sweatReveal below for why), so slot assignment runs in reverse of reveal order.
@@ -885,6 +932,7 @@ function dealCardsAnimated(){
   }
   order.forEach((item,i)=>{
     Cards.reset(item.el);
+    item.el.classList.remove('discarded');
     item.el.style.transition='none';
     item.el.style.left=item.stackLeft+'cqh';
     item.el.style.zIndex=1;
@@ -1100,6 +1148,8 @@ function finishHand(data){
   const dealerFinal=evalHand(data.dealerHand);
   if(data.folded){
     document.getElementById('player-hand-name').textContent='Folded';
+  }else{
+    applyDiscardVisual(playerFinal);
   }
   // (player-hand-name already shows its live description from the initial sweat when not folded)
   (data.log||[]).forEach(line=>{
@@ -1156,7 +1206,7 @@ function finishHand(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.locked={ante:0,flushRush:0,superFlushRush:0};G.playBet=0;
-  [...G.cardEls.player,...G.cardEls.dealer].forEach(el=>{Cards.reset(el);resetCardPosition(el);});
+  [...G.cardEls.player,...G.cardEls.dealer].forEach(el=>{Cards.reset(el);resetCardPosition(el);el.classList.remove('discarded');});
   resetCardRows();
   document.getElementById('play-spot').classList.remove('inert');
   document.getElementById('dealer-hand-name').textContent='';
