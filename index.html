@@ -29,6 +29,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .auth-status.show{display:block}
 .auth-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,215,0,.25);border-top-color:#ffd700;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+#auth-form-wrap{display:none}
+.auth-discord-warn{background:rgba(180,120,0,.2);border:1px solid rgba(255,180,60,.4);border-radius:6px;padding:8px 10px;font-size:15px;line-height:1.4;color:#ffcf8a;margin-bottom:14px}
 
 /* ── LOBBY ── */
 #lobby-screen{display:none;flex-direction:column;height:100vh;height:100dvh;overflow-y:auto;padding:24px 16px 40px}
@@ -62,14 +64,17 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <h1>🎲 Heavenly Aces Casino</h1>
     <p>Hosted by Deck</p>
     <div class="auth-status" id="auth-status"><span class="auth-spinner"></span>Connecting to Discord&hellip;</div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Log In</button>
-      <button class="auth-tab" id="tab-register" onclick="showTab('register')">Create Account</button>
+    <div id="auth-form-wrap">
+      <div class="auth-discord-warn" id="auth-discord-warn" style="display:none">Couldn't sign you in with Discord. Logging in below uses a separate account &mdash; balance isn't shared or transferable between it and your Discord account.</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Log In</button>
+        <button class="auth-tab" id="tab-register" onclick="showTab('register')">Create Account</button>
+      </div>
+      <div id="auth-error" class="auth-error"></div>
+      <div class="auth-field"><label>Username</label><input type="text" id="auth-username" placeholder="your name"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+      <button class="auth-btn" id="auth-btn" onclick="handleAuth()">Log In</button>
     </div>
-    <div id="auth-error" class="auth-error"></div>
-    <div class="auth-field"><label>Username</label><input type="text" id="auth-username" placeholder="your name"></div>
-    <div class="auth-field"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••"></div>
-    <button class="auth-btn" id="auth-btn" onclick="handleAuth()">Log In</button>
   </div>
 </div>
 
@@ -122,7 +127,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="lt-sub">Learn/practice standard craps</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.4.127</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.4.129</div>
 </div>
 
 <script>
@@ -132,6 +137,16 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 // though, and that hostname is never true for a plain website visit, so check it first;
 // frame_id stays as a defense-in-depth fallback.
 function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
+// Set the correct initial auth-screen state before the browser paints, so a Discord launch
+// never shows a flash of the login form -- only the connecting message -- while a plain
+// website visit skips straight to the form with no Discord-specific messaging. This runs as
+// part of the same synchronous parse/execute pass as the rest of the page, before the
+// browser gets a chance to paint the initial (CSS-default) state.
+if(isDiscordActivity()){
+  document.getElementById('auth-status').classList.add('show');
+}else{
+  document.getElementById('auth-form-wrap').style.display='block';
+}
 // Every cross-game link is a bare filename, which drops Discord's frame_id/instance_id
 // query params on navigation -- the destination page then can't tell it's running inside
 // Discord and tries direct (proxy-blocked) Supabase calls. Route every such navigation
@@ -188,6 +203,8 @@ function logout(){
   currentPlayer=null;
   document.getElementById('lobby-screen').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-status').classList.remove('show');
+  document.getElementById('auth-form-wrap').style.display='block';
   document.getElementById('auth-username').value='';
   document.getElementById('auth-password').value='';
 }
@@ -290,6 +307,10 @@ async function runDiscordEntry(){
   }catch(e){
     console.error('Discord entry failed, falling back to normal login:',e);
     await tryRestoreSession();
+    if(!currentPlayer){
+      document.getElementById('auth-discord-warn').style.display='block';
+      document.getElementById('auth-form-wrap').style.display='block';
+    }
   }finally{
     statusEl.classList.remove('show');
   }

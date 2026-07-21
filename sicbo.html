@@ -10,7 +10,7 @@
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
 
 /* ── AUTH (identical to craps) ── */
-#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;padding:20px}
+#auth-screen{display:none;align-items:center;justify-content:center;height:100vh;padding:20px}
 .auth-box{background:#1a1a1a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:28px 24px;width:100%;max-width:340px}
 .auth-box h1{font-size:34px;font-weight:700;color:#ffd700;margin-bottom:3px}
 .auth-box p{font-size:21px;color:rgba(255,255,255,.4);margin-bottom:20px}
@@ -339,7 +339,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.125</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.129</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -576,12 +576,13 @@ async function loginPlayer(username,password){
   await sb.from('players').update({session_token:token,session_expires:expires}).eq('id',data.id);
   localStorage.setItem('craps_session',token);startSession({...data,session_token:token,session_expires:expires});
 }
+function showAuthScreen(){document.getElementById('auth-screen').style.display='flex';}
 async function tryRestoreSession(){
-  const token=localStorage.getItem('craps_session');if(!token)return;
+  const token=localStorage.getItem('craps_session');if(!token){showAuthScreen();return;}
   const{data,error}=await sb.from('players').select('*').eq('session_token',token).maybeSingle();
-  if(error){console.error('tryRestoreSession: query failed, leaving session token intact',error);return;}
-  if(!data){localStorage.removeItem('craps_session');return;}
-  if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
+  if(error){console.error('tryRestoreSession: query failed, leaving session token intact',error);showAuthScreen();return;}
+  if(!data){localStorage.removeItem('craps_session');showAuthScreen();return;}
+  if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');showAuthScreen();return;}
   startSession(data);
 }
 function applyServerGameState(player){
