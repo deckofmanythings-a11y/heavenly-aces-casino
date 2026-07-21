@@ -41,8 +41,8 @@ h1{font-size:22px;color:#ffd700;font-weight:800}
 #fp-bar-wrap{max-width:120px;margin-left:auto;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-top:4px}
 #fp-bar{height:100%;background:#ffd700;border-radius:3px;width:0%}
 #tier-box{background:linear-gradient(160deg,#1a1030,#161616);border:1px solid rgba(180,120,255,.45);border-radius:12px;padding:16px;margin-bottom:8px}
-#tier-name{font-size:24px;font-weight:900;color:#c99bff;letter-spacing:.03em}
-#tier-num{font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+#tier-card-img{display:block;width:100%;max-width:420px;margin:0 auto;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+#tier-num{text-align:center;font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .tier-metric{margin-top:12px}
 .tier-metric-label{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px}
 .tier-bar-wrap{height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
@@ -62,7 +62,7 @@ h1{font-size:22px;color:#ffd700;font-weight:800}
   <div class="section-title">Tier</div>
   <div id="tier-box">
     <div id="tier-num"></div>
-    <div id="tier-name"></div>
+    <img id="tier-card-img" src="" alt="Tier card">
     <div id="tier-metrics"></div>
     <div id="tier-maxed" style="display:none">Maximum Tier reached.</div>
   </div>
@@ -139,19 +139,20 @@ const TASK_META={
 // Mirrors supabase/functions/_shared/dailies.ts computeTier() exactly -- display only,
 // the server is authoritative for the actual tier value (players.tier).
 const TIER_META=[
-  {name:'Mortal',    streak:0},
-  {name:'Nephilim',  streak:1},
-  {name:'Throne',    streak:7},
-  {name:'Seraphim',  streak:28},
-  {name:'Archangel', streak:28, wager:7000},
-  {name:'Horseman',  streak:90, wager:70000},
+  {name:'Mortal',    streak:0,  img:'tier-0-mortal.png'},
+  {name:'Nephilim',  streak:1,  img:'tier-1-nephilim.png'},
+  {name:'Throne',    streak:7,  img:'tier-2-throne.png'},
+  {name:'Seraphim',  streak:28, img:'tier-3-seraphim.png'},
+  {name:'Archangel', streak:28, wager:7000,  img:'tier-4-archangel.png'},
+  {name:'Horseman',  streak:90, wager:70000, img:'tier-5-horseman.png'},
 ];
 function renderTier(tier,dailies){
   tier=Math.max(0,Math.min(5,tier||0));
   const streak=dailies.task_streak||0;
   const wk=(dailies.weekly_wager&&dailies.weekly_wager.amount)||0;
-  document.getElementById('tier-num').textContent='Tier '+tier;
-  document.getElementById('tier-name').textContent=TIER_META[tier].name;
+  document.getElementById('tier-num').textContent='Tier '+tier+' — '+TIER_META[tier].name;
+  const img=document.getElementById('tier-card-img');
+  if(img.getAttribute('src')!==TIER_META[tier].img)img.src=TIER_META[tier].img;
 
   const metricsEl=document.getElementById('tier-metrics');
   metricsEl.innerHTML='';
