@@ -37,6 +37,9 @@ h1{font-size:22px;color:#ffd700;font-weight:800}
 #quest-box.done #quest-reward{color:#4dff88}
 #reset-note{text-align:center;font-size:11px;color:rgba(255,255,255,.3);margin-top:22px}
 #loading{text-align:center;padding:60px 0;color:rgba(255,255,255,.4)}
+#fp-progress{max-width:640px;margin:0 auto 4px;text-align:right;font-size:11px;color:rgba(255,255,255,.4)}
+#fp-bar-wrap{max-width:120px;margin-left:auto;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-top:4px}
+#fp-bar{height:100%;background:#ffd700;border-radius:3px;width:0%}
 </style>
 </head>
 <body>
@@ -68,7 +71,11 @@ h1{font-size:22px;color:#ffd700;font-weight:800}
     <div id="quest-reward"></div>
   </div>
 
-  <div id="reset-note">Tasks &amp; Quest reset daily at midnight Pacific time.</div>
+  <div id="fp-progress" style="display:none">
+    <span id="fp-progress-text"></span>
+    <div id="fp-bar-wrap"><div id="fp-bar"></div></div>
+  </div>
+  <div id="reset-note">Tasks &amp; Quest reset daily at midnight Pacific time.<br>Free Play is a gift — it doesn't count toward your redeemed balance, and any of it you haven't played through is lost at rollover.</div>
 </div>
 
 <script>
@@ -126,6 +133,18 @@ function render(dailies,freePlayBalance){
   document.getElementById('quest-reward').textContent=dailies.quest_completed
     ? 'Won $'+parseFloat(dailies.quest_reward).toFixed(2)+' today!'
     : 'Reward varies with the winning hand/roll.';
+
+  const fp=dailies.free_play||{balance:0,wagered:0,target:0};
+  const fpEl=document.getElementById('fp-progress');
+  if(fp.target>0){
+    fpEl.style.display='block';
+    const pct=Math.min(100,Math.round((fp.wagered/fp.target)*100));
+    document.getElementById('fp-progress-text').textContent=
+      '$'+fp.wagered.toFixed(2)+' / $'+fp.target.toFixed(2)+' wagered through';
+    document.getElementById('fp-bar').style.width=pct+'%';
+  }else{
+    fpEl.style.display='none';
+  }
 }
 
 async function load(){
