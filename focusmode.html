@@ -1498,7 +1498,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.125</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.126</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5105,8 +5105,18 @@ async function runDiscordEntry(){
   }
 }
 
+async function bootDiscordDM(){
+  // ready() hangs reliably in DM context, so try the cheap path first: an existing
+  // session in localStorage restores instantly with no OAuth handshake at all. Only
+  // fall through to the full runDiscordEntry() flow -- and its unavoidable wait on a
+  // handshake known not to complete here -- if that restore didn't actually succeed,
+  // so a new or deleted-and-recreated Discord account can still get created rather
+  // than being permanently stranded on the login screen.
+  await tryRestoreSession();
+  if(!currentPlayer){await runDiscordEntry();}
+}
 if(isDiscordActivity()){
-  if(isDiscordDM()){tryRestoreSession();}else{runDiscordEntry();}
+  if(isDiscordDM()){bootDiscordDM();}else{runDiscordEntry();}
 }else{
   tryRestoreSession();
 }
