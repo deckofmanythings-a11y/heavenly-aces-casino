@@ -2,25 +2,307 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Casino</title>
-<!-- TEMPORARY DIAGNOSTIC: redirect target swapped to classic-crapless.html (the original,
-     unmodified entry point that's known to have completed the Discord ready() handshake
-     successfully) instead of focusmode.html, to isolate whether the current ready() timeout
-     is specific to focusmode.html or something broader. Revert to focusmode.html?mode=standard
-     once this test is done -- see git history for the real redirect target. -->
+<script src="supabase-js.bundle.js?v=1"></script>
+<script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
-  html,body{height:100%;margin:0;background:#0a0a12;color:#fff;font-family:system-ui,sans-serif;
-    display:flex;align-items:center;justify-content:center}
-  a{color:#ffd700}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
+
+/* ── AUTH ── */
+#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh;padding:20px}
+.auth-box{background:#1a1a1a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:28px 24px;width:100%;max-width:340px}
+.auth-box h1{font-size:34px;font-weight:700;color:#ffd700;margin-bottom:3px}
+.auth-box p{font-size:21px;color:rgba(255,255,255,.4);margin-bottom:20px}
+.auth-tabs{display:flex;margin-bottom:16px;border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+.auth-tab{flex:1;padding:7px;text-align:center;font-size:23px;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);border:none}
+.auth-tab.active{background:rgba(255,215,0,.15);color:#ffd700}
+.auth-field{margin-bottom:12px}
+.auth-field label{display:block;font-size:19px;color:rgba(255,255,255,.5);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.auth-field input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:24px;outline:none}
+.auth-field input:focus{border-color:rgba(255,215,0,.5)}
+.auth-btn{width:100%;background:#c8a200;border:none;border-radius:7px;color:#111;font-size:24px;font-weight:700;padding:10px;cursor:pointer;margin-top:4px}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed}
+.auth-error{background:rgba(180,0,0,.25);border:1px solid rgba(255,80,80,.3);border-radius:6px;padding:8px 10px;font-size:21px;color:#ff9a9a;margin-bottom:12px;display:none}
+.auth-status{text-align:center;font-size:16px;color:rgba(255,255,255,.45);margin-bottom:14px;display:none}
+.auth-status.show{display:block}
+.auth-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,215,0,.25);border-top-color:#ffd700;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LOBBY ── */
+#lobby-screen{display:none;flex-direction:column;height:100vh;height:100dvh;overflow-y:auto;padding:24px 16px 40px}
+#lobby-header{display:flex;align-items:center;justify-content:space-between;max-width:720px;width:100%;margin:0 auto 28px;flex-wrap:wrap;gap:10px}
+#lobby-title{font-size:26px;font-weight:800;color:#ffd700}
+#lobby-account{display:flex;align-items:center;gap:14px}
+#lobby-player-info{text-align:right;line-height:1.3}
+#lobby-username{font-size:17px;font-weight:700;color:#fff}
+#lobby-bankroll{font-size:14px;color:rgba(255,215,0,.85)}
+#logout-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;padding:7px 14px;font-size:14px;cursor:pointer}
+#logout-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+
+#lobby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;max-width:720px;width:100%;margin:0 auto}
+.lobby-tile{background:#161616;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
+.lobby-tile:hover{border-color:rgba(255,215,0,.5);background:#1c1c1c}
+.lobby-tile .lt-icon{font-size:32px}
+.lobby-tile .lt-label{font-size:16px;font-weight:800;letter-spacing:.03em;color:#fff}
+.lobby-tile .lt-sub{font-size:12px;color:rgba(255,255,255,.45)}
+.lobby-tile.wide{grid-column:1/-1}
+.lobby-tile.practice{border-color:rgba(74,158,255,.35)}
+.lobby-tile.practice:hover{border-color:rgba(74,158,255,.7);background:#141c26}
+
+#lobby-footer{text-align:center;margin-top:28px;font-size:11px;color:rgba(255,255,255,.3)}
 </style>
 </head>
 <body>
-  <p>Loading Heavenly Aces Casino&hellip; if you're not redirected, <a href="classic-crapless.html" id="fallback-link">click here</a>.</p>
-  <script>
-    const dest='classic-crapless.html'+(location.search?'?'+location.search.slice(1):'');
-    document.getElementById('fallback-link').href=dest;
-    location.replace(dest);
-  </script>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <h1>🎲 Heavenly Aces Casino</h1>
+    <p>Hosted by Deck</p>
+    <div class="auth-status" id="auth-status"><span class="auth-spinner"></span>Connecting to Discord&hellip;</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Log In</button>
+      <button class="auth-tab" id="tab-register" onclick="showTab('register')">Create Account</button>
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+    <div class="auth-field"><label>Username</label><input type="text" id="auth-username" placeholder="your name"></div>
+    <div class="auth-field"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+    <button class="auth-btn" id="auth-btn" onclick="handleAuth()">Log In</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div id="lobby-screen">
+  <div id="lobby-header">
+    <div id="lobby-title">🎲 Heavenly Aces</div>
+    <div id="lobby-account">
+      <div id="lobby-player-info">
+        <div id="lobby-username"></div>
+        <div id="lobby-bankroll"></div>
+      </div>
+      <button id="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+  <div id="lobby-grid">
+    <div class="lobby-tile" onclick="dNav('focusmode.html?mode=crapless')">
+      <div class="lt-icon">🎲</div>
+      <div class="lt-label">CRAPLESS</div>
+      <div class="lt-sub">No naturals</div>
+    </div>
+    <div class="lobby-tile" onclick="dNav('focusmode.html?mode=standard')">
+      <div class="lt-icon">🎲</div>
+      <div class="lt-label">STANDARD</div>
+      <div class="lt-sub">7 &amp; 11 win</div>
+    </div>
+    <div class="lobby-tile" onclick="dNav('sicbo.html')">
+      <div class="lt-icon">🎰</div>
+      <div class="lt-label">SIC-BO</div>
+      <div class="lt-sub">3 dice</div>
+    </div>
+    <div class="lobby-tile" onclick="dNav('destroyer.html')">
+      <div class="lt-icon">🚢</div>
+      <div class="lt-label">DESTROYER</div>
+      <div class="lt-sub">Naval Strike</div>
+    </div>
+    <div class="lobby-tile" onclick="dNav('uth.html')">
+      <div class="lt-icon">🃏</div>
+      <div class="lt-label">HOLD'EM</div>
+      <div class="lt-sub">Ultimate Texas</div>
+    </div>
+    <div class="lobby-tile" onclick="dNav('iluvsuits.html')">
+      <div class="lt-icon">♠️</div>
+      <div class="lt-label">I LUV SUITS</div>
+      <div class="lt-sub">Max-flush poker</div>
+    </div>
+    <div class="lobby-tile wide practice" onclick="dNav('focusmode.html')">
+      <div class="lt-icon">🎓</div>
+      <div class="lt-label">FOCUS MODE</div>
+      <div class="lt-sub">Learn/practice standard craps</div>
+    </div>
+  </div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.4.127</div>
+</div>
+
+<script>
+// Discord's launch-context query params aren't reliably present on every launch surface
+// (a DM launch doesn't carry frame_id the way a guild voice-channel launch does). Discord
+// always serves the Activity from <app-id>.discordsays.com regardless of launch surface
+// though, and that hostname is never true for a plain website visit, so check it first;
+// frame_id stays as a defense-in-depth fallback.
+function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
+// Every cross-game link is a bare filename, which drops Discord's frame_id/instance_id
+// query params on navigation -- the destination page then can't tell it's running inside
+// Discord and tries direct (proxy-blocked) Supabase calls. Route every such navigation
+// through this so the params always carry forward.
+function dNav(url){
+  if(isDiscordActivity()){
+    const sep=url.includes('?')?'&':'?';
+    url=url+sep+location.search.slice(1);
+  }
+  window.location.href=url;
+}
+// Discord's Activity CSP blocks the browser's native inline onclick="" (etc.) execution path
+// entirely -- it fails silently, so every inline handler in the page goes dead. The same CSP
+// DOES allow 'unsafe-eval', so instead of rewriting every inline handler, a single delegated
+// listener re-runs the attribute's code via new Function() at click/input time, matching how
+// the native attribute would have fired via event bubbling.
+if(isDiscordActivity()){
+  const CS_ATTR={click:'onclick',contextmenu:'oncontextmenu',input:'oninput',change:'onchange'};
+  Object.keys(CS_ATTR).forEach(type=>{
+    document.addEventListener(type,function(e){
+      const attr=CS_ATTR[type];
+      const el=e.target.closest('['+attr+']');
+      if(!el)return;
+      const code=el.getAttribute(attr);
+      if(!code)return;
+      let stopped=false;const origStop=e.stopPropagation.bind(e);
+      e.stopPropagation=function(){stopped=true;origStop();};
+      Object.defineProperty(e,'currentTarget',{value:el,configurable:true});
+      try{new Function('event',code).call(el,e);}
+      catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
+      finally{e.stopPropagation=origStop;delete e.currentTarget;}
+      if(stopped)e.stopImmediatePropagation();
+    });
+  });
+}
+const SUPABASE_URL=isDiscordActivity()?(location.origin+'/.proxy/supabase'):'https://qgiksiauptrqmxsupwqe.supabase.co';
+const FUNCTIONS_URL=SUPABASE_URL+'/functions/v1';
+const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{fetch:(url,options)=>fetch(url,{...options,cache:'no-store'})}});
+const DISCORD_CLIENT_ID='1528447760653746346';
+
+let currentPlayer=null,_authMode='login';
+
+function showLobby(player){
+  currentPlayer=player;
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('lobby-screen').style.display='flex';
+  document.getElementById('lobby-username').textContent=player.username;
+  document.getElementById('lobby-bankroll').textContent='$'+(parseFloat(player.bankroll)||0).toFixed(2)+' bankroll';
+}
+function logout(){
+  if(currentPlayer)sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
+  localStorage.removeItem('craps_session');
+  currentPlayer=null;
+  document.getElementById('lobby-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-username').value='';
+  document.getElementById('auth-password').value='';
+}
+function showTab(tab){
+  _authMode=tab;
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('auth-btn').textContent=tab==='login'?'Log In':'Create Account';
+  document.getElementById('auth-error').style.display='none';
+}
+function showAuthError(msg){
+  const el=document.getElementById('auth-error');
+  el.textContent=msg;el.style.display='block';
+}
+async function handleAuth(){
+  const username=document.getElementById('auth-username').value.trim();
+  const password=document.getElementById('auth-password').value;
+  if(!username||!password){showAuthError('Please enter a username and password.');return;}
+  const btn=document.getElementById('auth-btn');
+  btn.disabled=true;
+  try{
+    if(_authMode==='register')await registerPlayer(username,password);
+    else await loginPlayer(username,password);
+  }catch(e){
+    showAuthError(e.message);
+  }finally{
+    btn.disabled=false;btn.textContent=_authMode==='login'?'Log In':'Create Account';
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth-screen').style.display!=='none')handleAuth();});
+
+async function hashPassword(p){const e=new TextEncoder().encode(p);const b=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function generateToken(){return Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function registerPlayer(username,password){
+  const{data:ex}=await sb.from('players').select('id').eq('username',username).maybeSingle();
+  if(ex)throw new Error('That username is already taken.');
+  const hash=await hashPassword(password);const token=generateToken();
+  const expires=new Date(Date.now()+30*24*60*60*1000).toISOString();
+  const{data,error}=await sb.from('players').insert({username,password_hash:hash,bankroll:20,net_pnl:0,total_redeemed:0,session_token:token,session_expires:expires}).select().single();
+  if(error)throw new Error('Could not create account: '+error.message);
+  localStorage.setItem('craps_session',token);showLobby(data);
+}
+async function loginPlayer(username,password){
+  const hash=await hashPassword(password);
+  const{data,error}=await sb.from('players').select('*').eq('username',username).single();
+  if(error||!data)throw new Error('Username not found.');
+  if(data.password_hash!==hash)throw new Error('Incorrect password.');
+  const token=generateToken();const expires=new Date(Date.now()+30*24*60*60*1000).toISOString();
+  await sb.from('players').update({session_token:token,session_expires:expires}).eq('id',data.id);
+  localStorage.setItem('craps_session',token);showLobby({...data,session_token:token,session_expires:expires});
+}
+async function tryRestoreSession(){
+  const token=localStorage.getItem('craps_session');if(!token)return;
+  const{data,error}=await sb.from('players').select('*').eq('session_token',token).maybeSingle();
+  // A failed request (network hiccup, Discord proxy misconfig, etc.) is not proof the session
+  // is invalid -- only clear the stored token on a clean "no such row" or genuine expiry, never
+  // on a query error, or a transient failure would permanently sign the player out.
+  if(error){console.error('tryRestoreSession: query failed, leaving session token intact',error);return;}
+  if(!data){localStorage.removeItem('craps_session');return;}
+  if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');return;}
+  showLobby(data);
+}
+
+// Discord's launch-context query params include location_id, which is prefixed gc- for a
+// guild channel (voice/text) and pc- for a private channel (DM or group DM). ready() has
+// been confirmed to hang reliably -- not flakily -- on pc- launches, so there's no point
+// spending 8+ seconds attempting it there. Skip straight to tryRestoreSession(), the
+// fallback already known to work off an existing localStorage session from an earlier
+// guild-channel launch.
+function isDiscordDM(){
+  const loc=new URLSearchParams(location.search).get('location_id');
+  return !!loc&&loc.startsWith('pc-');
+}
+function withTimeout(promise,ms,label){
+  return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out')),ms))]);
+}
+// Discord Activity entry: exchange the OAuth code for a verified identity via the
+// discord-auth Edge Function, then boot straight into the lobby -- no password screen.
+// Any failure here (SDK hiccup, network, server) falls back to the normal login flow
+// rather than stranding the player on a blank screen.
+async function runDiscordEntry(){
+  const statusEl=document.getElementById('auth-status');
+  statusEl.classList.add('show');
+  try{
+    const {DiscordSDK}=window.DiscordSDKLib;
+    const discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
+    await withTimeout(discordSdk.ready(),8000,'Discord SDK ready()');
+    const{code}=await discordSdk.commands.authorize({
+      client_id:DISCORD_CLIENT_ID,response_type:'code',state:'',prompt:'none',scope:['identify']
+    });
+    const res=await fetch(FUNCTIONS_URL+'/discord-auth',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({action:'auth',code})
+    });
+    const data=await res.json();
+    if(!data.ok||!data.player)throw new Error(data.message||'Discord sign-in failed.');
+    localStorage.setItem('craps_session',data.player.session_token);
+    showLobby(data.player);
+  }catch(e){
+    console.error('Discord entry failed, falling back to normal login:',e);
+    await tryRestoreSession();
+  }finally{
+    statusEl.classList.remove('show');
+  }
+}
+async function bootDiscordDM(){
+  await tryRestoreSession();
+  if(!currentPlayer){await runDiscordEntry();}
+}
+if(isDiscordActivity()){
+  if(isDiscordDM()){bootDiscordDM();}else{runDiscordEntry();}
+}else{
+  tryRestoreSession();
+}
+</script>
 </body>
 </html>
