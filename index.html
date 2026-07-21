@@ -54,6 +54,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .lobby-tile.practice:hover{border-color:rgba(74,158,255,.7);background:#141c26}
 
 #lobby-footer{text-align:center;margin-top:28px;font-size:11px;color:rgba(255,255,255,.3)}
+#dailies-badge{display:inline-block;background:#ffd700;color:#111;font-size:11px;font-weight:800;border-radius:10px;padding:1px 7px;margin-left:6px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -126,8 +127,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="lt-label">FOCUS MODE</div>
       <div class="lt-sub">Learn/practice standard craps</div>
     </div>
+    <div class="lobby-tile wide" id="dailies-tile" onclick="dNav('dailies.html')">
+      <div class="lt-icon">🗓️</div>
+      <div class="lt-label">DAILIES <span id="dailies-badge" style="display:none"></span></div>
+      <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
+    </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.4.129</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.4.131</div>
 </div>
 
 <script>
@@ -196,6 +202,37 @@ function showLobby(player){
   document.getElementById('lobby-screen').style.display='flex';
   document.getElementById('lobby-username').textContent=player.username;
   document.getElementById('lobby-bankroll').textContent='$'+(parseFloat(player.bankroll)||0).toFixed(2)+' bankroll';
+  loadDailiesBadge();
+}
+// Read-only peek at today's Dailies via dailies-action ('state') just to badge the
+// lobby tile with how many Tasks/Quest are still open -- the same call self-heals a
+// stale day stamp, so this also doubles as the day's first rollover if the player
+// hasn't touched a game yet today.
+async function loadDailiesBadge(){
+  if(!currentPlayer)return;
+  const token=localStorage.getItem('craps_session');if(!token)return;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/dailies-action',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token,action:'state'})
+    });
+    const data=await res.json();
+    if(!data.ok)return;
+    const d=data.dailies;
+    const remaining=Object.values(d.tasks).filter(v=>!v).length + (d.bonus_claimed?0:0) + (d.quest_completed?0:1);
+    const badge=document.getElementById('dailies-badge');
+    const sub=document.getElementById('dailies-sub');
+    const tasksLeft=Object.values(d.tasks).filter(v=>!v).length;
+    if(tasksLeft===0 && d.quest_completed){
+      badge.style.display='none';
+      sub.textContent='All done for today';
+    }else{
+      badge.style.display='inline-block';
+      badge.textContent=remaining;
+      sub.textContent=tasksLeft+' Task'+(tasksLeft===1?'':'s')+' left · Quest '+(d.quest_completed?'complete':'open');
+    }
+  }catch(e){/* badge is a nice-to-have, never block the lobby on it */}
 }
 function logout(){
   if(currentPlayer)sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);

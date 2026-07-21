@@ -1277,6 +1277,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
             <button class="info-btn" id="cashout-btn" onclick="closeFinancesDropdown();cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
           </div>
         </div>
+        <button class="info-btn" onclick="dNav('dailies.html')" style="flex:1">🗓️ Dailies</button>
         <button class="info-btn" id="logout-btn" onclick="logout()" style="flex:1">Log Out</button>
       </div>
 <div class="hud-item" id="hud-lastwin-row"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e;font-size:15px;line-height:1.25">—</div></div>
@@ -1498,7 +1499,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.130</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.131</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5857,6 +5858,7 @@ window.addEventListener('load',tutorialMaybeShowPopup);
 <script src="cannon.min.js"></script>
 <script src="cloche-dice.js?v=0.4.97"></script>
 <script src="winner-modal.js?v=0.4.86"></script>
+<script src="dailies-popup.js?v=1"></script>
 <script>
 // Cloche dice overlay: shared module, configured for craps (2 dice, 2.0 scale)
 // using the table's own DIE_B64 face art.

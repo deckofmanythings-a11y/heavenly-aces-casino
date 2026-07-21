@@ -617,7 +617,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.130</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.131</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -639,6 +639,7 @@ Tap BEGIIN GAME to start the game.</div>
       <div style="display:flex;gap:6px">
         <button class="bar-btn" onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
         <button class="bar-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
+        <button class="bar-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
         <button class="bar-btn" onclick="logout()">Log Out</button>
       </div>
     </div>
@@ -1335,6 +1336,23 @@ function renderPlacementGrid(){
   });
 }
 
+// Dailies: "Adjust the position of one ship" has no server round-trip of its own
+// (placement is pure client drag/rotate before the battle starts), so this fires the
+// one-off dailies-action call the first time a rotate/drag actually changes a ship's
+// squares this session. Session-guarded (_shipTaskFired) so a player fidgeting with
+// ships repeatedly doesn't spam the endpoint -- the server is idempotent per day
+// anyway, but there's no reason to call it more than once.
+let _shipTaskFired=false;
+function markShipAdjusted(){
+  if(_shipTaskFired)return;_shipTaskFired=true;
+  const token=localStorage.getItem('craps_session');if(!token)return;
+  fetch(FUNCTIONS_URL+'/dailies-action',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+    body:JSON.stringify({session_token:token,action:'ship_position'})
+  }).catch(()=>{});
+}
+
 function rotateShip(si){
   if(si<0||si>=G.ships.length)return;
   const ship=G.ships[si];
@@ -1346,6 +1364,7 @@ function rotateShip(si){
   const others=G.ships.filter((_,i)=>i!==si).flat().map(([r,c])=>r+','+c);
   if(newSquares.some(([r,c])=>others.includes(r+','+c)))return;
   G.ships[si]=newSquares;
+  markShipAdjusted();
   renderPlacementGrid();
 }
 
@@ -1374,7 +1393,7 @@ function commitDrop(targetR,targetC){
   if(!squares)return false;
   const others=G.ships.filter((_,i)=>i!==_dragShipIdx).flat().map(([r,c])=>r+','+c);
   const valid=squares.every(([r,c])=>r>=0&&r<GRID_SIZE&&c>=0&&c<GRID_SIZE&&!others.includes(r+','+c));
-  if(valid){G.ships[_dragShipIdx]=squares;renderPlacementGrid();}
+  if(valid){G.ships[_dragShipIdx]=squares;markShipAdjusted();renderPlacementGrid();}
   return valid;
 }
 
@@ -2567,6 +2586,7 @@ async function redeemVoucher(code){
 <script src="cannon.min.js"></script>
 <script src="cloche-dice.js?v=0.4.97"></script>
 <script src="winner-modal.js?v=0.4.86"></script>
+<script src="dailies-popup.js?v=1"></script>
 <script>
 // Hit/miss impact sounds -- recorded clips (hit.ogg/miss.ogg), preloaded and cloned per play
 // so rapid-fire rolls don't cut a still-playing instance short.

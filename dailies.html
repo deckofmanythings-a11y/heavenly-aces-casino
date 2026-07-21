@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dailies — Heavenly Aces Casino</title>
+<script src="supabase-js.bundle.js?v=1"></script>
+<script src="discord-embedded-app-sdk.js?v=1"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh;overflow-y:auto;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff}
+#wrap{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+#top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+#back-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:6px;padding:8px 14px;font-size:14px;cursor:pointer}
+h1{font-size:22px;color:#ffd700;font-weight:800}
+#fp-balance{text-align:right;font-size:13px;color:rgba(255,255,255,.5)}
+#fp-balance b{color:#4dff88;font-size:16px;display:block}
+.section-title{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin:22px 0 10px}
+.task-row{display:flex;align-items:center;gap:12px;background:#161616;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.task-row.done{border-color:rgba(77,255,136,.4);background:#132116}
+.task-icon{font-size:22px;width:30px;text-align:center}
+.task-body{flex:1}
+.task-label{font-size:15px;font-weight:700}
+.task-sub{font-size:12px;color:rgba(255,255,255,.4)}
+.task-reward{font-size:15px;font-weight:800;color:#ffd700}
+.task-row.done .task-reward{color:#4dff88}
+.task-check{font-size:18px}
+#bonus-row{border-color:rgba(255,215,0,.35)}
+#bonus-row.done{border-color:rgba(77,255,136,.4)}
+#quest-box{background:linear-gradient(160deg,#241a05,#161616);border:1px solid rgba(255,215,0,.4);border-radius:12px;padding:16px}
+#quest-box.done{border-color:rgba(77,255,136,.5)}
+#quest-game{font-size:12px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+#quest-label{font-size:17px;font-weight:800;color:#ffd700;margin-bottom:4px}
+#quest-box.done #quest-label{color:#4dff88}
+#quest-sub{font-size:13px;color:rgba(255,255,255,.5)}
+#quest-reward{font-size:22px;font-weight:900;color:#ffd700;margin-top:8px}
+#quest-box.done #quest-reward{color:#4dff88}
+#reset-note{text-align:center;font-size:11px;color:rgba(255,255,255,.3);margin-top:22px}
+#loading{text-align:center;padding:60px 0;color:rgba(255,255,255,.4)}
+</style>
+</head>
+<body>
+<div id="loading">Loading Dailies&hellip;</div>
+<div id="wrap" style="display:none">
+  <div id="top">
+    <button id="back-btn" onclick="dNav('index.html')">&larr; Lobby</button>
+    <h1>🗓️ Dailies</h1>
+    <div id="fp-balance">Free Play<b id="fp-amt">$0.00</b></div>
+  </div>
+
+  <div class="section-title">Tasks — $50 each</div>
+  <div id="task-list"></div>
+  <div class="task-row" id="bonus-row">
+    <div class="task-icon">🏆</div>
+    <div class="task-body">
+      <div class="task-label">Complete all Tasks</div>
+      <div class="task-sub">Finish every Task above</div>
+    </div>
+    <div class="task-reward" id="bonus-reward">$250</div>
+    <div class="task-check" id="bonus-check"></div>
+  </div>
+
+  <div class="section-title">Quest</div>
+  <div id="quest-box">
+    <div id="quest-game"></div>
+    <div id="quest-label"></div>
+    <div id="quest-sub"></div>
+    <div id="quest-reward"></div>
+  </div>
+
+  <div id="reset-note">Tasks &amp; Quest reset daily at midnight Pacific time.</div>
+</div>
+
+<script>
+function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
+function dNav(url){
+  if(isDiscordActivity()){const sep=url.includes('?')?'&':'?';url=url+sep+location.search.slice(1);}
+  window.location.href=url;
+}
+const SUPABASE_URL=isDiscordActivity()?(location.origin+'/.proxy/supabase'):'https://qgiksiauptrqmxsupwqe.supabase.co';
+const FUNCTIONS_URL=SUPABASE_URL+'/functions/v1';
+const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
+
+const TASK_META={
+  craps:{icon:'🎲',label:'Make one Craps bet'},
+  sicbo:{icon:'🎰',label:'Make one Sic-Bo bet'},
+  destroyer:{icon:'🚢',label:'Adjust one Destroyer ship'},
+  uth:{icon:'🃏',label:'Make one Hold\'em bet'},
+  iluvsuits:{icon:'♠️',label:'Make one I Luv Suits bet'},
+};
+const QUEST_META={
+  craps:{game:'Craps',label:'Win a Hard Way bet',sub:'Any Hard 4, 6, 8 or 10 — pays as if you’d bet $100 on it.'},
+  sicbo:{game:'Sic-Bo',label:'Win an Any Triple bet',sub:'Roll any triple (30:1) — pays as if you’d bet $100 on it.'},
+  uth:{game:'Ultimate Texas Hold\'em',label:'Win the Trips bonus bet',sub:'Trips (3-of-a-kind) or better — pays as if you’d bet $100 on it.'},
+  iluvsuits:{game:'I Luv Suits',label:'Win a Super Flush Rush bet',sub:'3+ card straight flush — pays as if you’d bet $100 on it.'},
+  destroyer:{game:'Destroyer: Naval Strike',label:'Sink a ship',sub:'Sink any ship in a battle — pays as if you’d bet $100 on it.'},
+};
+
+function render(dailies,freePlayBalance){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('wrap').style.display='block';
+  document.getElementById('fp-amt').textContent='$'+(parseFloat(freePlayBalance)||0).toFixed(2);
+
+  const list=document.getElementById('task-list');list.innerHTML='';
+  Object.keys(TASK_META).forEach(g=>{
+    const done=!!dailies.tasks[g];
+    const row=document.createElement('div');
+    row.className='task-row'+(done?' done':'');
+    row.innerHTML='<div class="task-icon">'+TASK_META[g].icon+'</div>'+
+      '<div class="task-body"><div class="task-label">'+TASK_META[g].label+'</div></div>'+
+      '<div class="task-reward">$50</div>'+
+      '<div class="task-check">'+(done?'✅':'')+'</div>';
+    list.appendChild(row);
+  });
+
+  const bonusRow=document.getElementById('bonus-row');
+  bonusRow.classList.toggle('done',!!dailies.bonus_claimed);
+  document.getElementById('bonus-check').textContent=dailies.bonus_claimed?'✅':'';
+
+  const qm=QUEST_META[dailies.quest_game];
+  const qbox=document.getElementById('quest-box');
+  qbox.classList.toggle('done',!!dailies.quest_completed);
+  document.getElementById('quest-game').textContent=qm.game;
+  document.getElementById('quest-label').textContent=qm.label;
+  document.getElementById('quest-sub').textContent=qm.sub;
+  document.getElementById('quest-reward').textContent=dailies.quest_completed
+    ? 'Won $'+parseFloat(dailies.quest_reward).toFixed(2)+' today!'
+    : 'Reward varies with the winning hand/roll.';
+}
+
+async function load(){
+  const token=localStorage.getItem('craps_session');
+  if(!token){dNav('index.html');return;}
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/dailies-action',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token,action:'state'})
+    });
+    const data=await res.json();
+    if(!data.ok){dNav('index.html');return;}
+    render(data.dailies,data.free_play_balance);
+  }catch(e){
+    document.getElementById('loading').textContent='Could not load Dailies. Check your connection and reload.';
+  }
+}
+load();
+</script>
+</body>
+</html>

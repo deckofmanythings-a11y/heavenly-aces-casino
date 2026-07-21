@@ -292,7 +292,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.130</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.131</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -316,6 +316,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
       <div class="info-row">
         <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
+        <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
         <button class="info-btn" onclick="logout()">Log Out</button>
       </div>
       <div class="hud-grid">
@@ -1384,5 +1385,6 @@ updateSweatSpeedButton();
 tryRestoreSession();
 </script>
 <script src="winner-modal.js?v=0.4.86"></script>
+<script src="dailies-popup.js?v=1"></script>
 </body>
 </html>
