@@ -267,7 +267,12 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 @media (orientation:portrait){
   #game-screen{position:relative}
 
-  #top-row{position:absolute;top:0;left:0;right:0;height:6.03dvh;flex-direction:row;border-bottom:none;z-index:2}
+  /* Discord's mobile Activity sheet draws its own drag-handle/title/Leave bar as an
+     overlay on top of the page rather than pushing content down -- top:0 here would
+     land username/balance directly underneath it, hidden. 44px is an estimate of that
+     overlay's height pending live confirmation; nudge if it's still covered or leaves
+     too big a gap. */
+  #top-row{position:absolute;top:44px;left:0;right:0;height:6.03dvh;flex-direction:row;border-bottom:none;z-index:2}
   #left-col-header{display:none}
   #info-panel{width:100%;max-width:none;min-width:0;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:2px 10px}
   #info-panel .info-row:nth-child(2){display:none}
@@ -411,7 +416,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.137</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.140</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
