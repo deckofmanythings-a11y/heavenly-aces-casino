@@ -122,7 +122,7 @@
   // audio, not something legally available to source or reuse. A tiny Web Audio synth gets the
   // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
   // exactly to however long a given roll's preroll+resolving phases actually last.
-  let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null;
+  let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null, _muted = false;
   // Deck supplied a reference recording (CrapsRoll.ogg) and asked for the same TYPE OF TONE --
   // not the file itself, same licensing reason the earlier bell-chime version cites: a real
   // recording isn't something to source/reuse, but a synth nailing the same character has zero
@@ -193,6 +193,10 @@
     _echoSend.connect(delay);
   }
   function _ensureAudio() {
+    // Single choke point for every sound this module makes (chime notes, dice knocks, action
+    // drums) -- every one of them already does `const ctx = _ensureAudio(); if (!ctx) return;`,
+    // so returning null here silently mutes all of them without touching each sound function.
+    if (_muted) return null;
     if (!_actx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
@@ -1081,7 +1085,9 @@
     onResult: (fn) => resultCallbacks.push(fn),
     // Exposed so other UI (the winner-modal coin waterfall) can reuse the exact same bell-chime
     // instrument as the dice tumble instead of duplicating the synth or using a different sound.
-    playChimeNote: (volume) => playChimeNote(volume)
+    playChimeNote: (volume) => playChimeNote(volume),
+    setMuted: (m) => { _muted = !!m; },
+    isMuted: () => _muted
   };
 
   global.ClocheDice = ClocheDice;
