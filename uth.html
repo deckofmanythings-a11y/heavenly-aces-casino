@@ -420,7 +420,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.147</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.148</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -908,9 +908,21 @@ function toggleProgressive(){
   }
   updateUI();
 }
-function openProgressiveModal(){
+// G.progressivePool only ever gets a live value from a deal/resolve response -- it resets
+// to the makeInitialG() default on every page load/session, so the modal would keep
+// showing that stale default until the player actually played a hand. Refetch the real,
+// server-persisted total directly (progressive_jackpot has no RLS restricting reads) any
+// time the modal opens, rather than trusting whatever's currently in memory.
+async function refreshProgressivePool(){
+  const{data,error}=await sb.from('progressive_jackpot').select('pool_amount').eq('id',1).single();
+  if(error||!data)return;
+  G.progressivePool=parseFloat(data.pool_amount)||G.progressivePool;
+}
+async function openProgressiveModal(){
   document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
   document.getElementById('modal-progressive').classList.remove('hidden');
+  await refreshProgressivePool();
+  document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
 }
 function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
 // Tracks whichever post-round presentation delay (ghosts/modal-open delay, or the flat
