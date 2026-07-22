@@ -5275,9 +5275,9 @@ const TUTORIAL_LESSONS=[
     id:'dice',title:'Rolling the Dice',freeRoll:true,
     visible:['dice','roll'],enabled:['dice','roll'],
     steps:[
-      {title:'Welcome to Craps',body:'Craps is a game built around the total of two dice.'},
-      {title:'Dice Totals',body:'Each roll produces a total from 2 through 12.'},
-      {title:'Roll the Dice',body:'Press Roll to see your first dice total.',requirement:'roll',highlight:'#roll-btn',allowEmptyRoll:true},
+      {title:'Welcome to Craps',body:'At its simplest, Craps is a game about the total of a roll of two standard dice.'},
+      {title:'Dice Totals',body:'Each roll produces a total from 2 through 12, with the 7 being the most common outcome.'},
+      {title:'Roll the Dice',body:'Press Roll.',requirement:'roll',highlight:'#roll-btn',allowEmptyRoll:true},
       {title:'Your Roll',body:'The two dice are added together. Most bets win or lose based on this total.',highlight:'#dice-zone'},
       {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true}
     ]
@@ -5286,21 +5286,21 @@ const TUTORIAL_LESSONS=[
     id:'passline',title:'The Pass Line',reset:true,
     visible:['dice','roll','chip','pass'],enabled:['chip','pass'],
     steps:[
-      {title:'The Pass Line',body:"The Pass Line is the standard starting bet in Craps.",highlight:'#pass-main',expectPhase:'comeout'},
-      {title:'Place Your Bet',body:'Place a chip on the Pass Line. Do this by tapping the Pass Line (which will increment up the bet by the selected chip amount), or by dragging a chip from your chip tray to the Pass Line box.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'The Pass Line',body:"The Pass Line is the standard starting bet.",highlight:'#pass-main',expectPhase:'comeout'},
+      {title:'Place Your Bet',body:'Place a bet on the Pass Line. Do this by tapping the Pass Line (which will increment up the bet by the selected chip amount), or by dragging a chip from your chip tray to the Pass Line box.',requirement:'bet',betKey:'pass',highlight:'#pass-main',expectPhase:'comeout'},
       // Spec: "Enable the Roll button" -- roll stays off until here, unlike Lesson 1 where it
       // was on from the start.
-      {title:'The Come Out Roll',body:'The first roll of a new round is called the Come Out Roll.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Roll a Winner',body:'On the Come Out Roll, a 7 or 11 wins the Pass Line immediately.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Winner',body:'A 7 on the Come Out Roll wins your Pass Line bet.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
-      {title:'Try Again',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'The Come Out Roll',body:'The first roll of a new round is called the Come Out Roll. A Come Out Roll is trying to establish a Point.',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Seven-Eleven',body:'On the Come Out Roll, a 7 or 11 wins the Pass Line immediately.',requirement:'roll',forcedRoll:7,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Winner!',body:'A 7 on the Come Out Roll wins your Pass Line bet.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Keep Going',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Another Winner',body:'There are multiple ways to win on the Come Out Roll.',requirement:'roll',forcedRoll:11,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Eleven Wins',body:'An 11 also wins the Pass Line on the Come Out Roll.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Craps Numbers',body:'It is possible to lose your bet on the Come Out Roll.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       // Spec's step 9 ("place a bet, then roll, force a 3") bundles two actions in one text
       // box -- split here into its own bet step + roll step instead, per the spec's own rule
       // to keep each box to a single action.
-      {title:'See a Losing Roll',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
+      {title:'Any Craps',body:'Place another Pass Line bet.',requirement:'bet',betKey:'pass',highlight:'#pass-main',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Roll It',body:'Roll the dice.',requirement:'roll',forcedRoll:3,highlight:'#roll-btn',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Craps',body:'A 2, 3, or 12 on the Come Out Roll loses the Pass Line bet. You rolled a 3, so your wager is lost.',highlight:'#dice-zone',enabled:['chip','pass','roll'],expectPhase:'comeout'},
       {title:'Lesson Complete',body:'Press Finish to move to the next lesson.',complete:true,enabled:['chip','pass','roll']}
