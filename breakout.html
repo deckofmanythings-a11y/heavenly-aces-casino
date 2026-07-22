@@ -101,6 +101,19 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
+/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
+   baked-in bulb art, so both lightOFF.png (idle) and lightON.png (lit, post-deal) are
+   placed as floating overlays in the open felt to the left of everything else --
+   placement is a first pass in open green space, not measured against baked art. */
+.panel-spot{position:absolute;border-radius:50%;cursor:pointer}
+.panel-spot.active{box-shadow:0 0 0 0.5cqh rgba(255,215,0,.4)}
+#light-spot,#light-off-img,#light-on-img{left:14%;top:42%;width:5.56%;height:9.89%}
+#light-info-btn{position:absolute;left:19.9%;top:43.5%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+@keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
+#light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
+.progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
+.progressive-tier-row .prog-pay{color:#ffd700;font-weight:700}
+
 /* ── INSURANCE PROMPT -- shown only when phase:'insurance' (dealer shows an Ace) ── */
 #insurance-banner{position:absolute;left:50%;top:4%;transform:translateX(-50%);z-index:20;background:rgba(10,10,10,.92);border:1.5px solid #ffd700;border-radius:8px;padding:1.2cqh 1.6cqh;text-align:center;display:none}
 #insurance-banner.show{display:block}
@@ -261,6 +274,8 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   #supertie-spot{left:46%;top:51.5%;width:19%;height:10%}
   #pairplus-spot{left:47%;top:60.5%;width:19%;height:9%}
   #sweet17-spot{left:44.5%;top:68.5%;width:20%;height:8.5%}
+  #light-spot,#light-off-img,#light-on-img{left:33%;top:7%;width:14%;height:7%}
+  #light-info-btn{left:47.5%;top:7.5%;width:5%;height:2.5%}
 
   .panel-spot-stk{font-size:1.2cqh}
 
@@ -334,12 +349,28 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
       <button class="modal-btn cancel" onclick="closeLogModal()" style="margin-top:8px">Close</button>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="modal-progressive">
+    <div class="modal-box dark" style="max-height:80vh;overflow-y:auto">
+      <div class="modal-title" style="text-align:center">💡 The Light</div>
+      <div style="text-align:center;font-size:15px;color:rgba(255,255,255,.6);margin-bottom:10px">A shared jackpot across every table. $5 to play.</div>
+      <div style="text-align:center;font-size:34px;font-weight:900;color:#ffd700;margin:10px 0" id="progressive-pool-display">$1,000.00</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:14px">$2.50 of every $5 bet feeds the pool. The rest funds the fixed prizes below and the house.</div>
+      <div class="progressive-tier-row"><span>Ace-King Blackjack, matching suits</span><span class="prog-pay">100% of pool</span></div>
+      <div class="progressive-tier-row"><span>Matching suited Blackjacks</span><span class="prog-pay">10% of pool</span></div>
+      <div class="progressive-tier-row"><span>Three Aces</span><span class="prog-pay">5% of pool</span></div>
+      <div class="progressive-tier-row"><span>Player/Dealer suited Blackjacks</span><span class="prog-pay">$1,000</span></div>
+      <div class="progressive-tier-row"><span>Player/Dealer Blackjacks</span><span class="prog-pay">$150</span></div>
+      <div class="progressive-tier-row"><span>Player suited Blackjack</span><span class="prog-pay">$50</span></div>
+      <div class="progressive-tier-row"><span>Player any Ace</span><span class="prog-pay">$10</span></div>
+      <button class="modal-btn cancel" onclick="closeProgressiveModal()" style="margin-top:12px">Close</button>
+    </div>
+  </div>
 
   <!-- TOP ROW -->
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.148</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.149</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -403,6 +434,16 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
       <div class="felt-spot" id="pairplus-spot" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
         <span class="panel-spot-stk" id="stk-pairPlus"></span>
       </div>
+
+      <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
+           has no baked-in bulb art, so lightOFF.png sits idle over open felt and swaps
+           for lightON.png once the round's dealt with the light on -- see updateUI(). -->
+      <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
+        <span class="panel-spot-stk" id="stk-light"></span>
+      </div>
+      <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
+      <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
+      <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">ⓘ</button>
 
       <!-- INSURANCE PROMPT -- shown only when the dealer's up card is an Ace -->
       <div id="insurance-banner">
@@ -521,7 +562,7 @@ function makeInitialG(){
     bankroll:0,startingBankroll:0,chip:25,
     // Flat bet object, matching the chip-ui.md convention -- all four side bets plus
     // the two mutually-exclusive main bets share one dict, keyed by string identifier.
-    bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0},
+    bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0},
     // 'player'|'breakout'|null -- which of the two bet circles carries chips right
     // now (derived, not chosen directly). Null pre-deal until a spot is bet; the
     // server echoes back the confirmed mode in its 'deal' response for the round.
@@ -533,6 +574,8 @@ function makeInitialG(){
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
     history:[],
     cardEls:null,
+    locked:{progressive:false},
+    progressivePool:1000, // shown before the first deal/roll response arrives with a live value
   };
 }
 let G=makeInitialG();
@@ -789,10 +832,45 @@ function removeBet(key){
 function clearBets(){
   if(G.phase!=='betting')return;
   const ret=Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0);
-  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0};
+  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0};
   G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
+
+// ── THE LIGHT (shared cross-game progressive) ─────────────────────────────────
+// Flat $5, no chip-denomination choice -- a single toggle, not a stackable stake like
+// the other bets. See progressive_jackpot table + roll-breakout's tier evaluation for
+// the server-authoritative side of this.
+const PROGRESSIVE_BET=5;
+function toggleProgressive(){
+  if(G.phase!=='betting')return;
+  if((G.bets.progressive||0)>0){
+    G.bankroll=r2(G.bankroll+G.bets.progressive);
+    G.bets.progressive=0;
+  }else{
+    if(G.bankroll<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
+    G.bets.progressive=PROGRESSIVE_BET;
+    G.bankroll=r2(G.bankroll-PROGRESSIVE_BET);
+  }
+  updateUI();
+}
+// G.progressivePool only ever gets a live value from a deal/resolve response -- it
+// resets to the makeInitialG() default on every page load/session, so the modal would
+// keep showing that stale default until the player actually played a hand. Refetch the
+// real, server-persisted total directly (progressive_jackpot has no RLS restricting
+// reads) any time the modal opens, rather than trusting whatever's currently in memory.
+async function refreshProgressivePool(){
+  const{data,error}=await sb.from('progressive_jackpot').select('pool_amount').eq('id',1).single();
+  if(error||!data)return;
+  G.progressivePool=parseFloat(data.pool_amount)||G.progressivePool;
+}
+async function openProgressiveModal(){
+  document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
+  document.getElementById('modal-progressive').classList.remove('hidden');
+  await refreshProgressivePool();
+  document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
+}
+function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
 function repeatLastBet(){
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
@@ -912,10 +990,11 @@ async function dealHand(){
   if((playerBet>0)===(breakoutBet>0)){addLog('Place exactly one of Player Bet or Breakout Bet.','info');return;}
   const superTieAmt=G.bets.superTie||0;
   if(superTieAmt>0&&superTieAmt<SUPER_TIE_MIN){addLog('Super Tie has a $'+SUPER_TIE_MIN+' minimum bet.','info');return;}
+  const progressive=(G.bets.progressive||0)>0;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   const body={session_token:token,action:'deal',playerBet,breakoutBet,
-    superTie:G.bets.superTie||0,breakoutBonus:G.bets.breakoutBonus||0,sweet17:G.bets.sweet17||0,pairPlus:G.bets.pairPlus||0};
+    superTie:G.bets.superTie||0,breakoutBonus:G.bets.breakoutBonus||0,sweet17:G.bets.sweet17||0,pairPlus:G.bets.pairPlus||0,progressive};
   let data;
   try{
     const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify(body)});
@@ -929,8 +1008,10 @@ async function dealHand(){
   G.phase=data.phase;
   G.hand={hand:data.hand,dealerHand:data.dealerHand};
   G.doubled=false;
+  G.locked={progressive:data.progressive};
   G.bankroll=data.newBankroll;
-  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0};
+  if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
+  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0};
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
   document.getElementById('dealer-hand-name').textContent='';
@@ -938,7 +1019,14 @@ async function dealHand(){
   document.getElementById('repeat-btn').disabled=false;
   updateStatusZone();
   renderActionButtons();
+  // Sweep the staged $5 chip away (not dimmed -- same noDim ghost style as a win-side
+  // sweep) BEFORE updateUI()/renderChipStacks() blanks #stk-light's text out from under it.
+  if(data.progressive)spawnChipGhost(document.getElementById('stk-light'),{noDim:true});
   updateUI();
+  if(data.progressive){
+    const img=document.getElementById('light-on-img');
+    img.classList.remove('lit-in');void img.offsetWidth;img.classList.add('lit-in');
+  }
   const dealMs=dealCardsAnimated();
   setTimeout(()=>{
     updateLiveHandDisplay();
@@ -1033,13 +1121,18 @@ function finishRound(data){
   });
   G.bankroll=data.newBankroll;
   G.lastWin=data.payout||0;
+  if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   const mainBetAmt=G.mode==='player'?(G.lastBetSnapshot.playerBet||0):(G.lastBetSnapshot.breakoutBet||0);
   const sideTotal=(G.lastBetSnapshot.superTie||0)+(G.lastBetSnapshot.breakoutBonus||0)+(G.lastBetSnapshot.sweet17||0)+(G.lastBetSnapshot.pairPlus||0);
   G.lastBetDisplay=r2(mainBetAmt+(G.doubled?mainBetAmt:0)+sideTotal);
   const mainLine=(data.log||[]).find(l=>/^Player Bet:|^Breakout Bet:/.test(l))||'';
   const mainResult=/win|pays/i.test(mainLine)?'win':/push/i.test(mainLine)?'push':/lost/i.test(mainLine)?'lose':(data.payout>0?'win':'lose');
+  let playerDesc='You: '+(G.mode==='player'?'Player Bet':'Breakout Bet')+' '+fmt(mainBetAmt);
+  if(G.locked.progressive){
+    playerDesc+=data.progressiveTier?' — THE LIGHT: '+data.progressiveTier.toUpperCase()+'!':' — THE LIGHT: no prize';
+  }
   G.history.unshift({result:mainResult,payout:data.payout,label:handValueLabel(G.hand.hand)||'--',
-    playerDesc:'You: '+(G.mode==='player'?'Player Bet':'Breakout Bet')+' '+fmt(mainBetAmt),
+    playerDesc,
     dealerDesc:'Dealer: '+handValueLabel(G.hand.dealerHand)});
   if(G.history.length>20)G.history.length=20;
   renderActionButtons();updateStatusZone();
@@ -1056,7 +1149,7 @@ function finishRound(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.doubled=false;G.insurance=0;G.insuranceAvailable=false;
-  G.mode=null;
+  G.mode=null;G.locked={progressive:false};
   hideInsuranceBanner();
   document.getElementById('dealer-row').classList.remove('active');
   document.getElementById('player-row').classList.remove('active');
@@ -1129,6 +1222,13 @@ function updateUI(){
       }
     }
   });
+  // The Light: a staged $5 stake shows like any other spot pre-deal, then the chip
+  // sweeps away and lightON.png takes over once dealt (G.locked.progressive) --
+  // there's no locked-chip-stack display for this one, just the bulb art itself.
+  document.getElementById('stk-light').textContent=(!locked&&G.bets.progressive)?fmt(G.bets.progressive):'';
+  document.getElementById('light-spot').classList.toggle('active',!locked&&(G.bets.progressive||0)>0);
+  document.getElementById('light-off-img').style.display=(locked&&G.locked.progressive)?'none':'';
+  document.getElementById('light-on-img').style.display=(locked&&G.locked.progressive)?'':'none';
   renderChipStacks();
 }
 
