@@ -562,6 +562,10 @@ function makeInitialG(){
 }
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login';
+// Deal/sweat animation lifecycle guards -- see dealHand() and the visibilitychange
+// handler below for how these prevent overlapping deals and stalled-tab reveals.
+let dealAnimInProgress=false;
+let pendingDealTimeouts=[];
 
 function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0)+G.playBet);}
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
@@ -1069,7 +1073,7 @@ function renderHandCardsStatic(){
 // STACK spot (not individual slots -- they land in one pile, face down, per hand),
 // same per-card pace as Ultimate Texas Hold'em. The "sweat" reveal (below) is what
 // later flips and fans each stack out.
-const DEAL_STAGGER_MS=170;
+const DEAL_STAGGER_MS=110;
 function dealCardsAnimated(){
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
@@ -1089,7 +1093,7 @@ function dealCardsAnimated(){
     Cards.dealIn(item.el,i*DEAL_STAGGER_MS);
     // 400ms matches pc-deal-in's own animation length (cards.js) -- play the landing
     // sound when the card actually settles, not when its staggered slide-in starts.
-    setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400);
+    pendingDealTimeouts.push(setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400));
   });
   return order.length*DEAL_STAGGER_MS+450;
 }
@@ -1112,7 +1116,7 @@ function dealCardsAnimated(){
 // land to its right), that assignment never needs to change again. This also
 // guarantees a not-yet-revealed card (still sitting at 0) can never outrank an
 // already-revealed one.
-const SWEAT_SPEEDS={slow:750,normal:500,fast:320};
+const SWEAT_SPEEDS={slow:550,normal:400,fast:260};
 let sweatSpeedKey=localStorage.getItem('iluvsuits_sweat_speed')||'normal';
 function getSweatStaggerMs(){return SWEAT_SPEEDS[sweatSpeedKey]||SWEAT_SPEEDS.normal;}
 function cycleSweatSpeed(){
@@ -1137,7 +1141,7 @@ function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
   cardEls.forEach(el=>{el.style.transition='';});
   cardEls.forEach((el,i)=>{Cards.setFront(el,cards[i]);Cards.flipUp(el);});
   for(let revealIdx=0;revealIdx<n;revealIdx++){
-    setTimeout(()=>{
+    pendingDealTimeouts.push(setTimeout(()=>{
       playSfx(SFX_CARD_SLIDE,true);
       // Every card revealed so far now sits (revealIdx - itsOwnIndex) slots from the
       // stack origin: the just-revealed card (j===revealIdx) lands back at slot 0
@@ -1147,8 +1151,8 @@ function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
         cardEls[j].style.left=fanLefts[revealIdx-j]+'cqh';
       }
       cardEls[revealIdx].style.zIndex=n-revealIdx; // further-right final slot -> higher layer
-      if(revealIdx===n-1)setTimeout(()=>{if(onAllRevealed)onAllRevealed();},550);
-    },revealIdx*stagger);
+      if(revealIdx===n-1)pendingDealTimeouts.push(setTimeout(()=>{if(onAllRevealed)onAllRevealed();},550));
+    },revealIdx*stagger));
   }
 }
 // Dealer's sweat fans all 7 cards out in one motion instead of one-at-a-time -- still
@@ -1181,6 +1185,7 @@ function sweatRevealAllAtOnce(cardEls,cards,fanLefts,onAllRevealed){
 // hand): shows the live hand description, decides whether the Play spot/button is
 // available at all (Rainbow = Fold only), and reveals the action buttons.
 function onHandFullyRevealed(){
+  dealAnimInProgress=false;
   updateLiveHandDisplay();
   const rainbow=isRainbow(evalHand(G.hand.playerHand));
   const playSpot=document.getElementById('play-spot');
@@ -1189,6 +1194,19 @@ function onHandFullyRevealed(){
   updateRaiseButtonStates();
   updateUI();
 }
+// Mobile browsers throttle/suspend setTimeout chains in a backgrounded tab (app
+// switch, screen lock, etc.), which can strand the deal/sweat animation mid-flight
+// with no visible cards. If the tab comes back while a deal is still "in progress"
+// per the guard above but the player's hand was never marked revealed, skip straight
+// to the final state instead of leaving the player staring at a stalled table.
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  if(!dealAnimInProgress||G.phase!=='dealt'||!G.hand||!G.cardEls)return;
+  pendingDealTimeouts.forEach(clearTimeout);
+  pendingDealTimeouts=[];
+  renderHandCardsStatic();
+  onHandFullyRevealed();
+});
 
 // ── SCREEN STATE (persistent felt panel -- only the card rows/action buttons toggle) ──
 function resetCardRows(){
@@ -1231,6 +1249,12 @@ function updateStatusZone(){
 
 // ── DEAL ──────────────────────────────────────────────────────────────────────
 async function dealHand(){
+  // Guards against a double-tap (or a tap landing in the brief window between the
+  // fetch resolving and the deal/fold buttons actually being hidden) starting a
+  // second overlapping deal/sweat animation chain that stomps this one's card
+  // positions. Cleared once the player's hand is fully revealed (or on any early
+  // return below).
+  if(dealAnimInProgress)return;
   const ante=G.bets.ante||0;
   if(ante<=0){addLog('Place an Ante bet before dealing.','info');return;}
   // G.bankroll already has Ante/side bets deducted (placeBet subtracts as soon as
@@ -1242,6 +1266,7 @@ async function dealHand(){
   const flushRush=G.bets.flushRush||0;
   const superFlushRush=G.bets.superFlushRush||0;
   const progressive=(G.bets.progressive||0)>0;
+  dealAnimInProgress=true;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
@@ -1250,7 +1275,7 @@ async function dealHand(){
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
-  if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
+  if(!data.ok){dealAnimInProgress=false;addLog(data.message||'Deal failed.','lose');return;}
   playSfx(SFX_CARD_SHUFFLE);
   G.locked={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush,progressive:data.progressive};
   G.lastBetSnapshot={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush};
@@ -1274,8 +1299,10 @@ async function dealHand(){
     const img=document.getElementById('light-on-img');
     img.classList.remove('lit-in');void img.offsetWidth;img.classList.add('lit-in');
   }
+  pendingDealTimeouts.forEach(clearTimeout);
+  pendingDealTimeouts=[];
   const dealMs=dealCardsAnimated();
-  setTimeout(()=>{sweatReveal(G.cardEls.player,G.hand.playerHand,PLAYER_FAN_LEFTS,onHandFullyRevealed);},dealMs);
+  pendingDealTimeouts.push(setTimeout(()=>{sweatReveal(G.cardEls.player,G.hand.playerHand,PLAYER_FAN_LEFTS,onHandFullyRevealed);},dealMs));
 }
 
 // ── PLAY / FOLD (server-resolved) ─────────────────────────────────────────────
