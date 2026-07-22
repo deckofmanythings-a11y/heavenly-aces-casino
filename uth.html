@@ -292,7 +292,11 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #table-panel{background-image:url('uth_port_bg.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
 
   #burn-region{left:2%;top:7%;width:14%;height:11%}
-  #dealer-region{left:20.8%;top:6.77%;width:58.4%;height:18.85%;flex-direction:row;justify-content:center}
+  /* Shifted down and shrunk from the original measured position -- the header's own
+     44px push (to clear Discord's chrome overlay) ate into the top of this zone, and
+     the baked "ANTE PUSHES..." text below is a fixed art position that can't move to
+     compensate, so dealer cards get less vertical room than before. */
+  #dealer-region{left:20.8%;top:11.7%;width:58.4%;height:13.5%;flex-direction:row;justify-content:center}
   #community-region{left:5.07%;top:31.28%;width:89.87%;height:11.21%;justify-content:space-between}
   /* Width matches the logo square itself (23.2%-66.67%), not the full player area --
      centering within that narrower box lands the fanned cards squarely on the logo,
@@ -306,7 +310,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
      dealer/player only ever show 2 cards each and have much more spare room, so they get
      their own larger scale instead of sharing community's constraint. */
   .card-row{--pc-w:7.3cqh}
-  #dealer-row{--pc-w:10cqh}
+  #dealer-row{--pc-w:8cqh}
   #player-row{--pc-w:10cqh}
   #player-row .pc-card:nth-child(2){margin-left:-6.8cqh}
   #burn-row.card-row{--pc-w:3.3cqh}
@@ -416,7 +420,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.140</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.141</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>

@@ -267,7 +267,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #table-area{position:absolute;inset:0;padding:0;z-index:1}
   #table-panel{background-image:url('iLuvSuits_port.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
 
-  #dealer-region{left:7.5%;top:8%;width:85%;height:16%}
+  /* Shifted down from the original measured position -- the header's own 44px push (to
+     clear Discord's chrome overlay) ate into the top of this zone, and the baked
+     "DEALER QUALIFIES..." text below is a fixed art position that can't move to
+     compensate, so this zone gets less vertical room than before. --pc-w:8cqh cards
+     (94px tall at this game's 1.447 aspect multiplier) still fit within the smaller
+     13.5% band with room for the hand-strength text under them. */
+  #dealer-region{left:7.5%;top:11.7%;width:85%;height:13.5%}
   #player-region{left:7.5%;top:29%;width:85%;height:22%}
   .card-row{--pc-w:8cqh}
 
@@ -346,7 +352,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.140</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.141</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
