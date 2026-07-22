@@ -308,6 +308,16 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #burn-row .pc-card:nth-child(2){margin-left:-2.4cqh}
   #burn-row .pc-card:nth-child(3){margin-left:-2.4cqh}
 
+  /* .crl-hand (hand-strength text) sits beside the cards in landscape's flex row, where
+     there's spare width for it -- portrait's narrower regions have none, so it was pushing
+     the card row sideways into the bet circles whenever it had content. Take it out of flow
+     entirely and float it below the cards instead. */
+  /* #dealer-region/#player-region are already position:absolute via the base .card-region
+     rule, which is what gives .crl-hand's own absolute positioning below a containing
+     block to anchor to -- do not add position:relative here, it would override that and
+     break the region's own placement within #table-panel. */
+  .crl-hand{position:absolute;left:0;right:0;bottom:-1px;text-align:center;min-height:0;font-size:1.3cqh}
+
   #trips-spot{left:68.53%;top:59.11%;width:9.07%;height:4.19%}
   #ante-spot{left:68.53%;top:65.64%;width:9.33%;height:4.31%}
   #blind-spot{left:88.53%;top:65.64%;width:9.33%;height:4.31%}
@@ -401,7 +411,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.136</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.137</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
