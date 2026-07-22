@@ -827,34 +827,8 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
            Discord Activity entry + anyone landing on this page directly) is retired as a
            user-facing destination: these two buttons hand off to Focus Mode instead of
            switching locally, same as every other button here. -->
-      <div id="game-mode-toggle">
-        <button class="gmode-btn active" id="gmode-crapless" onclick="navigateAway('focusmode.html?mode=crapless')">
-          CRAPLESS<span class="gmode-sub">No naturals</span>
-        </button>
-        <button class="gmode-btn" id="gmode-standard" onclick="navigateAway('focusmode.html?mode=standard')">
-          STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
-          SIC-BO<span class="gmode-sub">3 dice</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
-          DESTROYER<span class="gmode-sub">Naval Strike</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('uth.html')">
-          HOLD'EM<span class="gmode-sub">Ultimate Texas</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('iluvsuits.html')">
-          I LUV SUITS<span class="gmode-sub">Max-flush poker</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('breakout.html')">
-          BREAKOUT<span class="gmode-sub">Blackjack</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('focusmode.html')" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">
-          FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('focusmode.html?tutorial=1')" style="border-color:rgba(120,255,140,.4);color:rgba(150,255,170,.9);grid-column:1/-1">
-          TUTORIAL<span class="gmode-sub">Guided lessons</span>
-        </button>
+      <div id="game-mode-toggle" style="display:block">
+        <button class="gmode-btn" onclick="navigateAway('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
       <div style="display:flex;gap:3px;width:100%;flex:1;align-items:center;padding:3px">
         <button class="mode-btn active" id="tab-hw" onclick="switchTab('hw')" style="flex:1">
@@ -923,7 +897,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.144</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.145</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>

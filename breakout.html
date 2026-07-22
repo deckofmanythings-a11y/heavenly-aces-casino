@@ -342,16 +342,9 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.144</div>
-      <div id="game-mode-toggle">
-        <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
-        <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
-        <button class="gmode-btn" onclick="dNav('sicbo.html')">SIC-BO<span class="gmode-sub">3 dice</span></button>
-        <button class="gmode-btn" onclick="dNav('destroyer.html')">DESTROYER<span class="gmode-sub">Naval Strike</span></button>
-        <button class="gmode-btn" onclick="dNav('uth.html')">HOLD'EM<span class="gmode-sub">Ultimate Texas</span></button>
-        <button class="gmode-btn" onclick="dNav('iluvsuits.html')">I LUV SUITS<span class="gmode-sub">Max-flush poker</span></button>
-        <button class="gmode-btn active">BREAKOUT<span class="gmode-sub">Blackjack</span></button>
-        <button class="gmode-btn" onclick="dNav('focusmode.html')" style="border-color:rgba(74,158,255,.4);color:rgba(120,180,255,.9);grid-column:1/-1">FOCUS MODE<span class="gmode-sub">Learn/practice standard craps</span></button>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.145</div>
+      <div id="game-mode-toggle" style="display:block">
+        <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
     </div>
     <!-- Status zone -->
@@ -781,8 +774,8 @@ function repeatLastBet(){
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
-  Object.keys(snap).forEach(k=>{G.bets[k]=snap[k]||0;});
   setMode((snap.breakoutBet||0)>0?'breakout':'player');
+  Object.keys(snap).forEach(k=>{G.bets[k]=snap[k]||0;});
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
 }
@@ -864,7 +857,10 @@ function renderActionButtons(){
 function updateStatusZone(){
   if(G.phase==='betting'){
     document.getElementById('status-phase').textContent='Place Your Bet';
-    document.getElementById('status-sub').innerHTML='Player Bet: play your own hand. Breakout Bet: bet the dealer wins.';
+    document.getElementById('status-sub').innerHTML='Pick a mode below the felt, then drop chips on the Player Hand circle.';
+  }else if(G.phase==='insurance'){
+    document.getElementById('status-phase').textContent='Insurance?';
+    document.getElementById('status-sub').innerHTML='Dealer shows an Ace.';
   }else if(G.phase==='playing'){
     document.getElementById('status-phase').textContent='Your Move';
     document.getElementById('status-sub').innerHTML='Hit, Stand, or Double (first decision only).';
@@ -872,6 +868,12 @@ function updateStatusZone(){
     document.getElementById('status-phase').textContent='Round Over';
     document.getElementById('status-sub').innerHTML='';
   }
+}
+
+// The main wager currently in play, from whichever field the locked snapshot used.
+function curMainBet(){
+  if(!G.lastBetSnapshot)return 0;
+  return G.mode==='breakout'?(G.lastBetSnapshot.breakoutBet||0):(G.lastBetSnapshot.playerBet||0);
 }
 
 // ── DEAL ──────────────────────────────────────────────────────────────────────
@@ -908,8 +910,40 @@ async function dealHand(){
   const dealMs=dealCardsAnimated();
   setTimeout(()=>{
     updateLiveHandDisplay();
-    if(data.resolved)finishRound(data);
+    if(data.insuranceAvailable&&data.phase==='insurance')showInsuranceBanner();
+    else if(data.resolved)finishRound(data);
   },dealMs+120);
+}
+
+// ── INSURANCE ─────────────────────────────────────────────────────────────────
+function showInsuranceBanner(){
+  const cap=r2(curMainBet()*0.5);
+  document.getElementById('insurance-sub').textContent='Dealer shows an Ace. Up to '+fmt(cap)+'.';
+  document.getElementById('insurance-yes-btn').textContent='Insure '+fmt(cap);
+  document.getElementById('insurance-banner').classList.add('show');
+}
+function hideInsuranceBanner(){document.getElementById('insurance-banner').classList.remove('show');}
+async function answerInsurance(yes){
+  hideInsuranceBanner();
+  const cap=r2(curMainBet()*0.5);
+  const amount=yes?cap:0;
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'insurance',amount})});
+    data=await res.json();
+  }catch(e){data={ok:false,message:'Network error. Try again.'};}
+  if(!data.ok){addLog(data.message||'Insurance failed.','lose');return;}
+  G.phase=data.phase;
+  G.hand.dealerHand=data.dealerHand;
+  if(data.phase==='done'){
+    revealDealerHand(data.dealerHand);
+    setTimeout(()=>finishRound(data),300);
+  }else{
+    (data.log||[]).forEach(line=>addLog(line,/lost/i.test(line)?'lose':/pays/i.test(line)?'win':'info'));
+    if(data.newBankroll!=null)G.bankroll=data.newBankroll;
+    renderActionButtons();updateStatusZone();updateUI();
+  }
 }
 
 function updateLiveHandDisplay(){
@@ -989,7 +1023,11 @@ function finishRound(data){
   if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
 }
 function resetToBetScreen(){
-  G.phase='betting';G.hand=null;G.mode=null;G.doubled=false;
+  G.phase='betting';G.hand=null;G.doubled=false;G.insurance=0;G.insuranceAvailable=false;
+  G.mode='player';
+  document.getElementById('mode-btn-player').classList.add('active');
+  document.getElementById('mode-btn-breakout').classList.remove('active');
+  hideInsuranceBanner();
   document.getElementById('dealer-row').classList.remove('active');
   document.getElementById('player-row').classList.remove('active');
   document.getElementById('dealer-row').innerHTML='';
@@ -1033,23 +1071,25 @@ function updateUI(){
 
   const locked=G.phase!=='betting';
   const snap=locked?(G.lastBetSnapshot||{}):G.bets;
-  ['playerBet','breakoutBet','superTie','breakoutBonus','sweet17','pairPlus'].forEach(key=>{
+
+  // The one physical main-wager spot: shows whichever of playerBet/breakoutBet the
+  // current mode (pre-lock: the toggle selection; post-lock: the server-confirmed
+  // mode) points at.
+  const mainAmt=(G.mode==='breakout'?snap.breakoutBet:snap.playerBet)||0;
+  document.getElementById('stk-main').textContent=mainAmt?fmt(mainAmt):'';
+  const mainSpot=document.getElementById('playerhand-spot');
+  mainSpot.classList.toggle('active',mainAmt>0);
+  mainSpot.classList.toggle('locked',locked);
+  document.getElementById('mode-btn-player').disabled=locked;
+  document.getElementById('mode-btn-breakout').disabled=locked;
+
+  SIDE_BET_KEYS.forEach(key=>{
     const amt=snap[key]||0;
     document.getElementById('stk-'+key).textContent=amt?fmt(amt):'';
-    const spotId=(key==='playerBet'?'playerbet-spot':key==='breakoutBet'?'breakoutbet-spot':key.toLowerCase()+'-spot');
-    const spotEl=document.getElementById(spotId);
+    const spotEl=document.getElementById(key.toLowerCase()+'-spot');
     if(spotEl){
       spotEl.classList.toggle('active',amt>0);
       spotEl.classList.toggle('locked',locked);
-      // Mutually-exclusive dimming: while still betting, if the OTHER main bet has
-      // chips staged, this spot reads as unavailable this round -- matches the
-      // server's "exactly one of playerBet/breakoutBet" hard contract.
-      if(!locked&&MAIN_KEYS.includes(key)){
-        const other=key==='playerBet'?'breakoutBet':'playerBet';
-        spotEl.classList.toggle('disabled',(G.bets[other]||0)>0);
-      }else{
-        spotEl.classList.remove('disabled');
-      }
     }
   });
   renderChipStacks();
@@ -1112,7 +1152,8 @@ function chipStackHTML(amt,locked){
 }
 function renderChipStacks(){
   const contractLocked=G.phase!=='betting';
-  ['playerBet','breakoutBet','superTie','breakoutBonus','sweet17','pairPlus'].forEach(key=>{
+  applyChipStackVisual('stk-main',contractLocked);
+  SIDE_BET_KEYS.forEach(key=>{
     applyChipStackVisual('stk-'+key,contractLocked);
   });
 }
@@ -1175,16 +1216,16 @@ function spawnChipGhost(el,opts){
 // already uses for line coloring, so this stays in sync with the server's wording.
 function breakoutGhostChecks(){
   return [
-    [/^Player Bet:/,'playerBet'],[/^Breakout Bet:/,'breakoutBet'],
-    [/^Super Tie:/,'superTie'],[/^Breakout Bonus:/,'breakoutBonus'],
-    [/^Sweet 17:/,'sweet17'],[/^Pair Plus:/,'pairPlus'],
+    [/^Player Bet:/,'stk-main'],[/^Breakout Bet:/,'stk-main'],
+    [/^Super Tie:/,'stk-superTie'],[/^Breakout Bonus:/,'stk-breakoutBonus'],
+    [/^Sweet 17:/,'stk-sweet17'],[/^Pair Plus:/,'stk-pairPlus'],
   ];
 }
 function spawnBreakoutGhosts(rawLog){
-  breakoutGhostChecks().forEach(([re,key])=>{
+  breakoutGhostChecks().forEach(([re,id])=>{
     const line=rawLog.find(l=>re.test(l));
     if(!line)return;
-    const el=document.getElementById('stk-'+key);
+    const el=document.getElementById(id);
     if(/lost/i.test(line))spawnChipGhost(el);
     else if(/win|pays|push/i.test(line))spawnChipGhost(el,{direction:'down',noDim:true});
   });

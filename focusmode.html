@@ -1175,28 +1175,8 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   <div id="top-row">
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
-      <div id="game-mode-toggle">
-        <button class="gmode-btn" id="gmode-crapless" onclick="switchGameMode('crapless')">
-          CRAPLESS<span class="gmode-sub">No naturals</span>
-        </button>
-        <button class="gmode-btn" id="gmode-standard" onclick="switchGameMode('standard')">
-          STANDARD<span class="gmode-sub">7 &amp; 11 win</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('sicbo.html')" style="border-color:rgba(255,180,0,.3);color:rgba(255,200,80,.8)">
-          SIC-BO<span class="gmode-sub">3 dice</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('destroyer.html')">
-          DESTROYER<span class="gmode-sub">Naval Strike</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('uth.html')">
-          HOLD'EM<span class="gmode-sub">Ultimate Texas</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('iluvsuits.html')">
-          I LUV SUITS<span class="gmode-sub">Max-flush poker</span>
-        </button>
-        <button class="gmode-btn" onclick="navigateAway('breakout.html')">
-          BREAKOUT<span class="gmode-sub">Blackjack</span>
-        </button>
+      <div id="game-mode-toggle" style="display:block">
+        <button class="gmode-btn" onclick="navigateAway('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
       <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
         <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
@@ -1502,7 +1482,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.144</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.145</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
