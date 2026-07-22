@@ -339,7 +339,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.147</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.148</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -840,6 +840,11 @@ function dealCardsAnimated(){
   order.forEach((item,i)=>{
     Cards.setFront(item.el,item.card);
     Cards.dealIn(item.el,i*DEAL_STAGGER_MS);
+    // Every card handed to this function is already meant to be visible -- the
+    // server conceals the dealer's hole card by simply omitting it from the
+    // response while phase==='playing', not by the client hiding a card it has.
+    // Without this flip, every dealt card sits showing its back forever.
+    setTimeout(()=>Cards.flipUp(item.el),i*DEAL_STAGGER_MS+200);
     setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400);
   });
   return order.length*DEAL_STAGGER_MS+450;
