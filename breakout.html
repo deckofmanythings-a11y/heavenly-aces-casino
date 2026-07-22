@@ -370,7 +370,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.152</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.154</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -596,7 +596,9 @@ function addLog(t,c){const el=document.getElementById('log');const p=document.cr
 function handValue(cards){
   let total=0,aces=0;
   for(const c of cards){
-    const v=c.r>=10?10:(c.r===14?11:c.r);
+    // Ace (r===14) must be checked before the generic >=10 face-card check, or it
+    // falls through and scores as 10 -- matches the fix in roll-breakout/index.ts.
+    const v=c.r===14?11:(c.r>=10?10:c.r);
     if(c.r===14)aces++;
     total+=v;
   }
