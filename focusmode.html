@@ -1482,7 +1482,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.153</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.154</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3083,15 +3083,17 @@ function renderChipStacks(){
     // missing it here meant Buy's off tag silently never applied on standard specifically.
     const cell=el.closest('.nb-buy,.nb-buy-left,.nb-place');
     const isOdds=el.id==='stk-passodds'||el.id==='stk-dpodds';
+    const isHardway=/^stk-hard(4|6|8|10)$/.test(el.id);
     if(cell){off=globalOff;}
     else if(/^stk-lay\d+$/.test(el.id)){off=globalOff;}
     else if(el.id==='stk-dp'||isOdds){off=globalOff;}
-    else if(/^stk-hard(4|6|8|10)$/.test(el.id)){off=globalOff;}
-    // Deck: Buy, Place, and Odds bets should be real money at all times -- they never
-    // draw from the Free Play balance, and (since they're skipped, not just labeled $)
-    // don't deplete fpRemaining either, leaving it fully available for whatever other
-    // spot comes next in this same pass.
-    const isFP=!(cell||isOdds)&&amt<=fpRemaining;
+    else if(isHardway){off=globalOff;}
+    // Deck: Buy, Place, Odds, and Hardways bets should be real money at all times --
+    // Hardways are neither a one-roll proposition nor a contract bet, so they're
+    // excluded here the same as the others. Skipped rather than just labeled $, so
+    // they don't deplete fpRemaining either, leaving it fully available for whatever
+    // other spot comes next in this same pass.
+    const isFP=!(cell||isOdds||isHardway)&&amt<=fpRemaining;
     if(isFP)fpRemaining-=amt;
     // Pass Line's own contract lock, and the Lucky Roller bonus bets' lock once they become
     // a contract at roll start -- same integrated badge everything else uses, on the chip
