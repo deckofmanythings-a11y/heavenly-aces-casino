@@ -233,6 +233,55 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .voucher-row-expiry{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
 .voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
+
+/* ══════════════ PORTRAIT MODE ══════════════
+   Same approach as uth.html's portrait mode: iLuvSuits_port.png is a full-screen
+   background (top ~6% and bottom ~21% reserved as UI bands), with felt/cards/bet-circles
+   in the middle. Bet-spot positions were measured directly off the art via pixel
+   clustering (not eyeballed); dealer/player card-region positions are placed in the open
+   felt per Deck's direction (dealer above the baked "DEALER QUALIFIES..." text, player in
+   the open gap between that text and the bet-circle cluster) since this art has no
+   labeled reference boxes the way uth_port_card_and_ui_areas.png did. See the
+   IS_PORTRAIT-branched fan-geometry constants in the script for why --pc-w here must
+   stay in sync with CARD_W_CQH in JS -- this game's 7-card fan positions are computed
+   once in JS from that constant, unlike uth.html's pure-CSS margin trick. */
+@media (orientation:portrait){
+  #game-screen{position:relative}
+
+  #top-row{position:absolute;top:0;left:0;right:0;height:6.03dvh;flex-direction:row;border-bottom:none;z-index:2}
+  #left-col-header{display:none}
+  #info-panel{width:100%;max-width:none;min-width:0;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:2px 10px}
+  #info-panel .info-row:nth-child(2){display:none}
+  #info-panel .hud-grid{display:flex;gap:10px}
+  #info-panel .hud-item:not(:has(#hud-bankroll)){display:none}
+
+  #status-zone{position:fixed;flex:none;width:auto;height:auto;top:27.7dvh;left:8dvw;right:8dvw;background:rgba(0,0,0,.6);border:1px solid rgba(255,215,0,.25);border-radius:6px;padding:3px 8px;z-index:3}
+  #status-phase{font-size:14px}
+  #status-sub{display:none}
+
+  #table-area{position:absolute;inset:0;padding:0;z-index:1}
+  #table-panel{background-image:url('iLuvSuits_port.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
+
+  #dealer-region{left:7.5%;top:8%;width:85%;height:16%}
+  #player-region{left:7.5%;top:29%;width:85%;height:22%}
+  .card-row{--pc-w:8cqh}
+
+  #flushrush-spot{left:43.2%;top:58.37%;width:11.47%;height:5.3%}
+  #ante-spot{left:43.2%;top:64.9%;width:11.47%;height:5.3%}
+  #play-spot{left:43.2%;top:71.43%;width:11.47%;height:5.3%}
+  #superflushrush-spot{left:56.27%;top:55.3%;width:13.07%;height:5.79%}
+
+  #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
+  #bottom-left{flex:1;height:auto}
+  #history-strip{display:none}
+  #bottom-bar{flex-wrap:nowrap;gap:2px;padding:2px 3px}
+  .chip[data-val="2"],.chip[data-val="3"],.chip[data-val="10"],.chip[data-val="50"]{display:none}
+  .chip{width:42px;height:42px;font-size:12px}
+  .bar-btn{font-size:13px;padding:3px 5px;height:24px}
+  #sweat-speed-btn{display:none}
+  #hud-pnl{font-size:15px;padding:0 2px}
+  #action-row{width:100%;height:auto;flex:1}
+}
 </style>
 </head>
 <body>
@@ -292,7 +341,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.135</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.138</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -883,14 +932,22 @@ function buildCardSlots(){
 // Each 7-card hand fans out left-to-right, slightly overlapping, centered within
 // its region. Widths are in cqh (matching --pc-w) so they scale with the panel
 // regardless of viewport -- see panel-art skill reference. Region widths below are
-// the dealer/player regions' own %-of-panel-width converted to cqh (panel is
-// 3200x1800, so 100cqh-of-height == 177.78cqh-of-width-equivalent).
-const FAN_STEP_CQH=11;     // horizontal offset between consecutive fanned cards
-const PLAYER_REGION_WIDTH_CQH=92.4;  // 52% of panel width
-const DEALER_REGION_WIDTH_CQH=160;   // 90% of panel width
+// the dealer/player regions' own %-of-panel-width converted to cqh. The cqh-per-%
+// conversion factor depends on the panel's own aspect ratio, which differs between
+// landscape (3200x1800 -- 100cqh-of-height == 177.78cqh-of-width-equivalent) and
+// portrait (375x812 -- 100cqh-of-height == 46.18cqh-of-width-equivalent); cardW and
+// the fan step are also tuned per-orientation since portrait's panel is nearly full
+// device height (not landscape's much shorter letterboxed panel), so a shared cqh
+// value would render enormously oversized cards there -- see the analogous fix in
+// uth.html's portrait mode.
+const IS_PORTRAIT=window.matchMedia('(orientation:portrait)').matches;
+const WIDTH_CQH_PER_PCT=IS_PORTRAIT?0.4618:1.7778;
+const FAN_STEP_CQH=IS_PORTRAIT?5:11;     // horizontal offset between consecutive fanned cards
+const CARD_W_CQH=IS_PORTRAIT?8:15;       // must match --pc-w
+const PLAYER_REGION_WIDTH_CQH=(IS_PORTRAIT?85:52)*WIDTH_CQH_PER_PCT;
+const DEALER_REGION_WIDTH_CQH=(IS_PORTRAIT?85:90)*WIDTH_CQH_PER_PCT;
 function computeFanLefts(n,regionWidthCqh){
-  const cardW=15; // matches --pc-w
-  const total=cardW+(n-1)*FAN_STEP_CQH;
+  const total=CARD_W_CQH+(n-1)*FAN_STEP_CQH;
   const start=Math.max(0,(regionWidthCqh-total)/2);
   return Array.from({length:n},(_,i)=>start+i*FAN_STEP_CQH);
 }
