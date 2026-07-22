@@ -169,12 +169,24 @@
   // Initial paint on page load: a player who hasn't rolled/dealt/fired anything yet
   // this visit still deserves to see their balance, so fetch it once via the same
   // read-only dailies-action('state') the lobby badge and dailies.html use.
+  //
+  // FUNCTIONS_URL/SUPABASE_ANON_KEY are declared `const` at the top of each game's own
+  // inline <script>, which does NOT attach them to `window` the way a top-level `var`
+  // or bare assignment would -- `typeof global.FUNCTIONS_URL` was therefore always
+  // 'undefined' here regardless of whether the page actually defines it, silently
+  // skipping this fetch on every page, every time. They're still reachable as bare
+  // identifiers though, since plain (non-module) <script> tags on the same page share
+  // one global lexical scope -- read them that way instead, inside a try/catch for the
+  // rare page that genuinely doesn't define them.
   function primeFpBadge() {
     const token = global.localStorage && global.localStorage.getItem('craps_session');
-    if (!token || typeof global.FUNCTIONS_URL === 'undefined' || typeof global.SUPABASE_ANON_KEY === 'undefined') return;
-    origFetch(global.FUNCTIONS_URL + '/dailies-action', {
+    if (!token) return;
+    let fnUrl, anonKey;
+    try { fnUrl = FUNCTIONS_URL; anonKey = SUPABASE_ANON_KEY; } catch (e) { return; }
+    if (!fnUrl || !anonKey) return;
+    origFetch(fnUrl + '/dailies-action', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + global.SUPABASE_ANON_KEY, 'apikey': global.SUPABASE_ANON_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + anonKey, 'apikey': anonKey },
       body: JSON.stringify({ session_token: token, action: 'state' }),
     }).then(res => res.json()).then(data => { if (data && data.ok) FreePlayBadge.setBalance(data.free_play_balance); }).catch(() => {});
   }
