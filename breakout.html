@@ -61,16 +61,17 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#051209;padding:4px;container-type:size}
 #table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('breakoutblackjack_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
 
-/* Card rows -- sit centered inside the baked DEALER HAND / PLAYER HAND ring circles
-   themselves (real-table convention: cards get dealt directly onto the betting/hand
-   circle). Upper portion of the circle holds the cards; the running-total banner
-   floats just below the ring rather than inside it, where there's no spare room. */
-.card-region{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:1.5cqh}
-#dealer-region{left:64.156%;top:37.389%;width:11.906%;height:21.278%}
-#player-region{left:64.219%;top:60.611%;width:11.906%;height:21.222%}
-.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:0.6cqh;--pc-w:5.5cqh;opacity:0;transition:opacity .3s;min-height:7.5cqh;flex-wrap:wrap;max-width:100%}
+/* Card rows -- the DEALER HAND / PLAYER HAND ring circles are the two bet spots
+   (see .felt-spot rules below), not the card layout area -- there's plenty of open
+   felt to their left in the landscape art, so hands fan out large there instead of
+   being crammed inside the small circles. Portrait has much less spare width, so its
+   card regions stay anchored closer to the circles (see the portrait media query). */
+.card-region{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#dealer-region{left:3%;top:27%;width:58%;height:30%}
+#player-region{left:3%;top:58%;width:58%;height:30%}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:0.8cqh;--pc-w:11cqh;opacity:0;transition:opacity .3s;min-height:15cqh;flex-wrap:wrap;max-width:100%}
 .card-row.active{opacity:1}
-.crl-hand{position:absolute;left:50%;bottom:-3cqh;transform:translateX(-50%);font-size:2.2cqh;color:#ffd700;font-weight:800;white-space:nowrap;letter-spacing:.03em;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.crl-hand{position:absolute;left:50%;bottom:-2.6cqh;transform:translateX(-50%);font-size:2.4cqh;color:#ffd700;font-weight:800;white-space:nowrap;letter-spacing:.03em;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 
 /* ── SIDE-BET BADGE SPOTS (spade/diamond/club/heart icons baked into the art) ──
    Hit-regions padded a little beyond each badge's measured bbox since the icons
@@ -79,29 +80,26 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .felt-spot.active{box-shadow:0 0 0 0.4cqh rgba(255,215,0,.5)}
 .felt-spot.locked{cursor:default}
 .felt-spot.disabled{opacity:.35;cursor:not-allowed}
+/* Attempted-wrong-spot feedback (mutually-exclusive Player Bet / Breakout Bet): a
+   quick red pulse + error sound (see flashSpotError() in the script) instead of the
+   quieter dim/disable treatment used elsewhere, per Deck's explicit direction. */
+@keyframes felt-spot-error{0%,100%{box-shadow:0 0 0 0.4cqh rgba(255,215,0,.5)}30%,70%{box-shadow:0 0 0 0.6cqh rgba(255,40,40,.85)}}
+.felt-spot.flash-error{animation:felt-spot-error .5s ease-in-out}
 
 #breakoutbonus-spot{left:55.2%;top:32.2%;width:9.5%;height:13.2%}
 #supertie-spot{left:54.3%;top:44.3%;width:8.7%;height:15.5%}
 #pairplus-spot{left:54.7%;top:59.2%;width:9.2%;height:13.4%}
 #sweet17-spot{left:53.6%;top:71.8%;width:10.5%;height:12.5%}
 
-/* PLAYER HAND circle doubles as the one physical spot for the main wager -- there's
-   no separate baked bet circle for it, so the chip stack renders low inside the same
-   ring the cards are dealt into (see .card-region above). Whichever mode the toggle
-   below is set to determines whether chips dropped here mean Player Bet or Breakout
-   Bet server-side. */
-#playerhand-spot{left:64.219%;top:60.611%;width:11.906%;height:21.222%;border-radius:50%}
+/* The two main-wager bet spots ARE the baked DEALER HAND (red) / PLAYER HAND (blue)
+   ring circles themselves -- matches the Dealer Instruction Manual's own diagrams
+   (fig. 6-8), which show chips placed directly on these two circles. Mutually
+   exclusive: betting one while the other already carries chips flashes the other
+   red instead of accepting the bet (see placePlayerBet/placeDealerBet). */
+#dealerbet-spot{left:64.156%;top:37.389%;width:11.906%;height:21.278%;border-radius:50%}
+#playerbet-spot{left:64.219%;top:60.611%;width:11.906%;height:21.222%;border-radius:50%}
 
-.panel-spot-stk{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
-
-/* ── MODE TOGGLE (not baked into the art -- the felt only has one physical circle
-   for the player's stake, so which of the two mutually-exclusive wagers a chip
-   dropped there means is picked here first). Disabled once any amount is staged,
-   matching every other bet spot's FREE-tier-until-locked convention. ── */
-#mode-toggle{position:absolute;left:64.219%;top:82.1%;width:11.906%;display:flex;flex-direction:column;gap:0.4cqh;z-index:9}
-.mode-btn{font-size:1.15cqh;font-weight:800;letter-spacing:.03em;padding:0.6cqh 0.3cqh;border-radius:6px;border:1.5px solid rgba(255,215,0,.4);background:rgba(0,0,0,.45);color:rgba(255,255,255,.6);cursor:pointer;text-align:center;line-height:1.15}
-.mode-btn.active{background:rgba(255,215,0,.22);border-color:#ffd700;color:#fff}
-.mode-btn:disabled{opacity:.4;cursor:not-allowed}
+.panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
 /* ── INSURANCE PROMPT -- shown only when phase:'insurance' (dealer shows an Ace) ── */
 #insurance-banner{position:absolute;left:50%;top:4%;transform:translateX(-50%);z-index:20;background:rgba(10,10,10,.92);border:1.5px solid #ffd700;border-radius:8px;padding:1.2cqh 1.6cqh;text-align:center;display:none}
@@ -254,7 +252,8 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
 
   #dealer-region{left:68.267%;top:49.261%;width:28.267%;height:12.069%;padding-top:1cqh}
   #player-region{left:68.533%;top:62.562%;width:28.267%;height:13.054%;padding-top:1cqh}
-  #playerhand-spot{left:68.533%;top:62.562%;width:28.267%;height:13.054%}
+  #dealerbet-spot{left:68.267%;top:49.261%;width:28.267%;height:12.069%}
+  #playerbet-spot{left:68.533%;top:62.562%;width:28.267%;height:13.054%}
   .card-row{--pc-w:4.5cqh;min-height:6cqh;gap:0.4cqh}
   .crl-hand{font-size:1.7cqh;bottom:-2.4cqh}
 
@@ -263,8 +262,6 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   #pairplus-spot{left:47%;top:60.5%;width:19%;height:9%}
   #sweet17-spot{left:44.5%;top:68.5%;width:20%;height:8.5%}
 
-  #mode-toggle{left:68.533%;top:78%;width:28.267%}
-  .mode-btn{font-size:1cqh;padding:0.5cqh 0.2cqh}
   .panel-spot-stk{font-size:1.2cqh}
 
   #insurance-banner{top:2%;padding:1cqh 1.3cqh}
@@ -342,7 +339,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.145</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.147</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -385,15 +382,13 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <span class="crl-hand" id="player-hand-name"></span>
       </div>
 
-      <!-- The one physical wager spot baked into the art (PLAYER HAND ring). Mode
-           toggle below picks whether a chip dropped here means Player Bet or
-           Breakout Bet -- see the CSS comment on #playerhand-spot. -->
-      <div class="felt-spot" id="playerhand-spot" onclick="placeMain()" oncontextmenu="event.preventDefault();event.stopPropagation();removeMain()">
-        <span class="panel-spot-stk" id="stk-main"></span>
+      <!-- The two main-wager bet spots are the DEALER HAND / PLAYER HAND ring circles
+           themselves -- mutually exclusive (see placePlayerBet/placeDealerBet). -->
+      <div class="felt-spot" id="dealerbet-spot" onclick="placeDealerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removeDealerBet()">
+        <span class="panel-spot-stk" id="stk-breakoutBet"></span>
       </div>
-      <div id="mode-toggle">
-        <button class="mode-btn active" id="mode-btn-player" onclick="setMode('player')">PLAY MY HAND<br>(Blackjack 3:2)</button>
-        <button class="mode-btn" id="mode-btn-breakout" onclick="setMode('breakout')">BET DEALER WINS<br>(1:1, BJ 3:2)</button>
+      <div class="felt-spot" id="playerbet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
+        <span class="panel-spot-stk" id="stk-playerBet"></span>
       </div>
 
       <div class="felt-spot" id="supertie-spot" onclick="placeBet('superTie')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superTie')">
@@ -527,10 +522,10 @@ function makeInitialG(){
     // Flat bet object, matching the chip-ui.md convention -- all four side bets plus
     // the two mutually-exclusive main bets share one dict, keyed by string identifier.
     bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0},
-    // 'player'|'breakout' -- pre-deal this is the toggle selection (default 'player'),
-    // deciding which field placeMain() writes into; post-deal the server echoes back
-    // the same value so it doubles as the confirmed mode for the rest of the round.
-    mode:'player',
+    // 'player'|'breakout'|null -- which of the two bet circles carries chips right
+    // now (derived, not chosen directly). Null pre-deal until a spot is bet; the
+    // server echoes back the confirmed mode in its 'deal' response for the round.
+    mode:null,
     phase:'betting',    // betting|insurance|playing|done
     hand:null,          // {hand:[cards],dealerHand:[cards]}
     doubled:false,
@@ -699,48 +694,79 @@ function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.
 // Mirrors the server-authoritative check in roll-breakout; this is UX only (clamp
 // + message before the request even goes out), the server rejects independently.
 const MIN_BET=1,MAX_BET=300;
+// Dealer Instruction Manual: Super Tie/Breakout Bonus are Breakout-Bet-only side
+// bets -- a Player Bet may only carry Pair Up and/or Sweet 17. Super Tie also
+// carries its own fixed $5 table minimum, independent of MIN_BET.
+const BREAKOUT_ONLY_KEYS=['superTie','breakoutBonus'];
+const SUPER_TIE_MIN=5;
 
 // ── PRE-DEAL BET ACTIONS (all six bet keys FREE-tier while G.phase==='betting',
 // hard-contract locked the instant a deal succeeds -- see server-authority.md) ──
-// The felt has exactly one physical circle for the main wager (see #playerhand-spot),
-// so placeMain()/removeMain() always write into whichever of playerBet/breakoutBet
-// G.mode currently points at -- setMode() picks that before any chips are staged and
-// is locked out once either field is nonzero, so the two stay truly mutually
-// exclusive without needing a second spot.
-function setMode(m){
-  if(G.phase!=='betting')return;
-  if((G.bets.playerBet||0)>0||(G.bets.breakoutBet||0)>0){addLog('Clear your bet before switching modes.','info');return;}
-  G.mode=m;
-  document.getElementById('mode-btn-player').classList.toggle('active',m==='player');
-  document.getElementById('mode-btn-breakout').classList.toggle('active',m==='breakout');
-  updateUI();
+// The two main-wager bet spots are the DEALER HAND / PLAYER HAND ring circles
+// themselves (matches the Dealer Instruction Manual's own diagrams). They're
+// mutually exclusive: trying to bet one while the other already carries chips
+// flashes the OTHER spot red + plays an error sound rather than silently no-op'ing
+// or auto-clearing -- Deck's explicit call, so the player sees exactly why nothing
+// happened instead of guessing.
+const SFX_ERROR=['miss.ogg'];
+function flashSpotError(spotId){
+  const el=document.getElementById(spotId);
+  if(!el)return;
+  el.classList.remove('flash-error');
+  void el.offsetWidth; // restart the animation if it's already mid-flash
+  el.classList.add('flash-error');
+  playSfx(SFX_ERROR,false);
 }
-function mainKey(){return G.mode==='breakout'?'breakoutBet':'playerBet';}
-function placeMain(){
+function placePlayerBet(){
   if(G.phase!=='betting')return;
+  if((G.bets.breakoutBet||0)>0){flashSpotError('dealerbet-spot');return;}
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
-  const key=mainKey();
-  const cur=G.bets[key]||0;
+  const cur=G.bets.playerBet||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const room=r2(G.bankroll);
-  const capRoom=r2(MAX_BET-cur);
-  const a=r2(Math.min(G.chip,room,capRoom));
+  const a=r2(Math.min(G.chip,r2(G.bankroll),r2(MAX_BET-cur)));
   if(a<=0){addLog('Not enough bankroll.','info');return;}
-  G.bets[key]=r2(cur+a);
+  G.bets.playerBet=r2(cur+a);
   G.bankroll=r2(G.bankroll-a);
   updateUI();
 }
-function removeMain(){
+function removePlayerBet(){
   if(G.phase!=='betting')return;
-  const key=mainKey();
-  const c=G.bets[key]||0;if(!c)return;
+  const c=G.bets.playerBet||0;if(!c)return;
   const rv=r2(Math.min(G.chip,c));
-  G.bets[key]=r2(c-rv);
+  G.bets.playerBet=r2(c-rv);
   G.bankroll=r2(G.bankroll+rv);
+  updateUI();
+}
+function placeDealerBet(){
+  if(G.phase!=='betting')return;
+  if((G.bets.playerBet||0)>0){flashSpotError('playerbet-spot');return;}
+  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  const cur=G.bets.breakoutBet||0;
+  if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
+  const a=r2(Math.min(G.chip,r2(G.bankroll),r2(MAX_BET-cur)));
+  if(a<=0){addLog('Not enough bankroll.','info');return;}
+  G.bets.breakoutBet=r2(cur+a);
+  G.bankroll=r2(G.bankroll-a);
+  updateUI();
+}
+function removeDealerBet(){
+  if(G.phase!=='betting')return;
+  const c=G.bets.breakoutBet||0;if(!c)return;
+  const rv=r2(Math.min(G.chip,c));
+  G.bets.breakoutBet=r2(c-rv);
+  G.bankroll=r2(G.bankroll+rv);
+  // Super Tie/Breakout Bonus are only valid alongside a live Breakout Bet -- once it
+  // fully clears, refund and drop them too rather than leaving a stale, now-invalid
+  // side bet the server would reject at deal time.
+  if(G.bets.breakoutBet<=0){
+    const refund=r2((G.bets.superTie||0)+(G.bets.breakoutBonus||0));
+    if(refund>0){G.bankroll=r2(G.bankroll+refund);G.bets.superTie=0;G.bets.breakoutBonus=0;}
+  }
   updateUI();
 }
 function placeBet(key){
   if(G.phase!=='betting')return;
+  if(BREAKOUT_ONLY_KEYS.includes(key)&&(G.bets.breakoutBet||0)<=0){flashSpotError('dealerbet-spot');addLog((key==='superTie'?'Super Tie':'Breakout Bonus')+' can only be bet alongside the Breakout Bet.','info');return;}
   if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets[key]||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
@@ -774,7 +800,6 @@ function repeatLastBet(){
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
-  setMode((snap.breakoutBet||0)>0?'breakout':'player');
   Object.keys(snap).forEach(k=>{G.bets[k]=snap[k]||0;});
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
@@ -857,7 +882,7 @@ function renderActionButtons(){
 function updateStatusZone(){
   if(G.phase==='betting'){
     document.getElementById('status-phase').textContent='Place Your Bet';
-    document.getElementById('status-sub').innerHTML='Pick a mode below the felt, then drop chips on the Player Hand circle.';
+    document.getElementById('status-sub').innerHTML='Blue circle: play your own hand. Red circle: bet the dealer wins.';
   }else if(G.phase==='insurance'){
     document.getElementById('status-phase').textContent='Insurance?';
     document.getElementById('status-sub').innerHTML='Dealer shows an Ace.';
@@ -880,6 +905,8 @@ function curMainBet(){
 async function dealHand(){
   const playerBet=G.bets.playerBet||0,breakoutBet=G.bets.breakoutBet||0;
   if((playerBet>0)===(breakoutBet>0)){addLog('Place exactly one of Player Bet or Breakout Bet.','info');return;}
+  const superTieAmt=G.bets.superTie||0;
+  if(superTieAmt>0&&superTieAmt<SUPER_TIE_MIN){addLog('Super Tie has a $'+SUPER_TIE_MIN+' minimum bet.','info');return;}
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   const body={session_token:token,action:'deal',playerBet,breakoutBet,
@@ -1024,9 +1051,7 @@ function finishRound(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.doubled=false;G.insurance=0;G.insuranceAvailable=false;
-  G.mode='player';
-  document.getElementById('mode-btn-player').classList.add('active');
-  document.getElementById('mode-btn-breakout').classList.remove('active');
+  G.mode=null;
   hideInsuranceBanner();
   document.getElementById('dealer-row').classList.remove('active');
   document.getElementById('player-row').classList.remove('active');
@@ -1072,16 +1097,17 @@ function updateUI(){
   const locked=G.phase!=='betting';
   const snap=locked?(G.lastBetSnapshot||{}):G.bets;
 
-  // The one physical main-wager spot: shows whichever of playerBet/breakoutBet the
-  // current mode (pre-lock: the toggle selection; post-lock: the server-confirmed
-  // mode) points at.
-  const mainAmt=(G.mode==='breakout'?snap.breakoutBet:snap.playerBet)||0;
-  document.getElementById('stk-main').textContent=mainAmt?fmt(mainAmt):'';
-  const mainSpot=document.getElementById('playerhand-spot');
-  mainSpot.classList.toggle('active',mainAmt>0);
-  mainSpot.classList.toggle('locked',locked);
-  document.getElementById('mode-btn-player').disabled=locked;
-  document.getElementById('mode-btn-breakout').disabled=locked;
+  // The two main-wager bet spots -- each shows its own field directly, no mode
+  // toggle to resolve first.
+  const playerAmt=snap.playerBet||0, dealerAmt=snap.breakoutBet||0;
+  document.getElementById('stk-playerBet').textContent=playerAmt?fmt(playerAmt):'';
+  document.getElementById('stk-breakoutBet').textContent=dealerAmt?fmt(dealerAmt):'';
+  const playerSpot=document.getElementById('playerbet-spot');
+  const dealerSpot=document.getElementById('dealerbet-spot');
+  playerSpot.classList.toggle('active',playerAmt>0);
+  playerSpot.classList.toggle('locked',locked);
+  dealerSpot.classList.toggle('active',dealerAmt>0);
+  dealerSpot.classList.toggle('locked',locked);
 
   SIDE_BET_KEYS.forEach(key=>{
     const amt=snap[key]||0;
@@ -1090,6 +1116,12 @@ function updateUI(){
     if(spotEl){
       spotEl.classList.toggle('active',amt>0);
       spotEl.classList.toggle('locked',locked);
+      // Super Tie/Breakout Bonus are Breakout-Bet-only -- read as unavailable until
+      // the Dealer Bet circle actually carries chips (matches the server's
+      // mode-gated rejection).
+      if(BREAKOUT_ONLY_KEYS.includes(key)){
+        spotEl.classList.toggle('disabled',!locked&&(G.bets.breakoutBet||0)<=0);
+      }
     }
   });
   renderChipStacks();
@@ -1152,7 +1184,8 @@ function chipStackHTML(amt,locked){
 }
 function renderChipStacks(){
   const contractLocked=G.phase!=='betting';
-  applyChipStackVisual('stk-main',contractLocked);
+  applyChipStackVisual('stk-playerBet',contractLocked);
+  applyChipStackVisual('stk-breakoutBet',contractLocked);
   SIDE_BET_KEYS.forEach(key=>{
     applyChipStackVisual('stk-'+key,contractLocked);
   });
@@ -1211,14 +1244,14 @@ function spawnChipGhost(el,opts){
   setTimeout(()=>{ghost.remove();},1450);
 }
 // Bet-name -> stake-element-id table, matched against roll-breakout's exact log-line
-// prefixes ("Player Bet:", "Breakout Bet:", "Pair Plus:", "Super Tie:", "Breakout
+// prefixes ("Player Bet:", "Breakout Bet:", "Pair Up:", "Super Tie:", "Breakout
 // Bonus:", "Sweet 17:"). Win/loss read off the same win|pays / lost keywords addLog()
 // already uses for line coloring, so this stays in sync with the server's wording.
 function breakoutGhostChecks(){
   return [
-    [/^Player Bet:/,'stk-main'],[/^Breakout Bet:/,'stk-main'],
+    [/^Player Bet:/,'stk-playerBet'],[/^Breakout Bet:/,'stk-breakoutBet'],
     [/^Super Tie:/,'stk-superTie'],[/^Breakout Bonus:/,'stk-breakoutBonus'],
-    [/^Sweet 17:/,'stk-sweet17'],[/^Pair Plus:/,'stk-pairPlus'],
+    [/^Sweet 17:/,'stk-sweet17'],[/^Pair Up:/,'stk-pairPlus'],
   ];
 }
 function spawnBreakoutGhosts(rawLog){

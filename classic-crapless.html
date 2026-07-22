@@ -897,7 +897,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.145</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.147</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2351,6 +2351,7 @@ const SFX_CHIP={
 const SFX_CHIP_MANY='lots_of_chips.ogg';
 const _sfxCache={};
 function playChipSound(count){
+  if(soundMuted)return;
   if(!(count>0))return;
   const bucket=count>=6?[SFX_CHIP_MANY]:SFX_CHIP[count];
   if(!bucket)return;
@@ -2365,6 +2366,7 @@ const SFX_PUCK_LAND=['chip-lay-1.ogg','chip-lay-2.ogg','chip-lay-3.ogg'];
 // Audio extracted from Deck's own 7-out.mp4 (ffmpeg -vn, video track dropped).
 const SFX_SEVEN_OUT=['seven-out.ogg'];
 function playSfx(bucket,pitchJitter){
+  if(soundMuted)return;
   if(!bucket||!bucket.length)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
@@ -2375,21 +2377,26 @@ function playSfx(bucket,pitchJitter){
   if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
   inst.play().catch(()=>{});
 }
-// "Voice" sounds (spoken/dealer-call clips like seven-out.ogg) are muted separately from the
-// rest of the game's SFX (chip sounds, the bell chime) -- toggled via the speaker button next
-// to the (i) info icon. Persisted across sessions via localStorage.
-let voicesMuted=localStorage.getItem('voicesMuted')==='1';
-function playVoiceSfx(bucket){if(!voicesMuted)playSfx(bucket);}
+// Was voice-clips-only (dealer calls like seven-out.ogg); Deck asked for the speaker button
+// next to the (i) info icon to be a real all-sounds mute instead -- now also silences chip
+// sounds, the puck-land chime (both gated inside playChipSound()/playSfx() themselves, the
+// single choke point both go through regardless of caller) and the cloche's own dice-tumble/
+// knock/chime audio (a separate Web Audio module, muted via ClocheDice.setMuted()). Keeps the
+// old 'voicesMuted' localStorage key so an existing muted preference carries forward instead
+// of silently resetting everyone back to unmuted.
+let soundMuted=localStorage.getItem('voicesMuted')==='1';
+function playVoiceSfx(bucket){playSfx(bucket);}
 function toggleMuteVoices(){
-  voicesMuted=!voicesMuted;
-  localStorage.setItem('voicesMuted',voicesMuted?'1':'0');
+  soundMuted=!soundMuted;
+  localStorage.setItem('voicesMuted',soundMuted?'1':'0');
+  if(typeof ClocheDice!=='undefined')ClocheDice.setMuted(soundMuted);
   updateMuteVoicesBtn();
 }
 function updateMuteVoicesBtn(){
   const b=document.getElementById('mute-voices-btn');if(!b)return;
-  b.textContent=voicesMuted?'🔇':'🔊';
-  b.title=voicesMuted?'Unmute Voices':'Mute Voices';
-  b.classList.toggle('gold',voicesMuted);
+  b.textContent=soundMuted?'🔇':'🔊';
+  b.title=soundMuted?'Unmute Sound':'Mute Sound';
+  b.classList.toggle('gold',soundMuted);
 }
 const _chipSoundState=new Map();
 function maybeTriggerChipSound(key,amt){
@@ -3416,7 +3423,7 @@ async function redeemVoucher(code){
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="cloche-dice.js?v=0.4.97"></script>
+<script src="cloche-dice.js?v=0.4.98"></script>
 <script src="winner-modal.js?v=0.4.86"></script>
 <script>
 // Cloche dice overlay: shared module, configured for craps (2 dice, 2.0 scale)
@@ -3424,6 +3431,7 @@ async function redeemVoucher(code){
 (function(){
   const faces={};for(const k in DIE_B64)faces[k]='data:image/png;base64,'+DIE_B64[k];
   ClocheDice.init({diceCount:2,dieSize:2.0,faceImages:faces});
+  ClocheDice.setMuted(soundMuted);
 })();
 </script>
 </body>
