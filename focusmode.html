@@ -1194,6 +1194,9 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="gmode-btn" onclick="navigateAway('iluvsuits.html')">
           I LUV SUITS<span class="gmode-sub">Max-flush poker</span>
         </button>
+        <button class="gmode-btn" onclick="navigateAway('breakout.html')">
+          BREAKOUT<span class="gmode-sub">Blackjack</span>
+        </button>
       </div>
       <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
         <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
@@ -1499,7 +1502,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.142</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.144</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4472,7 +4475,14 @@ function calibBaseEntries(){
   // Was hardcoded to feltLayoutFor('standard') from back when Focus Mode was standard-only --
   // now that crapless is real, this must follow whichever mode is actually active, or
   // calibrate mode shows standard's boxes (wrong positions entirely) while playing crapless.
-  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#lucky-roller','#info-panel','#bottom-section']);
+  // #lucky-roller itself used to be UI chrome, skipped here on purpose -- but it's a real bet-
+  // area container (Low Rolls/Roll'em All/High Rolls all live inside it, positioned as a % of
+  // ITS box), and its own x/y/w/h was never hand-calibrated, just a leftover hardcoded value.
+  // The '@lr-low'/'@lr-all'/'@lr-high' rulers calibExtraEntries() draws are computed FROM that
+  // value, so they always look self-consistent even if the container itself is off (Deck: "the
+  // ATS bet areas are off, they seem too high and too small") -- un-skipping it so it's
+  // actually draggable/resizable instead of just an invisible input to those rulers.
+  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#info-panel','#bottom-section']);
   if(activeGame==='standard')skip.add('#num-zone');
   return feltLayoutFor(activeGame==='standard'?'standard':'crapless').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
 }
