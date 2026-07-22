@@ -106,6 +106,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #blind-spot{left:80.22%;top:72.22%;width:5.28%;height:9.39%;--chip:6.5cqh}
 #trips-spot{left:70.47%;top:59.89%;width:5.56%;height:9.89%;--chip:6.5cqh}
 #play-spot{left:70.63%;top:84.28%;width:5.28%;height:9.39%;--chip:7cqh}
+/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. Position measured by
+   diffing uth_bg.png against uth_bg_lightON.png (the bulb graphic is already baked into
+   the felt in its OFF state at this exact spot). */
+#light-spot,#light-on-img{left:69%;top:42.667%;width:8.594%;height:15.278%}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 #light-info-btn{position:absolute;left:78.3%;top:43.5%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 /* Sweep-to-lit: the $5 chip at #light-spot vanishes (handled by stk-light going blank in
@@ -249,6 +253,82 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .voucher-row-expiry{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
 .voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
+
+/* ══════════════ PORTRAIT MODE ══════════════
+   uth_port_bg.png is a full-screen background (unlike landscape's uth_bg.png, which is
+   only the felt panel) -- the top ~6% and bottom ~21% are UI bands baked into the art
+   itself (gold borders), with felt/cards/bet-circles in the middle. Every region below
+   was measured off uth_port_card_and_ui_areas.png (a reference copy of the same art with
+   colored boxes marking each zone) via pixel scanning of the raw PNG, not eyeballed --
+   see panel-art.md's measurement technique. Secondary info-panel actions (Redeem/Cash
+   Out/Dailies/Log Out) and the mode-toggle grid have no room in the 6% header band and
+   are hidden here rather than crammed in -- they need their own portrait entry point
+   (e.g. a menu button) in a follow-up pass. */
+@media (orientation:portrait){
+  #game-screen{position:relative}
+
+  #top-row{position:absolute;top:0;left:0;right:0;height:6.03dvh;flex-direction:row;border-bottom:none;z-index:2}
+  #left-col-header{display:none}
+  #info-panel{width:100%;max-width:none;min-width:0;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:2px 10px}
+  #info-panel .info-row:nth-child(2){display:none}
+  #info-panel .hud-grid{display:flex;gap:10px}
+  #info-panel .hud-item:not(:has(#hud-bankroll)){display:none}
+
+  /* Phase/status readout floats as a banner over the open felt between the dealer and
+     community card zones, instead of living in the cramped header. position:fixed keeps
+     it viewport-relative regardless of #top-row's now-collapsed overflow. */
+  /* Only room for one compact line in the gap between the baked "ANTE PUSHES..." text and
+     the community-card row -- #status-sub (the longer explainer line) is dropped here. */
+  #status-zone{position:fixed;flex:none;width:auto;height:auto;top:27.7dvh;left:8dvw;right:8dvw;background:rgba(0,0,0,.6);border:1px solid rgba(255,215,0,.25);border-radius:6px;padding:3px 8px;z-index:3}
+  #status-phase{font-size:14px}
+  #status-sub{display:none}
+
+  #table-area{position:absolute;inset:0;padding:0;z-index:1}
+  #table-panel{background-image:url('uth_port_bg.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
+
+  #burn-region{left:2%;top:7%;width:14%;height:11%}
+  #dealer-region{left:20.8%;top:6.77%;width:58.4%;height:18.85%;flex-direction:row;justify-content:center}
+  #community-region{left:5.07%;top:31.28%;width:89.87%;height:11.21%;justify-content:space-between}
+  /* Width matches the logo square itself (23.2%-66.67%), not the full player area --
+     centering within that narrower box lands the fanned cards squarely on the logo,
+     which is where they're meant to sit, rather than drifting into the bet-circle column. */
+  #player-region{left:23.2%;top:58%;width:43.47%;height:18.85%;flex-direction:row;justify-content:center;align-items:flex-start}
+
+  /* cqh here is relative to #table-panel's own height, which in portrait is nearly the
+     full device height (not landscape's much shorter letterboxed panel) -- the landscape
+     19.2cqh card scale would render enormous, so portrait needs its own much smaller
+     multiplier. Community's 5-card row is the tightest fit (7.3cqh is close to its max);
+     dealer/player only ever show 2 cards each and have much more spare room, so they get
+     their own larger scale instead of sharing community's constraint. */
+  .card-row{--pc-w:7.3cqh}
+  #dealer-row{--pc-w:10cqh}
+  #player-row{--pc-w:10cqh}
+  #player-row .pc-card:nth-child(2){margin-left:-6.8cqh}
+  #burn-row.card-row{--pc-w:3.3cqh}
+  #burn-row .pc-card:nth-child(2){margin-left:-2.4cqh}
+  #burn-row .pc-card:nth-child(3){margin-left:-2.4cqh}
+
+  #trips-spot{left:68.53%;top:59.11%;width:9.07%;height:4.19%}
+  #ante-spot{left:68.53%;top:65.64%;width:9.33%;height:4.31%}
+  #blind-spot{left:88.53%;top:65.64%;width:9.33%;height:4.31%}
+  #play-spot{left:68.8%;top:72.41%;width:8.8%;height:4.06%}
+  /* The Light isn't baked into the portrait art (per Deck) -- placed north of Trips as a
+     plain CSS-drawn spot (background/border/label) rather than an art-matched one. */
+  #light-spot,#light-on-img{left:68.3%;top:52.6%;width:9.5%;height:4.6%}
+  #light-spot{background:radial-gradient(circle,#3a1a5c 0%,#1a0a30 100%);border:1.5px solid #ffd700;display:flex;align-items:center;justify-content:center}
+  #light-spot::before{content:'LIGHT';font-size:1.5cqh;font-weight:800;color:#ffd700;letter-spacing:.04em;pointer-events:none}
+  #light-info-btn{left:78.6%;top:52.9%;width:2.6%;height:2.1%}
+
+  #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
+  #bottom-left{flex:1;height:auto}
+  #history-strip{display:none}
+  #bottom-bar{flex-wrap:nowrap;gap:2px;padding:2px 3px}
+  .chip[data-val="2"],.chip[data-val="3"],.chip[data-val="10"],.chip[data-val="50"]{display:none}
+  .chip{width:42px;height:42px;font-size:12px}
+  .bar-btn{font-size:13px;padding:3px 5px;height:24px}
+  #hud-pnl{font-size:15px;padding:0 2px}
+  #action-row{width:100%;height:auto;flex:1}
+}
 </style>
 </head>
 <body>
@@ -321,7 +401,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.135</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.136</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS<span class="gmode-sub">No naturals</span></button>
         <button class="gmode-btn" onclick="dNav('focusmode.html?mode=standard')">STANDARD<span class="gmode-sub">7 &amp; 11 win</span></button>
@@ -392,10 +472,10 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
       <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. Position
            measured by diffing uth_bg.png against uth_bg_lightON.png (the bulb graphic
            is already baked into the felt in its OFF state at this exact spot). -->
-      <div class="panel-spot" id="light-spot" style="left:69%;top:42.667%;width:8.594%;height:15.278%" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
+      <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
         <span class="panel-spot-stk" id="stk-light"></span>
       </div>
-      <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;left:69%;top:42.667%;width:8.594%;height:15.278%;pointer-events:none;z-index:5">
+      <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
       <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">ⓘ</button>
 
     </div>
