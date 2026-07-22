@@ -377,7 +377,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.153</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.154</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -506,7 +506,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 
 </div><!-- end game-screen -->
 
-<script src="cards.js?v=0.4.121"></script>
+<script src="cards.js?v=0.4.122"></script>
 <script>
 function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 function dNav(url){
@@ -568,8 +568,10 @@ let dealAnimInProgress=false;
 let pendingDealTimeouts=[];
 // Warm the image cache for every card face as soon as the script loads -- well before
 // the first deal is even possible (needs auth + a placed Ante) -- so the sweat reveal
-// never has to fetch+decode a face image on the fly mid-animation.
-Cards.preloadAll();
+// never has to fetch+decode a face image on the fly mid-animation. Guarded so a stale
+// cached cards.js (missing preloadAll) degrades to "no preload" instead of aborting
+// this entire script and leaving the page blank.
+try{Cards.preloadAll();}catch(e){console.error('Cards.preloadAll failed:',e);}
 
 function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0)+G.playBet);}
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
