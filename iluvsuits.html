@@ -377,7 +377,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.149</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.150</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1480,12 +1480,12 @@ function maybeTriggerChipSound(key,amt){
 // ── CHIP STACKS ON BET SPOTS ──────────────────────────────────────────────────
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
-function chipLabel(amt){return Number.isInteger(amt)?'$'+amt:'$'+amt.toFixed(2);}
-function chipStackHTML(amt,locked){
+function chipLabel(amt,isFP){return (isFP?'FP$':'$')+(Number.isInteger(amt)?amt:amt.toFixed(2));}
+function chipStackHTML(amt,locked,isFP){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
-  const label=chipLabel(amt);
+  const label=chipLabel(amt,isFP);
   const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
   // Same anchor/build-into-the-stack approach as craps' chip-lock badge (see index.html) --
@@ -1497,8 +1497,14 @@ function chipStackHTML(amt,locked){
 // Ante/Flush Rush/Super Flush Rush are locked (contract) once dealt; Play is locked
 // once resolved (showdown). The chip stack stays up the whole time either way --
 // only whether the lock badge is appended changes.
+// Freeplay eligibility per spot is a client-side estimate, not the server's real
+// accounting (that only happens on resolve) -- each spot is checked in render order
+// against a running balance that depletes as earlier spots claim it, so the total
+// labeled FP$ across a hand's chips never overstates the player's actual FP balance.
+let _fpRemainingForRender=0;
 function renderChipStacks(){
   const contractLocked=G.phase!=='betting';
+  _fpRemainingForRender=(window.FreePlayBadge&&FreePlayBadge.getBalance())||0;
   applyChipStackVisual('stk-ante',contractLocked);
   applyChipStackVisual('stk-flushrush',contractLocked);
   applyChipStackVisual('stk-superflushrush',contractLocked);
@@ -1511,7 +1517,9 @@ function applyChipStackVisual(id,locked){
   const amt=parseFloat(m[1].replace(/,/g,''));
   if(!(amt>0)){maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
   maybeTriggerChipSound(id,amt);
-  el.innerHTML=chipStackHTML(amt,locked);
+  const isFP=amt<=_fpRemainingForRender;
+  if(isFP)_fpRemainingForRender-=amt;
+  el.innerHTML=chipStackHTML(amt,locked,isFP);
   el.classList.add('has-stack');
 }
 document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});

@@ -136,13 +136,19 @@
     fpUsedEl = document.getElementById('fp-used');
   }
 
+  let fpBalance = 0;
   const FreePlayBadge = {
     setBalance(balance) {
       if (!fpBadgeEl) buildFpBadge();
       const b = parseFloat(balance) || 0;
+      fpBalance = b;
       fpAmtEl.textContent = b.toFixed(2);
       fpBadgeEl.classList.toggle('hidden', b <= 0 && !fpUsedEl.classList.contains('show'));
     },
+    // Last known balance, for games that want to label a chip stack "FP$" the instant
+    // it's placed (an optimistic client-side estimate of what the server will draw
+    // from on resolve) rather than waiting for a round-trip to confirm it.
+    getBalance() { return fpBalance; },
     flashUsed(amount) {
       if (!fpBadgeEl) buildFpBadge();
       if (!(amount > 0)) return;
