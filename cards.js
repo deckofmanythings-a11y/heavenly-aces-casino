@@ -23,6 +23,23 @@ function rankLabel(r){return RANK_LABEL[r];}
 function suitSymbol(s){return SUIT_SYMBOL[s];}
 function suitColor(s){return SUIT_COLOR[s];}
 
+// Warms the browser's image cache for every card face (+ the back) up front, so a
+// mid-hand reveal never has to kick off a fresh network fetch + decode for a face
+// it's about to paint -- that decode work landing on the main thread mid-animation
+// is what turns a staggered reveal into a stall-then-snap on slower mobile devices.
+// Safe to call multiple times; the browser cache makes repeats free. Callers should
+// fire this once, as early as possible (page load), well before the first deal.
+function preloadAll(){
+  Object.keys(RANK_CODE).forEach(r=>{
+    ['S','H','D','C'].forEach(s=>{
+      const img=new Image();
+      img.src=cardImgSrc({r:+r,s});
+    });
+  });
+  const back=new Image();
+  back.src=backImgSrc();
+}
+
 // ── DOM helper: a flippable card slot ────────────────────────────────────────
 // makeSlot() returns a detached .pc-card element with back showing. setFront()
 // populates its face content (call once cards are known). flipUp() animates
@@ -82,5 +99,5 @@ function injectStyle(){
 }
 injectStyle();
 
-window.Cards={makeSlot,setFront,flipUp,reset,dealIn,rankLabel,suitSymbol,suitColor,cardImgSrc,backImgSrc};
+window.Cards={makeSlot,setFront,flipUp,reset,dealIn,rankLabel,suitSymbol,suitColor,cardImgSrc,backImgSrc,preloadAll};
 })();
