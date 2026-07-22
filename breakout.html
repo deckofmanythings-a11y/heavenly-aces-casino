@@ -103,12 +103,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 
 /* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
    baked-in bulb art, so both lightOFF.png (idle) and lightON.png (lit, post-deal) are
-   placed as floating overlays in the open felt to the left of everything else --
-   placement is a first pass in open green space, not measured against baked art. */
+   placed as floating overlays -- positioned directly above the Breakout Bonus badge
+   and below where the Insurance banner shows, per Deck's placement call, sharing
+   Breakout Bonus's own horizontal alignment so the two stack cleanly. */
 .panel-spot{position:absolute;border-radius:50%;cursor:pointer}
 .panel-spot.active{box-shadow:0 0 0 0.5cqh rgba(255,215,0,.4)}
-#light-spot,#light-off-img,#light-on-img{left:14%;top:42%;width:5.56%;height:9.89%}
-#light-info-btn{position:absolute;left:19.9%;top:43.5%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+#light-spot,#light-off-img,#light-on-img{left:55.2%;top:16.5%;width:9.5%;height:14.5%}
+#light-info-btn{position:absolute;left:63.3%;top:17.5%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 .progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
@@ -274,8 +275,10 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   #supertie-spot{left:46%;top:51.5%;width:19%;height:10%}
   #pairplus-spot{left:47%;top:60.5%;width:19%;height:9%}
   #sweet17-spot{left:44.5%;top:68.5%;width:20%;height:8.5%}
-  #light-spot,#light-off-img,#light-on-img{left:33%;top:7%;width:14%;height:7%}
-  #light-info-btn{left:47.5%;top:7.5%;width:5%;height:2.5%}
+  /* Directly above Breakout Bonus, below where the Insurance banner shows, same
+     horizontal alignment as Breakout Bonus. */
+  #light-spot,#light-off-img,#light-on-img{left:48%;top:30%;width:19%;height:14%}
+  #light-info-btn{left:63.5%;top:31%;width:5%;height:2.5%}
 
   .panel-spot-stk{font-size:1.2cqh}
 
@@ -370,7 +373,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.154</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.155</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1302,6 +1305,12 @@ function renderChipStacks(){
   SIDE_BET_KEYS.forEach(key=>{
     applyChipStackVisual('stk-'+key,contractLocked);
   });
+  // The Light was only ever showing its $5 as plain text -- routing it through the
+  // same chip-stack renderer as every other spot gives it a real $5 chip image, which
+  // is also what the existing spawnChipGhost() sweep-on-deal call actually sweeps
+  // (it reads the .chip-img inside this element; with no chip markup there was
+  // nothing but text to animate away).
+  applyChipStackVisual('stk-light',contractLocked);
 }
 function applyChipStackVisual(id,locked){
   const el=document.getElementById(id);
