@@ -1482,7 +1482,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.154</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.155</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5858,12 +5858,11 @@ function tutorialDebugReset(){
 applyGameMode('standard');
 buildFocusFeltArt();
 applyFocusVisibility();
-// Deferred: cloche-dice.js (ClocheDice, used by toggleFocusPractice()'s guard) loads via a
-// <script src> tag further down the page and isn't parsed yet at this point in the inline
-// script -- calling tutorialStart() this early threw a ReferenceError inside that guard and
-// silently aborted before tutorialActive ever got set. Letting the load event pass first
-// guarantees every deferred script tag below this one has already run.
-window.addEventListener('load',tutorialMaybeShowPopup);
+// Deck: shelving the tutorial entirely for now -- the whole engine (TUTORIAL_LESSONS,
+// tutorialStart() etc.) is left in place so it can be re-enabled later with no rework, but
+// the auto-popup that used to greet a player's first-ever visit is disabled here. Still
+// manually reachable via ?tutorial=1 (see tutorialMaybeShowPopup()) or the debug panel.
+// window.addEventListener('load',tutorialMaybeShowPopup);
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
