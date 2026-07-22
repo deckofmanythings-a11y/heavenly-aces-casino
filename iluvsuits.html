@@ -566,6 +566,10 @@ let currentPlayer=null,_authMode='login';
 // handler below for how these prevent overlapping deals and stalled-tab reveals.
 let dealAnimInProgress=false;
 let pendingDealTimeouts=[];
+// Warm the image cache for every card face as soon as the script loads -- well before
+// the first deal is even possible (needs auth + a placed Ante) -- so the sweat reveal
+// never has to fetch+decode a face image on the fly mid-animation.
+Cards.preloadAll();
 
 function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0)+G.playBet);}
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
