@@ -421,7 +421,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.5</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.7</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -634,6 +634,7 @@ function makeInitialG(){
     shoeTotal:312,shoeRemaining:0, // real server-tracked shoe state -- 0 remaining reads as "needs a cut" until the first action response arrives
     penetrationCards:0, // cards dealt before a reshuffle is forced -- server always reserves roughly the last fifth regardless of the chosen cut fraction
     pendingCutFraction:0.75,
+    dealInFlight:false, // re-entrancy guard -- see dealHand()
   };
 }
 let G=makeInitialG();
@@ -1153,6 +1154,17 @@ async function dealHand(){
   if((playerBet>0)===(breakoutBet>0)){addLog('Place exactly one of Player Bet or Breakout Bet.','info');return;}
   const superTieAmt=G.bets.superTie||0;
   if(superTieAmt>0&&superTieAmt<SUPER_TIE_MIN){addLog('Super Tie has a $'+SUPER_TIE_MIN+' minimum bet.','info');return;}
+  // Re-entrancy guard: a rapid double-tap (or confirmCut()'s auto-retry racing a
+  // manual tap) could otherwise start a second overlapping deal cycle. Without
+  // this, the button used to flip back to enabled the instant the network response
+  // landed -- well before the card-deal animation/resolution actually finished --
+  // so a second tap in that window could fire a second dealHand() call. If the
+  // first call's delayed finishRound() then ran AFTER the second call's cycle had
+  // already reset the board, G.hand was null and finishRound() crashed outright
+  // (TypeError: Cannot set properties of null (setting 'dealerHand')), which is
+  // indistinguishable from a soft lock since nothing after the crash ever ran.
+  if(G.dealInFlight)return;
+  G.dealInFlight=true;
   const progressive=(G.bets.progressive||0)>0;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
@@ -1163,9 +1175,14 @@ async function dealHand(){
     const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify(body)});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
-  document.getElementById('btn-deal').disabled=false;
   updateShoeFromResponse(data);
   if(!data.ok){
+    // Only re-enable/unlock on failure -- on success the button stays disabled (and
+    // dealInFlight stays true) through the whole animation+resolution sequence;
+    // resetToBetScreen() is what clears dealInFlight once a new bet can legitimately
+    // be placed.
+    document.getElementById('btn-deal').disabled=false;
+    G.dealInFlight=false;
     if(data.needsCut){showCutModal();return;}
     addLog(data.message||'Deal failed.','lose');return;
   }
@@ -1197,8 +1214,20 @@ async function dealHand(){
   const dealMs=dealCardsAnimated();
   setTimeout(()=>{
     updateLiveHandDisplay();
-    if(data.insuranceAvailable&&data.phase==='insurance')showInsuranceBanner();
+    if(data.insuranceAvailable&&data.phase==='insurance'){
+      // Control returns to the player for the Insurance decision -- release the
+      // guard here too (answerInsurance() takes its own lock for that decision).
+      G.dealInFlight=false;
+      showInsuranceBanner();
+    }
     else if(data.resolved)finishRound(data);
+    else{
+      // Normal Player Bet deal with no immediate Blackjack -- control returns to the
+      // player for Hit/Stand/Double, so the guard must release here too, or every
+      // action button silently no-ops for the rest of the hand (the same shape of
+      // bug this guard exists to prevent, just moved one step later).
+      G.dealInFlight=false;
+    }
   },dealMs+120);
 }
 
@@ -1211,6 +1240,11 @@ function showInsuranceBanner(){
 }
 function hideInsuranceBanner(){document.getElementById('insurance-banner').classList.remove('show');}
 async function answerInsurance(yes){
+  // Same guard family as dealHand()/sendAction() -- hideInsuranceBanner() below
+  // stops a real double-tap (the banner's gone before a second physical click could
+  // land), but this also blocks any programmatic/synchronous double-invocation.
+  if(G.dealInFlight)return;
+  G.dealInFlight=true;
   hideInsuranceBanner();
   const cap=r2(curMainBet()*0.5);
   const amount=yes?cap:0;
@@ -1221,13 +1255,17 @@ async function answerInsurance(yes){
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   updateShoeFromResponse(data);
-  if(!data.ok){addLog(data.message||'Insurance failed.','lose');return;}
+  if(!data.ok){G.dealInFlight=false;addLog(data.message||'Insurance failed.','lose');return;}
   G.phase=data.phase;
   G.hand.dealerHand=data.dealerHand;
   if(data.phase==='done'){
     revealDealerHand(data.dealerHand);
     setTimeout(()=>finishRound(data),300);
   }else{
+    // Insurance settled without ending the hand (dealer didn't have Blackjack) --
+    // control returns to the player for Hit/Stand/Double, so release the guard
+    // dealHand() left set, same as the equivalent branch there.
+    G.dealInFlight=false;
     (data.log||[]).forEach(line=>addLog(line,/lost/i.test(line)?'lose':/pays/i.test(line)?'win':'info'));
     if(data.newBankroll!=null)G.bankroll=data.newBankroll;
     renderActionButtons();updateStatusZone();updateUI();
@@ -1245,6 +1283,12 @@ function updateLiveHandDisplay(){
 
 // ── HIT / STAND / DOUBLE ──────────────────────────────────────────────────────
 async function sendAction(action){
+  // Same re-entrancy guard as dealHand() -- a rapid double-tap on Hit/Stand/Double
+  // could otherwise start a second overlapping action while the first's delayed
+  // finishRound() is still pending. Cleared in resetToBetScreen(), and immediately
+  // below on any non-resolving response (a hit that doesn't bust/stand yet).
+  if(G.dealInFlight)return;
+  G.dealInFlight=true;
   ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=true);
   const token=localStorage.getItem('craps_session');
   let data;
@@ -1252,9 +1296,12 @@ async function sendAction(action){
     const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
-  ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=false);
   updateShoeFromResponse(data);
-  if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
+  if(!data.ok){
+    G.dealInFlight=false;
+    ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=false);
+    addLog(data.message||'Action failed.','lose');return;
+  }
   const newCard=data.hand[data.hand.length-1];
   const grewHand=action!=='stand';
   G.phase=data.phase;
@@ -1269,6 +1316,10 @@ async function sendAction(action){
       revealDealerHand(data.dealerHand);
       setTimeout(()=>finishRound(data),500);
     }else{
+      // Still the player's turn (a hit that didn't bust) -- clear the guard so the
+      // next Hit/Stand/Double tap isn't silently ignored.
+      G.dealInFlight=false;
+      ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=false);
       renderActionButtons();updateStatusZone();updateUI();
     }
   };
@@ -1280,6 +1331,11 @@ function doDouble(){sendAction('double');}
 
 // ── ROUND RESOLUTION ──────────────────────────────────────────────────────────
 function finishRound(data){
+  // Belt-and-suspenders: dealHand()'s dealInFlight guard should make this
+  // impossible now, but if G.hand is ever null here (a race we haven't seen, a
+  // future bug elsewhere), fail loud-but-safe instead of throwing mid-function and
+  // silently soft-locking the board with G.phase stuck at whatever it last was.
+  if(!G.hand){addLog('Round display lost sync -- resetting the table.','info');resetToBetScreen();return;}
   G.phase='done';
   G.hand.dealerHand=data.dealerHand;
   document.getElementById('dealer-hand-name').textContent=handValueLabel(G.hand.dealerHand);
@@ -1311,13 +1367,6 @@ function finishRound(data){
   if(data.payout>0){
     const bigWin=(data.payout/totalWagered)>=7;
     WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
-    // Watchdog: resetToBetScreen only ever runs from WinnerModal's onClose here --
-    // if that callback is ever skipped (a missed tap, a race with another action, any
-    // future bug in the shared modal), phase:'done' sticks forever and every bet spot
-    // silently no-ops (exactly the "soft locked, can't bet, Repeat does nothing"
-    // report). WinnerModal's own auto-close fires at 3000ms, so 8000ms leaves ample
-    // margin for the normal path while still guaranteeing recovery from a stuck one.
-    setTimeout(()=>{ if(G.phase==='done')resetToBetScreen(); },8000);
   }else{
     setTimeout(resetToBetScreen,3500);
   }
@@ -1325,7 +1374,8 @@ function finishRound(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.doubled=false;G.insurance=0;G.insuranceAvailable=false;
-  G.mode=null;G.locked={progressive:false};
+  G.mode=null;G.locked={progressive:false};G.dealInFlight=false;
+  document.getElementById('btn-deal').disabled=false;
   hideInsuranceBanner();
   document.getElementById('dealer-row').classList.remove('active');
   document.getElementById('player-row').classList.remove('active');
@@ -1591,6 +1641,25 @@ async function cashOut(){
   updateUI();
 }
 function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
+
+// ── STUCK-PHASE WATCHDOG ────────────────────────────────────────────────────────
+// General safety net, not tied to any one code path: if G.phase is ever sitting at
+// 'done' for more than ~6s straight, something failed to bring the board back to
+// betting (a skipped WinnerModal callback, a rare overlapping-response race that
+// slips past the dealInFlight guards, anything not yet seen). Every bet spot and
+// the Repeat button gate on phase==='betting', so a stuck 'done' reads to the
+// player as a dead table with no other symptom -- this polls every second and
+// force-resets rather than requiring each new race to be found and patched
+// individually. resetToBetScreen() is safe to call redundantly.
+let _doneSince=null;
+setInterval(()=>{
+  if(G.phase==='done'){
+    if(_doneSince==null)_doneSince=Date.now();
+    else if(Date.now()-_doneSince>6000){_doneSince=null;resetToBetScreen();}
+  }else{
+    _doneSince=null;
+  }
+},1000);
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 renderActionButtons();
