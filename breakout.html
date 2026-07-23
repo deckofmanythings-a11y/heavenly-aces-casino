@@ -141,6 +141,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .tray-stack{position:relative;width:60%;height:70%;margin-top:2.2cqh}
 .tray-stack img{position:absolute;left:0;width:100%;border-radius:0.3cqh;box-shadow:0 1px 3px rgba(0,0,0,.6)}
 .tray-count{position:absolute;bottom:0.4cqh;left:0;right:0;text-align:center;font-size:1.15cqh;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.9);z-index:2}
+/* Reshuffle marker -- sits at a fixed height within the shoe stack (the reserved
+   ~fifth of the shoe below the cut card never gets dealt) so as the visible stack
+   shrinks toward it each hand, the player can see how many hands are likely left
+   before the next cut. Positioned/shown by renderShoeTrays(). */
+#shoe-cut-line{position:absolute;left:-15%;right:-15%;height:2px;background:#ff3b3b;box-shadow:0 0 4px rgba(255,59,59,.9);bottom:0;display:none;z-index:3}
 
 /* ── CUT-THE-DECK MODAL -- shown whenever the server refuses to deal with
    needsCut:true (a brand-new player, or the shoe hit its cut-card penetration
@@ -416,7 +421,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.5</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -451,7 +456,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
     <div id="table-panel">
 
       <!-- SHOE / DISCARD -- landscape only, real server-tracked depletion. -->
-      <div id="shoe-tray"><span class="tray-label">Shoe</span><div class="tray-stack" id="shoe-stack"></div><span class="tray-count" id="shoe-count">–/–</span></div>
+      <div id="shoe-tray"><span class="tray-label">Shoe</span><div class="tray-stack" id="shoe-stack"><div id="shoe-cut-line" title="Reshuffle point"></div></div><span class="tray-count" id="shoe-count">–/–</span></div>
       <div id="discard-tray"><span class="tray-label">Discard</span><div class="tray-stack" id="discard-stack"></div><span class="tray-count" id="discard-count">–</span></div>
 
       <div class="card-region" id="dealer-region">
@@ -627,6 +632,7 @@ function makeInitialG(){
     locked:{progressive:false},
     progressivePool:1000, // shown before the first deal/roll response arrives with a live value
     shoeTotal:312,shoeRemaining:0, // real server-tracked shoe state -- 0 remaining reads as "needs a cut" until the first action response arrives
+    penetrationCards:0, // cards dealt before a reshuffle is forced -- server always reserves roughly the last fifth regardless of the chosen cut fraction
     pendingCutFraction:0.75,
   };
 }
@@ -729,6 +735,7 @@ function startSession(player){
   if(gs.breakoutShoe&&Array.isArray(gs.breakoutShoe.cards)){
     G.shoeTotal=gs.breakoutShoe.totalCards||312;
     G.shoeRemaining=gs.breakoutShoe.cards.length;
+    G.penetrationCards=gs.breakoutShoe.penetrationCards||0;
   }
   renderShoeTrays();
   renderActionButtons();updateUI();
@@ -940,16 +947,20 @@ function closeProgressiveModal(){document.getElementById('modal-progressive').cl
 function updateShoeFromResponse(data){
   if(data.shoeTotal!=null)G.shoeTotal=data.shoeTotal;
   if(data.shoeRemaining!=null)G.shoeRemaining=data.shoeRemaining;
+  if(data.penetrationCards!=null)G.penetrationCards=data.penetrationCards;
   renderShoeTrays();
 }
 const TRAY_MAX_IMGS=10;
 function renderTrayStack(id,frac){
   const el=document.getElementById(id);
   if(!el)return;
-  el.innerHTML='';
+  // Only clears the card-back images (.tray-card) -- #shoe-cut-line lives inside
+  // #shoe-stack too and must survive every re-render, not get wiped with innerHTML=''.
+  el.querySelectorAll('.tray-card').forEach(n=>n.remove());
   const n=Math.max(0,Math.min(TRAY_MAX_IMGS,Math.round(frac*TRAY_MAX_IMGS)));
   for(let i=0;i<n;i++){
     const img=document.createElement('img');
+    img.className='tray-card';
     img.src='cards/card-back.png?v=0.4.120';
     img.draggable=false;
     img.style.bottom=(i*3)+'%';
@@ -966,6 +977,20 @@ function renderShoeTrays(){
   if(discardCountEl)discardCountEl.textContent=String(dealt);
   renderTrayStack('shoe-stack',total>0?remaining/total:0);
   renderTrayStack('discard-stack',total>0?dealt/total:0);
+  // Reshuffle marker: sits at the fixed height the remaining-card stack will have
+  // shrunk to once the cut card is reached (total-penetrationCards cards left) --
+  // as the visible stack depletes down toward this line each hand, it signals how
+  // many hands are likely left before the next cut.
+  const cutLine=document.getElementById('shoe-cut-line');
+  if(cutLine){
+    if(total>0&&G.penetrationCards>0){
+      const reserveCards=Math.max(0,total-G.penetrationCards);
+      cutLine.style.bottom=Math.min(95,(reserveCards/total)*100)+'%';
+      cutLine.style.display='block';
+    }else{
+      cutLine.style.display='none';
+    }
+  }
 }
 
 // ── CUT THE DECK ─────────────────────────────────────────────────────────────
@@ -983,7 +1008,10 @@ function hideCutModal(){document.getElementById('modal-cut').classList.add('hidd
 function cutStripClick(e){
   const rect=document.getElementById('cut-strip').getBoundingClientRect();
   let frac=(e.clientX-rect.left)/rect.width;
-  frac=Math.min(0.95,Math.max(0.4,frac));
+  // Matches the server's own clamp -- it always reserves roughly the last fifth of
+  // the shoe regardless of where the player taps, so the strip shouldn't let them
+  // aim anywhere the server would silently override anyway.
+  frac=Math.min(0.8,Math.max(0.4,frac));
   G.pendingCutFraction=frac;
   updateCutMarker();
 }
