@@ -4486,12 +4486,15 @@ const FM_ART=[
   // together at their old combined union box (x:114,w:913, y:844-1760), native aspect
   // preserved at w=913 (921x919 native -> 910 tall), bottom-anchored to the old 1760 edge
   // (#bottom-section alignment) same as before.
-  // NOTE: deliberately no `group` here (was 3 separate groups: seven/anycraps/props) -- one
-  // fused image can't independently hide just Any 7, just Any Craps, or just Horn/Props
-  // anymore. It always shows on the 'hw' tab now; the real bet click-targets (@any7/@anyCraps/
-  // @horn/etc.) still individually show/hide via their own Focus Settings toggles same as
-  // before, only this backdrop art lost that granularity. Flag to Deck if that's a problem.
-  {id:'onerollbets',img:'OneRollBetsV2.png',  x:114, y:850, w:913, h:910, tab:'hw'},
+  // FIX: leaving `group` off entirely (as first written) meant this element was never picked
+  // up by applyFocusVisibility()'s "#fm-art-layer [data-fm-group]" loop at all -- and that loop
+  // is ALSO what applies the tab-gating check (data-fm-tab !== feltTab), so without a group the
+  // art never got hidden when switching to the 'hop' tab (Deck: "hardways/horn bets need to
+  // disappear when I switch to hop mode"). Using 'props' as the master group restores correct
+  // tab-gating; the real tradeoff (Seven/Any Craps no longer independently hideable from Horn/
+  // Props via Focus Settings, since it's one fused image now instead of 3 separate files) still
+  // stands -- flag to Deck if that granularity loss matters.
+  {id:'onerollbets',img:'OneRollBetsV2.png',  group:'props', x:114, y:850, w:913, h:910, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595},
   // Crapless number line: one combined image per configuration (Deck: "there are three
   // versions. They are NOT meant to stack on one another, just wholesale replace the entire
