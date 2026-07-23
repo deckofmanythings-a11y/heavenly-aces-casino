@@ -1533,7 +1533,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.163</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.164</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3509,18 +3509,26 @@ function initPuck3D(){
   document.body.appendChild(puck3dEl);
 }
 let puck3dAnchor=null;
-// target: either an anchor element (puck's CENTER lands on that element's own center, the
-// old "off" behavior) or {cornerOf:el} (puck's CENTER lands on that element's UPPER-LEFT
-// CORNER instead -- Deck: "on a number, center the puck on the upper-left corner of that
-// number's Lay Bet area"). state is 'on'/'off'/null (null hides the puck).
+// target: an anchor element (puck's CENTER lands on that element's own center, the old "off"
+// behavior), {cornerOf:el} (puck's CENTER lands on that element's UPPER-LEFT CORNER instead --
+// Standard's on-a-number spec: "center the puck on the upper-left corner of that number's Lay
+// Bet area"), or {topOf:el} (puck's own BOTTOM-CENTER lands on that element's TOP-CENTER --
+// Crapless has no Lay area to use cornerOf against, so its spec is instead "in line with the
+// center of the BUY bet area of the point number, bottom edge of the puck just touching the
+// top of the BUY bet box"). state is 'on'/'off'/null (null hides the puck).
 function updatePuck3D(target,state){
   initPuck3D();
   if(!target||!state){puck3dEl.classList.remove('puck3d-visible');puck3dState=null;puck3dAnchor=null;return;}
-  const el=target.cornerOf||target;
+  const el=target.cornerOf||target.topOf||target;
   const r=el.getBoundingClientRect();
-  const px=target.cornerOf?r.left:r.left+r.width/2;
-  const py=target.cornerOf?r.top:r.top+r.height/2;
-  const cx=px-PUCK_RADIUS,cy=py-PUCK_RADIUS; // translate so the puck's own center lands on (px,py)
+  let px,py;
+  if(target.cornerOf){px=r.left;py=r.top;}
+  else if(target.topOf){px=r.left+r.width/2;py=r.top;}
+  else{px=r.left+r.width/2;py=r.top+r.height/2;}
+  const cx=px-PUCK_RADIUS;
+  // cornerOf/plain-anchor center the puck vertically on py; topOf instead puts the puck's
+  // BOTTOM edge (2*PUCK_RADIUS below its own top) at py, so it sits flush above the target.
+  const cy=target.topOf?(py-2*PUCK_RADIUS):(py-PUCK_RADIUS);
   const moved=el!==puck3dAnchor; // sliding to a new number/off-spot, not just a redundant re-render
   puck3dEl.style.transform='translate('+cx+'px,'+cy+'px)';
   puck3dEl.classList.add('puck3d-visible');
@@ -4149,16 +4157,22 @@ function updateUI(){
   {const ca=G.bets['come']||0;const st=document.getElementById('stk-come');if(st)st.textContent=ca?fmt(ca):'';const cb=document.getElementById('come-bar');if(cb)cb.classList.toggle('active-bar',!!ca);}
   // Don't Come waiting zone
   {const dca=G.bets['dc']||0;const st=document.getElementById('stk-dc-wait');if(st)st.textContent=dca?fmt(dca):'';const dcb=document.getElementById('dc-wait-bar');if(dcb)dcb.classList.toggle('active-bar',!!dca);}
-  // On/Off indicator: Standard uses the 3D sliding puck again (Deck: turn it back on for
-  // Standard specifically); Crapless keeps the border-only indicator from last change --
-  // black border around the shared #num-zone block while off, no point-set puck to show.
+  // On/Off indicator: Standard's point-set puck lands via cornerOf its Lay Bet area (no
+  // Crapless equivalent -- Crapless has no Lay row at all). Crapless instead lands the puck
+  // via topOf its Buy Bet area (Deck: "in line with the center of the BUY bet area of the
+  // point number and the bottom edge of the puck just touching the top of the BUY bet box").
+  // Neither mode has a Crapless-side "off" anchor (no Don't Come waiting box in Crapless, see
+  // buildStrip()), so Crapless keeps the border-only off indicator from before -- the puck
+  // only appears once a point is set, and hides again (border returns) at comeout.
   if(activeGame==='standard'){
     let puckTarget=null,puckState=null;
     if(G.phase==='point'){const layEl=document.getElementById('nb-lay-'+G.point);if(layEl)puckTarget={cornerOf:layEl};puckState='on';}
     else if(G.phase==='comeout'){puckTarget=document.getElementById('puck-off-dc');puckState='off';}
     updatePuck3D(puckTarget,puckState);
   }else{
-    updatePuck3D(null,null); // hide the puck widget entirely -- Crapless never shows it
+    let puckTarget=null,puckState=null;
+    if(G.phase==='point'){const buyEl=document.getElementById('nb-buy-'+G.point);if(buyEl){puckTarget={topOf:buyEl};puckState='on';}}
+    updatePuck3D(puckTarget,puckState);
     const nz=document.getElementById('num-zone');if(nz)nz.classList.toggle('line-off',G.phase==='comeout');
   }
   // Don't Pass bar
