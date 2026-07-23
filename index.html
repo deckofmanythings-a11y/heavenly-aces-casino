@@ -61,7 +61,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .modal-close-btn:hover{background:rgba(255,255,255,.18)}
 
 #lobby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;max-width:720px;width:100%;margin:0 auto}
-.lobby-tile{background:#161616;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
+.lobby-tile{position:relative;background:#161616;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
 .lobby-tile:hover{border-color:rgba(255,215,0,.5);background:#1c1c1c}
 .lobby-tile .lt-icon{font-size:32px}
 .lobby-tile .lt-label{font-size:16px;font-weight:800;letter-spacing:.03em;color:#fff}
@@ -69,6 +69,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .lobby-tile.wide{grid-column:1/-1}
 .lobby-tile.practice{border-color:rgba(74,158,255,.35)}
 .lobby-tile.practice:hover{border-color:rgba(74,158,255,.7);background:#141c26}
+
+/* ── STATUS BADGES ── */
+.status-badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 7px;border-radius:9px;border:1px solid transparent;z-index:2;cursor:help}
+.status-badge.status-playable{background:rgba(46,204,113,.18);border-color:rgba(46,204,113,.55);color:#5be08a}
+.status-badge.status-beta{background:rgba(74,158,255,.18);border-color:rgba(74,158,255,.55);color:#7ab4ff}
+.status-badge.status-alpha{background:rgba(255,165,0,.18);border-color:rgba(255,165,0,.55);color:#ffb84d}
+.status-badge.status-pre-alpha{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.65)}
+.status-badge .sb-tip{position:absolute;bottom:calc(100% + 6px);right:0;background:#101010;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:6px 9px;font-size:11px;font-weight:500;letter-spacing:normal;text-transform:none;color:rgba(255,255,255,.85);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.status-badge:hover .sb-tip,.status-badge.show-tip .sb-tip{opacity:1}
 
 #lobby-footer{text-align:center;margin-top:28px;font-size:11px;color:rgba(255,255,255,.3)}
 #dailies-badge{display:inline-block;background:#ffd700;color:#111;font-size:11px;font-weight:800;border-radius:10px;padding:1px 7px;margin-left:6px;vertical-align:middle}
@@ -128,41 +137,49 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   </div>
   <div id="lobby-grid">
     <div class="lobby-tile" onclick="dNav('focusmode.html?mode=crapless')">
+      <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
       <div class="lt-icon">🎲</div>
       <div class="lt-label">CRAPLESS</div>
       <div class="lt-sub">No naturals</div>
     </div>
     <div class="lobby-tile" onclick="dNav('focusmode.html?mode=standard')">
+      <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
       <div class="lt-icon">🎲</div>
       <div class="lt-label">STANDARD</div>
       <div class="lt-sub">7 &amp; 11 win</div>
     </div>
     <div class="lobby-tile" onclick="dNav('sicbo.html')">
+      <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
       <div class="lt-icon">🎰</div>
       <div class="lt-label">SIC-BO</div>
       <div class="lt-sub">Bet on 3 dice</div>
     </div>
     <div class="lobby-tile" onclick="dNav('roulette.html')">
+      <div class="status-badge status-pre-alpha" onclick="toggleBadgeTip(event,this)">Pre-Alpha<span class="sb-tip">Pre-Alpha — very early, incomplete and unstable</span></div>
       <div class="lt-icon">🎡</div>
       <div class="lt-label">ROULETTE</div>
       <div class="lt-sub">Double Zero wheel</div>
     </div>
     <div class="lobby-tile" onclick="dNav('destroyer.html')">
+      <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
       <div class="lt-icon">🚢</div>
       <div class="lt-label">BATTLESHIPS</div>
       <div class="lt-sub">Destroyer - Naval Strike</div>
     </div>
     <div class="lobby-tile" onclick="dNav('uth.html')">
+      <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
       <div class="lt-icon">🃏</div>
       <div class="lt-label">UTH</div>
       <div class="lt-sub">Ultimate Texas Hold'em</div>
     </div>
     <div class="lobby-tile" onclick="dNav('iluvsuits.html')">
+      <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
       <div class="lt-icon">♠️</div>
       <div class="lt-label">I ❤️ SUITS</div>
       <div class="lt-sub">Best Flush Wins</div>
     </div>
     <div class="lobby-tile" onclick="dNav('breakout.html')">
+      <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
       <div class="lt-icon">🃏</div>
       <div class="lt-label">BLACKJACK</div>
       <div class="lt-sub">Breakout Variant</div>
@@ -173,7 +190,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.5.7</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.5.8</div>
 </div>
 
 <script>
@@ -315,6 +332,17 @@ function onOptionsVolumeInput(v){
   if(+v>0&&AudioSettings.isMuted())AudioSettings.setMuted(false);
   refreshOptionsUI();
 }
+// Badges need to work by hover (desktop) AND tap (mobile, no hover) without also
+// triggering the tile's own onclick navigation.
+function toggleBadgeTip(e,el){
+  e.stopPropagation();
+  const wasOpen=el.classList.contains('show-tip');
+  document.querySelectorAll('.status-badge.show-tip').forEach(b=>b.classList.remove('show-tip'));
+  if(!wasOpen)el.classList.add('show-tip');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.status-badge'))document.querySelectorAll('.status-badge.show-tip').forEach(b=>b.classList.remove('show-tip'));
+});
 function showTab(tab){
   _authMode=tab;
   document.getElementById('tab-login').classList.toggle('active',tab==='login');
