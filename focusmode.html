@@ -1572,7 +1572,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.2</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.3</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4261,7 +4261,20 @@ function updateUI(){
     updatePuck3D(puckTarget,puckState);
   }else{
     let puckTarget=null,puckState=null;
-    if(G.phase==='point'){const buyEl=document.getElementById('nb-buy-'+G.point);if(buyEl){puckTarget={topOf:buyEl};puckState='on';}}
+    if(G.phase==='point'){
+      // nb-buy-N always exists in the DOM for every number (buildStrip() creates it
+      // unconditionally) but applyLineModeGating() display:none's it whenever the current
+      // Buy/Place line mode doesn't offer Buy on that number (Limited Buy/Place restricts Buy
+      // to 2/3/4/5/9/10/11/12 only; No Buy/Place Bets removes it everywhere) -- landing on a
+      // hidden, zero-size element is why the puck only worked in Full Buy/Place (Deck: "the
+      // puck in Crapless should work in all three Buy/Place modes"). Falls back to nb-mid-N
+      // (the number's own digit cell, always visible regardless of line mode, sitting directly
+      // below where Buy would be) so the puck lands in the same visual row either way instead
+      // of jumping to a different height depending on which line mode is active.
+      const buyEl=document.getElementById('nb-buy-'+G.point);
+      const anchorEl=(lineModeAllows('buy',G.point)&&buyEl)?buyEl:document.getElementById('nb-mid-'+G.point);
+      if(anchorEl){puckTarget={topOf:anchorEl};puckState='on';}
+    }
     updatePuck3D(puckTarget,puckState);
     const nz=document.getElementById('num-zone');if(nz)nz.classList.toggle('line-off',G.phase==='comeout');
   }
