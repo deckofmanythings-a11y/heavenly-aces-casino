@@ -1804,9 +1804,19 @@ const FELT_LAYOUT=[
 // eating clicks there even with pointer-events:none set).
 const LR_LAYOUT=[
   ['#lr-title-art', 0.774, 2.000,97.032,61.429],
-  ['#bnums-low',  6.20,31.50,27.70,13.00],
-  ['#bnums-high',65.30,31.60,28.50,12.80],
-  ['#dice-zone', 31.742, 0.00,33.806,50.571],
+  // #bnums-low/#bnums-high and #dice-zone were APPROXIMATED off the old art's fractions rather
+  // than measured (flagged at the time as low-risk/cosmetic-only) -- turned out to overlap
+  // #dice-zone by several px, which sizeDiceZone()'s gap-detection reads as "no margin left" and
+  // aggressively shrinks the dice to compensate (Deck: "the dice between Lucky and Roller are
+  // tiny"). Re-measured directly off LuckyRollerTitle.png's alpha channel (row/column profile
+  // scan, same method used elsewhere in this file) -- oval capsules sit at abs px (within the
+  // 752x215 title crop) x:4-254/y:94-158 (left, "2 3 4 5 6") and x:490-740/y:95-158 (right, "8 9
+  // 10 11 12"), converted to %-of-#lucky-roller-container using the title's own stage position
+  // (1226,22). Zero-gap by construction: bnums-low's right edge and bnums-high's left edge both
+  // land exactly on dice-zone's edges (33.548%/64.0%), no overlap.
+  ['#bnums-low',   1.290,28.857,32.258,18.286],
+  ['#bnums-high', 64.000,29.143,32.258,18.000],
+  ['#dice-zone',  33.548, 0.00,30.452,50.571],
   ['low',    1.161,50.571,30.581,48.286],
   ['all',   34.194,50.857,30.323,48.000],
   ['high',  65.548,50.571,33.548,48.286]
