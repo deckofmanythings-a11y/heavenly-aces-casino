@@ -291,6 +291,21 @@
   let livCtx = null, prerollAngle = 0, prerollWheelAngle = 0;
   const PREROLL_BALL_SPEED = -9.5, PREROLL_WHEEL_SPEED = 4.2;
 
+  // The relabel (rewriting which number is drawn at which slot) must never happen at a moment
+  // a player could tie to "the server just told the wheel what to do" -- doing it at the exact
+  // instant beginResolve() runs (right as the network response lands) would be a visible tell:
+  // the numbers would visibly jump on the wheel face at a moment correlated with a real event
+  // the player can perceive (their spin committing). Instead the offset is computed immediately
+  // (cheap, silent, touches no pixels) but the actual texture redraw is deferred to a RANDOM
+  // step well inside the fast outer-track orbit phase -- comfortably before DROP_SPEED is ever
+  // reached (dropStart lands around step ~489 given the fixed preroll speeds; see the resolveStep
+  // model), while the wheel and ball are both still spinning fast with no player-visible event
+  // anywhere near it to anchor the moment to. Unlike the dice (which hide a face relabel inside
+  // chaotic 3D tumbling), the wheel only rotates on one predictable axis, so timing is the only
+  // available cover here -- pick an unpredictable moment, not a chaotic orientation.
+  const RELABEL_STEP_MIN = 90, RELABEL_STEP_MAX = 380;
+  let relabelStep = 0, relabeled = false;
+
   function beginResolve() {
     const baseline = { wheelAngle: prerollWheelAngle, ballAngle: prerollAngle,
       wheelAngVel: PREROLL_WHEEL_SPEED, ballAngVel: PREROLL_BALL_SPEED };
@@ -308,8 +323,11 @@
       wheelAngVel: baseline.wheelAngVel, ballAngVel: baseline.ballAngVel,
       radius: ORBIT_R, height: ORBIT_Y, dropStart: null };
 
+    // Decide the offset now (silent, no rendering) but don't draw it yet -- see the comment
+    // above relabelStep for why the draw itself is deferred to a random later moment.
     labelOffset = offsetForSlot(serverPocket, slot);
-    drawWheelTexture();
+    relabelStep = RELABEL_STEP_MIN + Math.floor(Math.random() * (RELABEL_STEP_MAX - RELABEL_STEP_MIN));
+    relabeled = false;
 
     livCtx = makeResolveCtx(mulberry32(chosenSeed));
     livCtx.onTick = (strength) => playTick(strength);
@@ -319,9 +337,13 @@
   function finishResolve() {
     const finalSlot = restingSlot();
     const displayedPocket = WHEEL_ORDER[(finalSlot - labelOffset + N * 4) % N];
-    if (displayedPocket !== serverPocket) {
-      // live replay drifted from the pre-sim by a step or two -- repair by relabeling again,
-      // exactly like ClocheDice.finishResolve()'s verify-and-repair step.
+    if (!relabeled || displayedPocket !== serverPocket) {
+      // Either the deferred relabel above somehow never fired (shouldn't happen --
+      // RELABEL_STEP_MAX is always well before this point) or the live replay drifted from
+      // the pre-sim by a step or two; repair by relabeling now, exactly like
+      // ClocheDice.finishResolve()'s verify-and-repair step. This late relabel IS visible if
+      // it ever triggers, but the deterministic replay (identical seed/baseline/step count for
+      // both presimulate and the live run) means it provably never should.
       labelOffset = offsetForSlot(serverPocket, finalSlot);
       drawWheelTexture();
     }
@@ -349,6 +371,7 @@
       const debt = Math.min(dt / STEP, 6);
       for (let i = 0; i < debt; i++) {
         resolveStep(livCtx);
+        if (!relabeled && livCtx.step >= relabelStep) { relabeled = true; drawWheelTexture(); }
         if (livCtx.done) { finishResolve(); break; }
       }
       wheelMesh.rotation.y = state.wheelAngle;
