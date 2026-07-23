@@ -946,6 +946,58 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   .chip{width:24px;height:24px;font-size:10px}
   #roll-btn{font-size:20px;padding:6px 10px}
 }
+
+/* ══════════════ PORTRAIT CRAPS (Standard only) ══════════════ */
+#felt-portrait{display:none;flex-direction:column;gap:3px;padding:4px;background:#0b4d33;color:#f3e9d2;font-family:inherit;box-sizing:border-box;width:100%}
+body.portrait-craps #play-area>*:not(#felt-portrait){display:none!important}
+body.portrait-craps #felt-portrait{display:flex}
+#pf-hitstrip{display:flex;gap:4px;align-items:center;justify-content:center;padding:4px 2px}
+#pf-hitstrip .pf-pill{border:1.5px solid #d9a441;border-radius:16px;padding:2px 8px;font-size:11px;letter-spacing:1px;display:flex;gap:4px}
+#pf-hitstrip .pf-pill span{opacity:.45}
+#pf-hitstrip .pf-pill span.hit{opacity:1;color:#3cff8c;text-shadow:0 0 6px rgba(60,255,140,.8)}
+#pf-hitstrip .pf-logo{font-family:Georgia,serif;font-style:italic;color:#e8b93c;font-weight:700;font-size:15px}
+.pf-box{border:2px solid #d9843a;border-radius:6px;background:#0e5b3d}
+#pf-numrow{display:flex;gap:2px}
+#pf-numrow .pf-num{flex:1;padding:10px 2px;text-align:center;font-size:22px;font-weight:800;position:relative;cursor:pointer}
+#pf-numrow .pf-num .pf-num-stk{display:block;font-size:11px;font-weight:400;color:#ffd700;min-height:12px}
+#pf-numrow .pf-num.is-point{background:#134;box-shadow:inset 0 0 0 2px #ffd700}
+#pf-mode-row{display:flex;gap:2px}
+#pf-mode-box{flex:1;padding:8px 6px;font-size:15px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;position:relative}
+#pf-lr-props{display:flex;flex:1;gap:2px}
+#pf-lr-props .pf-lr-prop{flex:1;padding:6px 4px;text-align:center;cursor:pointer;background:#7a1f1f}
+#pf-lr-props .pf-lr-prop.mid{background:#4a1f7a}
+#pf-lr-props .pf-lr-prop .lbl{display:block;font-size:10px;font-weight:700}
+#pf-lr-props .pf-lr-prop .pay{display:block;font-size:11px;color:#ffd700}
+#pf-lr-props .pf-lr-prop .stk{display:block;font-size:11px;min-height:12px;color:#7ee87e}
+#pf-mode-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:#08321f;border:2px solid #d9843a;border-radius:6px;overflow:hidden}
+#pf-mode-dropdown.open{display:block}
+#pf-mode-dropdown .pf-opt{padding:8px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.1)}
+#pf-mode-dropdown .pf-opt:hover{background:rgba(255,255,255,.08)}
+#pf-status-list{display:flex;flex-direction:column;font-size:11px;padding:2px 4px}
+#pf-status-list .pf-status-row{display:flex;justify-content:space-between;padding:1px 2px;opacity:.85}
+#pf-lower{display:flex;flex-direction:column;gap:2px}
+.pf-cd-row{display:flex;gap:2px}
+.pf-cd-row>div{flex:1;padding:16px 4px;text-align:center;font-size:22px;font-weight:800}
+#pf-c-box{color:#f3e9d2}#pf-dc-box{color:#e14040}
+#pf-field-box{padding:8px;text-align:center}
+#pf-field-box .ft{font-size:26px;font-weight:800}
+#pf-field-box .fp{font-size:11px;display:flex;justify-content:space-between;padding-top:2px}
+.pf-lodp-row,.pf-plp-row{display:flex}
+.pf-lodp-row>div,.pf-plp-row>div{flex:1;padding:10px 6px}
+.pf-lodp-row .lbl,.pf-plp-row .lbl{font-size:10px;opacity:.8}
+.pf-lodp-row .big{color:#e14040;font-size:24px;font-weight:800;text-align:right}
+.pf-plp-row .big{font-size:24px;font-weight:800;text-align:right}
+#pf-panel-horn,#pf-panel-hard,#pf-panel-hop{display:flex;flex-direction:column;gap:2px}
+.pf-horn-row{display:flex;gap:2px}
+.pf-horn-row>div{flex:1;padding:8px 4px;text-align:center;cursor:pointer}
+.pf-horn-row .lbl{display:block;font-size:11px}
+.pf-horn-row .pay{display:block;font-size:10px;color:#ffd700}
+.pf-horn-row .stk{display:block;font-size:11px;min-height:12px;color:#7ee87e}
+.pf-hard-cell{padding:10px 4px;text-align:center;cursor:pointer}
+.pf-hard-cell .stk{display:block;font-size:11px;min-height:12px;color:#7ee87e}
+#pf-hop-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.pf-hop-cell{padding:5px 3px;text-align:center;font-size:11px;cursor:pointer}
+.pf-hop-cell .stk{display:block;font-size:10px;min-height:11px;color:#7ee87e}
 </style>
 </head>
 <body>
@@ -1281,6 +1333,91 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <div id="fm-art-layer"></div>
     </div>
 
+    <!-- PORTRAIT CRAPS (Standard only) -->
+    <div id="felt-portrait">
+      <div id="pf-hitstrip" class="pf-box">
+        <div class="pf-pill" id="pf-pill-low"></div>
+        <div class="pf-logo">Lucky Roller</div>
+        <div class="pf-pill" id="pf-pill-high"></div>
+      </div>
+
+      <div id="pf-numrow"></div>
+
+      <div id="pf-mode-row">
+        <div id="pf-mode-box" class="pf-box" onclick="pfToggleDropdown()">
+          <span id="pf-mode-label">Pass/Come</span>
+          <div id="pf-mode-dropdown"></div>
+        </div>
+        <div id="pf-lr-props" style="display:none">
+          <div class="pf-lr-prop" onclick="pfLrBet('low')" oncontextmenu="event.preventDefault();bonusRemove('low')">
+            <span class="lbl">Low Rolls</span><span class="pay">31 for 1</span><span class="stk" id="pf-lr-stk-low"></span>
+          </div>
+          <div class="pf-lr-prop mid" onclick="pfLrBet('all')" oncontextmenu="event.preventDefault();bonusRemove('all')">
+            <span class="lbl">Roll'em All</span><span class="pay">156 for 1</span><span class="stk" id="pf-lr-stk-all"></span>
+          </div>
+          <div class="pf-lr-prop" onclick="pfLrBet('high')" oncontextmenu="event.preventDefault();bonusRemove('high')">
+            <span class="lbl">High Rolls</span><span class="pay">31 for 1</span><span class="stk" id="pf-lr-stk-high"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="pf-status-list" class="pf-box"></div>
+
+      <div id="pf-lower">
+        <!-- Passline / Place / Buy / Lay shared panel -->
+        <div id="pf-panel-shared">
+          <div class="pf-cd-row">
+            <div class="pf-box" id="pf-c-box" onclick="pfComeBet('come',event)" oncontextmenu="pfComeBet('come',event)">C<span class="pf-num-stk" id="pf-c-stk"></span></div>
+            <div class="pf-box" id="pf-dc-box" onclick="pfComeBet('dc',event)" oncontextmenu="pfComeBet('dc',event)">DC<span class="pf-num-stk" id="pf-dc-stk"></span></div>
+          </div>
+          <div class="pf-box" id="pf-field-box" onclick="placeBet('field')" oncontextmenu="event.preventDefault();removeBet('field')">
+            <div class="ft">Field <span id="pf-field-stk"></span></div>
+            <div class="fp"><span>2:1&nbsp;&nbsp;&nbsp;3,4,9,10,11</span><span>3:1&nbsp;&nbsp;Pays 1:1</span></div>
+          </div>
+          <div class="pf-box pf-lodp-row">
+            <div><span class="lbl">Lay Odds</span></div>
+            <div class="big" id="pf-dp-box" onclick="placeBet('dp')" oncontextmenu="event.preventDefault();removeBet('dp')">DP <span id="pf-dp-stk"></span></div>
+          </div>
+          <div class="pf-box pf-plp-row">
+            <div><span class="lbl">Place Odds</span></div>
+            <div class="big" id="pf-p-box" onclick="placeBet('pass')" oncontextmenu="event.preventDefault();removeBet('pass')">P <span id="pf-p-stk"></span></div>
+          </div>
+        </div>
+
+        <!-- Horn -->
+        <div id="pf-panel-horn" style="display:none">
+          <div class="pf-horn-row">
+            <div class="pf-box" onclick="placeBet('aces')" oncontextmenu="event.preventDefault();removeBet('aces')"><span class="lbl">2</span><span class="pay">31:1</span><span class="stk" id="pf-stk-aces"></span></div>
+            <div class="pf-box" onclick="placeBet('ace2')" oncontextmenu="event.preventDefault();removeBet('ace2')"><span class="lbl">3</span><span class="pay">16:1</span><span class="stk" id="pf-stk-ace2"></span></div>
+          </div>
+          <div class="pf-horn-row">
+            <div class="pf-box" onclick="placeBet('midnight')" oncontextmenu="event.preventDefault();removeBet('midnight')"><span class="lbl">12</span><span class="pay">31:1</span><span class="stk" id="pf-stk-midnight"></span></div>
+            <div class="pf-box" onclick="placeBet('yo')" oncontextmenu="event.preventDefault();removeBet('yo')"><span class="lbl">11</span><span class="pay">16:1</span><span class="stk" id="pf-stk-yo"></span></div>
+          </div>
+          <div class="pf-box pf-horn-row">
+            <div onclick="placeBet('horn')" oncontextmenu="event.preventDefault();removeBet('horn')"><span class="lbl">Horn Bet</span><span class="stk" id="pf-stk-horn"></span></div>
+          </div>
+          <div class="pf-horn-row">
+            <div class="pf-box" onclick="placeBet('any7')" oncontextmenu="event.preventDefault();removeBet('any7')"><span class="lbl">Any Seven</span><span class="pay">5:1</span><span class="stk" id="pf-stk-any7"></span></div>
+            <div class="pf-box" onclick="placeBet('anyCraps')" oncontextmenu="event.preventDefault();removeBet('anyCraps')"><span class="lbl">Any Craps</span><span class="pay">8:1</span><span class="stk" id="pf-stk-anyCraps"></span></div>
+          </div>
+        </div>
+
+        <!-- Hard Ways -->
+        <div id="pf-panel-hard" style="display:none">
+          <div class="pf-box pf-hard-cell" onclick="placeBet('hard4')" oncontextmenu="event.preventDefault();removeBet('hard4')">Hard 4 (8 for 1)<span class="stk" id="pf-stk-hard4"></span></div>
+          <div class="pf-box pf-hard-cell" onclick="placeBet('hard6')" oncontextmenu="event.preventDefault();removeBet('hard6')">Hard 6 (10 for 1)<span class="stk" id="pf-stk-hard6"></span></div>
+          <div class="pf-box pf-hard-cell" onclick="placeBet('hard8')" oncontextmenu="event.preventDefault();removeBet('hard8')">Hard 8 (10 for 1)<span class="stk" id="pf-stk-hard8"></span></div>
+          <div class="pf-box pf-hard-cell" onclick="placeBet('hard10')" oncontextmenu="event.preventDefault();removeBet('hard10')">Hard 10 (8 for 1)<span class="stk" id="pf-stk-hard10"></span></div>
+        </div>
+
+        <!-- Hop Bets -->
+        <div id="pf-panel-hop" style="display:none">
+          <div id="pf-hop-grid"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- LEFT COL -->
     <div id="left-col">
       <!-- HARDWAYS MODE -->
@@ -1482,7 +1619,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.155</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.156</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2224,7 +2361,7 @@ function fmtLastWin(b){
   return s+')';
 }
 
-function makeInitialG(){return{bankroll:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000};}
+function makeInitialG(){return{bankroll:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline'};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
 let animating=false,animStart=0,tumbling=false,tumbleStart=0;
@@ -2237,6 +2374,7 @@ function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
 function bActive(){return G.betsOn&&!G.betsOffThisRoll;}
 function comeOddsActive(){return G.betsOn;}
 function dblCost(){let c=0;for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy')))c=r2(c+G.bets[k]);return c;}
+function betTotal(keys){return r2(keys.reduce((s,k)=>r2(s+(G.bets[k]||0)),0));}
 function snap(){const b={};for(const k in G.bets)b[k]=G.bets[k];G.snapshot={bets:b,comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),dcBets:G.dcBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high}};}
 function chkRepeat(){
   if(!G.snapshot){G.canRepeat=false;return;}
@@ -3982,10 +4120,11 @@ function updateUI(){
   if(gmSt)gmSt.disabled=rollBusy||activeGame==='standard';
   const dc=dblCost();document.getElementById('double-btn').disabled=!dc||dc>G.bankroll;
   // Mode totals
-  const hwT=r2((G.bets['hard4']||0)+(G.bets['hard6']||0)+(G.bets['hard8']||0)+(G.bets['hard10']||0));
-  const hopT=r2(Object.keys(HOP_MAP).reduce((s,k)=>r2(s+(G.bets[k]||0)),0));
+  const hwT=betTotal(['hard4','hard6','hard8','hard10']);
+  const hopT=betTotal(Object.keys(HOP_MAP));
   const hwEl=document.getElementById('hw-total');if(hwEl)hwEl.textContent='$'+hwT.toFixed(2);
   const hopEl=document.getElementById('hop-total');if(hopEl)hopEl.textContent='$'+hopT.toFixed(2);
+  if(typeof pfRender==='function')pfRender();
   // Number strip
   ALL_NUMS.forEach(n=>{
     const be=document.getElementById('nb-buy-'+n),pe=document.getElementById('nb-place-'+n);if(!be)return;
@@ -5863,6 +6002,179 @@ applyFocusVisibility();
 // the auto-popup that used to greet a player's first-ever visit is disabled here. Still
 // manually reachable via ?tutorial=1 (see tutorialMaybeShowPopup()) or the debug panel.
 // window.addEventListener('load',tutorialMaybeShowPopup);
+
+// ══════════════ PORTRAIT CRAPS (Standard only) ══════════════
+const PF_NUM_LABEL={4:'4',5:'5',6:'SIX',8:'8',9:'NINE',10:'10'};
+const PF_MODES=[
+  {id:'passline',label:'Pass/Come'},
+  {id:'luckyroller',label:'Lucky Roller',available:()=>G.bonus.open&&!G.bonus.locked},
+  {id:'horn',label:'Horn Bets'},
+  {id:'hardways',label:'Hard Ways'},
+  {id:'hopbets',label:'Hop Bets'},
+  {id:'place',label:'Place Bets'},
+  {id:'buy',label:'Buy Bets'},
+  {id:'lay',label:'Lay Bets'}
+];
+function pfModeAvailable(m){return m.available?m.available():true;}
+function isPortraitCraps(){return window.matchMedia('(orientation: portrait)').matches&&activeGame==='standard';}
+function pfApplyOrientation(){
+  document.body.classList.toggle('portrait-craps',isPortraitCraps());
+  if(isPortraitCraps()){
+    const cur=PF_MODES.find(m=>m.id===G.portraitMode);
+    if(!cur||!pfModeAvailable(cur)){G.portraitMode='passline';}
+    pfRender();
+  }
+}
+window.addEventListener('resize',pfApplyOrientation);
+window.addEventListener('orientationchange',pfApplyOrientation);
+document.addEventListener('DOMContentLoaded',pfApplyOrientation);
+
+function pfToggleDropdown(){
+  const dd=document.getElementById('pf-mode-dropdown');
+  if(dd.classList.contains('open')){dd.classList.remove('open');return;}
+  dd.innerHTML=PF_MODES.filter(pfModeAvailable).map(m=>
+    '<div class="pf-opt" onclick="event.stopPropagation();pfSetMode(\''+m.id+'\')">'+m.label+'</div>'
+  ).join('');
+  dd.classList.add('open');
+}
+document.addEventListener('click',(e)=>{
+  const dd=document.getElementById('pf-mode-dropdown');
+  if(dd&&dd.classList.contains('open')&&!e.target.closest('#pf-mode-box'))dd.classList.remove('open');
+});
+function pfSetMode(id){
+  G.portraitMode=id;
+  const dd=document.getElementById('pf-mode-dropdown');if(dd)dd.classList.remove('open');
+  pfRender();
+}
+function pfLrBet(t){bonusBet(t);}
+function pfComeBet(which,ev){
+  const key=which==='come'?'come':'dc';
+  if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeBet(key);return;}
+  placeBet(key);
+}
+const PF_HORN_KEYS=['horn','aces','ace2','midnight','yo','anyCraps','any7','cande','eleven'];
+function pfNumberTap(n,ev){
+  const mode=G.portraitMode;
+  if(mode==='place'){if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeBet('place'+n);}else placeBet('place'+n);}
+  else if(mode==='buy'){if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeBet('buy'+n);}else placeBetWithCommissionCheck(()=>placeBet('buy'+n));}
+  else if(mode==='lay'){if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeLay(n);}else placeBetWithCommissionCheck(()=>placeLay(n));}
+  // passline/hardways/hopbets/horn: number boxes are display-only (Come/DC travel automatically)
+}
+function pfBuildNumRow(){
+  const row=document.getElementById('pf-numrow');
+  row.innerHTML=ALL_NUMS_STANDARD.map(n=>
+    '<div class="pf-box pf-num" id="pf-num-'+n+'" onclick="pfNumberTap('+n+',event)" oncontextmenu="pfNumberTap('+n+',event)">'+
+      PF_NUM_LABEL[n]+'<span class="pf-num-stk" id="pf-num-stk-'+n+'"></span>'+
+    '</div>'
+  ).join('');
+}
+function pfBuildHopGrid(){
+  const grid=document.getElementById('pf-hop-grid');
+  const HARD_HOPS=['hop11','hop22','hop33','hop44','hop55','hop66'];
+  grid.innerHTML=Object.keys(HOP_MAP).map(k=>{
+    const pay=HARD_HOPS.includes(k)?'31:1':'16:1';
+    const d=HOP_MAP[k];
+    return '<div class="pf-box pf-hop-cell" onclick="placeBet(\''+k+'\')" oncontextmenu="event.preventDefault();removeBet(\''+k+'\')">'+
+      d[0]+'-'+d[1]+' ('+pay+')<span class="stk" id="pf-stk-'+k+'"></span></div>';
+  }).join('');
+}
+let _pfBuilt=false;
+function pfBuildOnce(){
+  if(_pfBuilt)return;_pfBuilt=true;
+  pfBuildNumRow();
+  pfBuildHopGrid();
+}
+function pfRender(){
+  if(!isPortraitCraps())return;
+  pfBuildOnce();
+  const mode=G.portraitMode;
+  document.getElementById('pf-mode-label').textContent=PF_MODES.find(m=>m.id===mode).label;
+
+  // Hit strip (reuses Landscape's Lucky Roller hit tracking)
+  const lowEl=document.getElementById('pf-pill-low'),highEl=document.getElementById('pf-pill-high');
+  lowEl.innerHTML=LOW_NUMS.map(n=>'<span class="'+(G.bonus.lowHit.has(n)?'hit':'')+'">'+n+'</span>').join('');
+  highEl.innerHTML=HIGH_NUMS.map(n=>'<span class="'+(G.bonus.highHit.has(n)?'hit':'')+'">'+n+'</span>').join('');
+
+  // Number row vs Lucky Roller props
+  const showNums=mode!=='luckyroller';
+  document.getElementById('pf-numrow').style.display=showNums?'flex':'none';
+  document.getElementById('pf-lr-props').style.display=showNums?'none':'flex';
+  if(!showNums){
+    document.getElementById('pf-lr-stk-low').textContent=G.bonus.low?fmt(G.bonus.low):'';
+    document.getElementById('pf-lr-stk-all').textContent=G.bonus.all?fmt(G.bonus.all):'';
+    document.getElementById('pf-lr-stk-high').textContent=G.bonus.high?fmt(G.bonus.high):'';
+  }else{
+    const travelModes=(mode==='passline'||mode==='hardways'||mode==='hopbets'||mode==='horn');
+    ALL_NUMS_STANDARD.forEach(n=>{
+      const box=document.getElementById('pf-num-'+n),stk=document.getElementById('pf-num-stk-'+n);
+      box.classList.toggle('is-point',G.phase==='point'&&G.point===n);
+      let amt=0;
+      if(travelModes){
+        const cb=G.comeBets.find(c=>c.num===n),dcb=G.dcBets.find(c=>c.num===n);
+        amt=r2((cb?cb.flat+(cb.odds||0):0)+(dcb?dcb.flat+(dcb.odds||0):0));
+      }else if(mode==='place')amt=G.bets['place'+n]||0;
+      else if(mode==='buy')amt=G.bets['buy'+n]||0;
+      else if(mode==='lay')amt=G.bets['lay'+n]||0;
+      stk.textContent=amt?fmt(amt):'';
+    });
+  }
+
+  // Lower panel swap
+  const sharedModes=(mode==='passline'||mode==='place'||mode==='buy'||mode==='lay');
+  document.getElementById('pf-panel-shared').style.display=sharedModes?'flex':'none';
+  document.getElementById('pf-panel-shared').style.flexDirection='column';
+  document.getElementById('pf-panel-horn').style.display=(mode==='horn')?'flex':'none';
+  document.getElementById('pf-panel-hard').style.display=(mode==='hardways')?'flex':'none';
+  document.getElementById('pf-panel-hop').style.display=(mode==='hopbets')?'flex':'none';
+  if(sharedModes){
+    document.getElementById('pf-c-stk').textContent=G.bets.come?fmt(G.bets.come):'';
+    document.getElementById('pf-dc-stk').textContent=G.bets.dc?fmt(G.bets.dc):'';
+    document.getElementById('pf-field-stk').textContent=G.bets.field?fmt(G.bets.field):'';
+    document.getElementById('pf-dp-stk').textContent=G.bets.dp?fmt(G.bets.dp):'';
+    document.getElementById('pf-p-stk').textContent=G.bets.pass?fmt(G.bets.pass):'';
+  }
+  if(mode==='horn'){
+    ['aces','ace2','midnight','yo','horn','any7','anyCraps'].forEach(k=>{
+      const el=document.getElementById('pf-stk-'+k);if(el)el.textContent=G.bets[k]?fmt(G.bets[k]):'';
+    });
+  }
+  if(mode==='hardways'){
+    ['hard4','hard6','hard8','hard10'].forEach(k=>{
+      const el=document.getElementById('pf-stk-'+k);if(el)el.textContent=G.bets[k]?fmt(G.bets[k]):'';
+    });
+  }
+  if(mode==='hopbets'){
+    Object.keys(HOP_MAP).forEach(k=>{
+      const el=document.getElementById('pf-stk-'+k);if(el)el.textContent=G.bets[k]?fmt(G.bets[k]):'';
+    });
+  }
+
+  // Bet status list
+  const comeTotal=r2(betTotal(['pass','passodds','dp','dpodds'])+
+    G.comeBets.reduce((s,c)=>r2(s+c.flat+(c.odds||0)),0)+
+    G.dcBets.reduce((s,c)=>r2(s+c.flat+(c.odds||0)),0));
+  const lrTotal=r2(G.bonus.low+G.bonus.all+G.bonus.high);
+  const hornTotal=betTotal(PF_HORN_KEYS);
+  const hopTotal=betTotal(Object.keys(HOP_MAP));
+  const hardTotal=betTotal(['hard4','hard6','hard8','hard10']);
+  const placeTotal=betTotal(ALL_NUMS_STANDARD.map(n=>'place'+n));
+  const buyTotal=betTotal(ALL_NUMS_STANDARD.map(n=>'buy'+n));
+  const layTotal=betTotal(ALL_NUMS_STANDARD.map(n=>'lay'+n));
+  const rows=[
+    ['Pass/Come',comeTotal,true],
+    ['Lucky Roller',lrTotal,false],
+    ['Horn',hornTotal,false],
+    ['Hops',hopTotal,false],
+    ['Hard Ways',hardTotal,false],
+    ['Place',placeTotal,false],
+    ['Buy',buyTotal,false],
+    ['Lay',layTotal,false]
+  ];
+  const list=document.getElementById('pf-status-list');
+  list.innerHTML=rows.filter(r=>r[2]||r[1]>0).map(r=>
+    '<div class="pf-status-row"><span>'+r[0]+':</span><span>'+fmt(r[1])+'</span></div>'
+  ).join('');
+}
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
