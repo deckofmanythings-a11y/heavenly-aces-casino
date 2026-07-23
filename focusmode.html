@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Craps — Focus Mode</title>
 <script src="supabase-js.bundle.js?v=1"></script>
+<script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1571,7 +1572,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.1</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.2</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3132,7 +3133,9 @@ function playChipSound(count){
   if(!bucket)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
-  _sfxCache[file].cloneNode().play().catch(()=>{});
+  const chipInst=_sfxCache[file].cloneNode();
+  chipInst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
+  chipInst.play().catch(()=>{});
 }
 // Puck landing -- from Kenney's Casino Audio pack (CC0/public domain,
 // https://kenney.nl/assets/casino-audio). Same cache-and-clone playback pattern as
@@ -3146,6 +3149,7 @@ function playSfx(bucket,pitchJitter){
   const file=bucket[Math.floor(Math.random()*bucket.length)];
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
   const inst=_sfxCache[file].cloneNode();
+  inst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
   // A handful of coin clinks all playing the same 4 samples back-to-back reads as a machine
   // gun rather than a shower -- a slight random pitch shift per instance is enough to break
   // that up without needing more source variants.
@@ -3159,12 +3163,24 @@ function playSfx(bucket,pitchJitter){
 // knock/chime audio (a separate Web Audio module, muted via ClocheDice.setMuted()). Keeps the
 // old 'voicesMuted' localStorage key so an existing muted preference carries forward instead
 // of silently resetting everyone back to unmuted.
-let soundMuted=localStorage.getItem('voicesMuted')==='1';
+// AudioSettings (audio-settings.js) is now the site-wide source of truth, shared with the
+// lobby's Options gear -- this page's own speaker button stays as a convenient in-game
+// shortcut but reads/writes through it instead of keeping a separate, disconnected state.
+// One-time migration: an existing 'voicesMuted' preference from before AudioSettings
+// existed still carries forward instead of silently resetting everyone to unmuted.
+let soundMuted;
+if(window.AudioSettings){
+  soundMuted=AudioSettings.isMuted();
+  if(!soundMuted&&localStorage.getItem('voicesMuted')==='1'){soundMuted=true;AudioSettings.setMuted(true);}
+}else{
+  soundMuted=localStorage.getItem('voicesMuted')==='1';
+}
 function playVoiceSfx(bucket){playSfx(bucket);}
 function toggleMuteVoices(){
   soundMuted=!soundMuted;
   localStorage.setItem('voicesMuted',soundMuted?'1':'0');
-  if(typeof ClocheDice!=='undefined')ClocheDice.setMuted(soundMuted);
+  if(window.AudioSettings)AudioSettings.setMuted(soundMuted);
+  if(typeof ClocheDice!=='undefined'){ClocheDice.setMuted(soundMuted);ClocheDice.setVolume(window.AudioSettings?AudioSettings.effectiveVolume():1);}
   updateMuteVoicesBtn();
 }
 function updateMuteVoicesBtn(){
@@ -6263,6 +6279,7 @@ function pfRender(){
   const faces={};for(const k in DIE_B64)faces[k]='data:image/png;base64,'+DIE_B64[k];
   ClocheDice.init({diceCount:2,dieSize:2.0,faceImages:faces});
   ClocheDice.setMuted(soundMuted);
+  ClocheDice.setVolume(window.AudioSettings?AudioSettings.effectiveVolume():1);
 })();
 </script>
 </body>

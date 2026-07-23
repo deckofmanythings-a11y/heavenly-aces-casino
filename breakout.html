@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Breakout Blackjack</title>
 <script src="supabase-js.bundle.js?v=1"></script>
+<script src="audio-settings.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
@@ -375,7 +376,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.2</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1257,13 +1258,16 @@ function playChipSound(count){
   if(!bucket)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
-  _sfxCache[file].cloneNode().play().catch(()=>{});
+  const chipInst=_sfxCache[file].cloneNode();
+  chipInst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
+  chipInst.play().catch(()=>{});
 }
 function playSfx(bucket,pitchJitter){
   if(!bucket||!bucket.length)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
   const inst=_sfxCache[file].cloneNode();
+  inst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
   if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
   inst.play().catch(()=>{});
 }

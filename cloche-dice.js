@@ -123,6 +123,11 @@
   // same "random notes while the dice tumble" character with zero licensing concerns, and syncs
   // exactly to however long a given roll's preroll+resolving phases actually last.
   let _actx = null, _noteTimer = null, _reverbSend = null, _echoSend = null, _muted = false;
+  // Site-wide volume level (0-1, set via ClocheDice.setVolume() -- see AudioSettings in
+  // audio-settings.js). Distinct from _muted: a caller-driven binary "this specific dice
+  // instance should never make sound" flag, vs. the player's own global volume preference.
+  // 0 behaves identically to _muted (silences via the _ensureAudio() choke point below).
+  let _masterVolume = 1;
   // Deck supplied a reference recording (CrapsRoll.ogg) and asked for the same TYPE OF TONE --
   // not the file itself, same licensing reason the earlier bell-chime version cites: a real
   // recording isn't something to source/reuse, but a synth nailing the same character has zero
@@ -196,7 +201,7 @@
     // Single choke point for every sound this module makes (chime notes, dice knocks, action
     // drums) -- every one of them already does `const ctx = _ensureAudio(); if (!ctx) return;`,
     // so returning null here silently mutes all of them without touching each sound function.
-    if (_muted) return null;
+    if (_muted || _masterVolume <= 0) return null;
     if (!_actx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
@@ -220,7 +225,7 @@
   const KNOCK_GAIN = 0.22;
   function playChimeNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
-    volume = volume == null ? 1 : volume;
+    volume = (volume == null ? 1 : volume) * _masterVolume;
     playMelodyNote(volume);
     playKnockSound(volume);
   }
@@ -266,7 +271,7 @@
   // whatever the current pace is instead of reintroducing gaps.
   function playMelodyNote(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
-    volume = volume == null ? 1 : volume;
+    volume = (volume == null ? 1 : volume) * _masterVolume;
     const t = ctx.currentTime;
     MELODY_VOICES.forEach(v => {
       if (Math.random() < v.prob) _playVoice(v.freq, v.gain, 10, 1066.7, ctx, t, volume);
@@ -277,7 +282,7 @@
   // bandpassed noise click), decaying to -6dB in ~6ms.
   function playKnockSound(volume) {
     const ctx = _ensureAudio(); if (!ctx) return;
-    volume = volume == null ? 1 : volume;
+    volume = (volume == null ? 1 : volume) * _masterVolume;
     const freq = KNOCK_FREQS[Math.floor(Math.random() * KNOCK_FREQS.length)];
     const t = ctx.currentTime;
     const master = ctx.createGain();
@@ -314,7 +319,7 @@
 
   function _playDrumHit(volume, accent) {
     const ctx = _ensureAudio(); if (!ctx) return;
-    volume = volume == null ? 1 : volume;
+    volume = (volume == null ? 1 : volume) * _masterVolume;
     const t = ctx.currentTime;
     const osc = ctx.createOscillator(), g = ctx.createGain();
     osc.type = 'sine';
@@ -1087,7 +1092,11 @@
     // instrument as the dice tumble instead of duplicating the synth or using a different sound.
     playChimeNote: (volume) => playChimeNote(volume),
     setMuted: (m) => { _muted = !!m; },
-    isMuted: () => _muted
+    isMuted: () => _muted,
+    // Site-wide volume level (0-1) -- see the AudioSettings-wiring comment on _masterVolume
+    // above. 0 silences the same way setMuted(true) does.
+    setVolume: (v) => { _masterVolume = Math.max(0, Math.min(1, +v || 0)); },
+    getVolume: () => _masterVolume
   };
 
   global.ClocheDice = ClocheDice;

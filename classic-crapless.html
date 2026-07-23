@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Craps</title>
 <script src="supabase-js.bundle.js?v=1"></script>
+<script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -901,7 +902,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.5.0</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.5.2</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -2361,7 +2362,9 @@ function playChipSound(count){
   if(!bucket)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
-  _sfxCache[file].cloneNode().play().catch(()=>{});
+  const chipInst=_sfxCache[file].cloneNode();
+  chipInst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
+  chipInst.play().catch(()=>{});
 }
 // Puck landing -- from Kenney's Casino Audio pack (CC0/public domain,
 // https://kenney.nl/assets/casino-audio). Same cache-and-clone playback pattern as
@@ -2375,6 +2378,7 @@ function playSfx(bucket,pitchJitter){
   const file=bucket[Math.floor(Math.random()*bucket.length)];
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
   const inst=_sfxCache[file].cloneNode();
+  inst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
   // A handful of coin clinks all playing the same 4 samples back-to-back reads as a machine
   // gun rather than a shower -- a slight random pitch shift per instance is enough to break
   // that up without needing more source variants.
@@ -2388,12 +2392,24 @@ function playSfx(bucket,pitchJitter){
 // knock/chime audio (a separate Web Audio module, muted via ClocheDice.setMuted()). Keeps the
 // old 'voicesMuted' localStorage key so an existing muted preference carries forward instead
 // of silently resetting everyone back to unmuted.
-let soundMuted=localStorage.getItem('voicesMuted')==='1';
+// AudioSettings (audio-settings.js) is now the site-wide source of truth, shared with the
+// lobby's Options gear -- this page's own speaker button stays as a convenient in-game
+// shortcut but reads/writes through it instead of keeping a separate, disconnected state.
+// One-time migration: an existing 'voicesMuted' preference from before AudioSettings
+// existed still carries forward instead of silently resetting everyone to unmuted.
+let soundMuted;
+if(window.AudioSettings){
+  soundMuted=AudioSettings.isMuted();
+  if(!soundMuted&&localStorage.getItem('voicesMuted')==='1'){soundMuted=true;AudioSettings.setMuted(true);}
+}else{
+  soundMuted=localStorage.getItem('voicesMuted')==='1';
+}
 function playVoiceSfx(bucket){playSfx(bucket);}
 function toggleMuteVoices(){
   soundMuted=!soundMuted;
   localStorage.setItem('voicesMuted',soundMuted?'1':'0');
-  if(typeof ClocheDice!=='undefined')ClocheDice.setMuted(soundMuted);
+  if(window.AudioSettings)AudioSettings.setMuted(soundMuted);
+  if(typeof ClocheDice!=='undefined'){ClocheDice.setMuted(soundMuted);ClocheDice.setVolume(window.AudioSettings?AudioSettings.effectiveVolume():1);}
   updateMuteVoicesBtn();
 }
 function updateMuteVoicesBtn(){
@@ -3451,6 +3467,7 @@ async function redeemVoucher(code){
   const faces={};for(const k in DIE_B64)faces[k]='data:image/png;base64,'+DIE_B64[k];
   ClocheDice.init({diceCount:2,dieSize:2.0,faceImages:faces});
   ClocheDice.setMuted(soundMuted);
+  ClocheDice.setVolume(window.AudioSettings?AudioSettings.effectiveVolume():1);
 })();
 </script>
 </body>

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Casino</title>
 <script src="supabase-js.bundle.js?v=1"></script>
+<script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -42,6 +43,22 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #lobby-bankroll{font-size:14px;color:rgba(255,215,0,.85)}
 #logout-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;padding:7px 14px;font-size:14px;cursor:pointer}
 #logout-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+#options-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;width:34px;height:34px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#options-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+
+/* ── OPTIONS MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
+.modal-overlay.hidden{display:none}
+.modal-box{background:#1a1a1a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:22px 20px;width:100%;max-width:340px}
+.modal-title{font-size:20px;font-weight:700;color:#ffd700;margin-bottom:16px}
+.opt-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.opt-label{font-size:15px;color:rgba(255,255,255,.85)}
+.opt-sub{font-size:12px;color:rgba(255,255,255,.4);margin-top:2px}
+#opt-volume{flex:1;accent-color:#ffd700;cursor:pointer}
+.opt-mute-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;width:36px;height:36px;font-size:16px;cursor:pointer;flex-shrink:0}
+.opt-mute-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#ffd700}
+.modal-close-btn{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:7px;color:#fff;font-size:15px;padding:9px;cursor:pointer;margin-top:4px}
+.modal-close-btn:hover{background:rgba(255,255,255,.18)}
 
 #lobby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;max-width:720px;width:100%;margin:0 auto}
 .lobby-tile{background:#161616;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
@@ -88,7 +105,25 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
         <div id="lobby-username"></div>
         <div id="lobby-bankroll"></div>
       </div>
+      <button id="options-btn" onclick="openOptionsModal()" title="Options">⚙️</button>
       <button id="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="modal-options" onclick="if(event.target===this)closeOptionsModal()">
+    <div class="modal-box">
+      <div class="modal-title">⚙️ Options</div>
+      <div class="opt-row">
+        <div>
+          <div class="opt-label">Sound Volume</div>
+          <div class="opt-sub">Applies to every game</div>
+        </div>
+      </div>
+      <div class="opt-row">
+        <button class="opt-mute-btn" id="opt-mute-btn" onclick="toggleOptionsMute()">🔊</button>
+        <input type="range" id="opt-volume" min="0" max="100" step="1" oninput="onOptionsVolumeInput(this.value)">
+      </div>
+      <button class="modal-close-btn" onclick="closeOptionsModal()">Close</button>
     </div>
   </div>
   <div id="lobby-grid">
@@ -133,7 +168,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.5.1</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.5.2</div>
 </div>
 
 <script>
@@ -244,6 +279,36 @@ function logout(){
   document.getElementById('auth-form-wrap').style.display='block';
   document.getElementById('auth-username').value='';
   document.getElementById('auth-password').value='';
+}
+
+// ── OPTIONS (audio-settings.js is the site-wide store, shared with every game's own
+// sound playback -- see the AudioSettings-wiring comments in uth.html/focusmode.html/etc) ──
+function refreshOptionsUI(){
+  const muted=window.AudioSettings?AudioSettings.isMuted():false;
+  const vol=window.AudioSettings?AudioSettings.getVolume():1;
+  document.getElementById('opt-volume').value=Math.round(vol*100);
+  const btn=document.getElementById('opt-mute-btn');
+  btn.textContent=muted?'🔇':'🔊';
+  btn.classList.toggle('active',muted);
+  btn.title=muted?'Unmute':'Mute';
+}
+function openOptionsModal(){
+  refreshOptionsUI();
+  document.getElementById('modal-options').classList.remove('hidden');
+}
+function closeOptionsModal(){document.getElementById('modal-options').classList.add('hidden');}
+function toggleOptionsMute(){
+  if(!window.AudioSettings)return;
+  AudioSettings.setMuted(!AudioSettings.isMuted());
+  refreshOptionsUI();
+}
+function onOptionsVolumeInput(v){
+  if(!window.AudioSettings)return;
+  AudioSettings.setVolume((+v||0)/100);
+  // Raising the slider off zero while muted should audibly take effect immediately,
+  // not silently stay muted until a separate unmute click.
+  if(+v>0&&AudioSettings.isMuted())AudioSettings.setMuted(false);
+  refreshOptionsUI();
 }
 function showTab(tab){
   _authMode=tab;
