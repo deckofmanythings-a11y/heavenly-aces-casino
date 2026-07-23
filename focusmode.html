@@ -855,12 +855,25 @@ body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:calc(va
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
    the felt's own bottom edge instead of overlaid on top of the art. */
 body.felt-mode #bottom-section{position:absolute;height:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
-/* Lucky Roller art */
-body.felt-mode #felt-stage #lucky-roller{background:url('lucky-roller.png') center/100% 100% no-repeat;border:none;padding:0}
+/* Lucky Roller art -- Deck's new cut element set: title/ovals and the three bet boxes are now
+   separate images (LuckyRollerTitle.png + Low/RollEmAll/HighRollsBox.png) instead of one
+   baked-together background, positioned via LR_LAYOUT (see enterFeltMode()). */
+#lr-title-art{display:none}
+body.felt-mode #felt-stage #lucky-roller{background:transparent;border:none;padding:0}
 body.felt-mode #felt-stage #lucky-roller>*:not(.felt-lr){display:none!important}
 body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
+body.felt-mode #felt-stage #lr-title-art.felt-lr{display:block;background:url('LuckyRollerTitle.png') center/100% 100% no-repeat;pointer-events:none}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:transparent;border:none;width:100%;height:100%;border-radius:10px}
+body.felt-mode #felt-stage #lucky-roller #bbonus-low{background:url('LowRollsBox.png') center/100% 100% no-repeat}
+body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar{background:url('RollEmAllBox.png') center/100% 100% no-repeat}
+body.felt-mode #felt-stage #lucky-roller #bbonus-high{background:url('HighRollsBox.png') center/100% 100% no-repeat}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{background:rgba(255,255,255,.10)}
+/* Hover-state override above forces background:transparent on :hover elsewhere in this file
+   (the "no hover highlighting" block) -- re-assert each box's own image so it doesn't vanish
+   on hover; higher specificity (id+:hover) wins over that rule's class+:hover selector. */
+body.felt-mode #felt-stage #lucky-roller #bbonus-low:hover{background:url('LowRollsBox.png') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar:hover{background:url('RollEmAllBox.png') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-high:hover{background:url('HighRollsBox.png') center/100% 100% no-repeat!important}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{}
 body.felt-mode #felt-stage #lucky-roller .lr-header,body.felt-mode #felt-stage #lucky-roller .lr-note,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{display:none!important}
@@ -1238,6 +1251,9 @@ body.portrait-craps #felt-portrait{display:flex}
 
     <!-- Lucky Roller -->
     <div id="lucky-roller">
+      <!-- Title/oval art (felt mode only -- hidden outside felt mode via #lucky-roller>*:not(.felt-lr),
+           positioned/shown by LR_LAYOUT + .felt-lr when felt mode is entered) -->
+      <div id="lr-title-art" style="pointer-events:none"></div>
       <!-- Three bet cells capped at 5/10 column widths of the number strip -->
       <div style="display:flex;gap:4px;flex-shrink:0;align-self:stretch">
         <!-- Low Rolls -->
@@ -1690,7 +1706,11 @@ const FELT_LAYOUT=[
   // a static 3-row button grid instead of a 1-row collapsed dropdown, so the box needs more
   // vertical room for the same content that used to fit collapsed).
   ['#left-col-header', 0.40, 0.70,12.60,15.50,null],
-  ['#lucky-roller',   39.20, 0.30,21.60,18.00,null],
+  // Recalibrated for Deck's new cut Lucky Roller art (LuckyRollerTitle.png + Low/RollEmAll/
+  // HighRollsBox.png), same master template/canvas as the old art -- box is the union bounding
+  // box of the title art + the three bet boxes, measured directly off the crop tool's exported
+  // stage coordinates (x:1220,y:15,w:775,h:350 on the 3200x1800 canvas).
+  ['#lucky-roller',   38.125, 0.833,24.219,19.444,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -1757,15 +1777,20 @@ const FELT_LAYOUT=[
   ['@hop46',         25.563,79.722, 8.813, 6.222,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
+// Recalibrated for Deck's new cut Lucky Roller art -- computed directly from the crop tool's
+// exported stage coordinates (all on the same 3200x1800 canvas as #lucky-roller's own box
+// above), not eyeballed. low/all/high are the three bet box images now (own background each,
+// see the #bbonus-low/#bbonus-all-bar/#bbonus-high CSS); '#lr-title-art' is the new title+oval
+// art layer (LuckyRollerTitle.png), added as its own element since title and boxes are now
+// separate images instead of one baked-together background.
 const LR_LAYOUT=[
-  // Measured directly from Deck's marked reference image, exact percentages of the Lucky
-  // Roller region itself, not a computed/estimated value.
-  ['low',    5.440,51.111,27.778,39.506],
-  ['all',   35.966,51.111,27.778,39.506],
-  ['high',  66.638,51.111,27.778,39.506],
+  ['low',    1.161,50.571,30.581,48.286],
+  ['all',   34.194,50.857,30.323,48.000],
+  ['high',  65.548,50.571,33.548,48.286],
+  ['#lr-title-art', 0.774, 2.000,97.032,61.429],
   ['#bnums-low',  6.20,31.50,27.70,13.00],
   ['#bnums-high',65.30,31.60,28.50,12.80],
-  ['#dice-zone', 34.50, 1.00,31.00,49.00]
+  ['#dice-zone', 31.742, 0.00,33.806,50.571]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
@@ -4392,7 +4417,13 @@ const FM_ART=[
   {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:898, w:1368,h:208, mode:'standard'},
   {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1106,w:1368,h:277, mode:'standard'},
   {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1383,w:1368,h:169, mode:'standard'},
-  {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1552,w:1368,h:208},
+  {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1552,w:1368,h:208, mode:'standard'},
+  // Crapless-only refresh (Deck's new cut felt-element set, PassLineV2.png) -- native aspect
+  // preserved at the shared 1368 column width (1376x227 native -> 226 tall) to avoid the
+  // stretching bug flagged elsewhere in this file; y recomputed below alongside come-crapless/
+  // field-crapless so the three still zero-gap stack with pass-crapless's bottom anchored to
+  // the old bottom edge (1552+208=1760, same as #bottom-section alignment).
+  {id:'pass-crapless', img:'PassLineV2.png',   group:'pass',      x:1813,y:1534,w:1368,h:226, mode:'crapless'},
   // Adjacent to the number line's right edge with no gap (Deck: "should be adjacent to the
   // number line with no space in-between") -- x = NUMLINE_ART.x+NUMLINE_ART.w (2908), y matches
   // the number line's own (now y:405) top.
@@ -4403,8 +4434,11 @@ const FM_ART=[
   // rests directly on top of Field's new position (1067+208=1275). Same x/w as Pass Line --
   // the crapless stack stays centered under the same column. Field's art also swaps to the
   // "pays double" version since crapless pays 2x on both 2 and 12 (no triple-pay 12 here).
-  {id:'come-crapless',  img:'ComeLine.png',        group:'come',  x:1813,y:1067,w:1368,h:208, mode:'crapless'},
-  {id:'field-crapless', img:'Field_PaysDouble.png',group:'field', x:1813,y:1275,w:1368,h:277, mode:'crapless'},
+  // Deck's new cut felt-element set (ComeLineV2/FieldPaysDoubleV2/PassLineV2) -- each kept at
+  // native aspect ratio at the shared 1368 column width to avoid stretching, still zero-gap
+  // stacked with pass-crapless's bottom anchored to the old 1760 bottom edge.
+  {id:'come-crapless',  img:'ComeLineV2.png',        group:'come',  x:1813,y:1058,w:1368,h:197, mode:'crapless'},
+  {id:'field-crapless', img:'FieldPaysDoubleV2.png', group:'field', x:1813,y:1255,w:1368,h:279, mode:'crapless'},
   // Hardways/SEVEN/Prop Bets/Any Craps ('hw' tab only -- HopHardWays/HopBets on the 'hop' tab
   // are a separate physical slot with no headroom to spare, so they're untouched here):
   // - propbets/bigred/anycraps x centered under Hardways (Hardways center = 8+1125/2 = 570.5;
@@ -4435,24 +4469,29 @@ const FM_ART=[
   // bottom edge exactly (324+393=717) instead of sharing Hard Ways' old y -- it's a
   // taller asset (466 vs 393px) so matching bottoms instead of tops is what makes the
   // gold bet-cell boxes line up when switching between the 'hw' and 'hop' tabs.
-  {id:'hardways',   img:'HardWays.png',       group:'hardways', x:8,   y:324, w:1125,h:393, tab:'hw'},
-  {id:'hopbets',    img:'HopBets.png',        group:'hopbets',  x:132, y:861, w:981, h:710, tab:'hop'},
-  {id:'hophardways',img:'HopHardWays.png',    group:'hopbets',  x:8,   y:251, w:1125,h:466, tab:'hop'},
+  // Deck's new cut felt-element set -- native sizes are within a few px of the old measured
+  // boxes (same master template/canvas as the old art), used as-is rather than stretched to
+  // the old exact w/h.
+  {id:'hardways',   img:'HardWaysV2.png',       group:'hardways', x:8,   y:324, w:1133,h:395, tab:'hw'},
+  {id:'hopbets',    img:'HopBetsV2.png',        group:'hopbets',  x:132, y:861, w:988, h:718, tab:'hop'},
+  {id:'hophardways',img:'HoppingHardWaysV2.png',group:'hopbets',  x:8,   y:251, w:1133,h:468, tab:'hop'},
   // Any Seven pushed down until its bottom is adjacent (zero-gap) to the TOP of the
   // whole Aces/Ace2/Horn/Midnight/Yo pill cluster (Deck: "that whole area is called
   // the Horn Bet") -- @aces is the highest element in that cluster at its new position
   // (1151), not @horn specifically. Aces/Ace2/Horn/Midnight/Yo/Any Craps all shifted
   // down 167px together (Deck: "40px space between the bottom of the Any Craps and the
   // edge of the felt"), preserving their existing internal gaps.
-  {id:'bigred',     img:'BigRed.png',         group:'seven', x:114, y:933, w:913, h:218, tab:'hw'},
-  // Shifted down 167px to catch up with Horn/Aces/Ace2/Midnight/Yo (Deck: "PropBets.png
-  // contains Horn, Midnight, and Yo; that is the element I asked you to move" -- those
-  // hit-regions moved with the earlier "Horn Bet" instruction but the backdrop image
-  // itself was never brought along). New bottom (844+698=1542) is now flush with Any
-  // Craps' top -- zero gap, per Deck: "the top edge of AnyCraps and the bottom edge of
-  // PropBets need to be adjacent with no space between them."
-  {id:'propbets',   img:'PropBets.png',       group:'props', x:114, y:844, w:913, h:698, tab:'hw'},
-  {id:'anycraps',   img:'AnyCraps.png',       group:'anycraps', x:114, y:1542,w:913, h:218, tab:'hw'},
+  // Deck's new cut felt-element set combines Seven/Horn Bet/Any Craps into ONE image
+  // (OneRollBetsV2.png) instead of three separate files -- replaces bigred/propbets/anycraps
+  // together at their old combined union box (x:114,w:913, y:844-1760), native aspect
+  // preserved at w=913 (921x919 native -> 910 tall), bottom-anchored to the old 1760 edge
+  // (#bottom-section alignment) same as before.
+  // NOTE: deliberately no `group` here (was 3 separate groups: seven/anycraps/props) -- one
+  // fused image can't independently hide just Any 7, just Any Craps, or just Horn/Props
+  // anymore. It always shows on the 'hw' tab now; the real bet click-targets (@any7/@anyCraps/
+  // @horn/etc.) still individually show/hide via their own Focus Settings toggles same as
+  // before, only this backdrop art lost that granularity. Flag to Deck if that's a problem.
+  {id:'onerollbets',img:'OneRollBetsV2.png',  x:114, y:850, w:913, h:910, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595},
   // Crapless number line: one combined image per configuration (Deck: "there are three
   // versions. They are NOT meant to stack on one another, just wholesale replace the entire
