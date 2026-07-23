@@ -416,7 +416,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.3</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.4</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1283,6 +1283,13 @@ function finishRound(data){
   if(data.payout>0){
     const bigWin=(data.payout/totalWagered)>=7;
     WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
+    // Watchdog: resetToBetScreen only ever runs from WinnerModal's onClose here --
+    // if that callback is ever skipped (a missed tap, a race with another action, any
+    // future bug in the shared modal), phase:'done' sticks forever and every bet spot
+    // silently no-ops (exactly the "soft locked, can't bet, Repeat does nothing"
+    // report). WinnerModal's own auto-close fires at 3000ms, so 8000ms leaves ample
+    // margin for the normal path while still guaranteeing recovery from a stuck one.
+    setTimeout(()=>{ if(G.phase==='done')resetToBetScreen(); },8000);
   }else{
     setTimeout(resetToBetScreen,3500);
   }
