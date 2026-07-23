@@ -1272,6 +1272,16 @@ body.portrait-craps #felt-portrait{display:flex}
       </div>
     </div>
 
+    <!-- Off-puck anchor for Crapless (Deck: "wire up the OFF puck to live smack dab in the
+         middle of the space between Lucky Roller and the upper right info box") -- Standard's
+         off-anchor (puck-off-dc) is nested inside its Don't Come waiting box and positioned
+         relative to that parent; Crapless has no equivalent per-bet container to nest inside,
+         so this is a standalone marker positioned directly via FELT_LAYOUT like every other
+         felt element instead. Zero-size on purpose -- updatePuck3D()'s plain-anchor mode
+         centers the puck on the target's own center, and a 0x0 box's center is just its own
+         left/top position, so width/height don't need to be anything but 0. -->
+    <div id="puck-off-crapless" class="puck-anchor" style="visibility:hidden;pointer-events:none"></div>
+
     <!-- Lucky Roller -->
     <div id="lucky-roller">
       <!-- Title/oval art (felt mode only -- hidden outside felt mode via #lucky-roller>*:not(.felt-lr),
@@ -1572,7 +1582,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.3</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.4</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1738,6 +1748,12 @@ const FELT_LAYOUT=[
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
   ['#info-panel',     82.50, 0.70,17.00,17.00,null],
+  // Crapless's OFF-puck anchor (Deck: "smack dab in the middle of the space between Lucky
+  // Roller and the upper right info box") -- x is the midpoint of #lucky-roller's right edge
+  // (38.125+24.219=62.344) and #info-panel's left edge (82.50): (62.344+82.50)/2=72.422. y is
+  // the average of both boxes' own vertical centers (10.555 and 9.20): 9.878. Zero-size, see
+  // the HTML comment on #puck-off-crapless for why.
+  ['#puck-off-crapless', 72.422, 9.878, 0, 0, null],
   // #bottom-section is deliberately NOT in this list -- it no longer gets reparented
   // into #felt-stage/positioned as % of the felt art. It now lives in #play-area
   // instead, sized/positioned directly in sizeFeltStage() so it sits flush below the
@@ -4251,9 +4267,10 @@ function updateUI(){
   // Crapless equivalent -- Crapless has no Lay row at all). Crapless instead lands the puck
   // via topOf its Buy Bet area (Deck: "in line with the center of the BUY bet area of the
   // point number and the bottom edge of the puck just touching the top of the BUY bet box").
-  // Neither mode has a Crapless-side "off" anchor (no Don't Come waiting box in Crapless, see
-  // buildStrip()), so Crapless keeps the border-only off indicator from before -- the puck
-  // only appears once a point is set, and hides again (border returns) at comeout.
+  // Crapless's OFF anchor: Standard's (puck-off-dc) is nested inside its Don't Come waiting
+  // box, which Crapless has no equivalent of -- instead uses the standalone #puck-off-crapless
+  // marker (Deck: "smack dab in the middle of the space between Lucky Roller and the upper
+  // right info box"), plain-anchor mode so the puck centers directly on it.
   if(activeGame==='standard'){
     let puckTarget=null,puckState=null;
     if(G.phase==='point'){const layEl=document.getElementById('nb-lay-'+G.point);if(layEl)puckTarget={cornerOf:layEl};puckState='on';}
@@ -4274,6 +4291,8 @@ function updateUI(){
       const buyEl=document.getElementById('nb-buy-'+G.point);
       const anchorEl=(lineModeAllows('buy',G.point)&&buyEl)?buyEl:document.getElementById('nb-mid-'+G.point);
       if(anchorEl){puckTarget={topOf:anchorEl};puckState='on';}
+    }else if(G.phase==='comeout'){
+      puckTarget=document.getElementById('puck-off-crapless');puckState='off';
     }
     updatePuck3D(puckTarget,puckState);
     const nz=document.getElementById('num-zone');if(nz)nz.classList.toggle('line-off',G.phase==='comeout');
