@@ -128,6 +128,31 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .ins-btn.yes{background:#c8a200;color:#111}
 .ins-btn.no{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3)}
 
+/* ── SHOE / DISCARD TRAY -- landscape only (there's no room for this in portrait,
+   per Deck's ask). Real, server-tracked depletion (roll-breakout's ShoeState),
+   not decorative -- shoeRemaining/shoeTotal come back on every action response.
+   Plain CSS-drawn trays in the open felt above the dealer hand, since there's no
+   baked art for this. Each tray shows a stack of card-back.png images (count scales
+   with the live fraction) plus a precise "N/312" readout. */
+#shoe-tray,#discard-tray{position:absolute;top:1.5%;width:13%;height:23%;border:1.5px solid rgba(255,215,0,.35);border-radius:8px;background:rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:0.8cqh;overflow:hidden}
+#shoe-tray{left:2.5%}
+#discard-tray{left:16.5%}
+.tray-label{position:absolute;top:0.5cqh;left:0;right:0;text-align:center;font-size:1.15cqh;color:rgba(255,215,0,.75);font-weight:800;letter-spacing:.05em;text-transform:uppercase;z-index:2}
+.tray-stack{position:relative;width:60%;height:70%;margin-top:2.2cqh}
+.tray-stack img{position:absolute;left:0;width:100%;border-radius:0.3cqh;box-shadow:0 1px 3px rgba(0,0,0,.6)}
+.tray-count{position:absolute;bottom:0.4cqh;left:0;right:0;text-align:center;font-size:1.15cqh;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.9);z-index:2}
+
+/* ── CUT-THE-DECK MODAL -- shown whenever the server refuses to deal with
+   needsCut:true (a brand-new player, or the shoe hit its cut-card penetration
+   point / safety reserve). Player clicks anywhere along the horizontal strip to
+   set where the plastic cut card goes; that position becomes the fraction sent to
+   the 'cut' action. ── */
+#modal-cut .modal-box{max-width:520px}
+#cut-strip{position:relative;height:70px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);border:1px solid rgba(255,255,255,.2);border-radius:6px;margin:14px 0 10px;cursor:pointer;overflow:hidden}
+#cut-strip-fill{position:absolute;inset:0;background:repeating-linear-gradient(90deg,#3a3a3a 0 3px,#2c2c2c 3px 6px);width:100%}
+#cut-marker{position:absolute;top:-6px;bottom:-6px;width:4px;background:#ff3b3b;box-shadow:0 0 6px rgba(255,59,59,.8);left:75%;pointer-events:none;transition:left .05s linear}
+#cut-pct{text-align:center;font-size:20px;font-weight:800;color:#ffd700;margin-bottom:4px}
+
 /* Contract-bet lock badge -- ported wholesale from craps/UTH chip-lock convention */
 .chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
 
@@ -266,6 +291,8 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
 
   #table-area{position:absolute;inset:0;padding:0;padding-top:18dvh;padding-bottom:21.31dvh;z-index:1}
   #table-panel{background-image:url('breakoutblackjack_bg_port.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
+  /* No room for the shoe/discard trays in portrait -- landscape only, per Deck. */
+  #shoe-tray,#discard-tray{display:none}
 
   #dealer-region{left:68.267%;top:49.261%;width:28.267%;height:12.069%;padding-top:1cqh}
   #player-region{left:68.533%;top:62.562%;width:28.267%;height:13.054%;padding-top:1cqh}
@@ -355,6 +382,19 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
       <button class="modal-btn cancel" onclick="closeLogModal()" style="margin-top:8px">Close</button>
     </div>
   </div>
+  <!-- CUT THE DECK -- shown whenever the server refuses to deal with needsCut:true. -->
+  <div class="modal-overlay hidden" id="modal-cut">
+    <div class="modal-box dark" style="text-align:center">
+      <div class="modal-title">Cut the Deck</div>
+      <div class="modal-sub">Fresh 6-deck shoe. Tap anywhere along the strip to set the cut card.</div>
+      <div id="cut-pct">75%</div>
+      <div id="cut-strip" onclick="cutStripClick(event)">
+        <div id="cut-strip-fill"></div>
+        <div id="cut-marker"></div>
+      </div>
+      <button class="modal-submit" id="cut-confirm-btn" onclick="confirmCut()">Cut Here</button>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="modal-progressive">
     <div class="modal-box dark" style="max-height:80vh;overflow-y:auto">
       <div class="modal-title" style="text-align:center">💡 The Light</div>
@@ -376,7 +416,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.2</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.5.3</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -409,6 +449,10 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <!-- TABLE AREA / FELT -->
   <div id="table-area">
     <div id="table-panel">
+
+      <!-- SHOE / DISCARD -- landscape only, real server-tracked depletion. -->
+      <div id="shoe-tray"><span class="tray-label">Shoe</span><div class="tray-stack" id="shoe-stack"></div><span class="tray-count" id="shoe-count">–/–</span></div>
+      <div id="discard-tray"><span class="tray-label">Discard</span><div class="tray-stack" id="discard-stack"></div><span class="tray-count" id="discard-count">–</span></div>
 
       <div class="card-region" id="dealer-region">
         <div class="card-row" id="dealer-row"></div>
@@ -582,6 +626,8 @@ function makeInitialG(){
     cardEls:null,
     locked:{progressive:false},
     progressivePool:1000, // shown before the first deal/roll response arrives with a live value
+    shoeTotal:312,shoeRemaining:0, // real server-tracked shoe state -- 0 remaining reads as "needs a cut" until the first action response arrives
+    pendingCutFraction:0.75,
   };
 }
 let G=makeInitialG();
@@ -677,6 +723,14 @@ function startSession(player){
   // once the player deals or acts again, but this v1 pass doesn't reconstruct the
   // card display for an orphaned round the way uth.html does for its preflop resume.
   if(gs.breakout&&gs.breakout.lastBetSnapshot){G.lastBetSnapshot=gs.breakout.lastBetSnapshot;document.getElementById('repeat-btn').disabled=false;}
+  // The player row already carries game_state.breakoutShoe (no extra round trip
+  // needed) -- read it straight off so the trays show real numbers immediately
+  // instead of sitting blank until the first deal/action response arrives.
+  if(gs.breakoutShoe&&Array.isArray(gs.breakoutShoe.cards)){
+    G.shoeTotal=gs.breakoutShoe.totalCards||312;
+    G.shoeRemaining=gs.breakoutShoe.cards.length;
+  }
+  renderShoeTrays();
   renderActionButtons();updateUI();
 }
 async function logout(){
@@ -879,6 +933,79 @@ async function openProgressiveModal(){
   document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
 }
 function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
+
+// ── SHOE / DISCARD TRAYS ────────────────────────────────────────────────────────
+// Real depletion, not decorative -- G.shoeTotal/G.shoeRemaining come straight off
+// roll-breakout's ShoeState via shoeTotal/shoeRemaining on every action response.
+function updateShoeFromResponse(data){
+  if(data.shoeTotal!=null)G.shoeTotal=data.shoeTotal;
+  if(data.shoeRemaining!=null)G.shoeRemaining=data.shoeRemaining;
+  renderShoeTrays();
+}
+const TRAY_MAX_IMGS=10;
+function renderTrayStack(id,frac){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.innerHTML='';
+  const n=Math.max(0,Math.min(TRAY_MAX_IMGS,Math.round(frac*TRAY_MAX_IMGS)));
+  for(let i=0;i<n;i++){
+    const img=document.createElement('img');
+    img.src='cards/card-back.png?v=0.4.120';
+    img.draggable=false;
+    img.style.bottom=(i*3)+'%';
+    img.style.zIndex=String(i);
+    el.appendChild(img);
+  }
+}
+function renderShoeTrays(){
+  const total=G.shoeTotal||312, remaining=Math.max(0,G.shoeRemaining||0);
+  const dealt=Math.max(0,total-remaining);
+  const shoeCountEl=document.getElementById('shoe-count');
+  const discardCountEl=document.getElementById('discard-count');
+  if(shoeCountEl)shoeCountEl.textContent=remaining+'/'+total;
+  if(discardCountEl)discardCountEl.textContent=String(dealt);
+  renderTrayStack('shoe-stack',total>0?remaining/total:0);
+  renderTrayStack('discard-stack',total>0?dealt/total:0);
+}
+
+// ── CUT THE DECK ─────────────────────────────────────────────────────────────
+function updateCutMarker(){
+  const pct=Math.round(G.pendingCutFraction*100);
+  document.getElementById('cut-pct').textContent=pct+'%';
+  document.getElementById('cut-marker').style.left=pct+'%';
+}
+function showCutModal(){
+  G.pendingCutFraction=0.75;
+  updateCutMarker();
+  document.getElementById('modal-cut').classList.remove('hidden');
+}
+function hideCutModal(){document.getElementById('modal-cut').classList.add('hidden');}
+function cutStripClick(e){
+  const rect=document.getElementById('cut-strip').getBoundingClientRect();
+  let frac=(e.clientX-rect.left)/rect.width;
+  frac=Math.min(0.95,Math.max(0.4,frac));
+  G.pendingCutFraction=frac;
+  updateCutMarker();
+}
+async function confirmCut(){
+  const btn=document.getElementById('cut-confirm-btn');btn.disabled=true;
+  const token=localStorage.getItem('craps_session');
+  let data;
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'cut',fraction:G.pendingCutFraction})});
+    data=await res.json();
+  }catch(e){data={ok:false,message:'Network error. Try again.'};}
+  btn.disabled=false;
+  if(!data.ok){addLog(data.message||'Cut failed.','lose');return;}
+  updateShoeFromResponse(data);
+  hideCutModal();
+  playSfx(SFX_CARD_SHUFFLE);
+  // The player already had a bet staged (that's the only way a cut gets triggered --
+  // see dealHand()'s needsCut branch) -- G.bets was never cleared on that failed
+  // attempt, so just retry the same deal now that the shoe is ready.
+  dealHand();
+}
+
 function repeatLastBet(){
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
@@ -1009,7 +1136,11 @@ async function dealHand(){
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
-  if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
+  updateShoeFromResponse(data);
+  if(!data.ok){
+    if(data.needsCut){showCutModal();return;}
+    addLog(data.message||'Deal failed.','lose');return;
+  }
   playSfx(SFX_CARD_SHUFFLE);
   G.lastBetSnapshot={...G.bets};
   G.mode=data.mode;
@@ -1061,6 +1192,7 @@ async function answerInsurance(yes){
     const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'insurance',amount})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
+  updateShoeFromResponse(data);
   if(!data.ok){addLog(data.message||'Insurance failed.','lose');return;}
   G.phase=data.phase;
   G.hand.dealerHand=data.dealerHand;
@@ -1093,6 +1225,7 @@ async function sendAction(action){
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=false);
+  updateShoeFromResponse(data);
   if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
   const newCard=data.hand[data.hand.length-1];
   const grewHand=action!=='stand';
