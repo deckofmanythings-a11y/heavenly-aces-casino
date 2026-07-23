@@ -1846,14 +1846,18 @@ const CRAPLESS_LAYOUT=[
   // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
   // same x/y/w/h as STANDARD_LAYOUT's own #pass-bar. See the 'come-crapless'/'field-crapless'
   // FM_ART entries for the matching art positions.
-  ['#come-bar',      56.656,59.278,42.750,11.556,null],
-  ['#field-bar',     56.656,70.833,42.750,15.389,null],
-  ['#pass-bar',      56.656,86.223,42.750,11.556,null],
+  // Recalibrated to match the new ComeLineV2/FieldPaysDoubleV2/PassLineV2 FM_ART positions
+  // exactly (Deck's new cut felt-element set, native aspect at the shared 1368 column width --
+  // see the 'come-crapless'/'field-crapless'/'pass-crapless' FM_ART comments) -- these three
+  // were left at their OLD pixel positions after the art swap, so the clickable area and the
+  // visible bar stopped agreeing (same class of bug as Lucky Roller's edge-click miss).
+  ['#come-bar',      56.656,58.778,42.750,10.944,null],
+  ['#field-bar',     56.656,69.722,42.750,15.500,null],
+  ['#pass-bar',      56.656,85.222,42.750,12.556,null],
   // Immediately left of the Pass Line (Deck's placement request), same y/h so it sits
-  // flush against pass-bar's row. Width derived from height to keep the square 275x275
-  // light art proportionally square on screen despite the felt canvas itself (3200x1800)
-  // not being square: 11.556% of 1800px=208px tall -> 208/3200=6.5% wide.
-  ['#light-spot',     49.856,86.223, 6.5,11.556,null]
+  // flush against pass-bar's row. Width derived from height to keep the light art square:
+  // 12.556% of 1800px=226px tall -> 226/3200=7.0625% wide.
+  ['#light-spot',     49.856,85.222, 7.0625,12.556,null]
 ];
 // Standard-specific positions, measured directly on the standard felt art -- this sheet has
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
