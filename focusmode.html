@@ -534,21 +534,11 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 #modal-log .log-entries p.lose{color:#f08080}
 #modal-log .log-entries p.info{color:#ffe066}
 /* Winner modal now lives in winner-modal.js (self-contained: injects its own <style> + DOM). */
-.puck-flash{animation:puckFlashGreen .5s ease-in-out 2}
-#puck3d-wrap{position:fixed;width:90px;height:90px;top:0;left:0;perspective:500px;pointer-events:none;z-index:60;opacity:0;transition:transform 1.1s cubic-bezier(.34,1.15,.4,1),opacity .2s ease;}
-#puck3d-wrap.puck3d-visible{opacity:1;}
-#puck3d-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.1s cubic-bezier(.4,0,.2,1);transform:rotateX(90deg);}
-#puck3d-inner.puck3d-flipped{transform:rotateY(180deg) rotateX(90deg);}
-.puck3d-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;box-shadow:inset 0 0 6px rgba(0,0,0,.5);overflow:hidden;}
-.puck3d-face.puck3d-front{transform:rotateX(90deg) translateZ(var(--puck-half-t,8px));}
-.puck3d-face.puck3d-back{transform:rotateX(-90deg) translateZ(var(--puck-half-t,8px));}
-.puck3d-face-img{position:absolute;inset:0;background-size:contain;background-repeat:no-repeat;background-position:center;}
-.puck3d-front .puck3d-face-img{transform:scale(-1,-1);}
-.puck3d-edge-seg{position:absolute;left:50%;top:50%;background:linear-gradient(90deg,#0a0a0a,#2a2a2a 50%,#0a0a0a);backface-visibility:hidden;}
-@keyframes puckFlashGreen{
-  0%,100%{filter:none}
-  50%{filter:drop-shadow(0 0 10px #00ff44) drop-shadow(0 0 20px #00ff44) brightness(1.35) saturate(0) sepia(1) hue-rotate(70deg) saturate(4)}
-}
+/* On/Off indicator: no more sliding 3D puck widget (Deck: get rid of it) -- the point
+   number keeps its existing white .is-point border (below), and the whole number line
+   gets a black border while the puck would've been "off" (comeout phase, no point set). */
+#num-zone.line-off{border:3px solid #000}
+.num-box.line-off{border:2px solid #000}
 
 /* Losing bet chip ghosts: a frozen copy of the chip stack, positioned exactly over where the
    real bet used to sit, that dims immediately (so it visually reads as "no longer live") then
@@ -1529,7 +1519,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.158</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.159</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3439,62 +3429,12 @@ function applyLineModeGating(){
     if(!lineModeAllows('place',n)){const el=document.getElementById('nb-place-'+n);if(el)el.style.display='none';}
   });
 }
-function flashPuckGreen(){
-  const p=document.getElementById('puck3d-wrap');
-  if(p&&p.classList.contains('puck3d-visible')){
-    p.classList.remove('puck-flash');void p.offsetWidth; // restart the animation if it's already mid-flash
-    p.classList.add('puck-flash');
-    setTimeout(()=>p.classList.remove('puck-flash'),1000);
-  }
-}
-// ── 3D PUCK ──────────────────────────────────────────────────────────────────
-// One puck element that slides+flips between anchors instead of two static images
-// (Puck_On.png / Puck_Off.png) toggling visibility in place. The old img elements are kept
-// as invisible '.puck-anchor' markers purely so their live layout position (which already
-// accounts for felt-mode vs list-mode and standard vs crapless) can be read via
-// getBoundingClientRect and used as this puck's travel target.
-let puck3dState=null,puck3dEl=null,puck3dInner=null;
-const PUCK_RADIUS=45,PUCK_THICK=20; // extrusion depth of the puck disc, in px (25% larger than the original 36/16)
-function initPuck3D(){
-  if(puck3dEl)return;
-  puck3dEl=document.createElement('div');puck3dEl.id='puck3d-wrap';
-  puck3dEl.style.setProperty('--puck-half-t',(PUCK_THICK/2)+'px');
-  puck3dInner=document.createElement('div');puck3dInner.id='puck3d-inner';
-  const front=document.createElement('div');front.className='puck3d-face puck3d-front';
-  const frontImg=document.createElement('div');frontImg.className='puck3d-face-img';frontImg.style.backgroundImage="url('Puck_Off.png')";front.appendChild(frontImg);
-  const back=document.createElement('div');back.className='puck3d-face puck3d-back';
-  const backImg=document.createElement('div');backImg.className='puck3d-face-img';backImg.style.backgroundImage="url('Puck_On.png')";back.appendChild(backImg);
-  puck3dInner.appendChild(front);puck3dInner.appendChild(back);
-  // Rim: a ring of thin strips standing on end, each rotated a bit further around Y and
-  // pushed out to PUCK_RADIUS, so together they approximate the cylindrical edge connecting
-  // the front/back faces. Classic CSS "cylinder from strips" technique.
-  const SEGS=40;
-  const segW=2*PUCK_RADIUS*Math.sin(Math.PI/SEGS)*1.04; // slight overlap to avoid gaps
-  for(let i=0;i<SEGS;i++){
-    const seg=document.createElement('div');seg.className='puck3d-edge-seg';
-    const angle=(360/SEGS)*i;
-    const shade=0.55+0.45*Math.abs(Math.cos(angle*Math.PI/180)); // cheap fake lighting
-    seg.style.cssText='width:'+segW.toFixed(2)+'px;height:'+PUCK_THICK+'px;margin-left:-'+(segW/2).toFixed(2)+'px;margin-top:-'+(PUCK_THICK/2)+'px;filter:brightness('+shade.toFixed(2)+');transform:rotateY('+angle+'deg) translateZ('+PUCK_RADIUS+'px)';
-    puck3dInner.appendChild(seg);
-  }
-  puck3dEl.appendChild(puck3dInner);
-  document.body.appendChild(puck3dEl);
-}
-let puck3dAnchor=null;
-function updatePuck3D(anchorEl,state){
-  initPuck3D();
-  if(!anchorEl||!state){puck3dEl.classList.remove('puck3d-visible');puck3dState=null;puck3dAnchor=null;return;}
-  const r=anchorEl.getBoundingClientRect();
-  const cx=r.left+r.width/2-45,cy=r.top+r.height/2-45; // center the 90x90 puck on the anchor
-  const moved=anchorEl!==puck3dAnchor; // sliding to a new number/off-spot, not just a redundant re-render
-  puck3dEl.style.transform='translate('+cx+'px,'+cy+'px)';
-  puck3dEl.classList.add('puck3d-visible');
-  if(state!==puck3dState)puck3dInner.classList.toggle('puck3d-flipped',state==='off');
-  // Delayed to land roughly when the CSS slide/flip transition (1.1s, see #puck3d-wrap) actually
-  // finishes, rather than when it starts.
-  if(moved)setTimeout(()=>playSfx(SFX_PUCK_LAND),1100);
-  puck3dState=state;puck3dAnchor=anchorEl;
-}
+// 3D puck widget removed (Deck: replace the On/Off puck with a white border on the point
+// number + a black border around the whole number line when off -- see .num-box.is-point
+// and .num-box.line-off/#num-zone.line-off above, and the on/off toggle in updateUI()).
+// flashPuckGreen() is kept as a no-op since bonusBet() still calls it when Lucky Roller is
+// locked; there's no puck to flash anymore.
+function flashPuckGreen(){}
 function bonusBet(t){
   if(!tutorialActionAllowed('bonus',t))return;
   pushUndo();
@@ -4114,16 +4054,18 @@ function updateUI(){
   {const ca=G.bets['come']||0;const st=document.getElementById('stk-come');if(st)st.textContent=ca?fmt(ca):'';const cb=document.getElementById('come-bar');if(cb)cb.classList.toggle('active-bar',!!ca);}
   // Don't Come waiting zone
   {const dca=G.bets['dc']||0;const st=document.getElementById('stk-dc-wait');if(st)st.textContent=dca?fmt(dca):'';const dcb=document.getElementById('dc-wait-bar');if(dcb)dcb.classList.toggle('active-bar',!!dca);}
-  // Puck: single 3D puck that flips/slides to whichever anchor is active, instead of two
-  // static images that used to toggle independently per number box.
+  // On/Off indicator (replaces the old sliding 3D puck): the point number already gets a
+  // white border from .num-box.is-point below; here we add a black border around the whole
+  // number line while off (comeout, no point set yet) -- one shared #num-zone block for
+  // Crapless, each individual number box for Standard (which has no single wrapping element
+  // once enterFeltMode() plucks the boxes out into #felt-stage).
   {
-    let puckAnchor=null,puckState=null;
-    if(G.phase==='point'){puckAnchor=document.getElementById('puck-'+G.point);puckState='on';}
-    // Crapless has no Don't Come box to park the OFF puck on (that's standard-only), so by
-    // Deck's instruction it sits on 9 specifically during a come-out roll instead.
-    else if(activeGame==='crapless'&&G.phase==='comeout'){puckAnchor=document.getElementById('puck-9');puckState='off';}
-    else if(activeGame==='standard'&&G.phase==='comeout'){puckAnchor=document.getElementById('puck-off-dc');puckState='off';}
-    updatePuck3D(puckAnchor,puckState);
+    const lineOff=(G.phase==='comeout');
+    if(activeGame==='crapless'){
+      const nz=document.getElementById('num-zone');if(nz)nz.classList.toggle('line-off',lineOff);
+    }else{
+      ALL_NUMS_STANDARD.forEach(n=>{const b=document.getElementById('numbox-'+n);if(b)b.classList.toggle('line-off',lineOff);});
+    }
   }
   // Don't Pass bar
   {
@@ -6074,8 +6016,11 @@ function pfRender(){
       else if(mode==='lay')amt=G.bets['lay'+n]||0;
       const isPoint=G.phase==='point'&&G.point===n;
       const x0=i*cw,x1=(i+1)*cw;
-      return '<div class="pf-tap" style="'+pfBox(x0,ny0,x1,ny1)+(isPoint?';box-shadow:inset 0 0 0 3px #ffd700':'')+'" onclick="pfNumberTap('+n+',event)" oncontextmenu="pfNumberTap('+n+',event)"></div>'+pfAmtBox(x0,ny0,x1,ny1,amt);
-    }).join('');
+      return '<div class="pf-tap" style="'+pfBox(x0,ny0,x1,ny1)+(isPoint?';box-shadow:inset 0 0 0 3px #fff':'')+'" onclick="pfNumberTap('+n+',event)" oncontextmenu="pfNumberTap('+n+',event)"></div>'+pfAmtBox(x0,ny0,x1,ny1,amt);
+    }).join('')
+    // On/Off indicator: black border around the whole number line while off (comeout, no
+    // point yet) -- same replacement for the sliding puck as Landscape's .line-off class.
+    +(G.phase==='comeout'?'<div class="pf-tap" style="'+pfBox(0,ny0,100,ny1)+';border:3px solid #000;pointer-events:none"></div>':'');
   }
 
   // Lower panel (cheap to fully rebuild per render, keeps amounts always in sync)
