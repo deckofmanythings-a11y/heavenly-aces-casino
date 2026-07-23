@@ -1587,7 +1587,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.5</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.5.7</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2784,7 +2784,19 @@ async function redeemCode(){
 // ── DICE ──────────────────────────────────────────────────────────────────────
 function initDice(){
   if(renderer)return;
-  THREE=window.THREE;if(!THREE)return;
+  THREE=window.THREE;
+  // three.min.js is a plain, blocking <script src> tag positioned AFTER the inline script that
+  // calls tryRestoreSession() -> startSession() -> initDice(). tryRestoreSession() is async
+  // (awaits a Supabase call), so the browser moves on to parsing/loading the later script tags
+  // while that request is in flight -- on a cold cache, the (small, fast) session-restore
+  // response can come back before the (larger) three.min.js has finished downloading, so THREE
+  // is still undefined here. Retrying instead of giving up forever fixes exactly that: Deck's
+  // report was "the die roller in Crapless doesn't work the first time I enter the game, I have
+  // to move to Standard and back" -- switching modes now navigates to a fresh page load (since
+  // the Game Selector became a single Home button), and the SECOND load hits three.min.js from
+  // browser cache, fast enough to mask the race -- not a Crapless-specific bug at all, just far
+  // more likely to be visible there since it's often the very first page a session lands on.
+  if(!THREE){setTimeout(initDice,100);return;}
   const W=480,H=168,cvs=document.getElementById('dice-canvas');
   renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
