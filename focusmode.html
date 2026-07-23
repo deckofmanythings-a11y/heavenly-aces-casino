@@ -1533,7 +1533,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.164</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.165</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2698,7 +2698,13 @@ function initDice(){
   const W=480,H=168,cvs=document.getElementById('dice-canvas');
   renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  renderer.setSize(W,H);renderer.setClearColor(0,0);
+  // updateStyle=false -- setSize() by default also overwrites the canvas's CSS width/height to
+  // literal pixels ('480px'/'168px'), clobbering the HTML's style="width:100%;height:100%" and
+  // locking the canvas's actual on-screen box to that fixed size forever after regardless of
+  // how #dice-canvas-wrap/#dice-zone resize (Deck: "the 3d dice didn't scale down when I
+  // scaled down the window"). Only the internal drawing-buffer resolution needs to be 480x168;
+  // the CSS box should stay governed by the container the same way every other felt element is.
+  renderer.setSize(W,H,false);renderer.setClearColor(0,0);
   scene=new THREE.Scene();
   camera=new THREE.PerspectiveCamera(40,W/H,.1,100);
   camera.position.set(0,-1.8,6.5);camera.lookAt(0,0,0);
