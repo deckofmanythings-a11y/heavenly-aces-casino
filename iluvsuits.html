@@ -101,10 +101,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 /* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
    baked-in bulb art (unlike UTH's), so both lightOFF.png (idle) and lightON.png (lit,
-   post-deal) are placed as floating overlays in the open felt to the left of the other
-   spots -- placement is a first pass in open green space, not measured against baked art. */
-#light-spot,#light-off-img,#light-on-img{left:14%;top:42%;width:5.56%;height:9.89%}
-#light-info-btn{position:absolute;left:19.9%;top:43.5%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+   post-deal) are placed as floating overlays -- positioned in the open gap between the
+   Super Flush Rush circle and the I Luv Suits logo (per Deck's direction), sized to
+   match the other circle spots. */
+#light-spot,#light-off-img,#light-on-img{left:73.5%;top:37.1%;width:5.28%;height:9.39%}
+#light-info-btn{position:absolute;left:79.4%;top:38.6%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 .progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
@@ -294,8 +295,11 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #ante-spot{left:43.2%;top:64.9%;width:11.47%;height:5.3%}
   #play-spot{left:43.2%;top:71.43%;width:11.47%;height:5.3%}
   #superflushrush-spot{left:56.27%;top:55.3%;width:13.07%;height:5.79%}
-  #light-spot,#light-off-img,#light-on-img{left:33%;top:9%;width:14%;height:7%}
-  #light-info-btn{left:47.5%;top:9.5%;width:5%;height:2.5%}
+  /* THE LIGHT: portrait felt has the Super Flush Rush circle and the logo nearly
+     touching corner-to-corner, so there's no real gap between them -- placed just
+     above that cluster instead, biased toward the logo side. */
+  #light-spot,#light-off-img,#light-on-img{left:65%;top:45%;width:14%;height:7%}
+  #light-info-btn{left:79.5%;top:45.5%;width:5%;height:2.5%}
 
   #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
   #bottom-left{flex:1;height:auto}
