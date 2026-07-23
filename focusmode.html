@@ -862,7 +862,10 @@ body.felt-mode #bottom-section{position:absolute;height:auto;background:rgba(0,0
 body.felt-mode #felt-stage #lucky-roller{background:transparent;border:none;padding:0}
 body.felt-mode #felt-stage #lucky-roller>*:not(.felt-lr){display:none!important}
 body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
-body.felt-mode #felt-stage #lr-title-art.felt-lr{display:block;background:url('LuckyRollerTitle.png') center/100% 100% no-repeat;pointer-events:none}
+body.felt-mode #felt-stage #lr-title-art.felt-lr{display:block;z-index:1;background:url('LuckyRollerTitle.png') center/100% 100% no-repeat;pointer-events:none}
+/* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
+   the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again. */
+body.felt-mode #felt-stage #lucky-roller .lr-bonus-wrap.felt-lr{z-index:2}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:transparent;border:none;width:100%;height:100%;border-radius:10px}
 body.felt-mode #felt-stage #lucky-roller #bbonus-low{background:url('LowRollsBox.png') center/100% 100% no-repeat}
 body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar{background:url('RollEmAllBox.png') center/100% 100% no-repeat}
@@ -1792,14 +1795,21 @@ const FELT_LAYOUT=[
 // see the #bbonus-low/#bbonus-all-bar/#bbonus-high CSS); '#lr-title-art' is the new title+oval
 // art layer (LuckyRollerTitle.png), added as its own element since title and boxes are now
 // separate images instead of one baked-together background.
+// Order matters here, not just for readability -- enterFeltMode() appends each entry's element
+// to #lucky-roller in array order, and later-appended siblings stack ON TOP in the same
+// stacking context. #lr-title-art/#dice-zone overlap low/all/high's top edge by design (title's
+// oval row and the dice sit right above the boxes) -- listed FIRST so they're guaranteed to
+// render BEHIND the clickable boxes regardless of pointer-events reliability (Deck: "clicks near
+// the edges miss" -- the title art was stacking on top of the bet boxes' overlapping region and
+// eating clicks there even with pointer-events:none set).
 const LR_LAYOUT=[
-  ['low',    1.161,50.571,30.581,48.286],
-  ['all',   34.194,50.857,30.323,48.000],
-  ['high',  65.548,50.571,33.548,48.286],
   ['#lr-title-art', 0.774, 2.000,97.032,61.429],
   ['#bnums-low',  6.20,31.50,27.70,13.00],
   ['#bnums-high',65.30,31.60,28.50,12.80],
-  ['#dice-zone', 31.742, 0.00,33.806,50.571]
+  ['#dice-zone', 31.742, 0.00,33.806,50.571],
+  ['low',    1.161,50.571,30.581,48.286],
+  ['all',   34.194,50.857,30.323,48.000],
+  ['high',  65.548,50.571,33.548,48.286]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
