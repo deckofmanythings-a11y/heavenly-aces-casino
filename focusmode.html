@@ -843,6 +843,10 @@ body.felt-compact #felt-stage #info-panel #finances-caret{display:none}
    label to wrap onto two lines instead of clipping "DESTROYER" to "DESTROY". */
 body.felt-compact #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--chip)*0.3);padding:1px 2px;line-height:1.05}
 body.felt-compact #felt-stage #left-col-header .gmode-sub{display:none}
+.gmode-btn-home{font-size:20px!important;padding:10px 6px!important}
+.gmode-btn-home .gmode-sub{font-size:13px!important}
+body.felt-mode #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.45)!important}
+body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.45)!important}
 /* Bottom section now sits below the felt (inside #play-area, not reparented into
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
    the felt's own bottom edge instead of overlaid on top of the art. */
@@ -1228,7 +1232,7 @@ body.portrait-craps #felt-portrait{display:flex}
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
       <div id="game-mode-toggle" style="display:block">
-        <button class="gmode-btn" onclick="navigateAway('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
+        <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
       <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
         <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
@@ -1619,7 +1623,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.156</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.157</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>

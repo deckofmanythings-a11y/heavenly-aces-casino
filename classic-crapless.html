@@ -600,6 +600,10 @@ body.felt-compact #felt-stage #info-panel #logout-btn::before{content:"⏻"}
    label to wrap onto two lines instead of clipping "DESTROYER" to "DESTROY". */
 body.felt-compact #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--chip)*0.3);padding:1px 2px;line-height:1.05}
 body.felt-compact #felt-stage #left-col-header .gmode-sub{display:none}
+.gmode-btn-home{font-size:20px!important;padding:10px 6px!important}
+.gmode-btn-home .gmode-sub{font-size:13px!important}
+body.felt-mode #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.45)!important}
+body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.45)!important}
 body.felt-mode #felt-stage #bottom-section{height:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
 /* Lucky Roller art */
 body.felt-mode #felt-stage #lucky-roller{background:url('lucky-roller.png') center/100% 100% no-repeat;border:none;padding:0}
@@ -828,7 +832,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
            user-facing destination: these two buttons hand off to Focus Mode instead of
            switching locally, same as every other button here. -->
       <div id="game-mode-toggle" style="display:block">
-        <button class="gmode-btn" onclick="navigateAway('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
+        <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
       <div style="display:flex;gap:3px;width:100%;flex:1;align-items:center;padding:3px">
         <button class="mode-btn active" id="tab-hw" onclick="switchTab('hw')" style="flex:1">
@@ -897,7 +901,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.154</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.4.155</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>

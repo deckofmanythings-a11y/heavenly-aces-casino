@@ -37,6 +37,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .gmode-btn:disabled{opacity:.35;cursor:not-allowed}
 .gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(255,255,255,.4);display:block}
 .gmode-btn.active .gmode-sub{color:rgba(255,215,0,.6)}
+.gmode-btn-home{font-size:20px!important;padding:10px 6px!important}
+.gmode-btn-home .gmode-sub{font-size:13px!important}
 #info-panel{width:30vw;min-width:200px;max-width:325px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
 .info-row{display:flex;gap:4px;align-items:center}
 .info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
@@ -377,9 +379,9 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.154</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.4.155</div>
       <div id="game-mode-toggle" style="display:block">
-        <button class="gmode-btn" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
+        <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
     </div>
     <!-- Status zone -->
