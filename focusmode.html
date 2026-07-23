@@ -691,7 +691,15 @@ body.felt-mode.game-crapless #prop-block .horn-stack{flex:1}
    left to the content's own size (each .puck-anchor is a fixed 90x90px, set inline in
    buildStrip()) rather than a %, since it no longer needs to divide num-zone's height with
    #num-strip-h. #num-strip-h picks up the freed space automatically via its existing flex:1. */
-body.felt-mode.game-crapless #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px}
+// FIX (Deck: "the Puck row spots line up EXACTLY where I can't click the Lucky Roller") --
+// bottom:100% puts this row directly above #num-zone's top edge, which in Crapless overlaps
+// the bottom portion of #lucky-roller (the Low/RollEmAll/HighRolls bet boxes sit right there).
+// Its own children (.puck-anchor) are visibility:hidden pure position markers for
+// updatePuck3D()'s getBoundingClientRect() reads -- nothing here should ever need clicks -- but
+// the CONTAINER itself was never given pointer-events:none, so its own box (not its invisible
+// children) was silently intercepting clicks meant for the boxes underneath. This is what was
+// actually breaking Lucky Roller, not the DOM-order/z-index theory from the previous fix attempt.
+body.felt-mode.game-crapless #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px;pointer-events:none}
 body.felt-mode.game-crapless #num-strip-h{flex:1;padding:0;gap:2px}
 
 /* Standard: each number column is [blank|Lay] thin top row, big [digit+Come] middle, [Place|Buy] thin bottom row */
@@ -714,7 +722,9 @@ body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;paddin
    the number line like we did with Crapless") -- pulled out of #num-zone's flex column
    entirely and anchored fully above it instead of eating a fixed % out of the column's own
    height. #num-strip-h's existing flex:1 picks up the freed space automatically. */
-body.felt-mode.game-standard #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px}
+// Same fix as the crapless copy above, applied defensively here too (this row is pure
+// invisible position markers in both modes, never needs to receive clicks itself).
+body.felt-mode.game-standard #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px;pointer-events:none}
 body.felt-mode.game-standard #num-strip-h{flex:1;padding:0;gap:2px}
 body.felt-mode.game-standard #felt-stage .num-box{position:relative}
 /* .num-box's default 0.5px white border/dark background (see the plain .num-box rule) was
