@@ -911,6 +911,15 @@ body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{
   border-color:transparent!important;background:transparent!important;outline:none!important;
 }
+/* The has-bet rule above (predates the new cut art -- back when the box's visible art came
+   from #lucky-roller's own single background image showing through a transparent child, not
+   from the child itself) forces background:transparent!important the moment a bet lands,
+   which was wiping out each box's own new background image entirely (Deck: "half the box
+   disappears when I bet it"). Re-assert each box's own image with matching !important +
+   higher id specificity so it survives .has-bet same as it already does on :hover. */
+body.felt-mode #felt-stage #lucky-roller #bbonus-low.has-bet{background:url('LowRollsBox.png') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar.has-bet{background:url('RollEmAllBox.png') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-high.has-bet{background:url('HighRollsBox.png') center/100% 100% no-repeat!important}
 body.felt-mode #felt-stage .odds-pay{display:none}
 /* Crapless-only reinforcement: Horn cell highlighting was still showing despite two earlier
    neutralization passes that should already cover it by source order. Could not find the exact
