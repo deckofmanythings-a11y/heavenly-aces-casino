@@ -152,13 +152,21 @@
     const dl = new THREE_.DirectionalLight(0xffffff, 0.8); dl.position.set(1, 3, 1); scene.add(dl);
 
     buildWheelTexture();
-    const wheelGeo = new THREE_.CylinderGeometry(CFG.wheelRadius, CFG.wheelRadius, 0.12, 64);
-    const wheelMat = [
-      new THREE_.MeshStandardMaterial({ color: 0x2a1a08 }),
-      new THREE_.MeshStandardMaterial({ map: wheelTexture }),
-      new THREE_.MeshStandardMaterial({ color: 0x1a0f04 }),
-    ];
-    wheelMesh = new THREE_.Mesh(wheelGeo, wheelMat);
+    // wheelMesh is a Group so both pieces spin together via wheelMesh.rotation.y each frame.
+    // The numbered face is a flat CircleGeometry rather than a CylinderGeometry top cap --
+    // a cylinder cap's UV layout doesn't match the simple "circle inscribed in a square"
+    // mapping the canvas texture is drawn with (confirmed: it rendered as a radial sunburst,
+    // the classic symptom of a texture being read with the wrong UV parameterization).
+    // CircleGeometry's UV mapping is the standard, well-defined one that actually matches.
+    wheelMesh = new THREE_.Group();
+    const rimGeo = new THREE_.CylinderGeometry(CFG.wheelRadius, CFG.wheelRadius, 0.12, 64);
+    const rimMesh = new THREE_.Mesh(rimGeo, new THREE_.MeshStandardMaterial({ color: 0x2a1a08 }));
+    wheelMesh.add(rimMesh);
+    const faceGeo = new THREE_.CircleGeometry(CFG.wheelRadius, 64);
+    const faceMesh = new THREE_.Mesh(faceGeo, new THREE_.MeshStandardMaterial({ map: wheelTexture }));
+    faceMesh.rotation.x = -Math.PI / 2; // lie flat, facing up toward the top-down camera
+    faceMesh.position.y = 0.061; // just above the rim's top surface (rim height 0.12) to avoid z-fighting
+    wheelMesh.add(faceMesh);
     scene.add(wheelMesh);
 
     const ballGeo = new THREE_.SphereGeometry(CFG.ballRadius, 20, 20);
