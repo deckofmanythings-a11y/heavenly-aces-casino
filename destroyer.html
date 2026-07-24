@@ -505,11 +505,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="firing-screen">
     <div id="firing-panel">
       <button id="fp-calib-toggle" onclick="toggleFpCalibMode()">🎯 Calibrate</button>
-      <!-- Region positions below are matched to DestroyerPanel_bg_new.png's baked screen
-           cutouts per Deck's letter mapping (A-K + upper-right plaque), eyeballed off the
-           art at 2000x1125 -- treat as a first pass, nudge if any drift off their cutout. -->
+      <!-- Region positions below are Deck's own calibrated export from the drag/resize tool
+           (fpCalibExport(), whole pixels on the 1672x940 FP_W/FP_H canvas), converted to %. -->
       <div class="fp-region" id="fp-game-select" onclick="toggleFiringGameSelect(event)"
-           style="left:2.5%;top:1.78%;width:12.75%;height:12%">
+           style="left:4.127%;top:3.085%;width:10.048%;height:8.83%">
         Game Select
         <div id="fp-game-select-menu">
           <button onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS</button>
@@ -519,39 +518,39 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
           <button onclick="dNav('focusmode.html')">FOCUS MODE</button>
         </div>
       </div>
-      <div class="fp-region" id="fp-dice-result" style="left:42.75%;top:1.33%;width:13.25%;height:11.11%">
+      <div class="fp-region" id="fp-dice-result" style="left:44.557%;top:3.298%;width:9.809%;height:7.766%">
         <div id="fp-last-result-text"></div>
       </div>
-      <div class="fp-region" id="fp-topbtns" style="left:85%;top:1.33%;width:11.5%;height:11.11%">
+      <div class="fp-region" id="fp-topbtns" style="left:86.663%;top:2.021%;width:8.852%;height:10.106%">
         <button onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
         <button id="fp-cashout-btn" onclick="cashOut()">Cash Out</button>
         <button onclick="logout()">Log Out</button>
       </div>
-      <div class="fp-region" id="fp-extra-wins" style="left:2.75%;top:15.56%;width:10.25%;height:25.33%">
+      <div class="fp-region" id="fp-extra-wins" style="left:4.187%;top:17.447%;width:7.955%;height:19.468%">
         <span class="fp-jackpot-lbl">Extra Wins</span>
         <span class="fp-jackpot-tier" id="fp-jt-2">2 sunk: <strong>+$<span id="fp-jv-2">0</span></strong></span>
         <span class="fp-jackpot-tier" id="fp-jt-3">3 sunk: <strong>+$<span id="fp-jv-3">0</span></strong></span>
         <span class="fp-jackpot-tier" id="fp-jt-4">4 sunk: <strong>+$<span id="fp-jv-4">0</span></strong></span>
       </div>
-      <div class="fp-region" id="fp-ship-0" style="left:89.533%;top:14.255%;width:8.732%;height:9.681%"></div>
-      <div class="fp-region" id="fp-ship-1" style="left:89.533%;top:28.191%;width:8.732%;height:9.681%"></div>
-      <div class="fp-region" id="fp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
-      <div class="fp-region" id="fp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
-      <div class="fp-region" id="fp-bet-circle" style="left:72.75%;top:54.22%;width:10.5%;height:21.78%">
+      <div class="fp-region" id="fp-ship-0" style="left:86.663%;top:15.745%;width:8.732%;height:8.723%"></div>
+      <div class="fp-region" id="fp-ship-1" style="left:86.543%;top:29.149%;width:9.031%;height:9.043%"></div>
+      <div class="fp-region" id="fp-ship-2" style="left:86.603%;top:42.66%;width:8.912%;height:9.149%"></div>
+      <div class="fp-region" id="fp-ship-3" style="left:86.603%;top:57.021%;width:8.912%;height:15.745%"></div>
+      <div class="fp-region" id="fp-bet-circle" style="left:73.864%;top:56.596%;width:8.552%;height:15.745%">
         <div class="fp-bet-chips" id="fp-bet-chips" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">
           <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
         </div>
         <span class="fp-winning-lbl" id="fp-winning-lbl">Winning: $0.00</span>
         <span class="fp-bankroll-lbl" id="fp-bankroll-lbl">Playable: $0</span>
       </div>
-      <div class="fp-region" id="fp-roll-history" style="left:1.794%;top:74.362%;width:96.651%;height:5%"></div>
-      <div class="fp-region" id="fp-strikes-area" style="left:0.75%;top:53.33%;width:26%;height:22.67%">
+      <div class="fp-region" id="fp-roll-history" style="left:2.093%;top:76.489%;width:80.442%;height:3.617%"></div>
+      <div class="fp-region" id="fp-strikes-area" style="left:4.964%;top:55.106%;width:20.036%;height:17.66%">
         <span id="fp-fm-label">Initial Strikes</span>
         <div id="fp-free-missiles-pips"></div>
       </div>
-      <div class="fp-region" id="fp-buy-area" style="left:26%;top:81.33%;width:39.5%;height:18.22%"></div>
+      <div class="fp-region" id="fp-buy-area" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%"></div>
       <button class="fp-region" id="fp-fire-btn" onclick="fireMissile()" disabled
-              style="left:86%;top:80%;width:11%;height:19.56%"></button>
+              style="left:88.278%;top:82.34%;width:7.656%;height:13.723%"></button>
       <div id="fp-grid-cells"></div>
     </div>
   </div>
