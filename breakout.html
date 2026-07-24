@@ -225,6 +225,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #modal-log .log-entries p.win{color:#7ee87e}
 #modal-log .log-entries p.lose{color:#f08080}
 #modal-log .log-entries p.info{color:#ffe066}
+#modal-log .log-entries p.divider{color:#ffd700;font-weight:800;text-align:center;letter-spacing:.04em;text-transform:uppercase;font-size:14px;border-bottom:1px solid rgba(255,215,0,.3);padding-top:8px}
 
 /* Bet-box chip stacks -- ported wholesale from craps/sicbo/UTH/I Luv Suits */
 body{--chip:64px;--edge:calc(var(--chip)*0.16)}
@@ -421,7 +422,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.6.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.6.5</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -646,9 +647,24 @@ function checkBroke(){if(G.bankroll<=0&&tBets()===0)setTimeout(()=>openRedeemMod
 
 function openCapModal(){document.getElementById('modal-cap').classList.remove('hidden');}
 function closeCapModal(){document.getElementById('modal-cap').classList.add('hidden');}
-function openLogModal(){document.getElementById('modal-log').classList.remove('hidden');}
+function openLogModal(){
+  const modal=document.getElementById('modal-log');
+  modal.classList.remove('hidden');
+  const el=document.getElementById('log');
+  el.scrollTop=el.scrollHeight;
+}
 function closeLogModal(){document.getElementById('modal-log').classList.add('hidden');}
-function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.prepend(p);while(el.children.length>80)el.removeChild(el.lastChild);}
+// Newest entries append at the bottom (chronological reading order) -- capped at 80
+// by dropping from the top (oldest) instead of the bottom.
+function addLog(t,c){
+  const el=document.getElementById('log');
+  const p=document.createElement('p');
+  p.className=c||'';
+  p.textContent=t;
+  el.appendChild(p);
+  while(el.children.length>80)el.removeChild(el.firstChild);
+  el.scrollTop=el.scrollHeight;
+}
 
 // ── HAND VALUE (display only -- mirrors roll-breakout's evaluator so the running-total
 // banner can update live off the cards the server already sent, without a round trip) ──
@@ -1187,6 +1203,9 @@ async function dealHand(){
     addLog(data.message||'Deal failed.','lose');return;
   }
   playSfx(SFX_CARD_SHUFFLE);
+  // Divider so a played-out log reads as a sequence of hands, not one long run-on
+  // list of side-bet/main-bet lines with no visual break between rounds.
+  addLog('New Hand — '+(data.mode==='breakout'?'Breakout Bet':'Player Bet')+' '+fmt(data.mode==='breakout'?G.bets.breakoutBet:G.bets.playerBet),'divider');
   G.lastBetSnapshot={...G.bets};
   G.mode=data.mode;
   G.phase=data.phase;
