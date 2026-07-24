@@ -1592,7 +1592,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.7</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.8</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1763,7 +1763,7 @@ const FELT_LAYOUT=[
   // (38.125+24.219=62.344) and #info-panel's left edge (82.50): (62.344+82.50)/2=72.422. y is
   // the average of both boxes' own vertical centers (10.555 and 9.20): 9.878. Zero-size, see
   // the HTML comment on #puck-off-crapless for why.
-  ['#puck-off-crapless', 72.422, 9.878, 0, 0, null],
+  ['#puck-off-crapless', 72.4375, 9.8889, 0, 0, null],
   // #bottom-section is deliberately NOT in this list -- it no longer gets reparented
   // into #felt-stage/positioned as % of the felt art. It now lives in #play-area
   // instead, sized/positioned directly in sizeFeltStage() so it sits flush below the
@@ -1803,27 +1803,34 @@ const FELT_LAYOUT=[
   // shift the same 9.278% (167px) as Horn and Any Craps, and Any Seven's target is
   // recalculated to be adjacent to the TOP of that whole cluster (@aces, the highest
   // element in it) instead of @horn specifically.
-  ['@any7',            3.781,53.167,28.000,10.778,'hw'],
+  // Fresh calibrator export (Deck: "changes in a lot of areas, read the entire block") --
+  // diffed the whole 30-line export against every stored entry rather than assuming anything
+  // changed; most of it (circles, tab-hw/hop, aces/ace2/horn/midnight/yo, hard4/6/8/10, the
+  // Crapless nb-buy/place-N entries from last time, come/field/pass-bar, lr-low/all/high) came
+  // back byte-for-byte identical or within sub-pixel rounding noise and were left untouched.
+  // Any 7 moved up ~9px; Any Craps grew taller (7.889% -> 11.5%, +65px); every Hop Bets pill
+  // shifted down 8-20px and slightly right (2-11px) -- see below.
+  ['@any7',            3.8438,52.6667,28.000,10.778,'hw'],
   ['@aces',            3.875,63.945, 7.219,10.278,'hw'],
   ['@ace2',           24.281,64.000, 7.594,10.167,'hw'],
   ['@horn',           11.188,69.722,13.188, 9.944,'hw'],
   ['@midnight',        3.719,75.000, 7.438,10.167,'hw'],
   ['@yo',             24.438,75.334, 7.375,10.111,'hw'],
-  ['@anyCraps',        3.625,85.667,28.219, 7.889,'hw'],
+  ['@anyCraps',        3.625,85.6667,28.2187,11.5,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
-  ['@hop13',          4.625,53.500, 8.813, 6.222,'hop'],
-  ['@hop16',         15.094,53.222, 8.750, 6.222,'hop'],
-  ['@hop26',         25.563,53.611, 8.813, 6.222,'hop'],
-  ['@hop14',          4.625,59.722, 8.813, 6.222,'hop'],
-  ['@hop25',         15.063,60.000, 8.750, 6.222,'hop'],
-  ['@hop35',         25.563,60.000, 8.813, 6.222,'hop'],
-  ['@hop23',          4.625,66.611, 8.813, 6.222,'hop'],
-  ['@hop34',         15.094,66.500, 8.750, 6.222,'hop'],
-  ['@hop36',         25.563,66.500, 8.813, 6.222,'hop'],
-  ['@hop24',          4.625,73.000, 8.813, 6.222,'hop'],
-  ['@hop45',         25.563,73.333, 8.813, 6.222,'hop'],
-  ['@hop15',          4.594,79.722, 8.813, 6.222,'hop'],
-  ['@hop46',         25.563,79.722, 8.813, 6.222,'hop']
+  ['@hop13',          4.6875,53.7778, 8.8125, 6.2222,'hop'],
+  ['@hop16',         15.3438,53.6667, 8.750, 6.2222,'hop'],
+  ['@hop26',         25.9062,53.7222, 8.8125, 6.2222,'hop'],
+  ['@hop14',          4.6875,60.6667, 8.8125, 6.2222,'hop'],
+  ['@hop25',         15.4063,60.4444, 8.750, 6.2222,'hop'],
+  ['@hop35',         25.9062,60.4444, 8.8125, 6.2222,'hop'],
+  ['@hop23',          4.7188,67.3889, 8.8125, 6.2222,'hop'],
+  ['@hop34',         15.3438,67.1667, 8.750, 6.2222,'hop'],
+  ['@hop36',         25.9062,67.4444, 8.8125, 6.2222,'hop'],
+  ['@hop24',          4.7188,74.1111, 8.8125, 6.2222,'hop'],
+  ['@hop45',         25.9062,74.1667, 8.8125, 6.2222,'hop'],
+  ['@hop15',          4.6875,80.7778, 8.8125, 6.2222,'hop'],
+  ['@hop46',         25.8438,80.8333, 8.8125, 6.2222,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
 // Recalibrated for Deck's new cut Lucky Roller art -- computed directly from the crop tool's
@@ -1939,7 +1946,7 @@ const CRAPLESS_LAYOUT=[
   // Immediately left of the Pass Line (Deck's placement request), same y/h so it sits
   // flush against pass-bar's row. Width derived from height to keep the light art square:
   // 12.556% of 1800px=226px tall -> 226/3200=7.0625% wide.
-  ['#light-spot',     49.856,85.222, 7.0625,12.556,null]
+  ['#light-spot',     49.8438,85.222, 7.0625,12.5556,null]
 ];
 // Standard-specific positions, measured directly on the standard felt art -- this sheet has
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
