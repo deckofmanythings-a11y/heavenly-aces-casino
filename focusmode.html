@@ -1592,7 +1592,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.6</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.7</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1887,7 +1887,42 @@ const CRAPLESS_LAYOUT=[
   // x/y match the 'craplessline-*' FM_ART entries' x:1200,y:424 (right edge ~40px off the
   // felt, 100px down, per Deck's live-site feedback). Height re-derived for the art's updated
   // native size (447px, was 344px -- see the matching FM_ART comment): 447/1800*100=24.833.
+  // #num-zone itself is now just an inert background container, same as it already is for
+  // Standard (calibBaseEntries() skips it there for the same reason) -- Buy/Place moved to
+  // their own individually-positioned entries below instead of dividing up #num-zone's box
+  // with an internal CSS grid (Deck: "you are still using a single Num Zone for the number
+  // line" -- now that each number has its own separate art tile (cl-a/b/c-N in FM_ART), each
+  // one's hit-region gets its own separate absolute position too, matching exactly instead of
+  // being sub-divided by a shared grid with its own independent (and slightly different)
+  // rounding.
   ['#num-zone',      37.50,23.556,61.25,24.83,null],
+  // 10 numbers x 196px-wide slices (1960/10, matching the FM_ART cl-*-N tiles' own x/w exactly
+  // -- same 1200-start, 196-step math, so Buy/Place always lines up with its number's actual
+  // art tile regardless of any grid-rounding elsewhere). Buy/Place height (94px each, Place
+  // bottom-aligned so 424+94+259+94=871=424+447) carries over the pre-existing internal 21/
+  // 58/21 flex split (buy/mid/place) as a starting point -- flag to Deck if the new tiles'
+  // real Buy/Place bands sit somewhere else internally, this can be tightened with real
+  // measurements the same way the horizontal slices were.
+  ['#nb-buy-2',   37.5000,23.5556,6.1250,5.2222,null],
+  ['#nb-place-2', 37.5000,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-3',   43.6250,23.5556,6.1250,5.2222,null],
+  ['#nb-place-3', 43.6250,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-4',   49.7500,23.5556,6.1250,5.2222,null],
+  ['#nb-place-4', 49.7500,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-5',   55.8750,23.5556,6.1250,5.2222,null],
+  ['#nb-place-5', 55.8750,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-6',   62.0000,23.5556,6.1250,5.2222,null],
+  ['#nb-place-6', 62.0000,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-8',   68.1250,23.5556,6.1250,5.2222,null],
+  ['#nb-place-8', 68.1250,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-9',   74.2500,23.5556,6.1250,5.2222,null],
+  ['#nb-place-9', 74.2500,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-10',   80.3750,23.5556,6.1250,5.2222,null],
+  ['#nb-place-10', 80.3750,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-11',   86.5000,23.5556,6.1250,5.2222,null],
+  ['#nb-place-11', 86.5000,43.1667,6.1250,5.2222,null],
+  ['#nb-buy-12',   92.6250,23.5556,6.1250,5.2222,null],
+  ['#nb-place-12', 92.6250,43.1667,6.1250,5.2222,null],
   // Come/Field/Pass share Pass Line's x/w and stay zero-gapped, same as standard, but with no
   // Don't Pass/Don't Come row: Field drops into Don't Pass's old slot (bottom flush against
   // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
@@ -4756,12 +4791,12 @@ function calibBaseEntries(){
   // Buy/Place/Lay/DC/DC Odds/Come/Come Odds are NOT here for standard -- their positions are
   // handled by pre-existing felt-mode layout code (feltSplitStandardNumBox + CSS), not this
   // calibration system; per-number markers for them come from calibExtraEntries() instead.
-  // #num-zone is skipped for STANDARD only: standard's own #nb-buy-N/#nb-place-N/#nb-lay-N
-  // entries already cover the number line individually and #num-zone there is just an inert
-  // background container, so showing it too would be a redundant, confusing overlapping box.
-  // Crapless has no such per-number entries (its whole strip moves as one #num-zone block via
-  // CRAPLESS_LAYOUT), so #num-zone IS the number line's only real calibratable hit-region there
-  // -- skipping it left crapless calibrate mode with zero boxes over the entire number line.
+  // #num-zone is skipped in BOTH modes now: Crapless's #nb-buy-N/#nb-place-N moved to their
+  // own individually-positioned CRAPLESS_LAYOUT entries (Deck: "you are still using a single
+  // Num Zone for the number line" -- now each number gets its own separate hit-region, same as
+  // Standard's #nb-buy-N/#nb-place-N/#nb-lay-N already do), so #num-zone is just an inert
+  // background container in both, and showing it too would be a redundant, confusing
+  // overlapping box either way.
   // Was hardcoded to feltLayoutFor('standard') from back when Focus Mode was standard-only --
   // now that crapless is real, this must follow whichever mode is actually active, or
   // calibrate mode shows standard's boxes (wrong positions entirely) while playing crapless.
@@ -4772,8 +4807,7 @@ function calibBaseEntries(){
   // value, so they always look self-consistent even if the container itself is off (Deck: "the
   // ATS bet areas are off, they seem too high and too small") -- un-skipping it so it's
   // actually draggable/resizable instead of just an invisible input to those rulers.
-  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#info-panel','#bottom-section']);
-  if(activeGame==='standard')skip.add('#num-zone');
+  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#info-panel','#bottom-section','#num-zone']);
   return feltLayoutFor(activeGame==='standard'?'standard':'crapless').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
 }
 function calibInitState(){
