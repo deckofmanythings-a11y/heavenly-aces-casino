@@ -682,11 +682,16 @@ body.felt-mode #felt-stage #pass-main{flex:1}
 body.felt-mode.game-crapless #felt-stage .nb-buy{flex:0 0 21%}
 body.felt-mode.game-crapless #felt-stage .nb-mid{flex:1}
 body.felt-mode.game-crapless #felt-stage .nb-place{flex:0 0 21%}
-/* Buy bet chips were landing too low against the felt art (Deck: "they need to move up appx
-   40% the height of the chip") -- adds on top of .has-stack's own generic bottom:6% base
-   (measured against the Buy cell's own box height) rather than replacing it, since 6% was
-   still the right starting point, just not enough on its own. */
-body.felt-mode.game-crapless #felt-stage .nb-buy .has-stack{bottom:calc(6% + var(--chip)*0.4)}
+/* The "move up 40% chip height" adjustment above was calibrated back when Buy was the TOP
+   THIRD of one tall shared #num-zone box -- 6% of that box's height plus a chip-relative
+   nudge was a reasonable amount to clear the felt art below it. Buy now has its own small,
+   individually-positioned 94px-tall box (Deck: "you are still using a single Num Zone" fix),
+   so that same offset massively overshoots a box this short and pushes the chip toward the
+   top instead of centering it (Deck screenshot: calibrator's true-center dot sits well below
+   where the chip actually renders). True-centers instead, same technique already used for
+   Field/Pass/Don't Pass's chip anchors once those got their own individually-sized boxes. */
+body.felt-mode.game-crapless #felt-stage .nb-buy .has-stack,
+body.felt-mode.game-crapless #felt-stage .nb-place .has-stack{top:50%;bottom:auto;transform:translate(-50%,-50%)}
 body.felt-mode.game-crapless #prop-block>.bwrap{flex:0 0 21%}
 body.felt-mode.game-crapless #prop-block .horn-stack{flex:1}
 /* On/Off puck row: pulled out of #num-zone's own flex column entirely (was eating into its
@@ -1592,7 +1597,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.8</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.9</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
