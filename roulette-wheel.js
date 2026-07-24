@@ -132,8 +132,13 @@
     const w = container.clientWidth || 200, h = container.clientHeight || 200;
 
     scene = new THREE_.Scene();
-    camera = new THREE_.PerspectiveCamera(35, w / h, 0.1, 100);
-    camera.position.set(0, 3.1, 0.01);
+    // Orthographic top-down camera, sized to the wheel's actual radius (see fitCameraFrustum)
+    // rather than a perspective camera at a hand-picked distance/FOV -- a perspective camera
+    // close enough to read the wheel's small on-screen size cropped the view into a square
+    // window that only showed the hub, with the whole numbered rim (and the wheel's roundness)
+    // entirely outside the frame. Orthographic + exact-fit framing sidesteps that class of bug.
+    camera = new THREE_.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+    camera.position.set(0, 10, 0.01);
     camera.lookAt(0, 0, 0);
 
     renderer = new THREE_.WebGLRenderer({ antialias: true, alpha: true });
@@ -170,12 +175,22 @@
     onResize();
     window.addEventListener('resize', onResize);
   }
+  // Fits the orthographic frustum to the wheel's actual radius plus the pointer mesh poking out
+  // above it, with a small margin -- recomputed on resize so a non-square container (or one
+  // resized after init) never re-introduces the cropping bug the perspective camera had.
+  function fitCameraFrustum(w, h) {
+    const extent = Math.max(CFG.wheelRadius, CFG.wheelRadius + 0.08) * 1.15;
+    const aspect = w / h;
+    if (aspect >= 1) { camera.top = extent; camera.bottom = -extent; camera.left = -extent * aspect; camera.right = extent * aspect; }
+    else { camera.left = -extent; camera.right = extent; camera.top = extent / aspect; camera.bottom = -extent / aspect; }
+    camera.updateProjectionMatrix();
+  }
   function onResize() {
     const container = typeof CFG.container === 'string' ? document.getElementById(CFG.container) : CFG.container;
     if (!container || !renderer) return;
     const w = container.clientWidth || 200, h = container.clientHeight || 200;
     renderer.setSize(w, h);
-    camera.aspect = w / h; camera.updateProjectionMatrix();
+    fitCameraFrustum(w, h);
   }
   function ballWorldPos(angle, radius, height) {
     ballMesh.position.set(Math.sin(angle) * radius, height, Math.cos(angle) * radius);
