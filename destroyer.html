@@ -532,16 +532,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <button id="fp-calib-toggle" onclick="toggleFpCalibMode()">🎯 Calibrate</button>
       <!-- Region positions below are Deck's own calibrated export from the drag/resize tool
            (fpCalibExport(), whole pixels on the 1672x940 FP_W/FP_H canvas), converted to %. -->
-      <div class="fp-region" id="fp-game-select" onclick="toggleFiringGameSelect(event)"
+      <!-- Swapped from the Game Select dropdown to a plain Home button (Deck: "have it work
+           like the other Home buttons") -- same dNav('index.html') the top-row Home button
+           uses (see the pre-firing-screen markup, id=top-left). -->
+      <div class="fp-region" id="fp-game-select" onclick="dNav('index.html')"
            style="left:4.127%;top:3.085%;width:10.048%;height:8.83%">
-        Game Select
-        <div id="fp-game-select-menu">
-          <button onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS</button>
-          <button onclick="dNav('focusmode.html?mode=standard')">STANDARD</button>
-          <button onclick="dNav('sicbo.html')">SIC-BO</button>
-          <button class="active">DESTROYER</button>
-          <button onclick="dNav('focusmode.html')">FOCUS MODE</button>
-        </div>
+        🏠 HOME
       </div>
       <div class="fp-region" id="fp-dice-result" style="left:44.557%;top:3.298%;width:9.809%;height:7.766%">
         <div id="fp-last-result-text"></div>
