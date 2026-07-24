@@ -1144,6 +1144,16 @@ body.portrait-craps #felt-portrait{display:flex}
       </div>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="modal-reset-point">
+    <div class="modal-box" style="max-width:360px">
+      <div class="modal-title" style="margin-bottom:12px">Reset to Come Out?</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">This resets the table to the state of a Come Out roll. All non-Contract bets will be returned. All Contract bets will be forfeited<span id="reset-point-forfeit-wrap"> (<span id="reset-point-amount" style="color:#ffd700;font-weight:700"></span>)</span>.</div>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn cancel" onclick="cancelResetPoint()">Cancel</button>
+        <button class="modal-btn" onclick="confirmResetPoint()">Reset Point</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="modal-log">
     <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column">
       <div class="modal-title" style="margin-bottom:8px">Roll Log</div>
@@ -1498,6 +1508,10 @@ body.portrait-craps #felt-portrait{display:flex}
             <button class="sc-btn" onclick="acrossAll()">Across</button>
             <button class="sc-btn std-only" onclick="insideAll()">Inside</button>
             <button class="sc-btn std-only" onclick="outsideAll()">Outside</button>
+            <!-- No std-only gate -- shows in both modes. Sits directly below Across in
+                 Crapless (Inside/Outside are std-only and hidden there) and below Outside in
+                 Standard, matching wherever the last button in this stack happens to land. -->
+            <button class="sc-btn" onclick="resetPoint()">Reset Point</button>
           </div>
         </div>
       </div>
@@ -1597,7 +1611,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.1</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.2</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2328,6 +2342,36 @@ function confirmForfeitLeave(){
 function cancelForfeitLeave(){
   document.getElementById('modal-forfeit').classList.add('hidden');
   pendingLeaveAction=null;
+}
+
+// "Reset Point" (below Across in Crapless / Outside in Standard): resets the table to a fresh
+// Come Out state without an actual roll -- same contract/non-contract split as leaving the
+// table (hasForfeitableBets()/forfeitAmount()/clearRemovable() already define exactly which
+// bets are "Contract" -- locked Pass Line flat, established Come flats, a locked Lucky Roller
+// bet), just applied in place instead of navigating away. Always confirms via a dialog (even
+// with nothing on the felt to forfeit) since this is a full-table reset, not a single-bet
+// removal -- too easy to fat-finger next to Across/Outside otherwise.
+function resetPoint(){
+  if(isRollInProgress()){addLog('Wait for the current roll to finish before resetting.','info');return;}
+  const amt=forfeitAmount();
+  document.getElementById('reset-point-forfeit-wrap').style.display=amt>0?'inline':'none';
+  document.getElementById('reset-point-amount').textContent=fmt(amt);
+  document.getElementById('modal-reset-point').classList.remove('hidden');
+}
+function confirmResetPoint(){
+  document.getElementById('modal-reset-point').classList.add('hidden');
+  clearRemovable(); // refunds every non-Contract bet, leaves only the locked Pass flat (if any) in G.bets
+  // Forfeit whatever Contract bets clearRemovable() deliberately left behind -- it refunds,
+  // it doesn't forfeit, so this table-reset action is the one that actually drops them.
+  G.bets={};G.comeBets=[];G.dcBets=[];
+  G.bonus=makeInitialG().bonus;
+  G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
+  G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
+  addLog('Table reset to Come Out — non-Contract bets returned, Contract bets forfeited.','info');
+  updateUI();
+}
+function cancelResetPoint(){
+  document.getElementById('modal-reset-point').classList.add('hidden');
 }
 
 // Saves a clean come-out state for the current mode to Supabase,
