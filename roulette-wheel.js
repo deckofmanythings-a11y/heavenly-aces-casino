@@ -213,7 +213,10 @@
   }
 
   // ---------- physics state ----------
-  const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.62;
+  // POCKET_R must sit OUTSIDE the label radius (r*0.8 in drawWheelTexture, i.e. ~0.8*wheelRadius
+  // in world units) so the ball settles past the numbers toward the rim, matching a real wheel
+  // (the pocket ring is the outermost moving part -- the ball never rests hub-side of the digits).
+  const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.87;
   const ORBIT_Y = 0.16, POCKET_Y = 0.09;
   let state = null; // live physics state -- {wheelAngle,wheelAngVel,ballAngle,ballAngVel,radius,height,dropStart}
 
@@ -308,7 +311,12 @@
   // not (ballAngle - wheelAngle) / SLOT_ANGLE.
   function restingSlot() {
     const rel = ((Math.PI + state.wheelAngle - state.ballAngle) % (Math.PI * 2) + Math.PI * 2 * 4) % (Math.PI * 2);
-    return Math.floor(rel / SLOT_ANGLE) % N;
+    // Slot i's label sits at rel === i*SLOT_ANGLE exactly (its center); the valid window for
+    // slot i is symmetric around that center (+/- half a slot), which means the nearest integer
+    // to rel/SLOT_ANGLE, not its floor. floor()'s valid window is [i, i+1) -- shifted a half-slot
+    // off from the true center-aligned window -- so it was right roughly half the time and off
+    // by exactly one slot the other half, depending purely on where in the slot the ball landed.
+    return Math.round(rel / SLOT_ANGLE) % N;
   }
 
   // Runs one full resolve from `baseline` (the real angles/speeds live at the moment the
