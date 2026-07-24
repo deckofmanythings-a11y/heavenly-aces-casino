@@ -240,7 +240,15 @@
   // isolated simulation: one seed needed ~40s of pocket-phase steps before crossing 0.03 rad/s).
   // A fixed pocket-phase budget that snaps the ball onto the wheel's velocity at the end sidesteps
   // that tail entirely and keeps every spin's total duration identical and predictable.
-  function makeResolveCtx(rng) { return { rng, step: 0, done: false, lastTickSlot: null }; }
+  function makeResolveCtx(rng) { return { rng, step: 0, done: false, lastTickSlot: null, bounce: 0 }; }
+
+  // World-unit scale of the visible bounce -- how high the ball visibly hops and how much it
+  // kicks outward in radius when it hits a fret or the outer wall, before settling.
+  const BOUNCE_HEIGHT = 0.09, BOUNCE_RADIUS = 0.05;
+  // Per-step multiplicative decay of an active bounce impulse between fret hits -- high enough
+  // that each hit reads as a distinct hop rather than a smear, but the ball still visibly settles
+  // (not a dead stop) between hits.
+  const BOUNCE_DECAY = 0.82;
 
   function resolveStep(ctx) {
     const s = state, rng = ctx.rng;
@@ -259,11 +267,18 @@
     } else {
       const dstep = ctx.step - s.dropStart;
       if (dstep < DESCENT_STEPS) {
-        // spiral fall toward the pocket ring, with a little seeded turbulence so it never
-        // looks like a mechanical lerp
+        // Spiral fall toward the pocket ring, with a little seeded turbulence so it never
+        // looks like a mechanical lerp, PLUS a few decaying hops off the outer wall layered on
+        // top of the smooth fall -- a real ball clatters against the bowl track several times
+        // before it commits to dropping, it doesn't glide down in one smooth arc.
         const f = dstep / DESCENT_STEPS;
-        s.radius = ORBIT_R + (POCKET_R - ORBIT_R) * (f * f * (3 - 2 * f)); // smoothstep
-        s.height = ORBIT_Y + (POCKET_Y - ORBIT_Y) * f;
+        const fallRadius = ORBIT_R + (POCKET_R - ORBIT_R) * (f * f * (3 - 2 * f)); // smoothstep
+        const fallHeight = ORBIT_Y + (POCKET_Y - ORBIT_Y) * f;
+        // 3 hops of decreasing height: sin^2 gives clean zero-crossings between hops (no dip
+        // below the fall path), (1-f) fades the whole pattern out exactly by pocket entry.
+        const hop = Math.pow(Math.sin(f * Math.PI * 3), 2) * (1 - f);
+        s.radius = fallRadius + hop * BOUNCE_RADIUS * 0.5;
+        s.height = fallHeight + hop * BOUNCE_HEIGHT;
         s.ballAngle += s.ballAngVel * STEP;
         s.ballAngVel *= ORBIT_FRICTION;
         s.ballAngVel += (rng() - 0.5) * 0.25 * STEP * 60;
@@ -271,11 +286,11 @@
         // among the frets: fixed-duration budget (see comment above makeResolveCtx). Decay the
         // ball's velocity RELATIVE to the wheel, not its absolute velocity -- a settled ball
         // travels along with the still-spinning wheel, it doesn't stop in the world frame.
-        s.radius = POCKET_R; s.height = POCKET_Y;
         s.ballAngle += s.ballAngVel * STEP;
         const pstep = dstep - DESCENT_STEPS;
         if (pstep >= POCKET_STEPS) {
           s.ballAngVel = s.wheelAngVel; // rigidly locked to the wheel now -- spin is over
+          s.radius = POCKET_R; s.height = POCKET_Y; ctx.bounce = 0;
           ctx.done = true;
         } else {
           s.ballAngVel = s.wheelAngVel + (s.ballAngVel - s.wheelAngVel) * POCKET_FRICTION;
@@ -287,9 +302,15 @@
             ctx.lastTickSlot = slotNow;
             if (kickEnvelope > 0 && Math.abs(s.ballAngVel - s.wheelAngVel) > 0.4) {
               s.ballAngVel += (rng() - 0.5) * Math.min(1.4, Math.abs(s.ballAngVel - s.wheelAngVel) * 0.6) * kickEnvelope;
+              // Each fret hit pops the ball up and slightly outward, decaying between hits --
+              // this is the actual "bounciness": without it the ball just glides to a stop.
+              ctx.bounce = Math.max(ctx.bounce, kickEnvelope * (0.5 + rng() * 0.5));
             }
             if (ctx.onTick) ctx.onTick(Math.min(1, Math.abs(s.ballAngVel - s.wheelAngVel) / 3));
           }
+          ctx.bounce *= BOUNCE_DECAY;
+          s.radius = POCKET_R + ctx.bounce * BOUNCE_RADIUS;
+          s.height = POCKET_Y + ctx.bounce * BOUNCE_HEIGHT;
         }
       }
     }
