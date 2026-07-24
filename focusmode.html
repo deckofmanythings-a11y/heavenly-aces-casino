@@ -706,7 +706,12 @@ body.felt-mode.game-crapless #prop-block .horn-stack{flex:1}
 // children) was silently intercepting clicks meant for the boxes underneath. This is what was
 // actually breaking Lucky Roller, not the DOM-order/z-index theory from the previous fix attempt.
 body.felt-mode.game-crapless #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px;pointer-events:none}
-body.felt-mode.game-crapless #num-strip-h{flex:1;padding:0;gap:2px}
+/* gap dropped to 0 (was 2px) -- the new per-number art tiles (Deck: "rebuild the number row
+   so the bet areas line up better") sit flush against each other with zero space between them,
+   so the underlying invisible hit-region grid needs to match exactly or its cell boundaries
+   drift away from each tile's real edges the further right you go (2px x 9 gaps = 18px of
+   accumulated drift by the last number). */
+body.felt-mode.game-crapless #num-strip-h{flex:1;padding:0;gap:0}
 
 /* Standard: each number column is [blank|Lay] thin top row, big [digit+Come] middle, [Place|Buy] thin bottom row */
 body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;padding:0}
@@ -1587,7 +1592,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.5</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.6</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4607,20 +4612,46 @@ const FM_ART=[
   // stands -- flag to Deck if that granularity loss matters.
   {id:'onerollbets',img:'OneRollBetsV2.png',  group:'props', x:114, y:850, w:913, h:910, tab:'hw'},
   {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595},
-  // Crapless number line: one combined image per configuration (Deck: "there are three
-  // versions. They are NOT meant to stack on one another, just wholesale replace the entire
-  // row"). Height derived from the art's own aspect ratio (2023x355 native) to avoid
-  // stretching, width unchanged from #num-zone's own crapless hit-region box (1960px).
-  // Position: right edge sits ~40px off the felt's right edge (3200-40=3160, 3160-1960=1200),
-  // 100px down from the original Hard-Ways-top-aligned y:324 (now y:424) -- per Deck's direct
-  // feedback on the live site.
-  // Height re-derived for the art's updated native size (2020x460, was 2023x355 -- Deck: "made
-  // them taller and fixed some lining issues") -- x/y/w unchanged (Deck: "positioning should
-  // remain exactly the same"), h recomputed from the new ratio to avoid stretching:
-  // 1960 * 460/2020 = 446.53 -> 447.
-  {id:'craplessline-a', img:'CraplessLineModeA.png', group:null, x:1200,y:424,w:1960,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'craplessline-b', img:'CraplessLineModeB.png', group:null, x:1200,y:424,w:1960,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'craplessline-c', img:'CraplessLineModeC.png', group:null, x:1200,y:424,w:1960,h:447, mode:'crapless',lineMode:'lineC'},
+  // Crapless number line: rebuilt from 30 individual per-number tiles (10 numbers x 3 Buy/
+  // Place line modes) instead of one combined image per mode, so each number's bet-area seam
+  // lines up exactly with its own art tile instead of an evenly-divided guess across one wide
+  // image (Deck: "rebuild the number row so the bet areas line up better"). All 30 source
+  // files are natively 202x460 and meant to sit flush with zero gap between them -- same total
+  // 1960x447 footprint as the old combined image (#num-zone's calibrated crapless hit-region
+  // box), just split into 10 equal 196-wide slices (1960/10) instead of one piece, x stepping
+  // 196px per number in board order (2,3,4,5,6,8,9,10,11,12). Mode A is BP (Buy+Place both
+  // shown) on every number; Mode B is P-only on 6/8 (Place, matching Limited Buy/Place's own
+  // restriction) and B-only everywhere else; Mode C is the plain unlabeled box (No Buy/Place).
+  {id:'cl-a-2', img:'Box2_BP.png', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-3', img:'Box3_BP.png', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-4', img:'Box4_BP.png', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-5', img:'Box5_BP.png', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-6', img:'Box6_BP.png', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-8', img:'Box8_BP.png', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-9', img:'Box9_BP.png', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-10', img:'Box10_BP.png', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-11', img:'Box11_BP.png', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-12', img:'Box12_BP.png', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-b-2', img:'Box2_B.png', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-3', img:'Box3_B.png', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-4', img:'Box4_B.png', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-5', img:'Box5_B.png', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-6', img:'Box6_P.png', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-8', img:'Box8_P.png', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-9', img:'Box9_B.png', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-10', img:'Box10_B.png', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-11', img:'Box11_B.png', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-12', img:'Box12_B.png', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-c-2', img:'Box2_.png', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-3', img:'Box3_.png', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-4', img:'Box4_.png', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-5', img:'Box5_.png', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-6', img:'Box6_.png', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-8', img:'Box8_.png', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-9', img:'Box9_.png', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-10', img:'Box10_.png', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-11', img:'Box11_.png', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-12', img:'Box12_.png', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
   // Standard number line: Number Line/Buy/Place/Lay stack -- moved into FM_ART (was 4 separate
   // addRegion() calls at the bottom of buildFocusFeltArt()) so mode-filtering applies to them
   // uniformly along with everything else.
