@@ -294,8 +294,20 @@
     ctx.step++;
   }
 
+  // Which drawn slot (see drawWheelTexture's `slot` loop variable) the ball is actually
+  // sitting over in WORLD space, given the current ballAngle/wheelAngle. This is NOT simply
+  // floor((ballAngle-wheelAngle)/SLOT_ANGLE) -- that was the original (wrong) assumption,
+  // carried over unverified from the old flat-2D canvas wheel. The real rendering pipeline
+  // (a canvas angle baked into a CircleGeometry's UVs, flattened via faceMesh.rotation.x=-π/2,
+  // then spun via wheelMesh.rotation.y) produces a REFLECTED and phase-shifted relationship
+  // instead, verified by walking THREE's actual CircleGeometry UV attribute values and its
+  // real rotation matrices (not assumed from memory): a label drawn at canvas angle θ ends up,
+  // after those two rotations, at world (x,z) = R*(sin(θ-β), -cos(θ-β)) where β=wheelAngle --
+  // solving that against ballWorldPos's (sin(A), cos(A)) convention gives slot i's ball-angle
+  // as A_i = π + β - i*SLOT_ANGLE, i.e. slot index = (π + wheelAngle - ballAngle) / SLOT_ANGLE,
+  // not (ballAngle - wheelAngle) / SLOT_ANGLE.
   function restingSlot() {
-    const rel = ((state.ballAngle - state.wheelAngle) % (Math.PI * 2) + Math.PI * 2 * 4) % (Math.PI * 2);
+    const rel = ((Math.PI + state.wheelAngle - state.ballAngle) % (Math.PI * 2) + Math.PI * 2 * 4) % (Math.PI * 2);
     return Math.floor(rel / SLOT_ANGLE) % N;
   }
 
