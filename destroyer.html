@@ -45,13 +45,20 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* CRT green-phosphor text for everything sitting on the new panel's screen cutouts -- font,
    color and glow all come from here so individual regions below don't need to repeat it.
    letter-spacing widened slightly (VT323 sits tighter than the old system-ui default). */
-#firing-panel .fp-region,#firing-panel .fp-region button{font-family:'VT323',monospace;letter-spacing:.04em;color:#b7ffc2;text-shadow:0 0 2px #8cff9d,0 0 6px rgba(80,255,110,.45)}
+/* Bumped from #b7ffc2 (Deck: "hard to read against the green monitors... needs to be super
+   bright, closer to green-white than pure green") -- #eafff0 reads as near-white with just
+   enough green tint to still look like phosphor, glow bumped to match. */
+#firing-panel .fp-region,#firing-panel .fp-region button{font-family:'VT323',monospace;letter-spacing:.04em;color:#eafff0;text-shadow:0 0 2px #dfffe8,0 0 6px rgba(180,255,200,.55)}
 #firing-panel .fp-region button{background:rgba(20,40,25,.55);border-color:rgba(140,255,157,.4)}
-#firing-panel #fp-cashout-btn,#firing-panel #fp-buy-area #buy-btn{border-color:rgba(140,255,157,.4);color:#b7ffc2;background:linear-gradient(180deg,rgba(30,70,40,.7),rgba(10,30,15,.7))}
-#firing-panel .fp-jackpot-tier.earned{color:#e8ffb0;text-shadow:0 0 2px #d4ff8c,0 0 6px rgba(212,255,140,.6)}
+#firing-panel #fp-cashout-btn,#firing-panel #fp-buy-area #buy-btn{border-color:rgba(140,255,157,.4);color:#eafff0;background:linear-gradient(180deg,rgba(30,70,40,.7),rgba(10,30,15,.7))}
+#firing-panel .fp-jackpot-tier.earned{color:#f5ffd8;text-shadow:0 0 2px #eeffc0,0 0 6px rgba(230,255,180,.65)}
 #firing-panel .fp-ship-card.sunk .fp-ship-name{color:#ff9a7a;text-shadow:0 0 2px #ff8060,0 0 6px rgba(255,100,60,.5)}
-#firing-panel .fp-winning-lbl{color:#b7ffc2;text-shadow:0 0 2px #8cff9d,0 0 6px rgba(80,255,110,.45)}
-#firing-panel .fp-bankroll-lbl{color:#e8ffb0;text-shadow:0 0 2px #d4ff8c,0 0 6px rgba(212,255,140,.5)}
+#firing-panel .fp-winning-lbl{color:#eafff0;text-shadow:0 0 2px #dfffe8,0 0 6px rgba(180,255,200,.55)}
+#firing-panel .fp-bankroll-lbl{color:#f5ffd8;text-shadow:0 0 2px #eeffc0,0 0 6px rgba(230,255,180,.6)}
+/* Extra Wins / jackpot tiers (Deck: "needs to be bigger") -- was inheriting the panel's base
+   1.6cqh font-size, same as everything else; bumped independently since this block sits in a
+   taller, roomier screen cutout (B) that can afford larger text without wrapping/clipping. */
+#firing-panel #fp-extra-wins{font-size:1.35em}
 /* Faint scanlines across the whole panel -- subtle enough to still read the baked metal/rivet
    art underneath, just enough to sell "these are all CRT screens" as a unifying texture.
    z-index:70, above the calib layer(60)/regions but the calibrator is only ever on in dev. */
