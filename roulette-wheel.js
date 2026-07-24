@@ -208,8 +208,13 @@
     renderer.setSize(w, h);
     fitCameraFrustum(w, h);
   }
-  function ballWorldPos(angle, radius, height) {
+  function ballWorldPos(angle, radius, height, bounceVisual) {
     ballMesh.position.set(Math.sin(angle) * radius, height, Math.cos(angle) * radius);
+    // Squash/stretch scale pulse standing in for the height bounce the top-down camera can't
+    // show (see the comment above BOUNCE_HEIGHT) -- bigger when "up" reads as a hop even
+    // though there's no actual vertical parallax to see it with.
+    const scale = 1 + (bounceVisual || 0) * 0.8;
+    ballMesh.scale.setScalar(scale);
   }
 
   // ---------- physics state ----------
@@ -242,9 +247,21 @@
   // that tail entirely and keeps every spin's total duration identical and predictable.
   function makeResolveCtx(rng) { return { rng, step: 0, done: false, lastTickSlot: null, bounce: 0 }; }
 
-  // World-unit scale of the visible bounce -- how high the ball visibly hops and how much it
-  // kicks outward in radius when it hits a fret or the outer wall, before settling.
-  const BOUNCE_HEIGHT = 0.09, BOUNCE_RADIUS = 0.05;
+  // World-unit scale of the visible bounce. The camera is a pure top-down orthographic view
+  // (see buildScene: position (0,10,0.01) looking at the origin) -- it looks straight down the
+  // Y axis, so a "height" bounce is geometrically invisible no matter how large BOUNCE_HEIGHT is.
+  // BOUNCE_HEIGHT is kept small and mostly vestigial; BOUNCE_RADIUS is the one that actually
+  // reads on screen (the ball visibly moving in/out from center), so it needs to be large enough
+  // to notice, not a subtle nudge. The scale pulse below (ballMesh.scale, driven by
+  // state.bounceVisual) is the real fake-height cue -- the standard top-down-game trick for
+  // conveying vertical impact when the camera literally cannot show vertical motion.
+  const BOUNCE_HEIGHT = 0.09, BOUNCE_RADIUS = 0.15;
+  // Safety clamp: ORBIT_R (0.92x wheelRadius) leaves only ~8% headroom before the ball would
+  // render past the wheel's own edge -- worth an explicit ceiling (computed live off
+  // CFG.wheelRadius, not cached, in case init() is ever called with a non-default radius)
+  // rather than trusting BOUNCE_RADIUS tuning alone to never combine with peak envelope/rng
+  // values badly.
+  function maxBallRadius() { return CFG.wheelRadius * 0.97; }
   // Per-step multiplicative decay of an active bounce impulse between fret hits -- high enough
   // that each hit reads as a distinct hop rather than a smear, but the ball still visibly settles
   // (not a dead stop) between hits.
@@ -263,7 +280,7 @@
       // outer-track orbit: fast, low friction, ball comfortably holds the rim
       s.ballAngle += s.ballAngVel * STEP;
       s.ballAngVel *= ORBIT_FRICTION;
-      s.radius = ORBIT_R; s.height = ORBIT_Y;
+      s.radius = ORBIT_R; s.height = ORBIT_Y; s.bounceVisual = 0;
     } else {
       const dstep = ctx.step - s.dropStart;
       if (dstep < DESCENT_STEPS) {
@@ -277,8 +294,9 @@
         // 3 hops of decreasing height: sin^2 gives clean zero-crossings between hops (no dip
         // below the fall path), (1-f) fades the whole pattern out exactly by pocket entry.
         const hop = Math.pow(Math.sin(f * Math.PI * 3), 2) * (1 - f);
-        s.radius = fallRadius + hop * BOUNCE_RADIUS * 0.5;
+        s.radius = Math.min(fallRadius + hop * BOUNCE_RADIUS, maxBallRadius());
         s.height = fallHeight + hop * BOUNCE_HEIGHT;
+        s.bounceVisual = hop;
         s.ballAngle += s.ballAngVel * STEP;
         s.ballAngVel *= ORBIT_FRICTION;
         s.ballAngVel += (rng() - 0.5) * 0.25 * STEP * 60;
@@ -290,7 +308,7 @@
         const pstep = dstep - DESCENT_STEPS;
         if (pstep >= POCKET_STEPS) {
           s.ballAngVel = s.wheelAngVel; // rigidly locked to the wheel now -- spin is over
-          s.radius = POCKET_R; s.height = POCKET_Y; ctx.bounce = 0;
+          s.radius = POCKET_R; s.height = POCKET_Y; s.bounceVisual = 0; ctx.bounce = 0;
           ctx.done = true;
         } else {
           s.ballAngVel = s.wheelAngVel + (s.ballAngVel - s.wheelAngVel) * POCKET_FRICTION;
@@ -309,8 +327,9 @@
             if (ctx.onTick) ctx.onTick(Math.min(1, Math.abs(s.ballAngVel - s.wheelAngVel) / 3));
           }
           ctx.bounce *= BOUNCE_DECAY;
-          s.radius = POCKET_R + ctx.bounce * BOUNCE_RADIUS;
+          s.radius = Math.min(POCKET_R + ctx.bounce * BOUNCE_RADIUS, maxBallRadius());
           s.height = POCKET_Y + ctx.bounce * BOUNCE_HEIGHT;
+          s.bounceVisual = ctx.bounce;
         }
       }
     }
@@ -447,7 +466,7 @@
         if (livCtx.done) { finishResolve(); break; }
       }
       wheelMesh.rotation.y = state.wheelAngle;
-      ballWorldPos(state.ballAngle, state.radius, state.height);
+      ballWorldPos(state.ballAngle, state.radius, state.height, state.bounceVisual);
     }
     renderer.render(scene, camera);
   }
