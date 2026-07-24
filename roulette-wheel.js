@@ -85,7 +85,9 @@
 
   // ---------- wheel number-ring texture (the "relabel" surface) ----------
   function buildWheelTexture() {
-    const size = 1024;
+    const size = 1536; // higher-res than the old 1024 -- the wheel now renders meaningfully
+                        // larger on screen (see #wheel-wrap in roulette.html), so the texture
+                        // needs more source pixels per label to stay crisp instead of blurry.
     wheelCanvas = document.createElement('canvas');
     wheelCanvas.width = size; wheelCanvas.height = size;
     wheelCtx = wheelCanvas.getContext('2d');
@@ -103,15 +105,21 @@
       const c = colorOf(pocket);
       ctx.fillStyle = c === 'red' ? '#a01818' : c === 'black' ? '#181818' : '#0a6b30';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,215,0,.35)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,215,0,.25)'; ctx.lineWidth = 2; ctx.stroke();
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(start + SLOT_ANGLE / 2);
-      ctx.translate(r * 0.82, 0);
+      ctx.translate(r * 0.8, 0);
       ctx.rotate(Math.PI / 2);
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold ' + Math.round(size * 0.032) + 'px system-ui,sans-serif';
+      // Bold outline behind the fill so white text stays legible against both the dark
+      // slots and the (similarly light) gold slot-boundary lines at small render sizes.
+      const fontPx = Math.round(size * (pocket.length > 1 ? 0.058 : 0.072));
+      ctx.font = 'bold ' + fontPx + 'px system-ui,sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+      ctx.strokeStyle = 'rgba(0,0,0,.9)'; ctx.lineWidth = fontPx * 0.22;
+      ctx.strokeText(pocket, 0, 0);
+      ctx.fillStyle = '#fff';
       ctx.fillText(pocket, 0, 0);
       ctx.restore();
     }
