@@ -342,7 +342,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.7.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.7.2</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -583,46 +583,6 @@ async function tryRestoreSession(){
   if(new Date(data.session_expires)<new Date()){localStorage.removeItem('craps_session');showAuthScreen();return;}
   startSession(data);
 }
-function applyServerGameState(player){
-  // Restore G from the server's authoritative game_state JSONB blob.
-  const gs=player.game_state||{};
-  G.bets=gs.bets||{};
-  G.comeBets=gs.comeBets||[];
-  G.point=gs.point??null;
-  G.phase=gs.phase||'comeout';
-  G.betsOn=!!gs.betsOn;
-  G.betsOffThisRoll=!!gs.betsOffThisRoll;
-  G.passLocked=!!gs.passLocked;
-  if(gs.bonus){
-    G.bonus.low=gs.bonus.low||0;G.bonus.all=gs.bonus.all||0;G.bonus.high=gs.bonus.high||0;
-    G.bonus.lowMax=gs.bonus.lowMax||0;G.bonus.allMax=gs.bonus.allMax||0;G.bonus.highMax=gs.bonus.highMax||0;
-    G.bonus.lowHit=new Set(gs.bonus.lowHit||[]);G.bonus.highHit=new Set(gs.bonus.highHit||[]);
-    G.bonus.open=gs.bonus.open!==undefined?gs.bonus.open:true;
-    G.bonus.locked=!!gs.bonus.locked;
-  }
-  if(gs.rollHistory)G.rollHistory=gs.rollHistory;
-}
-function startSession(player){
-  currentPlayer=player;
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('game-screen').style.display='flex';
-  document.getElementById('top-bar-username').textContent=player.username;
-  G=makeInitialG();
-  G.bankroll=parseFloat(player.bankroll)||0;
-  G.freePlay=parseFloat(player.free_play_balance)||0;
-  G.startingBankroll=parseFloat(player.total_redeemed)||0;
-  G.bankrollAfterLastRoll=G.bankroll;
-  applyServerGameState(player);
-  updateUI();initDice();
-}
-async function logout(){
-  if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
-  localStorage.removeItem('craps_session');currentPlayer=null;G=makeInitialG();
-  document.getElementById('game-screen').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
-  document.getElementById('auth-username').value='';document.getElementById('auth-password').value='';
-}
-
 // ── REDEEM ────────────────────────────────────────────────────────────────────
 function openRedeemModal(broke){
   document.getElementById('redeem-input').value='';document.getElementById('redeem-error').textContent='';
@@ -762,7 +722,7 @@ function startSession(player){
 async function logout(){
   if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
   localStorage.removeItem('craps_session');currentPlayer=null;
-  G={bankroll:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null};
+  G={bankroll:0,freePlay:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null};
   document.getElementById('game-screen').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('auth-username').value='';document.getElementById('auth-password').value='';
