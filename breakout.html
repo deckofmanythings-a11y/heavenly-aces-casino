@@ -422,7 +422,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.6.5</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.7.1</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -615,7 +615,7 @@ const FN_HEADERS={'Content-Type':'application/json','Authorization':'Bearer '+SU
 const SIDE_BET_KEYS=['superTie','breakoutBonus','sweet17','pairPlus'];
 function makeInitialG(){
   return {
-    bankroll:0,startingBankroll:0,chip:25,
+    bankroll:0,freePlay:0,startingBankroll:0,chip:25,
     // Flat bet object, matching the chip-ui.md convention -- all four side bets plus
     // the two mutually-exclusive main bets share one dict, keyed by string identifier.
     bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0},
@@ -738,6 +738,7 @@ function startSession(player){
   G=makeInitialG();
   buildCardSlots();
   G.bankroll=parseFloat(player.bankroll)||0;
+  G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   const gs=player.game_state||{};
   // Note: an in-progress 'playing' round abandoned mid-session (refresh during
@@ -849,10 +850,12 @@ function flashSpotError(spotId){
 function placePlayerBet(){
   if(G.phase!=='betting')return;
   if((G.bets.breakoutBet||0)>0){flashSpotError('dealerbet-spot');return;}
-  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  // Free Play counts toward what a player can stage -- roll-breakout already validates
+  // against realBankroll+free_play.balance combined server-side.
+  if(!(G.bankroll+G.freePlay)){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets.playerBet||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const a=r2(Math.min(G.chip,r2(G.bankroll),r2(MAX_BET-cur)));
+  const a=r2(Math.min(G.chip,r2(G.bankroll+G.freePlay),r2(MAX_BET-cur)));
   if(a<=0){addLog('Not enough bankroll.','info');return;}
   G.bets.playerBet=r2(cur+a);
   G.bankroll=r2(G.bankroll-a);
@@ -869,10 +872,10 @@ function removePlayerBet(){
 function placeDealerBet(){
   if(G.phase!=='betting')return;
   if((G.bets.playerBet||0)>0){flashSpotError('playerbet-spot');return;}
-  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  if(!(G.bankroll+G.freePlay)){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets.breakoutBet||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const a=r2(Math.min(G.chip,r2(G.bankroll),r2(MAX_BET-cur)));
+  const a=r2(Math.min(G.chip,r2(G.bankroll+G.freePlay),r2(MAX_BET-cur)));
   if(a<=0){addLog('Not enough bankroll.','info');return;}
   G.bets.breakoutBet=r2(cur+a);
   G.bankroll=r2(G.bankroll-a);
@@ -896,10 +899,10 @@ function removeDealerBet(){
 function placeBet(key){
   if(G.phase!=='betting')return;
   if(BREAKOUT_ONLY_KEYS.includes(key)&&(G.bets.breakoutBet||0)<=0){flashSpotError('dealerbet-spot');addLog((key==='superTie'?'Super Tie':'Breakout Bonus')+' can only be bet alongside the Breakout Bet.','info');return;}
-  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  if(!(G.bankroll+G.freePlay)){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets[key]||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const room=r2(G.bankroll);
+  const room=r2(G.bankroll+G.freePlay);
   const capRoom=r2(MAX_BET-cur);
   const a=r2(Math.min(G.chip,room,capRoom));
   if(a<=0){addLog('Not enough bankroll.','info');return;}
@@ -934,7 +937,7 @@ function toggleProgressive(){
     G.bankroll=r2(G.bankroll+G.bets.progressive);
     G.bets.progressive=0;
   }else{
-    if(G.bankroll<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
+    if(G.bankroll+G.freePlay<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
     G.bets.progressive=PROGRESSIVE_BET;
     G.bankroll=r2(G.bankroll-PROGRESSIVE_BET);
   }
@@ -1056,7 +1059,7 @@ function repeatLastBet(){
   const snap=G.lastBetSnapshot;
   const cost=Object.values(snap).reduce((a,b)=>r2(a+(b||0)),0);
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
-  if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
+  if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
   Object.keys(snap).forEach(k=>{G.bets[k]=snap[k]||0;});
   G.bankroll=r2(G.bankroll-cost);
@@ -1213,6 +1216,7 @@ async function dealHand(){
   G.doubled=false;
   G.locked={progressive:data.progressive};
   G.bankroll=data.newBankroll;
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0};
   document.getElementById('dealer-row').classList.add('active');
@@ -1287,6 +1291,7 @@ async function answerInsurance(yes){
     G.dealInFlight=false;
     (data.log||[]).forEach(line=>addLog(line,/lost/i.test(line)?'lose':/pays/i.test(line)?'win':'info'));
     if(data.newBankroll!=null)G.bankroll=data.newBankroll;
+    if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     renderActionButtons();updateStatusZone();updateUI();
   }
 }
@@ -1364,6 +1369,7 @@ function finishRound(data){
     addLog(line,cls);
   });
   G.bankroll=data.newBankroll;
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   G.lastWin=data.payout||0;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   const mainBetAmt=G.mode==='player'?(G.lastBetSnapshot.playerBet||0):(G.lastBetSnapshot.breakoutBet||0);
@@ -1426,7 +1432,7 @@ function renderRollHistory(){
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
-  document.getElementById('hud-bankroll').textContent=fmtS(G.bankroll);
+  document.getElementById('hud-bankroll').textContent=fmtS(Math.max(0,G.bankroll));
   document.getElementById('hud-bet').textContent=fmtS(tBets());
   document.getElementById('hud-lastbet').textContent=G.lastBetDisplay>0?fmtS(G.lastBetDisplay):'—';
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';

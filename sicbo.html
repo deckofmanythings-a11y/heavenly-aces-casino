@@ -342,7 +342,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.6.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.7.1</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -523,7 +523,7 @@ const DIE_IMG_SZ='min(13px,2vw)'; // size for inline pip images in bet cells
 const DIE_IMG_SZ_LG='min(18px,2.8vw)'; // any-number row
 
 // ── STATE ────────────────────────────────────────────────────────────────────
-let G={bankroll:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
+let G={bankroll:0,freePlay:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
 let currentPlayer=null,_authMode='login';
 let animating=false,tumbling=false,tumbleStart=0,animStart=0;
 const LAND_MS=550,ANIM_MS=1100;
@@ -609,6 +609,7 @@ function startSession(player){
   document.getElementById('top-bar-username').textContent=player.username;
   G=makeInitialG();
   G.bankroll=parseFloat(player.bankroll)||0;
+  G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
   applyServerGameState(player);
@@ -706,10 +707,12 @@ function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.
 // independently.
 const MIN_BET=1,MAX_BET=300;
 function placeBet(key){
-  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  // Free Play counts toward what a player can stage -- roll-sicbo already validates
+  // against realBankroll+free_play.balance combined server-side.
+  if(!(G.bankroll+G.freePlay)){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets[key]||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const a=r2(Math.min(G.chip,G.bankroll,MAX_BET-cur));
+  const a=r2(Math.min(G.chip,G.bankroll+G.freePlay,MAX_BET-cur));
   G.bets[key]=r2(cur+a);
   G.bankroll=r2(G.bankroll-a);
   updateUI();
@@ -733,7 +736,7 @@ function repeatLastBet(){
   const snap=G.lastBetSnapshot;
   const cost=Object.values(snap).reduce((a,b)=>r2(a+(b||0)),0);
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
-  if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
+  if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
   for(const k in snap){G.bets[k]=snap[k];G.bankroll=r2(G.bankroll-snap[k]);}
   updateUI();
@@ -746,6 +749,7 @@ function startSession(player){
   document.getElementById('game-screen').style.display='flex';
   document.getElementById('top-bar-username')&&(document.getElementById('top-bar-username').textContent=player.username);
   G.bankroll=parseFloat(player.bankroll)||0;
+  G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   // Restore lastBet snapshot from game_state.sicbo
   const gs=player.game_state||{};
@@ -842,6 +846,7 @@ async function rollDice(){
     G.lastBetSnapshot={...G.bets};
     G.bets={};
     G.bankroll=data.newBankroll;
+    if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     G.lastWin=data.returned||0;
     const isTriple=d1===d2&&d2===d3;
     if(!G.rollHistory)G.rollHistory=[];
@@ -887,7 +892,7 @@ function renderRollHistory(){
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
-  document.getElementById('hud-bankroll').textContent=fmtS(G.bankroll);
+  document.getElementById('hud-bankroll').textContent=fmtS(Math.max(0,G.bankroll));
   document.getElementById('hud-bet').textContent=fmtS(tBets());
   document.getElementById('hud-lastbet').textContent=G.lastBetDisplay>0?fmtS(G.lastBetDisplay):'—';
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';

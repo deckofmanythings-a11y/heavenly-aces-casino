@@ -620,7 +620,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.6.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.7.1</div>
       <div style="width:100%">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -982,7 +982,7 @@ function buyMissilePrice(shipHits,sunkenCount){
 
 // ── STATE ────────────────────────────────────────────────────────────────────
 let G={
-  bankroll:0,startingBankroll:0,chip:5,
+  bankroll:0,freePlay:0,startingBankroll:0,chip:5,
   phase:'placement',
   ships:null,
   grid:null,
@@ -1096,6 +1096,7 @@ function startSession(player){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
   G.bankroll=parseFloat(player.bankroll)||0;
+  G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   // Restore in-progress game if any
   const gs=(player.game_state||{}).destroyer;
@@ -1245,7 +1246,7 @@ function addBetChip(){
   if(G.phase!=='placement')return;
   const chip=G.chip||5;
   G.placementBet=Math.round(((G.placementBet||0)+chip)*100)/100;
-  if(G.placementBet>G.bankroll)G.placementBet=Math.round(G.bankroll*100)/100;
+  if(G.placementBet>G.bankroll+G.freePlay)G.placementBet=Math.round((G.bankroll+G.freePlay)*100)/100;
   if(G.placementBet>MAX_BET){G.placementBet=MAX_BET;addLog('Table max is '+fmt(MAX_BET)+'.','info');}
   updateBetDisplay();
 }
@@ -1398,7 +1399,7 @@ function commitDrop(targetR,targetC){
 async function startBattle(){
   const bet=G.placementBet||0;
   if(bet<=0){addLog('Place a bet before starting.','info');return;}
-  if(bet>G.bankroll){addLog('Bet exceeds bankroll.','info');return;}
+  if(bet>G.bankroll+G.freePlay){addLog('Bet exceeds bankroll.','info');return;}
   if(bet<MIN_BET||bet>MAX_BET){addLog('Bet must be between '+fmt(MIN_BET)+' and '+fmt(MAX_BET)+'.','info');return;}
   const btn=document.getElementById('start-battle-btn');btn.disabled=true;
   const token=localStorage.getItem('craps_session');
@@ -1414,6 +1415,7 @@ async function startBattle(){
   btn.disabled=false;
   if(!data.ok){addLog(data.message||'Error.','info');return;}
   applyState(data.state,data.newBankroll);
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   G.buyPrice=data.buyPrice||0;G.canBuy=false;
   hidePlacementScreen();
   showFiringScreen();
@@ -1494,6 +1496,7 @@ async function fireMissile(){
   // Skip the increment if this miss was already optimistically dimmed at buy-click time.
   else if(firedType==='extra'&&!hit&&!wasPendingBuyDim){G.missilesBoughtUsed=(G.missilesBoughtUsed||0)+1;}
   applyState(state,newBankroll);
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   G.buyPrice=buyPrice||0;G.canBuy=canBuy||false;
   if(!G.rollHistory)G.rollHistory=[];
   G.rollHistory.push({letter:roll.letter,number:displayNumber,hit});
@@ -1593,6 +1596,7 @@ async function resolveGameEnd(){
   if(!data.ok){addLog(data.message||'Error ending game.','info');return;}
   G.phase='done';
   applyState(data.state,data.newBankroll);
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   G.lastWin=data.winnings||0;
   if(currentPlayer)currentPlayer.bankroll=data.newBankroll;
   handleBattleOver(data.finalPayout,data.winnings,data.state);
@@ -1603,7 +1607,7 @@ async function resolveGameEnd(){
 // ── BUY MISSILE ───────────────────────────────────────────────────────────────
 async function buyMissile(){
   if(G.firing||!G.canBuy||G.missilesRemaining>0)return;
-  if(G.buyPrice>G.bankroll){addLog('Insufficient bankroll for missile.','info');return;}
+  if(G.buyPrice>G.bankroll+G.freePlay){addLog('Insufficient bankroll for missile.','info');return;}
   // Kill the countdown timer immediately
   G.buyOfferPending=false;
   if(_buyOfferTimer){clearInterval(_buyOfferTimer);_buyOfferTimer=null;}
@@ -1630,6 +1634,7 @@ async function buyMissile(){
   G.firing=false;
   if(!data.ok){addLog(data.message||'Error.','info');updateUI();return;}
   applyState(data.state,data.newBankroll);
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   G.buyPrice=data.buyPrice||0;G.canBuy=data.canBuy||false;
   G.totalSpent=r2((G.totalSpent||G.bet)+(data.pricePaid||G.buyPrice));
   G.freeMissiles=(G.freeMissiles||0)+1; // purchased missile is now ready to fire
@@ -2264,7 +2269,7 @@ function renderFiringFireCenter(){
   if(buyBtn){
     buyBtn.style.display=offerLive?'block':'none';
     const price=G.buyPrice||0;
-    buyBtn.disabled=G.firing||price>G.bankroll;
+    buyBtn.disabled=G.firing||price>G.bankroll+G.freePlay;
     buyBtn.textContent='🎯 Buy '+fmt(price);
   }
   const timerRow=document.getElementById('buy-timer-row');
@@ -2327,7 +2332,7 @@ function renderBetCirclePair(prefix,amt){
     winEl.textContent='Winning: '+fmt(winning);
   }
   const bankEl=document.getElementById(prefix+'-bankroll-lbl');
-  if(bankEl)bankEl.textContent='Playable: '+fmtS(G.bankroll);
+  if(bankEl)bankEl.textContent='Playable: '+fmtS(Math.max(0,G.bankroll));
 }
 function renderFiringBetCircle(){
   renderBetCirclePair('fp',G.totalSpent||G.bet||0);
@@ -2338,7 +2343,7 @@ function updateUI(){
   const net=r2(G.bankroll-G.startingBankroll);
   const pnlColor=net>=0?'#7ee87e':'#f08080';
   const e=id=>document.getElementById(id);
-  if(e('hud-bankroll'))e('hud-bankroll').textContent='Playable: '+fmtS(G.bankroll);
+  if(e('hud-bankroll'))e('hud-bankroll').textContent='Playable: '+fmtS(Math.max(0,G.bankroll));
   if(G.phase!=='placement')renderBetCircle(G.totalSpent||G.bet||0);
   const winEl=e('hud-winning-top');
   if(winEl){
@@ -2359,7 +2364,7 @@ function updateUI(){
   if(buyBtn){
     const showBuy=G.phase==='firing'&&G.missilesRemaining===0&&G.canBuy;
     buyBtn.style.display=G.phase==='firing'?'block':'none';
-    buyBtn.disabled=!showBuy||G.firing||G.buyPrice>G.bankroll;
+    buyBtn.disabled=!showBuy||G.firing||G.buyPrice>G.bankroll+G.freePlay;
     if(showBuy)buyBtn.textContent='🎯 Buy Missile '+fmt(G.buyPrice);
     else if(G.phase==='firing'&&G.missilesRemaining===0&&!G.canBuy)buyBtn.textContent='Max missiles bought';
     else buyBtn.textContent='';
@@ -2436,7 +2441,7 @@ function renderFireCenter(){
   if(buyBtn){
     buyBtn.style.display=offerLive?'block':'none';
     const price=G.buyPrice||0;
-    buyBtn.disabled=G.firing||price>G.bankroll;
+    buyBtn.disabled=G.firing||price>G.bankroll+G.freePlay;
     buyBtn.textContent='🎯 Buy Missile  '+fmt(price);
   }
   const timerRow=document.getElementById('buy-timer-row');

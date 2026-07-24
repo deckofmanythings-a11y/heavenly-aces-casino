@@ -902,7 +902,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" id="logout-btn" onclick="logout()">Log Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.6.4</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.7.1</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1654,7 +1654,7 @@ const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,max
 const fmtS=n=>'$'+Math.abs(n).toFixed(0);
 const oddsLim=(flat,pt)=>r2(flat*(ODDS_MULT[pt]||1));
 
-function makeInitialG(){return{bankroll:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false}};}
+function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false}};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
 let animating=false,animStart=0,tumbling=false,tumbleStart=0;
@@ -1937,6 +1937,7 @@ function startSession(player){
   document.getElementById('top-bar-username').textContent=player.username;
   G=makeInitialG();
   G.bankroll=parseFloat(player.bankroll)||0;
+  G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
   applyServerGameState(player); // this calls applyGameMode() internally, setting mode from saved state
@@ -2806,7 +2807,15 @@ function cancelCommission(){
 // server rejects independently.
 const MIN_BET=1,MAX_BET=300;
 function placeBet(key,loc){
-  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  // Deck: Buy, Place, and Hardways bets are real money at all times, same rule as the
+  // FP\$ chip-label exclusion (see renderChipStacks()) -- they never draw from Free Play,
+  // so they don't get combined-room treatment below the way every other bet type does.
+  // Floored at 0: G.bankroll can be transiently negative (another bet drawing on Free
+  // Play), and Math.min() below would otherwise turn a negative room into a negative
+  // bet amount instead of correctly refusing the bet.
+  const excludeFP=/^(buy|place|hard)\d/.test(key);
+  const room=excludeFP?Math.max(0,G.bankroll):r2(G.bankroll+G.freePlay);
+  if(!room){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
   if(key==='pass'){if(G.passLocked){addLog('Pass Line locked.','info');return;}if(G.phase==='point'){addLog('Pass Line: come-out only.','info');return;}}
   if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
@@ -2814,7 +2823,7 @@ function placeBet(key,loc){
   if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
   const cur=G.bets[key]||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const a=r2(Math.min(G.chip,G.bankroll,MAX_BET-cur));G.bets[key]=r2(cur+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
+  const a=r2(Math.min(G.chip,room,MAX_BET-cur));G.bets[key]=r2(cur+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
 }
 function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}
 // Place bets on 6 or 8 must land in multiples of $6 for the 7-for-6 payout to resolve cleanly.
@@ -2992,6 +3001,7 @@ async function rollDice(){
     if(data.error==='sync'&&data.lastGoodState){
       addLog(data.message||'Sync Error. Restoring last known good bet and bankroll state.','lose');
       restoreFromServerState(data.lastGoodState);
+      if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     }else{
       addLog(data.message||'Roll failed. Try again.','lose');
     }
@@ -3029,6 +3039,7 @@ async function rollDice(){
     spawnLossGhosts(rawLog);
     spawnWinGhosts(rawLog);
     restoreFromServerState(data.newState);
+    if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     if(data.returned>0)G.lastWin=data.returned;
     G.rollHistory=data.newState.rollHistory||G.rollHistory;
     chkRepeat();
@@ -3122,7 +3133,7 @@ async function rollDice(){
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
-  document.getElementById('hud-bankroll').textContent=fmt(G.bankroll);
+  document.getElementById('hud-bankroll').textContent=fmt(Math.max(0,G.bankroll));
   document.getElementById('hud-bet').textContent=fmt(tBets());
   document.getElementById('hud-lastbet').textContent=(G._lastBetDisplay&&G._lastBetDisplay>0)?fmt(G._lastBetDisplay):'—';
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmt(G.lastWin):'—';

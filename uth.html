@@ -423,7 +423,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.6.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.7.1</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -600,7 +600,7 @@ const FN_HEADERS={'Content-Type':'application/json','Authorization':'Bearer '+SU
 // ── STATE ────────────────────────────────────────────────────────────────────
 function makeInitialG(){
   return {
-    bankroll:0,startingBankroll:0,chip:25,
+    bankroll:0,freePlay:0,startingBankroll:0,chip:25,
     bets:{ante:0,trips:0,progressive:0},
     playBet:0,       // staged locally in the Play spot, only sent to the server on PLAY
     phase:'betting', // betting|preflop|flop|river|showdown
@@ -774,6 +774,9 @@ function startSession(player){
   G=makeInitialG();
   buildCardSlots();
   G.bankroll=parseFloat(player.bankroll)||0;
+  // Real bankroll and Free Play are two separate pools -- see the placeBet()/dealHand()
+  // gating comments below for why both count toward what a player can actually stage.
+  G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   const gs=player.game_state||{};
   if(gs.uth&&gs.uth.lastBetSnapshot){G.lastBetSnapshot=gs.uth.lastBetSnapshot;document.getElementById('repeat-btn').disabled=false;}
@@ -866,11 +869,18 @@ const MIN_BET=1,MAX_BET=300;
 function anteReserveMult(key){return key==='ante'?2:1;}
 function placeBet(key){
   if(G.phase!=='betting')return;
-  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  // Free Play counts toward what a player can stage -- the server (roll-uth) already
+  // validates against realBankroll+free_play.balance combined and draws from Free Play
+  // first at resolution, so a $0-bankroll player with a Free Play balance shouldn't be
+  // blocked from betting here before the request even reaches the server. G.bankroll
+  // itself still deducts as before (see below) and can go negative while Free Play is
+  // covering the gap -- it self-corrects the moment the server responds with the real
+  // newBankroll, since the server did the actual accounting.
+  if(!(G.bankroll+G.freePlay)){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets[key]||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
   const mult=anteReserveMult(key);
-  const room=r2(G.bankroll/mult);
+  const room=r2((G.bankroll+G.freePlay)/mult);
   const capRoom=r2(MAX_BET-cur);
   const a=r2(Math.min(G.chip,room,capRoom));
   if(a<=0){addLog('Not enough bankroll to also cover the matching Blind bet.','info');return;}
@@ -905,7 +915,7 @@ function toggleProgressive(){
     G.bankroll=r2(G.bankroll+G.bets.progressive);
     G.bets.progressive=0;
   }else{
-    if(G.bankroll<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
+    if(G.bankroll+G.freePlay<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
     G.bets.progressive=PROGRESSIVE_BET;
     G.bankroll=r2(G.bankroll-PROGRESSIVE_BET);
   }
@@ -944,7 +954,7 @@ function repeatLastBet(){
   const snap=G.lastBetSnapshot;
   const cost=r2((snap.ante||0)*2+(snap.trips||0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
-  if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
+  if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
   G.bets.ante=snap.ante||0;G.bets.trips=snap.trips||0;
   G.bankroll=r2(G.bankroll-cost);
@@ -965,7 +975,7 @@ function updateRaiseButtonStates(){
   opts.forEach(mult=>{
     const btn=document.getElementById(RAISE_BTN_ID[mult]);if(!btn)return;
     const amt=r2(G.locked.ante*mult);
-    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll&&amt<=MAX_BET);
+    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll+G.freePlay&&amt<=MAX_BET);
   });
 }
 function doRaise(mult){
@@ -974,7 +984,7 @@ function doRaise(mult){
   const btn=document.getElementById(RAISE_BTN_ID[mult]);
   if(btn&&btn.disabled)return;
   const amt=r2(G.locked.ante*mult);
-  if(amt<=0||amt>G.bankroll||amt>MAX_BET)return;
+  if(amt<=0||amt>G.bankroll+G.freePlay||amt>MAX_BET)return;
   G.playBet=amt;
   G.bankroll=r2(G.bankroll-amt);
   updateUI();
@@ -1109,7 +1119,7 @@ async function dealHand(){
   // subtract as soon as chips are staged), so this is exactly the reserve left over --
   // never let a hand start that can't afford even the smallest possible Play bet (1x
   // Ante, at the river), or every street would force a Fold no matter what's drawn.
-  if(G.bankroll<ante-0.01){addLog('Not enough bankroll left to cover a 1x Play bet ('+fmt(ante)+') at the river. Lower your Ante/Trips or add funds.','info');return;}
+  if(G.bankroll+G.freePlay<ante-0.01){addLog('Not enough bankroll left to cover a 1x Play bet ('+fmt(ante)+') at the river. Lower your Ante/Trips or add funds.','info');return;}
   const trips=G.bets.trips||0;
   const progressive=(G.bets.progressive||0)>0;
   document.getElementById('btn-deal').disabled=true;
@@ -1126,6 +1136,7 @@ async function dealHand(){
   G.lastBetSnapshot={ante:data.ante,trips:data.trips};
   G.hand={playerHole:data.playerHole,community:data.community,dealerHole:null};
   G.bankroll=data.newBankroll;
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   G.bets={ante:0,trips:0,progressive:0};
   G.playBet=0;
@@ -1238,6 +1249,7 @@ function finishHand(data){
       addLog(line,cls);
     });
     G.bankroll=data.newBankroll;
+    if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     G.lastWin=data.payout||0;
     G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
     if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
@@ -1327,7 +1339,7 @@ function renderRollHistory(){
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
-  document.getElementById('hud-bankroll').textContent=fmtS(G.bankroll);
+  document.getElementById('hud-bankroll').textContent=fmtS(Math.max(0,G.bankroll));
   document.getElementById('hud-bet').textContent=fmtS(tBets());
   document.getElementById('hud-lastbet').textContent=G.lastBetDisplay>0?fmtS(G.lastBetDisplay):'—';
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
