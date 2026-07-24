@@ -37,7 +37,25 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    the baked labels/artwork -- see PANEL_W/PANEL_H and the FIRING_REGIONS table in the JS. ── */
 #firing-screen{display:none;flex:1;min-height:0;align-items:center;justify-content:center}
 #firing-screen.active{display:flex}
+/* Self-hosted (not Google Fonts @import) per Deck's ask -- identical rendering across
+   browsers/players and no external request at load time. font-display:block, not swap, so
+   no fallback-font flash before it's ready. */
+@font-face{font-family:'VT323';src:url('fonts/VT323-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:block}
 #firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg_new.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
+/* CRT green-phosphor text for everything sitting on the new panel's screen cutouts -- font,
+   color and glow all come from here so individual regions below don't need to repeat it.
+   letter-spacing widened slightly (VT323 sits tighter than the old system-ui default). */
+#firing-panel .fp-region,#firing-panel .fp-region button{font-family:'VT323',monospace;letter-spacing:.04em;color:#b7ffc2;text-shadow:0 0 2px #8cff9d,0 0 6px rgba(80,255,110,.45)}
+#firing-panel .fp-region button{background:rgba(20,40,25,.55);border-color:rgba(140,255,157,.4)}
+#firing-panel #fp-cashout-btn,#firing-panel #fp-buy-area #buy-btn{border-color:rgba(140,255,157,.4);color:#b7ffc2;background:linear-gradient(180deg,rgba(30,70,40,.7),rgba(10,30,15,.7))}
+#firing-panel .fp-jackpot-tier.earned{color:#e8ffb0;text-shadow:0 0 2px #d4ff8c,0 0 6px rgba(212,255,140,.6)}
+#firing-panel .fp-ship-card.sunk .fp-ship-name{color:#ff9a7a;text-shadow:0 0 2px #ff8060,0 0 6px rgba(255,100,60,.5)}
+#firing-panel .fp-winning-lbl{color:#b7ffc2;text-shadow:0 0 2px #8cff9d,0 0 6px rgba(80,255,110,.45)}
+#firing-panel .fp-bankroll-lbl{color:#e8ffb0;text-shadow:0 0 2px #d4ff8c,0 0 6px rgba(212,255,140,.5)}
+/* Faint scanlines across the whole panel -- subtle enough to still read the baked metal/rivet
+   art underneath, just enough to sell "these are all CRT screens" as a unifying texture.
+   z-index:70, above the calib layer(60)/regions but the calibrator is only ever on in dev. */
+#firing-panel::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:70;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.08) 0,rgba(0,0,0,.08) 1px,transparent 1px,transparent 3px);mix-blend-mode:multiply;opacity:.5}
 #firing-panel .fp-region{position:absolute;overflow:hidden}
 #fp-game-select,#pp-game-select{display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:visible!important}
 #fp-game-select-menu,#pp-game-select-menu{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#141420;border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;z-index:20;min-width:100%}
