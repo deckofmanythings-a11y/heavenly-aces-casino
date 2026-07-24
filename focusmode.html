@@ -1283,7 +1283,7 @@ body.portrait-craps #felt-portrait{display:flex}
       <div id="line-mode-toggle" style="display:none;gap:3px;width:100%;padding:0 3px 3px" title="Crapless number-line configuration">
         <button class="mode-btn active" id="line-mode-a" onclick="switchLineMode('lineA')" style="flex:1;font-size:10px;line-height:1.15;padding:2px 2px;min-height:0" title="Buy + Place on every number">Full Buy/Place</button>
         <button class="mode-btn" id="line-mode-b" onclick="switchLineMode('lineB')" style="flex:1;font-size:10px;line-height:1.15;padding:2px 2px;min-height:0" title="Buy 2/3/4/5/9/10/11/12, Place 6/8">Limited Buy/Place</button>
-        <button class="mode-btn" id="line-mode-c" onclick="switchLineMode('lineC')" style="flex:1;font-size:10px;line-height:1.15;padding:2px 2px;min-height:0" title="Pass/Come only, no Buy/Place">No Buy/Place Bets</button>
+        <button class="mode-btn" id="line-mode-c" onclick="switchLineMode('lineC')" style="flex:1;font-size:10px;line-height:1.15;padding:2px 2px;min-height:0" title="Place on every number, no Buy">Easy Craps</button>
       </div>
     </div>
 
@@ -1597,7 +1597,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.6.9</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.0</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3603,12 +3603,14 @@ function switchTab(t){
 // ── CRAPLESS NUMBER-LINE MODE ─────────────────────────────────────────────────
 // Which Buy/Place bets a crapless table actually offers -- three real configurations, not
 // just a display preference: Line A offers Buy+Place on every number, Line B is the common
-// "house way" (Buy the outside numbers 2/3/4/5/9/10/11/12, Place the inside 6/8), Line C
-// offers neither, Pass/Come only. null in a list means "every number allowed."
+// "house way" (Buy the outside numbers 2/3/4/5/9/10/11/12, Place the inside 6/8), Line C is
+// "Easy Craps" -- Place on every number, no Buy (renamed from "No Buy/Place Bets", which used
+// to disable Place too -- Deck: "a player can still make a Place bet on any box. (Come still
+// works as well)"). null in a list means "every number allowed."
 const LINE_MODE_ALLOWED={
   lineA:{buy:null,                          place:null},
   lineB:{buy:[2,3,4,5,9,10,11,12],          place:[6,8]},
-  lineC:{buy:[],                            place:[]}
+  lineC:{buy:[],                            place:null}
 };
 function lineModeAllows(type,n){
   if(activeGame!=='crapless')return true; // line mode only restricts crapless's number line
@@ -4668,7 +4670,10 @@ const FM_ART=[
   // box), just split into 10 equal 196-wide slices (1960/10) instead of one piece, x stepping
   // 196px per number in board order (2,3,4,5,6,8,9,10,11,12). Mode A is BP (Buy+Place both
   // shown) on every number; Mode B is P-only on 6/8 (Place, matching Limited Buy/Place's own
-  // restriction) and B-only everywhere else; Mode C is the plain unlabeled box (No Buy/Place).
+  // restriction) and B-only everywhere else; Mode C is the plain unlabeled box -- "Easy Craps"
+  // (renamed from "No Buy/Place Bets"): Place is still a real, clickable bet on every number
+  // here despite the blank art (Deck: "Keep the completely blank/number only number boxes, but
+  // a player can still make a Place bet on any box"), only Buy is actually disabled.
   {id:'cl-a-2', img:'Box2_BP.png', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
   {id:'cl-a-3', img:'Box3_BP.png', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
   {id:'cl-a-4', img:'Box4_BP.png', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
