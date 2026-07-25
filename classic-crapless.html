@@ -391,10 +391,16 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
    bankroll instead of away) and stay in full color the whole time -- no .dim class applied. */
 .chip-ghost.sweep-down{transform:translateY(130vh);opacity:0;
   transition:transform .55s ease-in,opacity .55s ease-in}
-/* Win-stack drop-in: spawned off the top edge (inline transform set before this class lands),
-   this class is what actually animates it down into its resting spot beside the wager it's
-   paying against. Removed again once the hold beat ends and .sweep-down takes over, so the
-   two transitions never fight over the same transform property at once. */
+/* Win-stack drop-in. BOTH classes below must be class-based, never inline styles -- an inline
+   style.transform always beats ANY class rule for the same property in the cascade regardless
+   of specificity, so a previous version that set the off-screen start position via inline style
+   and tried to animate it away via .win-in alone was a no-op: the ghost stayed pinned at
+   -130vh, fully off-screen, for its entire lifecycle (confirmed live -- the win-stack never
+   appeared even after chip-ghost's z-index was fixed to beat cloche-dice.js's overlay, while
+   the wager-ghost, which never used inline transform, swept correctly the whole time). .win-start
+   is applied BEFORE the element is appended (so there's no flash at the wrong position), then
+   swapped for .win-in on the next frame to trigger the actual transition. */
+.chip-ghost.win-start{transform:translateY(-130vh)}
 .chip-ghost.win-in{transform:translateY(0);transition:transform .48s cubic-bezier(.22,.9,.32,1)}
 
 /* ── CASHOUT VOUCHER MODAL ── */
@@ -911,7 +917,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn gold" id="redeem-btn-top" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.8.2</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.8.3</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -1857,22 +1863,21 @@ function spawnWinPair(elId,amt,stays){
   const liveChipVar=feltStageEl?getComputedStyle(feltStageEl).getPropertyValue('--chip').trim():'';
   const existingAmtSpan=stakeEl.querySelector('.chip-amt');
   const isFP=!!(existingAmtSpan&&/^FP\$/.test(existingAmtSpan.textContent));
-  const gap=8;
+  const gap=1;
   // Prefer landing to the left of the wager (mirrors a dealer squaring a payout next to the
-  // original bet); if that would land off-screen (a bet parked near the felt's left edge),
-  // fall back to the right instead rather than clipping.
+  // original bet, chips just barely touching); if that would land off-screen (a bet parked
+  // near the felt's left edge), fall back to the right instead rather than clipping.
   let targetLeft=rect.left-rect.width-gap;
   if(targetLeft<4)targetLeft=rect.right+gap;
 
   const winGhost=document.createElement('div');
-  winGhost.className='chip-ghost';
+  winGhost.className='chip-ghost win-start';
   winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
   winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
   winGhost.style.setProperty('--chip',liveChipVar||'32px');
-  winGhost.style.transform='translateY(-130vh)';
   winGhost.innerHTML=chipStackHTML(amt,false,false,isFP);
   document.body.appendChild(winGhost);
-  requestAnimationFrame(()=>{winGhost.classList.add('win-in');});
+  requestAnimationFrame(()=>{winGhost.classList.remove('win-start');winGhost.classList.add('win-in');});
 
   // Only bets that CLEAR (delete the key server-side) take their wager with them -- standing
   // bets ("stays") keep their real stake box exactly as-is, so no wager ghost is spawned for
