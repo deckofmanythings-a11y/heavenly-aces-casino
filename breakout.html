@@ -56,23 +56,35 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
 
 /* ── TABLE AREA / FELT ── */
-/* Baked-art panel (breakoutblackjack_bg.png, 3200x1800): the felt, the DEALER HAND /
-   PLAYER HAND ring circles, the four side-bet badges (spade/diamond/club/heart), the
-   paytable text and the Breakout Blackjack logo are all printed into the art itself.
-   Every interactive element below is a %-of-art-pixels overlay, measured via
-   ffmpeg raw-RGB + connected-region scanning (see panel-art.md), not eyeballed. */
+/* Plain CSS felt (no baked full-table art) -- breakout_blackjack_felt_bets.png is a
+   small trimmed module (just the two bet-hand circles + four side-bet badges,
+   1080x1410, portrait-shaped) placed as one unit in #bets-module, positioned with
+   its own %-of-that-image-only coordinates (measured the same ffmpeg raw-RGBA +
+   connected-region way as every other panel-art overlay in this family, not
+   eyeballed -- see panel-art.md). Everything else -- the felt itself, the three
+   printed rule lines, the shoe/discard trays, and both card regions -- is drawn
+   directly in the wide-open remaining felt so hands can be as large as possible,
+   per Deck's explicit ask. */
 #table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#051209;padding:4px;container-type:size}
-#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('breakoutblackjack_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
+#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);container-type:size}
 
-/* Card rows -- the DEALER HAND / PLAYER HAND ring circles are the two bet spots
-   (see .felt-spot rules below), not the card layout area -- there's plenty of open
-   felt to their left in the landscape art, so hands fan out large there instead of
-   being crammed inside the small circles. Portrait has much less spare width, so its
-   card regions stay anchored closer to the circles (see the portrait media query). */
+#bets-module{position:absolute;right:1%;top:2%;height:96%;aspect-ratio:1080/1410;z-index:2}
+#bets-module img.bets-module-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none}
+
+/* Casino-felt printed rule text, drawn directly in the open felt (not baked into
+   any art) -- an engraved-serif Google Font stands in for real printed felt type. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
+#felt-rules{position:absolute;left:1%;top:0.3%;width:53%;text-align:center;z-index:2;font-family:'Cinzel',serif;color:rgba(255,215,0,.88);text-shadow:0 1px 3px rgba(0,0,0,.9);line-height:1.35;pointer-events:none}
+#felt-rules .fr-line{font-size:1.7cqh;font-weight:800;letter-spacing:.04em}
+#felt-rules .fr-line.fr-sub{font-size:1.35cqh;font-weight:600;color:rgba(255,255,255,.65)}
+
+/* Card rows -- the DEALER HAND / PLAYER HAND ring circles (inside #bets-module) are
+   the two bet spots, not the card layout area -- cards fan out large in the open
+   felt to their left/above instead, per "as large as possible in both orientations". */
 .card-region{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center}
-#dealer-region{left:3%;top:27%;width:58%;height:30%}
-#player-region{left:3%;top:58%;width:58%;height:30%}
-.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:0.8cqh;--pc-w:11cqh;opacity:0;transition:opacity .3s;min-height:15cqh;flex-wrap:wrap;max-width:100%}
+#dealer-region{left:1%;top:27%;width:53%;height:31%}
+#player-region{left:1%;top:61%;width:53%;height:31%}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:0.8cqh;--pc-w:13cqh;opacity:0;transition:opacity .3s;min-height:17cqh;flex-wrap:wrap;max-width:100%}
 .card-row.active{opacity:1}
 .crl-hand{position:absolute;left:50%;bottom:-2.6cqh;transform:translateX(-50%);font-size:2.4cqh;color:#ffd700;font-weight:800;white-space:nowrap;letter-spacing:.03em;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 
@@ -97,34 +109,45 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 @keyframes felt-spot-error{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 0.6cqh rgba(255,40,40,.85)}}
 .felt-spot.flash-error{animation:felt-spot-error .5s ease-in-out}
 
-#breakoutbonus-spot{left:55.2%;top:32.2%;width:9.5%;height:13.2%}
-#supertie-spot{left:54.3%;top:44.3%;width:8.7%;height:15.5%}
-#pairplus-spot{left:54.7%;top:59.2%;width:9.2%;height:13.4%}
-#sweet17-spot{left:53.6%;top:71.8%;width:10.5%;height:12.5%}
+/* Badge positions measured relative to #bets-module (the 1080x1410 art), not the
+   table panel -- these are now children of #bets-module in the markup. */
+#breakoutbonus-spot{left:11.111%;top:1.418%;width:30.463%;height:21.418%}
+#supertie-spot{left:7.5%;top:24.326%;width:26.852%;height:25.603%}
+#pairplus-spot{left:9.167%;top:52.34%;width:28.889%;height:21.631%}
+#sweet17-spot{left:4.352%;top:76.17%;width:33.056%;height:20.78%}
 
 /* The two main-wager bet spots ARE the baked DEALER HAND (red) / PLAYER HAND (blue)
    ring circles themselves -- matches the Dealer Instruction Manual's own diagrams
    (fig. 6-8), which show chips placed directly on these two circles. Mutually
    exclusive: betting one while the other already carries chips flashes the other
    red instead of accepting the bet (see placePlayerBet/placeDealerBet). */
-#dealerbet-spot{left:64.156%;top:37.389%;width:11.906%;height:21.278%;border-radius:50%}
-#playerbet-spot{left:64.219%;top:60.611%;width:11.906%;height:21.222%;border-radius:50%}
+#dealerbet-spot{left:43.889%;top:9.433%;width:52.222%;height:40.142%;border-radius:50%}
+#playerbet-spot{left:44.167%;top:53.191%;width:52.222%;height:40.142%;border-radius:50%}
 
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
-/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
-   baked-in bulb art, so both lightOFF.png (idle) and lightON.png (lit, post-deal) are
-   placed as floating overlays -- positioned directly above the Breakout Bonus badge
-   and below where the Insurance banner shows, per Deck's placement call, sharing
-   Breakout Bonus's own horizontal alignment so the two stack cleanly. */
+/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. The new bets
+   module has the Breakout Bonus badge starting almost at its own top edge (no room
+   above it inside the module), so The Light sits just above the module's top edge
+   instead, still landing in the open felt (not baked art). Positioned relative to
+   #bets-module via a negative top -- module children are positioned absolute, this
+   just extends the box upward into the empty felt directly above it. */
 .panel-spot{position:absolute;border-radius:50%;cursor:pointer}
 .panel-spot.active{}
-#light-spot,#light-off-img,#light-on-img{left:55.2%;top:16.5%;width:9.5%;height:14.5%}
-#light-info-btn{position:absolute;left:63.3%;top:17.5%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+#light-spot,#light-off-img,#light-on-img{left:33%;top:-9%;width:22%;height:9%}
+#light-info-btn{position:absolute;left:53.5%;top:-8%;width:5%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 .progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
 .progressive-tier-row .prog-pay{color:#ffd700;font-weight:700}
+
+/* Circle-i payout-table buttons next to each side bet badge -- opens #modal-paytable
+   with the matching table (see openPaytable() / PAYTABLE_CONTENT). */
+.paytable-info-btn{position:absolute;width:6%;height:4.5%;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1.5px solid rgba(255,215,0,.6);font-size:1.7cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0;font-weight:800}
+#breakoutbonus-info{left:38%;top:3%}
+#supertie-info{left:31%;top:26%}
+#pairplus-info{left:34%;top:54%}
+#sweet17-info{left:34%;top:78%}
 
 /* ── INSURANCE PROMPT -- shown only when phase:'insurance' (dealer shows an Ace) ── */
 #insurance-banner{position:absolute;left:50%;top:4%;transform:translateX(-50%);z-index:20;background:rgba(10,10,10,.92);border:1.5px solid #ffd700;border-radius:8px;padding:1.2cqh 1.6cqh;text-align:center;display:none}
@@ -142,7 +165,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    Plain CSS-drawn trays in the open felt above the dealer hand, since there's no
    baked art for this. Each tray shows a stack of card-back.png images (count scales
    with the live fraction) plus a precise "N/312" readout. */
-#shoe-tray,#discard-tray{position:absolute;top:1.5%;width:13%;height:23%;border:1.5px solid rgba(255,215,0,.35);border-radius:8px;background:rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:0.8cqh;overflow:hidden}
+#shoe-tray,#discard-tray{position:absolute;top:7%;width:13%;height:17%;border:1.5px solid rgba(255,215,0,.35);border-radius:8px;background:rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:0.8cqh;overflow:hidden}
 #shoe-tray{left:2.5%}
 #discard-tray{left:16.5%}
 .tray-label{position:absolute;top:0.5cqh;left:0;right:0;text-align:center;font-size:1.15cqh;color:rgba(255,215,0,.75);font-weight:800;letter-spacing:.05em;text-transform:uppercase;z-index:2}
@@ -286,10 +309,13 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
 
 /* ══════════════ PORTRAIT MODE ══════════════
-   breakoutblackjack_bg_port.png (375x812) is a full-screen background with its own
-   independently-measured circle/badge geometry (not a crop or rescale of the
-   landscape art) -- header/bottom bands follow uth.html's portrait convention
-   (Discord-overlay offset, collapsed left-col, single hud item). */
+   Same plain-felt approach as landscape, same #bets-module image reused at a
+   different size/position -- badge/circle/light coordinates are all relative to
+   that module's own art (see the base rules above), so they're identical in both
+   orientations and don't need portrait-specific overrides. Only the module's own
+   placement, the card regions, and the felt text need to move for the narrower
+   screen. Header/bottom bands follow uth.html's portrait convention (Discord-
+   overlay offset, collapsed left-col, single hud item). */
 @media (orientation:portrait){
   #game-screen{position:relative}
   #top-row{position:absolute;top:44px;left:0;right:0;height:6.03dvh;flex-direction:row;border-bottom:none;z-index:2}
@@ -304,27 +330,26 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   #status-sub{display:none}
 
   #table-area{position:absolute;inset:0;padding:0;padding-top:18dvh;padding-bottom:21.31dvh;z-index:1}
-  #table-panel{background-image:url('breakoutblackjack_bg_port.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
+  #table-panel{aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
   /* No room for the shoe/discard trays in portrait -- landscape only, per Deck. */
   #shoe-tray,#discard-tray{display:none}
 
-  #dealer-region{left:68.267%;top:49.261%;width:28.267%;height:12.069%;padding-top:1cqh}
-  #player-region{left:68.533%;top:62.562%;width:28.267%;height:13.054%;padding-top:1cqh}
-  #dealerbet-spot{left:68.267%;top:49.261%;width:28.267%;height:12.069%}
-  #playerbet-spot{left:68.533%;top:62.562%;width:28.267%;height:13.054%}
-  .card-row{--pc-w:4.5cqh;min-height:6cqh;gap:0.4cqh}
+  #felt-rules{left:2%;top:0.5%;width:96%}
+  #felt-rules .fr-line{font-size:2.3cqh}
+  #felt-rules .fr-line.fr-sub{font-size:1.8cqh}
+
+  #dealer-region{left:2%;top:9%;width:96%;height:22%}
+  #player-region{left:2%;top:33%;width:96%;height:22%}
+  .card-row{--pc-w:6.5cqh;min-height:8.5cqh;gap:0.4cqh}
+  .hand-group-label{font-size:1.9cqh}
   .crl-hand{font-size:1.7cqh;bottom:-2.4cqh}
 
-  #breakoutbonus-spot{left:48%;top:45.5%;width:19%;height:8%}
-  #supertie-spot{left:46%;top:51.5%;width:19%;height:10%}
-  #pairplus-spot{left:47%;top:60.5%;width:19%;height:9%}
-  #sweet17-spot{left:44.5%;top:68.5%;width:20%;height:8.5%}
-  /* Directly above Breakout Bonus, below where the Insurance banner shows, same
-     horizontal alignment as Breakout Bonus. */
-  #light-spot,#light-off-img,#light-on-img{left:48%;top:30%;width:19%;height:14%}
-  #light-info-btn{left:63.5%;top:31%;width:5%;height:2.5%}
+  /* Module now sized by width (70%, centered) instead of height -- badge/circle/
+     light percentages inside it are unchanged (module-relative). */
+  #bets-module{left:15%;right:auto;top:58%;height:auto;width:70%}
 
   .panel-spot-stk{font-size:1.2cqh}
+  .paytable-info-btn{width:5.5%;height:3.8%;font-size:1.4cqh}
 
   #insurance-banner{top:2%;padding:1cqh 1.3cqh}
   #insurance-banner .ins-title{font-size:1.7cqh}
@@ -426,11 +451,20 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
     </div>
   </div>
 
+  <!-- Shared side-bet paytable modal -- content swapped in by openPaytable(key). -->
+  <div class="modal-overlay hidden" id="modal-paytable">
+    <div class="modal-box dark" style="max-height:80vh;overflow-y:auto">
+      <div class="modal-title" style="text-align:center" id="paytable-title">Paytable</div>
+      <div id="paytable-body"></div>
+      <button class="modal-btn cancel" onclick="closePaytable()" style="margin-top:12px">Close</button>
+    </div>
+  </div>
+
   <!-- TOP ROW -->
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.9.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.9.1</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -463,6 +497,13 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="table-area">
     <div id="table-panel">
 
+      <!-- Casino-felt printed rule lines, drawn directly (no baked art for this). -->
+      <div id="felt-rules">
+        <div class="fr-line">BLACKJACK PAYS 3 TO 2</div>
+        <div class="fr-line fr-sub">DEALER MUST HIT SOFT 17</div>
+        <div class="fr-line fr-sub">INSURANCE PAYS 2 TO 1</div>
+      </div>
+
       <!-- SHOE / DISCARD -- landscape only, real server-tracked depletion. -->
       <div id="shoe-tray"><span class="tray-label">Shoe</span><div class="tray-stack" id="shoe-stack"><div id="shoe-cut-line" title="Reshuffle point"></div></div><span class="tray-count" id="shoe-count">–/–</span></div>
       <div id="discard-tray"><span class="tray-label">Discard</span><div class="tray-stack" id="discard-stack"></div><span class="tray-count" id="discard-count">–</span></div>
@@ -476,37 +517,49 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <span class="crl-hand" id="player-hand-name"></span>
       </div>
 
-      <!-- The two main-wager bet spots are the DEALER HAND / PLAYER HAND ring circles
-           themselves -- mutually exclusive (see placePlayerBet/placeDealerBet). -->
-      <div class="felt-spot" id="dealerbet-spot" onclick="placeDealerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removeDealerBet()">
-        <span class="panel-spot-stk" id="stk-breakoutBet"></span>
-      </div>
-      <div class="felt-spot" id="playerbet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
-        <span class="panel-spot-stk" id="stk-playerBet"></span>
-      </div>
+      <!-- breakout_blackjack_felt_bets.png: just the two bet-hand circles + four
+           side-bet badges (1080x1410), placed as one module. Every interactive
+           element below is a %-of-THIS-IMAGE overlay (see the CSS comment on
+           #bets-module), so it's a child of this div, not #table-panel directly. -->
+      <div id="bets-module">
+        <img class="bets-module-art" src="breakout_blackjack_felt_bets.png" alt="">
 
-      <div class="felt-spot" id="supertie-spot" onclick="placeBet('superTie')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superTie')">
-        <span class="panel-spot-stk" id="stk-superTie"></span>
-      </div>
-      <div class="felt-spot" id="breakoutbonus-spot" onclick="placeBet('breakoutBonus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('breakoutBonus')">
-        <span class="panel-spot-stk" id="stk-breakoutBonus"></span>
-      </div>
-      <div class="felt-spot" id="sweet17-spot" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
-        <span class="panel-spot-stk" id="stk-sweet17"></span>
-      </div>
-      <div class="felt-spot" id="pairplus-spot" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
-        <span class="panel-spot-stk" id="stk-pairPlus"></span>
-      </div>
+        <!-- The two main-wager bet spots are the DEALER HAND / PLAYER HAND ring
+             circles themselves -- mutually exclusive (see placePlayerBet/placeDealerBet). -->
+        <div class="felt-spot" id="dealerbet-spot" onclick="placeDealerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removeDealerBet()">
+          <span class="panel-spot-stk" id="stk-breakoutBet"></span>
+        </div>
+        <div class="felt-spot" id="playerbet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
+          <span class="panel-spot-stk" id="stk-playerBet"></span>
+        </div>
 
-      <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
-           has no baked-in bulb art, so lightOFF.png sits idle over open felt and swaps
-           for lightON.png once the round's dealt with the light on -- see updateUI(). -->
-      <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
-        <span class="panel-spot-stk" id="stk-light"></span>
+        <div class="felt-spot" id="supertie-spot" onclick="placeBet('superTie')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superTie')">
+          <span class="panel-spot-stk" id="stk-superTie"></span>
+        </div>
+        <button class="paytable-info-btn" id="supertie-info" onclick="event.stopPropagation();openPaytable('superTie')" title="Super Tie Paytable">ⓘ</button>
+        <div class="felt-spot" id="breakoutbonus-spot" onclick="placeBet('breakoutBonus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('breakoutBonus')">
+          <span class="panel-spot-stk" id="stk-breakoutBonus"></span>
+        </div>
+        <button class="paytable-info-btn" id="breakoutbonus-info" onclick="event.stopPropagation();openPaytable('breakoutBonus')" title="Breakout Bonus Paytable">ⓘ</button>
+        <div class="felt-spot" id="sweet17-spot" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
+          <span class="panel-spot-stk" id="stk-sweet17"></span>
+        </div>
+        <button class="paytable-info-btn" id="sweet17-info" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
+        <div class="felt-spot" id="pairplus-spot" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
+          <span class="panel-spot-stk" id="stk-pairPlus"></span>
+        </div>
+        <button class="paytable-info-btn" id="pairplus-info" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
+
+        <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
+             has no baked-in bulb art, so lightOFF.png sits idle over open felt and swaps
+             for lightON.png once the round's dealt with the light on -- see updateUI(). -->
+        <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
+          <span class="panel-spot-stk" id="stk-light"></span>
+        </div>
+        <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
+        <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
+        <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">ⓘ</button>
       </div>
-      <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
-      <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
-      <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">ⓘ</button>
 
       <!-- INSURANCE PROMPT -- shown only when the dealer's up card is an Ace -->
       <div id="insurance-banner">
@@ -969,6 +1022,31 @@ async function openProgressiveModal(){
   document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
 }
 function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
+
+// ── SIDE-BET PAYTABLE MODAL (circle-i buttons next to each badge) ──────────────
+const PAYTABLE_CONTENT={
+  superTie:{title:'Super Tie',rows:[
+    ['Blackjack tie','25 to 1'],['21 tie','15 to 1'],['20 tie','8 to 1'],
+    ['17-19 tie','3 to 1'],['Both hands bust','1 to 1'],
+  ],note:'$5 table minimum. Loses on any other tie or no tie.'},
+  breakoutBonus:{title:'Breakout Bonus',rows:[
+    ['12+ cards','250 to 1'],['11 cards','150 to 1'],['10 cards','100 to 1'],
+    ['9 cards','30 to 1'],['8 cards','15 to 1'],['6-7 cards','5 to 1'],
+  ],note:'Wins only when BOTH the hand and the dealer bust. Pays by total cards used across both hands.'},
+  sweet17:{title:'Sweet 17',rows:[['Dealer finishes exactly 17','6 to 1']],note:'Loses on any other dealer total.'},
+  pairPlus:{title:'Pair Up',rows:[
+    ['Both hands paired','50 to 1'],['Either hand a suited pair','5 to 1'],['Either hand a pair','3 to 1'],
+  ],note:'Off the opening two cards only, unaffected by a later split.'},
+};
+function openPaytable(key){
+  const p=PAYTABLE_CONTENT[key];if(!p)return;
+  document.getElementById('paytable-title').textContent=p.title;
+  document.getElementById('paytable-body').innerHTML=
+    p.rows.map(r=>'<div class="progressive-tier-row"><span>'+r[0]+'</span><span class="prog-pay">'+r[1]+'</span></div>').join('')
+    +'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:10px">'+p.note+'</div>';
+  document.getElementById('modal-paytable').classList.remove('hidden');
+}
+function closePaytable(){document.getElementById('modal-paytable').classList.add('hidden');}
 
 // ── SHOE / DISCARD TRAYS ────────────────────────────────────────────────────────
 // Real depletion, not decorative -- G.shoeTotal/G.shoeRemaining come straight off
