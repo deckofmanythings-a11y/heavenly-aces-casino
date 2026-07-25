@@ -1652,7 +1652,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.6</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.7</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2867,18 +2867,16 @@ function spawnWinPair(elId,amt,stays){
   let targetLeft=rect.left-rect.width-gap;
   if(targetLeft<4)targetLeft=rect.right+gap;
 
-  // TEMP DEBUG (Deck, 2026-07-25): prove this code path actually runs in production by
-  // blanking the felt for the exact duration of the chip-sweep. Remove once the
-  // invisible-win-stack issue is diagnosed -- see project_craps_win_animation_dealer_sweep
-  // memory note for context.
-  document.body.style.background='#ff00ff';
-  const feltStageDbg=document.getElementById('felt-stage');
-  const prevFeltBg=feltStageDbg?feltStageDbg.style.background:'';
-  if(feltStageDbg)feltStageDbg.style.background='#ff00ff';
-  setTimeout(()=>{
-    document.body.style.background='';
-    if(feltStageDbg)feltStageDbg.style.background=prevFeltBg;
-  },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+150);
+  // TEMP DEBUG (Deck, 2026-07-25 v2): the previous version set body/felt-stage background
+  // color, but that can be covered by an opaque wood/felt texture on some other wrapping
+  // element and never actually show -- this instead injects a brand-new position:fixed,
+  // full-viewport div at a z-index higher than anything else on the page (chip-ghost is 150,
+  // WinnerModal is 200), so nothing already on the page can possibly cover it. Remove once
+  // diagnosed -- see project_craps_win_animation_dealer_sweep memory note for context.
+  const dbgOverlay=document.createElement('div');
+  dbgOverlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#ff00ff;pointer-events:none';
+  document.body.appendChild(dbgOverlay);
+  setTimeout(()=>{dbgOverlay.remove();},WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+150);
 
   const winGhost=document.createElement('div');
   winGhost.className='chip-ghost';
