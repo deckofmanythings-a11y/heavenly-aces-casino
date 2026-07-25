@@ -1179,6 +1179,10 @@ body.portrait-craps #felt-portrait{display:flex}
           <input type="number" id="bullets-count" min="1" step="1" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="updateBulletsPreview()">
         </label>
         <div id="bullets-size-preview" style="font-size:13px;color:#ffd700;min-height:16px"></div>
+        <label style="font-size:13px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="bullets-hard" style="width:16px;height:16px;margin:0">
+          Hard Bullets <span style="color:rgba(255,255,255,.5);font-weight:400">-- everything outside the bullet is off-limits until you switch or end (unchecked = Soft: you can always dip into the rest of your bankroll)</span>
+        </label>
       </div>
       <div class="modal-input-error" id="bullets-error" style="font-size:14px"></div>
       <div style="display:flex;gap:8px">
@@ -1664,7 +1668,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.0</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.1</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2437,7 +2441,7 @@ function cancelResetPoint(){
 // it's a personal play-style preference, not real-money state, so it never touches game_state.
 function bulletsStorageKey(pid){return 'craps_bullets_'+pid;}
 function loadBullets(playerId){
-  G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;G.bulletSessionStart=0;
+  G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;G.bulletSessionStart=0;G.bulletHard=false;
   try{
     const raw=localStorage.getItem(bulletsStorageKey(playerId));
     if(raw){
@@ -2447,6 +2451,7 @@ function loadBullets(playerId){
         G.bulletIndex=Math.min(Math.max(0,d.index||0),d.count-1);
         G.bulletBaseline=(typeof d.baseline==='number')?d.baseline:G.bankroll;
         G.bulletSessionStart=(typeof d.sessionStart==='number')?d.sessionStart:G.bulletBaseline;
+        G.bulletHard=!!d.hard;
       }
     }
   }catch(e){}
@@ -2455,8 +2460,15 @@ function saveBullets(){
   if(!currentPlayer)return;
   const k=bulletsStorageKey(currentPlayer.id);
   if(!G.bulletActive){try{localStorage.removeItem(k);}catch(e){}return;}
-  try{localStorage.setItem(k,JSON.stringify({size:G.bulletSize,count:G.bulletCount,index:G.bulletIndex,baseline:G.bulletBaseline,sessionStart:G.bulletSessionStart}));}catch(e){}
+  try{localStorage.setItem(k,JSON.stringify({size:G.bulletSize,count:G.bulletCount,index:G.bulletIndex,baseline:G.bulletBaseline,sessionStart:G.bulletSessionStart,hard:G.bulletHard}));}catch(e){}
 }
+// Soft bullets (default): the meter is a display-only guide, every bet still draws on the
+// real G.bankroll -- so maxBettable() below just returns it unchanged. Hard bullets: nothing
+// outside the current bullet is spendable at all, so every affordability check throughout
+// betting (placeBet's room, odds, lay bets, Lucky Roller, press/double/repeat) is capped to
+// whatever's left of the bullet instead of the full bankroll, until the player switches
+// bullets or ends the session. This is the single choke point all of those checks call.
+function maxBettable(){return (G.bulletActive&&G.bulletHard)?Math.max(0,bulletRemaining()):G.bankroll;}
 // Shows the profit/loss made since the current bullets session started (G.bulletSessionStart,
 // set once when "Make Bullets" is confirmed and left untouched by nextBullet() -- only ending
 // or reconfiguring bullets closes out a session) before actually applying whatever change
@@ -2492,11 +2504,13 @@ function openBulletsModal(){
     document.getElementById('bullets-total').value=G.bankroll>0?G.bankroll:'';
     document.getElementById('bullets-count').value=G.bulletCount||'';
     endBtn.style.display='';
+    document.getElementById('bullets-hard').checked=G.bulletHard;
   }else{
     document.getElementById('bullets-intro').textContent='Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn\'t change, only how much of it you\'re using right now.';
     document.getElementById('bullets-total').value='';
     document.getElementById('bullets-count').value='';
     endBtn.style.display='none';
+    document.getElementById('bullets-hard').checked=false;
   }
   updateBulletsPreview();
   document.getElementById('modal-bullets').classList.remove('hidden');
@@ -2510,11 +2524,12 @@ function confirmBullets(){
   if(!(total>0)||total>G.bankroll+0.001){errEl.textContent='Total can\'t exceed your Playable bankroll ('+fmt(G.bankroll)+').';return;}
   const size=r2(total/count);
   if(size<=0){errEl.textContent='That split is too small -- fewer bullets or a bigger total.';return;}
+  const hard=document.getElementById('bullets-hard').checked;
   const applyNewBullets=()=>{
     G.bulletActive=true;G.bulletSize=size;G.bulletCount=count;G.bulletIndex=0;
-    G.bulletBaseline=G.bankroll;G.bulletSessionStart=G.bankroll;
+    G.bulletBaseline=G.bankroll;G.bulletSessionStart=G.bankroll;G.bulletHard=hard;
     saveBullets();
-    addLog('Made '+count+' bullets of '+fmt(size)+' each.','info');
+    addLog('Made '+count+' '+(hard?'hard':'soft')+' bullets of '+fmt(size)+' each.','info');
     updateUI();
   };
   document.getElementById('modal-bullets').classList.add('hidden');
@@ -2661,7 +2676,7 @@ function fmtLastWin(b){
   return s+')';
 }
 
-function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline',bulletActive:false,bulletSize:0,bulletCount:0,bulletIndex:0,bulletBaseline:0,bulletSessionStart:0};}
+function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline',bulletActive:false,bulletSize:0,bulletCount:0,bulletIndex:0,bulletBaseline:0,bulletSessionStart:0,bulletHard:false};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
 let animating=false,animStart=0,tumbling=false,tumbleStart=0;
@@ -3769,7 +3784,7 @@ function openOddsModal(type,cbIdx,flatAmt,num){
     const lim=dcOddsLim(flatAmt,num);
     const title='DC Lay Odds'+(type==='dp'?' (Don\'t Pass)':' (Don\'t Come)')+' — Point '+num;
     document.getElementById('modal-odds-title').textContent=title;
-    document.getElementById('modal-odds-sub').textContent='Pays '+LAY_LABEL[num]+' · Max lay: '+fmt(lim)+' · Playable: '+fmt(G.bankroll);
+    document.getElementById('modal-odds-sub').textContent='Pays '+LAY_LABEL[num]+' · Max lay: '+fmt(lim)+' · Playable: '+fmt(maxBettable());
     const grid=document.getElementById('modal-odds-grid');grid.innerHTML='';
     // Show multiples of flat win: 1x,2x,3x,4x,5x,6x of flat as desired win
     for(let m=1;m<=6;m++){
@@ -3777,9 +3792,9 @@ function openOddsModal(type,cbIdx,flatAmt,num){
       const layDesired=r2(winDesired/payRatio);
       if(layDesired>lim)break;
       const add=r2(layDesired-curOdds);
-      const b=document.createElement('button');b.className='modal-btn odds-lay-btn'+(add>G.bankroll?' disabled':'');
+      const b=document.createElement('button');b.className='modal-btn odds-lay-btn'+(add>maxBettable()?' disabled':'');
       b.textContent=m+'x  (lay '+fmt(layDesired)+' → win '+fmt(winDesired)+')';
-      if(add<=G.bankroll&&add!==0)b.onclick=()=>oddsModalPick(add,layDesired);
+      if(add<=maxBettable()&&add!==0)b.onclick=()=>oddsModalPick(add,layDesired);
       else if(add===0)b.style.opacity='.4';
       grid.appendChild(b);
     }
@@ -3789,13 +3804,13 @@ function openOddsModal(type,cbIdx,flatAmt,num){
   }else{
     const maxMult=ODDS_MULT[num]||1;
     document.getElementById('modal-odds-title').textContent=(type==='pass'?'Pass Line':'Come')+' Odds — Point '+num;
-    document.getElementById('modal-odds-sub').textContent='Flat: '+fmt(flatAmt)+' · Pays '+ODDS_LABEL[num]+' · Max '+maxMult+'x · Playable: '+fmt(G.bankroll);
+    document.getElementById('modal-odds-sub').textContent='Flat: '+fmt(flatAmt)+' · Pays '+ODDS_LABEL[num]+' · Max '+maxMult+'x · Playable: '+fmt(maxBettable());
     const grid=document.getElementById('modal-odds-grid');grid.innerHTML='';
     for(let m=1;m<=maxMult;m++){
       const td=r2(flatAmt*m),add=r2(td-curOdds);
-      const b=document.createElement('button');b.className='modal-btn'+(add>G.bankroll?' disabled':'');
+      const b=document.createElement('button');b.className='modal-btn'+(add>maxBettable()?' disabled':'');
       b.textContent=m+'x';b.title=fmt(td)+' total';
-      if(add<=G.bankroll&&add!==0)b.onclick=()=>oddsModalPick(add,td);
+      if(add<=maxBettable()&&add!==0)b.onclick=()=>oddsModalPick(add,td);
       else if(add===0)b.style.opacity='.4';
       grid.appendChild(b);
     }
@@ -3805,7 +3820,7 @@ function openOddsModal(type,cbIdx,flatAmt,num){
 }
 function oddsModalPick(additional,totalDesired){
   document.getElementById('modal-odds').classList.add('hidden');
-  if(!oddsCtx||additional>G.bankroll)return;
+  if(!oddsCtx||additional>maxBettable())return;
   const{type,cbIdx}=oddsCtx;
   if(type==='pass'){const cur=G.bets['passodds']||0;G.bets['passodds']=totalDesired;G.bankroll=r2(G.bankroll-r2(totalDesired-cur));}
   else if(type==='dp'){const cur=G.bets['dpodds']||0;G.bets['dpodds']=totalDesired;G.bankroll=r2(G.bankroll-r2(totalDesired-cur));}
@@ -3831,13 +3846,13 @@ function addOddsAmt(type,amt){
     if(!G.bets['pass']){addLog('Need Pass Line first.','info');return;}
     const cur=G.bets['passodds']||0,lim=oddsLim(G.bets['pass'],G.point);
     const room=r2(lim-cur);if(room<=0){addLog('Pass Odds at max.','info');return;}
-    const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
+    const add=r2(Math.min(amt,room,maxBettable()));if(add<=0)return;
     G.bets['passodds']=r2(cur+add);G.bankroll=r2(G.bankroll-add);updateUI();
   }else if(type==='dp'){
     if(!G.bets['dp']){addLog('Need Don\'t Pass first.','info');return;}
     const cur=G.bets['dpodds']||0,lim=dcOddsLim(G.bets['dp'],G.point);
     const room=r2(lim-cur);if(room<=0){addLog('Lay Odds at max.','info');return;}
-    const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
+    const add=r2(Math.min(amt,room,maxBettable()));if(add<=0)return;
     G.bets['dpodds']=r2(cur+add);G.bankroll=r2(G.bankroll-add);updateUI();
   }
 }
@@ -3846,7 +3861,7 @@ function addComeOddsAmt(idx,amt){
   if(!tutorialActionAllowed('comeodds',cb.num))return;
   const cur=cb.odds||0,lim=oddsLim(cb.flat,cb.num);
   const room=r2(lim-cur);if(room<=0){addLog('Come Odds at max.','info');return;}
-  const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
+  const add=r2(Math.min(amt,room,maxBettable()));if(add<=0)return;
   cb.odds=r2(cur+add);G.bankroll=r2(G.bankroll-add);updateUI();
 }
 function addDcOddsAmt(idx,amt){
@@ -3854,7 +3869,7 @@ function addDcOddsAmt(idx,amt){
   if(!tutorialActionAllowed('dcodds',dc.num))return;
   const cur=dc.odds||0,lim=dcOddsLim(dc.flat,dc.num);
   const room=r2(lim-cur);if(room<=0){addLog('Lay Odds at max.','info');return;}
-  const add=r2(Math.min(amt,room,G.bankroll));if(add<=0)return;
+  const add=r2(Math.min(amt,room,maxBettable()));if(add<=0)return;
   dc.odds=r2(cur+add);G.bankroll=r2(G.bankroll-add);updateUI();
 }
 function removeOddsAmt(type,amt){
@@ -3905,8 +3920,8 @@ function removeDcFlat(idx){
 function placeLay(n){
   if(!tutorialActionAllowed('lay',n))return;
   if(activeGame!=='standard'){addLog('Lay bets: standard mode only.','info');return;}
-  if(!G.bankroll){addLog('No bankroll.','info');checkBroke();return;}
-  const a=r2(Math.min(G.chip,G.bankroll));
+  if(!maxBettable()){addLog(G.bulletActive&&G.bulletHard?'Hard bullets: switch bullets or end the session.':'No bankroll.','info');checkBroke();return;}
+  const a=r2(Math.min(G.chip,maxBettable()));
   G.bets['lay'+n]=r2((G.bets['lay'+n]||0)+a);G.bankroll=r2(G.bankroll-a);updateUI();
 }
 function removeLay(n){
@@ -4076,10 +4091,10 @@ function bonusBet(t){
   // legal betting opportunity is the single roll immediately after a 7; grace period must
   // not be able to reopen wagering once a non-7 has locked it for the rest of this shooter.
   if(G.bonus.locked){addLog('Lucky Roller is locked until the next 7.','info');flashPuckGreen();return;}
-  if(G.bonus.gracePeriod&&max>0){const room=r2(max-G.bonus[t]);if(room<=0){addLog('Already at max.','info');return;}const a=r2(Math.min(G.chip,room,G.bankroll));if(a<=0)return;G.bonus[t]=r2(G.bonus[t]+a);G.bankroll=r2(G.bankroll-a);updateUI();return;}
+  if(G.bonus.gracePeriod&&max>0){const room=r2(max-G.bonus[t]);if(room<=0){addLog('Already at max.','info');return;}const a=r2(Math.min(G.chip,room,maxBettable()));if(a<=0)return;G.bonus[t]=r2(G.bonus[t]+a);G.bankroll=r2(G.bankroll-a);updateUI();return;}
   if(!G.bonus.open){addLog('Bonus only open after a 7.','info');return;}
-  if(!G.bankroll)return;
-  const a=r2(Math.min(G.chip,G.bankroll));G.bonus[t]=r2(G.bonus[t]+a);G.bonus[t+'Max']=G.bonus[t];G.bankroll=r2(G.bankroll-a);updateUI();
+  if(!maxBettable())return;
+  const a=r2(Math.min(G.chip,maxBettable()));G.bonus[t]=r2(G.bonus[t]+a);G.bonus[t+'Max']=G.bonus[t];G.bankroll=r2(G.bankroll-a);updateUI();
 }
 function bonusRemove(t){if(G.bonus.locked){addLog('Lucky Roller is locked once rolling starts.','info');return;}const c=G.bonus[t];if(!c)return;const rv=r2(Math.min(G.chip,c));G.bonus[t]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bonus[t]<=0){G.bonus[t]=0;if(!G.bonus.locked)G.bonus[t+'Max']=0;}updateUI();}
 // ===== CLEAR LAST BET (client-side undo of pre-roll bet actions; caps at 20 steps) =====
@@ -4155,8 +4170,8 @@ function placeBet(key,loc){
   // Play), and Math.min() below would otherwise turn a negative room into a negative
   // bet amount instead of correctly refusing the bet.
   const excludeFP=/^(buy|place|hard)\d/.test(key);
-  const room=excludeFP?Math.max(0,G.bankroll):r2(G.bankroll+G.freePlay);
-  if(!room){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  const room=excludeFP?Math.max(0,maxBettable()):r2(maxBettable()+G.freePlay);
+  if(!room){addLog(G.bulletActive&&G.bulletHard&&G.bankroll>0?'Hard bullets: switch bullets or end the session to use the rest of your bankroll.':'No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
   if(key==='pass'){if(G.passLocked){addLog('Pass Line locked.','info');return;}if(G.phase==='point'){addLog('Pass Line: come-out only.','info');return;}}
   if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
@@ -4191,7 +4206,7 @@ function toggleProgressive(){
     G.progressiveArmPending=false;
     G.bankroll=r2(G.bankroll+PROGRESSIVE_BET);
   }else{
-    if(G.bankroll+G.freePlay<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
+    if(maxBettable()+G.freePlay<PROGRESSIVE_BET){addLog('Not enough bankroll for the light ($5).','info');return;}
     G.progressiveArmPending=true;
     G.bankroll=r2(G.bankroll-PROGRESSIVE_BET);
   }
@@ -4216,7 +4231,7 @@ function pressAll(){
       const k=t+n;
       if(!(G.bets[k]>0))return;
       const add=(t==='place'&&(n===6||n===8))?place68Amount(G.chip):G.chip;
-      if(add>G.bankroll)return;
+      if(add>maxBettable())return;
       G.bets[k]=r2(G.bets[k]+add);G.bankroll=r2(G.bankroll-add);
     });
   });
@@ -4230,7 +4245,7 @@ function placeChipOnSet(nums){
   nums.filter(n=>n!==G.point).forEach(n=>{
     const k='place'+n;
     const add=(n===6||n===8)?place68Amount(G.chip):G.chip;
-    if(add>G.bankroll)return;
+    if(add>maxBettable())return;
     G.bets[k]=r2((G.bets[k]||0)+add);G.bankroll=r2(G.bankroll-add);
   });
   updateUI();
@@ -4238,7 +4253,7 @@ function placeChipOnSet(nums){
 function acrossAll(){placeChipOnSet([4,5,6,8,9,10]);}
 function insideAll(){placeChipOnSet([5,6,8,9]);}
 function outsideAll(){placeChipOnSet([4,5,9,10]);}
-function doubleBet(){const c=dblCost();if(!c||c>G.bankroll){addLog(c?'Not enough.':'No place/buy bets.','info');return;}for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy')))G.bets[k]=r2(G.bets[k]*2);G.bankroll=r2(G.bankroll-c);addLog('Doubled.','info');updateUI();}
+function doubleBet(){const c=dblCost();if(!c||c>maxBettable()){addLog(c?'Not enough.':'No place/buy bets.','info');return;}for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy')))G.bets[k]=r2(G.bets[k]*2);G.bankroll=r2(G.bankroll-c);addLog('Doubled.','info');updateUI();}
 function repeatLastBet(){
   if(!G.snapshot||!G.canRepeat)return;
   let cost=0;const tr={};
@@ -4246,7 +4261,7 @@ function repeatLastBet(){
   const br=G.bonus.open||G.bonus.gracePeriod;const bonusR={};
   if(br&&G.snapshot.bonus){['low','all','high'].forEach(t=>{const had=G.snapshot.bonus[t]||0,cur=G.bonus[t]||0;if(had>cur){bonusR[t]=r2(had-cur);cost=r2(cost+bonusR[t]);}});}
   if(cost<=0){addLog('Nothing to restore.','info');return;}
-  if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
+  if(cost>maxBettable()){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   for(const k in tr){G.bets[k]=r2((G.bets[k]||0)+tr[k]);G.bankroll=r2(G.bankroll-tr[k]);}
   for(const t in bonusR){G.bonus[t]=r2(G.bonus[t]+bonusR[t]);G.bonus[t+'Max']=G.bonus[t];G.bankroll=r2(G.bankroll-bonusR[t]);}
   addLog('Last bets restored ('+fmt(cost)+').','info');updateUI();
@@ -4496,10 +4511,10 @@ async function rollDice(){
       if(tutorialActive)return;
       if(document.getElementById('modal-odds')&&!document.getElementById('modal-odds').classList.contains('hidden'))return;
       // Pass Line odds prompt only on the roll that set the point, not on every later roll of it
-      if(justEstablishedPoint&&G.phase==='point'&&G.bets['pass']&&!G.bets['passodds']&&G.bankroll>0){
+      if(justEstablishedPoint&&G.phase==='point'&&G.bets['pass']&&!G.bets['passodds']&&maxBettable()>0){
         openOddsModal('pass',null,G.bets['pass'],G.point);return;
       }
-      if(justEstablishedPoint&&G.phase==='point'&&G.bets['dp']&&!G.bets['dpodds']&&G.bankroll>0){
+      if(justEstablishedPoint&&G.phase==='point'&&G.bets['dp']&&!G.bets['dpodds']&&maxBettable()>0){
         openOddsModal('dp',null,G.bets['dp'],G.point);return;
       }
       // Come/DC bets with no odds persist at odds===0 for every roll until the player adds
@@ -4513,9 +4528,9 @@ async function rollDice(){
       const liveDcNums=new Set(G.dcBets.map(dc=>dc.num));
       for(const n of[...G.dcOddsPrompted])if(!liveDcNums.has(n))G.dcOddsPrompted.delete(n);
       const newCome=G.comeBets.findIndex(cb=>cb.num>0&&(!cb.odds||cb.odds===0)&&!G.comeOddsPrompted.has(cb.num));
-      if(newCome>=0&&G.bankroll>0){G.comeOddsPrompted.add(G.comeBets[newCome].num);openOddsModal('come',newCome,G.comeBets[newCome].flat,G.comeBets[newCome].num);return;}
+      if(newCome>=0&&maxBettable()>0){G.comeOddsPrompted.add(G.comeBets[newCome].num);openOddsModal('come',newCome,G.comeBets[newCome].flat,G.comeBets[newCome].num);return;}
       const newDc=G.dcBets.findIndex(dc=>dc.num>0&&(!dc.odds||dc.odds===0)&&!G.dcOddsPrompted.has(dc.num));
-      if(newDc>=0&&G.bankroll>0){G.dcOddsPrompted.add(G.dcBets[newDc].num);openOddsModal('dc',newDc,G.dcBets[newDc].flat,G.dcBets[newDc].num);}
+      if(newDc>=0&&maxBettable()>0){G.dcOddsPrompted.add(G.dcBets[newDc].num);openOddsModal('dc',newDc,G.dcBets[newDc].flat,G.dcBets[newDc].num);}
     }
     // Move Bet: fires when a Place/Buy bet is sitting on a number that a point (main or Come)
     // JUST landed on this roll -- reuses the exact same "did this just happen" signals the odds
@@ -4584,7 +4599,7 @@ function updateUI(){
   const hudBrEl=document.getElementById('hud-bankroll');
   if(G.bulletActive){
     hudBrEl.textContent=fmt(Math.max(0,bulletRemaining()));
-    hudBrEl.title='Bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+' -- full bankroll: '+fmt(G.bankroll);
+    hudBrEl.title='Bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+' ('+(G.bulletHard?'Hard':'Soft')+') -- full bankroll: '+fmt(G.bankroll);
   }else{
     hudBrEl.textContent=fmt(Math.max(0,G.bankroll));
     hudBrEl.title='';
@@ -4631,7 +4646,7 @@ function updateUI(){
   const gmCl=document.getElementById('gmode-crapless');const gmSt=document.getElementById('gmode-standard');
   if(gmCl)gmCl.disabled=rollBusy||activeGame==='crapless';
   if(gmSt)gmSt.disabled=rollBusy||activeGame==='standard';
-  const dc=dblCost();document.getElementById('double-btn').disabled=!dc||dc>G.bankroll;
+  const dc=dblCost();document.getElementById('double-btn').disabled=!dc||dc>maxBettable();
   // Mode totals
   const hwT=betTotal(['hard4','hard6','hard8','hard10']);
   const hopT=betTotal(Object.keys(HOP_MAP));
@@ -4656,7 +4671,7 @@ function updateUI(){
     // Come slot
     const slot=document.getElementById('come-slot-'+n);if(!slot)return;
     const cbIdx=G.comeBets.findIndex(c=>c.num===n);
-    if(cbIdx>=0){const cb=G.comeBets[cbIdx],cur=cb.odds||0,lim=oddsLim(cb.flat,n),atMax=r2(cur)>=r2(lim),canOdds=!atMax&&G.bankroll>0;
+    if(cbIdx>=0){const cb=G.comeBets[cbIdx],cur=cb.odds||0,lim=oddsLim(cb.flat,n),atMax=r2(cur)>=r2(lim),canOdds=!atMax&&maxBettable()>0;
       const feltOn=document.body.classList.contains('felt-mode');
       let html='';
       if(feltOn){
@@ -4682,7 +4697,7 @@ function updateUI(){
     const dslot=document.getElementById('dc-slot-'+n);if(!dslot)return;
     const dcIdx=G.dcBets.findIndex(c=>c.num===n);
     if(dcIdx>=0){
-      const dc=G.dcBets[dcIdx],cur=dc.odds||0,lim=dcOddsLim(dc.flat,n),atMax=r2(cur)>=r2(lim),canOdds=!atMax&&G.bankroll>0;
+      const dc=G.dcBets[dcIdx],cur=dc.odds||0,lim=dcOddsLim(dc.flat,n),atMax=r2(cur)>=r2(lim),canOdds=!atMax&&maxBettable()>0;
       const feltOn=document.body.classList.contains('felt-mode');
       let html='<div class="dc-on-box" oncontextmenu="event.preventDefault();event.stopPropagation();'+(cur>0?'removeDcOdds('+dcIdx+')':'removeDcFlat('+dcIdx+')')+'">';
       if(feltOn){
