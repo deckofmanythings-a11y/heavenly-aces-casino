@@ -173,13 +173,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible}
 .fp-ship-img-wrap img{width:100%;height:auto;opacity:.9;display:block}
 
-/* ── FIRING-PANEL CALIBRATION MODE -- same drag/resize-box pattern as Focus Mode Craps's
-   calibrator (calibExport() there), adapted to the firing panel's fixed FP_W/FP_H=1672x940
-   canvas instead of the felt stage. Ghost boxes overlay the baked art so Deck can drag each
-   region directly onto its target screen cutout, then export a table of exact left/top/
-   width/height back. Purely a dev tool -- #fp-calib-toggle is the only visible entry point. */
-#fp-calib-toggle{position:absolute;left:.3em;top:.15em;z-index:50;background:rgba(0,0,0,.55);border:1px solid rgba(0,255,255,.5);border-radius:4px;color:#0ff;font-size:.6em;padding:.25em .5em;cursor:pointer}
-#fp-calib-layer{position:absolute;inset:0;z-index:60;pointer-events:none}
+/* ── PANEL CALIBRATION MODE -- same drag/resize-box pattern as Focus Mode Craps's calibrator
+   (calibExport() there), adapted to each baked-art panel's fixed 1672x940 canvas instead of
+   the felt stage. Shared between the firing panel and placement panel (toggleCalibMode('firing'
+   |'placement')) via one toolbar/export modal -- only one panel's calibrator is ever active at
+   a time. Ghost boxes overlay the baked art so Deck can drag each region directly onto its
+   target screen cutout, then export a table of exact left/top/width/height back. Purely a dev
+   tool -- the small "Calibrate" buttons in each panel's corner are the only visible entry point. */
+.fp-calib-toggle-btn{position:absolute;left:.3em;top:.15em;z-index:50;background:rgba(0,0,0,.55);border:1px solid rgba(0,255,255,.5);border-radius:4px;color:#0ff;font-size:.6em;padding:.25em .5em;cursor:pointer}
+.fp-calib-layer{position:absolute;inset:0;z-index:60;pointer-events:none}
 .fp-calib-box{position:absolute;border:2px dashed #0ff;background:rgba(0,255,255,.15);cursor:move;pointer-events:auto;box-sizing:border-box}
 .fp-calib-box.dragging{background:rgba(0,255,255,.3);border-color:#fff}
 .fp-calib-box .fp-calib-label{position:absolute;top:1px;left:2px;font-size:10px;color:#0ff;background:rgba(0,0,0,.6);padding:0 3px;border-radius:2px;white-space:nowrap;pointer-events:none}
@@ -189,12 +191,21 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-calib-toolbar.hidden{display:none}
 
 /* ── PLACEMENT SCREEN (same baked-art-panel treatment as the firing screen, companion
-   background DestroyerPanelSetup_bg.png -- same 1672x940 canvas, same top-bar/right-rail
-   frame dimensions, same grid geometry as DestroyerPanel_bg.png, confirmed by measuring the
-   Begin Game button against fp-fire-btn's position: they land within a few px of each other). */
+   background DestroyerPanel_bg_setup_new.png -- same CRT-monitor panel art as the firing
+   screen's DestroyerPanel_bg_new.png, just with "BEGIN GAME" baked into the knob instead of
+   blank -- same 1672x940 canvas, same screen-cutout layout, confirmed by eye against the
+   firing panel's art). */
 #placement-screen{display:none;flex:1;min-height:0;align-items:center;justify-content:center}
 #placement-screen.active{display:flex}
-#placement-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanelSetup_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
+#placement-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg_setup_new.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
+/* Same green-phosphor CRT treatment as the firing panel (#firing-panel rules above) --
+   font, color, glow and scanlines all mirrored 1:1 since it's the same monitor art. */
+#placement-panel .fp-region,#placement-panel .fp-region button{font-family:'VT323',monospace;letter-spacing:.04em;color:#eafff0;text-shadow:0 0 2px #dfffe8,0 0 6px rgba(180,255,200,.55)}
+#placement-panel .fp-region button{background:rgba(20,40,25,.55);border-color:rgba(140,255,157,.4)}
+#placement-panel #pp-cashout-btn{border-color:rgba(140,255,157,.4);color:#eafff0;background:linear-gradient(180deg,rgba(30,70,40,.7),rgba(10,30,15,.7))}
+#placement-panel .fp-winning-lbl{color:#eafff0;text-shadow:0 0 2px #dfffe8,0 0 6px rgba(180,255,200,.55)}
+#placement-panel .fp-bankroll-lbl{color:#f5ffd8;text-shadow:0 0 2px #eeffc0,0 0 6px rgba(230,255,180,.6)}
+#placement-panel::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:70;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.08) 0,rgba(0,0,0,.08) 1px,transparent 1px,transparent 3px);mix-blend-mode:multiply;opacity:.5}
 #placement-panel .fp-region{position:absolute;overflow:hidden}
 /* Randomize/Begin Game text is already baked into the art -- these are just invisible
    clickable hitboxes sized to the green buttons, not rebuilt UI. */
@@ -529,7 +540,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
        hideFiringScreen and buildFiringGrid/renderFiringGrid in the script below. -->
   <div id="firing-screen">
     <div id="firing-panel">
-      <button id="fp-calib-toggle" onclick="toggleFpCalibMode()">🎯 Calibrate</button>
+      <button class="fp-calib-toggle-btn" onclick="toggleCalibMode('firing')">🎯 Calibrate</button>
       <!-- Region positions below are Deck's own calibrated export from the drag/resize tool
            (fpCalibExport(), whole pixels on the 1672x940 FP_W/FP_H canvas), converted to %. -->
       <!-- Swapped from the Game Select dropdown to a plain Home button (Deck: "have it work
@@ -582,16 +593,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
        reuses fpCellCorners/fpPct (same 1672x940 companion canvas as the firing panel). -->
   <div id="placement-screen">
     <div id="placement-panel">
-      <div class="fp-region" id="pp-game-select" onclick="toggleFiringGameSelect(event)"
-           style="left:1.675%;top:1.17%;width:8.971%;height:9.681%">
-        Game Select
-        <div id="pp-game-select-menu">
-          <button onclick="dNav('focusmode.html?mode=crapless')">CRAPLESS</button>
-          <button onclick="dNav('focusmode.html?mode=standard')">STANDARD</button>
-          <button onclick="dNav('sicbo.html')">SIC-BO</button>
-          <button class="active">DESTROYER</button>
-          <button onclick="dNav('focusmode.html')">FOCUS MODE</button>
-        </div>
+      <button class="fp-calib-toggle-btn" onclick="toggleCalibMode('placement')">🎯 Calibrate</button>
+      <!-- Swapped from the Game Select dropdown to a plain Home button, same as the firing
+           panel's #fp-game-select (Deck: "have it work like the other Home buttons"). -->
+      <div class="fp-region" id="pp-game-select" onclick="dNav('index.html')"
+           style="left:4.127%;top:3.085%;width:10.048%;height:8.83%">
+        🏠 HOME
       </div>
       <!-- Same region firing screen's #fp-dice-result (the 3D dice results) occupies during
            the main game -- blank here during setup, so it hosts placement instructions instead. -->
@@ -599,7 +606,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 Alter ship positions via the Randomize Ship Positions button or drag them on the game board to move them.
 Tap the northernmost cell of the ship to rotate it (room permitting, move the ship to clearer space if its not rotating).
 Tap BEGIIN GAME to start the game.</div>
-      <div class="fp-region" id="pp-topbtns" style="left:89.533%;top:1.17%;width:8.732%;height:9.681%">
+      <div class="fp-region" id="pp-topbtns" style="left:86.663%;top:2.021%;width:8.852%;height:10.106%">
         <button onclick="openRedeemModal(false)" style="border-color:rgba(74,158,255,.4);color:#4a9eff">Redeem</button>
         <button id="pp-cashout-btn" onclick="cashOut()">Cash Out</button>
         <button onclick="logout()">Log Out</button>
@@ -610,13 +617,15 @@ Tap BEGIIN GAME to start the game.</div>
       <div class="fp-region" id="pp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
       <button class="fp-region pp-invisible-btn" id="pp-randomize-btn" onclick="reRandomize()"
               style="left:76.735%;top:15.745%;width:7.895%;height:12.979%">Randomize</button>
+      <!-- Sits on the knob now baked as "BEGIN GAME" art in DestroyerPanel_bg_setup_new.png
+           (position J, same as the firing panel's #fp-fire-btn on the equivalent knob). -->
       <button class="fp-region pp-invisible-btn" id="pp-begin-btn" onclick="startBattle()"
-              style="left:90.132%;top:82.447%;width:7.895%;height:12.979%">Begin</button>
-      <div class="fp-region" id="pp-chip-row-wrap" style="left:14.5%;top:83.617%;width:72%;height:13.298%"></div>
+              style="left:88.278%;top:82.34%;width:7.656%;height:13.723%">Begin</button>
+      <div class="fp-region" id="pp-chip-row-wrap" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%"></div>
       <!-- Same structure/style as the firing screen's #fp-bet-circle (Deck: "Make the setup
            phase Bet area look identical to the Main Game's") -- replaces the old circular
            #bet-circle-wrap widget, which stacked chips and looked visually different. -->
-      <div class="fp-region" id="pp-bet-circle" style="left:77.85%;top:58.88%;width:9%;height:13%">
+      <div class="fp-region" id="pp-bet-circle" style="left:73.864%;top:56.596%;width:8.552%;height:15.745%">
         <div class="fp-bet-chips" id="pp-bet-chips" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">
           <span class="fp-bet-amt" id="pp-bet-amt">$0</span>
         </div>
@@ -627,14 +636,15 @@ Tap BEGIIN GAME to start the game.</div>
     </div>
   </div>
 
-  <!-- FIRING-PANEL CALIBRATION MODE toolbar + export, same pattern as Focus Mode Craps's
-       drag-tool calibrator. See toggleFpCalibMode() etc. in the script below. -->
+  <!-- PANEL CALIBRATION MODE toolbar + export, same pattern as Focus Mode Craps's drag-tool
+       calibrator. Shared between the firing and placement panels -- see toggleCalibMode()
+       etc. in the script below. -->
   <div id="fp-calib-toolbar" class="hidden">
     <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
     <span id="fp-calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Drag a box to move it, corner handle to resize</span>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="fpCalibReset()">Reset</button>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="fpCalibExport()">Export</button>
-    <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleFpCalibMode()">Exit</button>
+    <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleCalibMode(calibKey)">Exit</button>
   </div>
   <div class="modal-overlay hidden" id="modal-fp-calib-export" style="z-index:401">
     <div class="modal-box" style="max-width:520px">
@@ -2074,21 +2084,32 @@ function fpCellCorners(i,j){
 }
 function fpPct(px,total){return px/total*100;}
 
-// ── FIRING-PANEL CALIBRATION MODE ───────────────────────────────────────────
-// Same drag/resize-box pattern as Focus Mode Craps's calibrator, adapted to the firing
-// panel's fixed FP_W/FP_H canvas. Seeds each box from the fp-region element's own current
-// inline left/top/width/height %, so the ghost boxes always start exactly where the real
-// regions are -- drag/resize to refine, then Export for a table of exact px values.
-const FP_CALIB_IDS=['fp-game-select','fp-dice-result','fp-topbtns','fp-extra-wins',
-  'fp-ship-0','fp-ship-1','fp-ship-2','fp-ship-3','fp-bet-circle','fp-roll-history',
-  'fp-strikes-area','fp-buy-area','fp-fire-btn'];
-let fpCalibActive=false,fpCalibState=null;
-function fpCalibPanel(){return document.getElementById('firing-panel');}
-function fpCalibLabel(id){return id.replace(/^fp-/,'');}
+// ── PANEL CALIBRATION MODE ──────────────────────────────────────────────────
+// Same drag/resize-box pattern as Focus Mode Craps's calibrator, adapted to the baked-art
+// panels' fixed 1672x940 canvas. Generalized to work on EITHER the firing panel or the
+// placement panel (toggleCalibMode('firing'|'placement')) since both are now the same CRT
+// panel art -- only one panel's calibrator is active at a time, sharing one toolbar/export
+// modal. Seeds each box from the region element's own current inline left/top/width/height
+// %, so the ghost boxes always start exactly where the real regions are -- drag/resize to
+// refine, then Export for a table of exact px values.
+const CALIB_CONFIGS={
+  firing:{panel:'firing-panel',w:FP_W,h:FP_H,layerId:'fp-calib-layer',
+    ids:['fp-game-select','fp-dice-result','fp-topbtns','fp-extra-wins',
+      'fp-ship-0','fp-ship-1','fp-ship-2','fp-ship-3','fp-bet-circle','fp-roll-history',
+      'fp-strikes-area','fp-buy-area','fp-fire-btn']},
+  placement:{panel:'placement-panel',w:FP_W,h:FP_H,layerId:'pp-calib-layer',
+    ids:['pp-game-select','pp-instructions','pp-topbtns',
+      'pp-ship-0','pp-ship-1','pp-ship-2','pp-ship-3','pp-randomize-btn','pp-begin-btn',
+      'pp-chip-row-wrap','pp-bet-circle']}
+};
+let calibKey=null,calibStates={};
+function calibCfg(){return CALIB_CONFIGS[calibKey];}
+function calibPanelEl(){return document.getElementById(calibCfg().panel);}
+function calibLabel(id){return id.replace(/^(fp|pp)-/,'');}
 function fpPxSnap(pct,total){return Math.round(pct/100*total)/total*100;}
-function fpCalibInitState(){
+function calibInitState(){
   const st={};
-  FP_CALIB_IDS.forEach(id=>{
+  calibCfg().ids.forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
     st[id]={x:parseFloat(el.style.left)||0,y:parseFloat(el.style.top)||0,
@@ -2096,89 +2117,95 @@ function fpCalibInitState(){
   });
   return st;
 }
-function fpCalibBuildLayer(){
-  const panel=fpCalibPanel();
-  let layer=document.getElementById('fp-calib-layer');
-  if(!layer){layer=document.createElement('div');layer.id='fp-calib-layer';panel.appendChild(layer);}
+function calibBuildLayer(){
+  const cfg=calibCfg(),panel=calibPanelEl();
+  let layer=document.getElementById(cfg.layerId);
+  if(!layer){layer=document.createElement('div');layer.id=cfg.layerId;layer.className='fp-calib-layer';panel.appendChild(layer);}
   layer.innerHTML='';
-  Object.keys(fpCalibState).forEach(id=>{
-    const s=fpCalibState[id];
+  const st=calibStates[calibKey];
+  Object.keys(st).forEach(id=>{
+    const s=st[id];
     const box=document.createElement('div');
     box.className='fp-calib-box';
     box.dataset.id=id;
     box.style.left=s.x+'%';box.style.top=s.y+'%';box.style.width=s.w+'%';box.style.height=s.h+'%';
-    const lbl=document.createElement('div');lbl.className='fp-calib-label';lbl.textContent=fpCalibLabel(id);
+    const lbl=document.createElement('div');lbl.className='fp-calib-label';lbl.textContent=calibLabel(id);
     const dot=document.createElement('div');dot.className='fp-calib-dot';
     const handle=document.createElement('div');handle.className='fp-calib-handle';
     box.appendChild(lbl);box.appendChild(dot);box.appendChild(handle);
-    box.addEventListener('pointerdown',e=>fpCalibStartDrag(e,box,id));
-    handle.addEventListener('pointerdown',e=>{e.stopPropagation();fpCalibStartResize(e,box,id);});
+    box.addEventListener('pointerdown',e=>calibStartDrag(e,box,id));
+    handle.addEventListener('pointerdown',e=>{e.stopPropagation();calibStartResize(e,box,id);});
     layer.appendChild(box);
   });
 }
-function fpCalibStatusText(id){
-  const s=fpCalibState[id];
-  const px=Math.round(s.x/100*FP_W),py=Math.round(s.y/100*FP_H);
-  const pw=Math.round(s.w/100*FP_W),ph=Math.round(s.h/100*FP_H);
-  return fpCalibLabel(id)+' -- x:'+px+'px y:'+py+'px w:'+pw+'px h:'+ph+'px';
+function calibStatusText(id){
+  const cfg=calibCfg(),s=calibStates[calibKey][id];
+  const px=Math.round(s.x/100*cfg.w),py=Math.round(s.y/100*cfg.h);
+  const pw=Math.round(s.w/100*cfg.w),ph=Math.round(s.h/100*cfg.h);
+  return calibLabel(id)+' -- x:'+px+'px y:'+py+'px w:'+pw+'px h:'+ph+'px';
 }
-function fpCalibStartDrag(e,box,id){
+function calibStartDrag(e,box,id){
   e.preventDefault();
   box.classList.add('dragging');
-  document.getElementById('fp-calib-selected').textContent=fpCalibStatusText(id);
-  const rect=fpCalibPanel().getBoundingClientRect();
+  document.getElementById('fp-calib-selected').textContent=calibStatusText(id);
+  const cfg=calibCfg(),st=calibStates[calibKey];
+  const rect=calibPanelEl().getBoundingClientRect();
   const startX=e.clientX,startY=e.clientY;
-  const orig={x:fpCalibState[id].x,y:fpCalibState[id].y};
+  const orig={x:st[id].x,y:st[id].y};
   function move(ev){
     const dxPct=(ev.clientX-startX)/rect.width*100;
     const dyPct=(ev.clientY-startY)/rect.height*100;
-    fpCalibState[id].x=fpPxSnap(orig.x+dxPct,FP_W);
-    fpCalibState[id].y=fpPxSnap(orig.y+dyPct,FP_H);
-    box.style.left=fpCalibState[id].x+'%';box.style.top=fpCalibState[id].y+'%';
-    document.getElementById('fp-calib-selected').textContent=fpCalibStatusText(id);
+    st[id].x=fpPxSnap(orig.x+dxPct,cfg.w);
+    st[id].y=fpPxSnap(orig.y+dyPct,cfg.h);
+    box.style.left=st[id].x+'%';box.style.top=st[id].y+'%';
+    document.getElementById('fp-calib-selected').textContent=calibStatusText(id);
   }
   function up(){box.classList.remove('dragging');document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
   document.addEventListener('pointermove',move);
   document.addEventListener('pointerup',up);
 }
-function fpCalibStartResize(e,box,id){
+function calibStartResize(e,box,id){
   e.preventDefault();
-  const rect=fpCalibPanel().getBoundingClientRect();
+  const cfg=calibCfg(),st=calibStates[calibKey];
+  const rect=calibPanelEl().getBoundingClientRect();
   const startX=e.clientX,startY=e.clientY;
-  const orig={w:fpCalibState[id].w,h:fpCalibState[id].h};
+  const orig={w:st[id].w,h:st[id].h};
   function move(ev){
     const dwPct=(ev.clientX-startX)/rect.width*100;
     const dhPct=(ev.clientY-startY)/rect.height*100;
-    fpCalibState[id].w=fpPxSnap(Math.max(1/FP_W*100,orig.w+dwPct),FP_W);
-    fpCalibState[id].h=fpPxSnap(Math.max(1/FP_H*100,orig.h+dhPct),FP_H);
-    box.style.width=fpCalibState[id].w+'%';box.style.height=fpCalibState[id].h+'%';
-    document.getElementById('fp-calib-selected').textContent=fpCalibStatusText(id);
+    st[id].w=fpPxSnap(Math.max(1/cfg.w*100,orig.w+dwPct),cfg.w);
+    st[id].h=fpPxSnap(Math.max(1/cfg.h*100,orig.h+dhPct),cfg.h);
+    box.style.width=st[id].w+'%';box.style.height=st[id].h+'%';
+    document.getElementById('fp-calib-selected').textContent=calibStatusText(id);
   }
   function up(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
   document.addEventListener('pointermove',move);
   document.addEventListener('pointerup',up);
 }
-function toggleFpCalibMode(){
-  fpCalibActive=!fpCalibActive;
-  document.getElementById('fp-calib-toolbar').classList.toggle('hidden',!fpCalibActive);
-  if(fpCalibActive){
-    if(!fpCalibState)fpCalibState=fpCalibInitState();
-    fpCalibBuildLayer();
-  }else{
-    const layer=document.getElementById('fp-calib-layer');
-    if(layer)layer.remove();
+function toggleCalibMode(key){
+  if(calibKey===key){
+    calibKey=null;
+    document.getElementById('fp-calib-toolbar').classList.add('hidden');
+    document.querySelectorAll('.fp-calib-layer').forEach(l=>l.remove());
+    return;
   }
+  document.querySelectorAll('.fp-calib-layer').forEach(l=>l.remove());
+  calibKey=key;
+  document.getElementById('fp-calib-toolbar').classList.remove('hidden');
+  if(!calibStates[key])calibStates[key]=calibInitState();
+  calibBuildLayer();
 }
 function fpCalibReset(){
-  fpCalibState=fpCalibInitState();
-  fpCalibBuildLayer();
+  calibStates[calibKey]=calibInitState();
+  calibBuildLayer();
 }
 function fpCalibExport(){
-  let out='// Calibrated via Destroyer firing-panel drag tool (whole pixels, '+FP_W+'x'+FP_H+' canvas)\n';
-  FP_CALIB_IDS.forEach(id=>{
-    const s=fpCalibState[id];if(!s)return;
-    const px=Math.round(s.x/100*FP_W),py=Math.round(s.y/100*FP_H);
-    const pw=Math.round(s.w/100*FP_W),ph=Math.round(s.h/100*FP_H);
+  const cfg=calibCfg(),st=calibStates[calibKey];
+  let out='// Calibrated via Destroyer '+calibKey+'-panel drag tool (whole pixels, '+cfg.w+'x'+cfg.h+' canvas)\n';
+  cfg.ids.forEach(id=>{
+    const s=st[id];if(!s)return;
+    const px=Math.round(s.x/100*cfg.w),py=Math.round(s.y/100*cfg.h);
+    const pw=Math.round(s.w/100*cfg.w),ph=Math.round(s.h/100*cfg.h);
     out+="  ['"+id+"', "+px+","+py+","+pw+","+ph+"],\n";
   });
   document.getElementById('fp-calib-export-text').value=out;
