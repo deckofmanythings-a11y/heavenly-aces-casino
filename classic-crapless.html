@@ -375,8 +375,14 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
    real bet used to sit, that dims immediately (so it visually reads as "no longer live") then
    sweeps off the top of the screen. The real cell underneath is already cleared and fully
    interactive the instant the roll response lands -- this ghost is purely a visual leftover,
-   pointer-events:none, it cannot be clicked, dragged, or otherwise interacted with. */
-.chip-ghost{position:fixed;z-index:150;pointer-events:none;filter:none;opacity:1;
+   pointer-events:none, it cannot be clicked, dragged, or otherwise interacted with.
+   z-index MUST beat cloche-dice.js's #cdx-overlay (z-index:9999, see CFG.zIndex) -- that
+   overlay's hideOverlay() only starts a 240ms opacity fade and doesn't set display:none until
+   260ms after that, but it resolves the promise the roll handler awaits in that SAME tick, so
+   every ghost spawned right after a roll resolves was rendering underneath a still-opaque
+   full-viewport layer for its entire drop-in animation. Confirmed via a z-index:99999 debug
+   overlay that WAS visible while the real (old z:150) ghost never was. */
+.chip-ghost{position:fixed;z-index:10000;pointer-events:none;filter:none;opacity:1;
   transition:filter .35s ease-out}
 .chip-ghost.dim{filter:grayscale(1) brightness(.55)}
 .chip-ghost.sweep{transform:translateY(-130vh);opacity:0;
@@ -905,7 +911,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn gold" id="redeem-btn-top" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.8.1</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.8.2</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
