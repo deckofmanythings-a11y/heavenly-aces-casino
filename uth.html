@@ -148,10 +148,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    in the open felt just above #bets-module (module children are position:absolute,
    this just extends upward via a negative top), not inside the module itself --
    there's no free space left inside its own canvas for it. */
-#light-spot,#light-off-img,#light-on-img{left:0%;top:-19%;width:34.938%;height:16%}
+#light-spot,#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%}
 #light-off-img,#light-on-img{object-fit:contain}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
-#light-info-btn{position:absolute;left:0%;top:-4.5%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+#light-info-btn{position:absolute;left:1%;top:-28.8%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 /* Sweep-to-lit: the $5 chip at #light-spot vanishes (handled by stk-light going blank in
    updateUI() once locked) and lightON.png fades/pops in over the felt's own baked-in OFF
    art -- triggered once, right when a deal with the light on succeeds (see dealHand()). */
@@ -479,7 +479,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.2</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
