@@ -78,7 +78,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
 .felt-label{position:absolute;text-align:center;font-family:'Cinzel',serif;color:#ffe066;font-weight:800;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;z-index:2}
 #dealers-hand-label{left:30%;top:0.5%;width:40%;font-size:2.6cqh}
-#players-hand-label{left:30%;top:96.5%;width:40%;font-size:2.6cqh}
+/* Unlike the dealer's label (a caption sitting above its card region, non-
+   overlapping), the player's hand is meant to unfold directly OVER this one, like a
+   printed felt label the cards land on top of and partially cover -- so it shares
+   #player-region's exact box (not a separate caption strip) and sits BEHIND the
+   cards. pc-card elements have no z-index of their own (z-index:auto), and any
+   negative z-index here paints below auto-stacked siblings regardless of DOM order,
+   which is what actually puts the cards on top -- the base .felt-label z-index:2
+   would otherwise cover the cards instead. */
+#players-hand-label{left:17%;top:66.5%;width:52.5%;height:31%;font-size:2.6cqh;z-index:-1;display:flex;align-items:center;justify-content:center}
 #ante-qualify-label{left:2%;top:35%;width:56%;font-size:2cqh;color:#ffd700;font-weight:700;letter-spacing:.02em}
 
 /* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows.
@@ -471,7 +479,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
