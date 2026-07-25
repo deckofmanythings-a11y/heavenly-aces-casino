@@ -71,7 +71,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .rollem-all-bar.has-bet{}
 
 /* Info panel (upper right) */
-#info-panel{width:36vw;min-width:240px;max-width:420px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
+#info-panel{width:36vw;min-width:240px;max-width:420px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between;position:relative}
 .info-row{display:flex;gap:4px;align-items:center}
 .info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
 .info-btn:hover{background:rgba(255,255,255,.2)}
@@ -625,7 +625,7 @@ body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
    exists to hide. Without this, the images were forced display:none while their (correctly
    sized/positioned) container divs stayed visible -- exactly the "toggle appears to work but
    nothing ever shows" symptom Deck reported. */
-body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img){display:none!important}
+body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img):not(.bullet-icon){display:none!important}
 #roll-history img{display:inline!important}
 body.felt-mode #felt-stage #roll-history img:not(#felt-img){display:inline!important}
 body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .nb-buy,
@@ -841,6 +841,7 @@ body.felt-mode #felt-stage #info-panel .info-btn{font-size:calc(var(--chip)*0.36
 body.felt-mode #felt-stage #info-panel .hud-lbl{font-size:calc(var(--chip)*0.26)}
 body.felt-mode #felt-stage #info-panel .hud-val{font-size:calc(var(--chip)*0.32)}
 body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--chip)*0.34)!important}
+body.felt-mode #felt-stage #info-panel .bullet-icon{width:calc(var(--chip)*0.11)!important}
 body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.34);padding:calc(var(--chip)*0.1) calc(var(--chip)*0.12)}
 body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.26)}
 /* Game selector went from one collapsed row to an always-visible 3-row grid (Deck: "make all
@@ -1400,7 +1401,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
         <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
       </div>
-      <div id="bullets-row" style="display:none;align-items:center;gap:3px;margin-top:4px;flex-wrap:wrap"></div>
+      <div id="bullets-row" style="display:none;align-items:center;gap:2px;flex-wrap:wrap"></div>
 
     </div>
   </div><!-- end top-row -->
@@ -1634,7 +1635,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.3</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.4</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2487,7 +2488,7 @@ function renderBullets(){
   for(let i=0;i<G.bulletCount;i++){
     const isCurrent=i===G.bulletIndex,isSpent=i<G.bulletIndex,isNext=i===G.bulletIndex+1;
     const style=isSpent?'opacity:.28;filter:grayscale(1)':isCurrent?'opacity:1;filter:drop-shadow(0 0 4px #ffd700)':'opacity:.55';
-    html+='<img src="bullet.png" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="height:22px;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
+    html+='<img class="bullet-icon" src="bullet.png" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="width:14px;height:auto;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
   }
   row.innerHTML=html;
 }
