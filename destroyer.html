@@ -252,7 +252,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #pp-chip-row-wrap .fp-bankroll-lbl{display:block;width:100%;text-align:center;font-size:.85em;font-weight:700}
 /* Visible button now (was pp-invisible-btn) -- new art has no baked "Randomize" text at this
    cutout (C), unlike the old panel art. */
-#pp-randomize-btn{background:rgba(20,40,25,.55);border:1px solid rgba(140,255,157,.4);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;line-height:1.3}
+/* Bumped up (Deck: "way bigger, there is a lot of screen to play with there") -- was
+   inheriting the panel's base 1.6cqh with no override, tiny compared to the C screen it sits
+   in (20% x 17.66% of the panel). */
+#pp-randomize-btn{background:rgba(20,40,25,.55);border:1px solid rgba(140,255,157,.4);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;line-height:1.35;font-size:2.6em;padding:.1em}
 .fp-cell.ship{cursor:grab;user-select:none}
 .fp-cell.ship:active{cursor:grabbing}
 .fp-cell.drag-over{box-shadow:inset 0 0 0 3px #4a9eff;background:rgba(74,158,255,.4)}
