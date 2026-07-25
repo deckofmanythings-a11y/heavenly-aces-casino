@@ -38,6 +38,8 @@ h1{font-size:22px;color:var(--tier-accent);font-weight:800}
 .task-reward{font-size:15px;font-weight:800;color:var(--tier-accent)}
 .task-row.done .task-reward{color:#4dff88}
 .task-check{font-size:18px}
+.task-go-btn{background:rgba(255,255,255,.08);border:1px solid var(--tier-accent-soft);color:var(--tier-accent);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:800;letter-spacing:.04em;cursor:pointer;flex-shrink:0}
+.task-go-btn:hover{background:rgba(255,255,255,.16)}
 #bonus-row{border-color:var(--tier-accent-soft)}
 #bonus-row.done{border-color:rgba(77,255,136,.4)}
 #quest-box{background:linear-gradient(160deg,var(--tier-bg-a),var(--tier-bg-b));border:1px solid var(--tier-accent-soft);border-radius:12px;padding:16px}
@@ -143,6 +145,17 @@ const TASK_META={
   iluvsuits:{icon:'♠️',label:'Make one I ❤️ Suits bet'},
   breakout:{icon:'🂡',label:'Play one Breakout Blackjack hand'},
 };
+// Where each task's GO button sends the player -- craps has no single canonical page
+// (Standard/Crapless are both focusmode.html with a mode query param), so it lands on
+// Focus Mode's own default mode rather than guessing which one the task means.
+const GAME_URL={
+  craps:'focusmode.html',
+  sicbo:'sicbo.html',
+  destroyer:'destroyer.html',
+  uth:'uth.html',
+  iluvsuits:'iluvsuits.html',
+  breakout:'breakout.html',
+};
 // Mirrors supabase/functions/_shared/dailies.ts computeTier() exactly -- display only,
 // the server is authoritative for the actual tier value (players.tier).
 // palette: pixel-sampled off each tier's own card PNG (ffmpeg raw-RGB extraction, most-
@@ -206,6 +219,7 @@ function render(dailies,freePlayBalance,tier){
     row.innerHTML='<div class="task-icon">'+TASK_META[g].icon+'</div>'+
       '<div class="task-body"><div class="task-label">'+TASK_META[g].label+'</div></div>'+
       '<div class="task-reward">$50</div>'+
+      (done?'':'<button class="task-go-btn" onclick="dNav(\''+GAME_URL[g]+'\')">GO</button>')+
       '<div class="task-check">'+(done?'✅':'')+'</div>';
     list.appendChild(row);
   });
