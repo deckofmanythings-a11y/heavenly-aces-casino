@@ -571,6 +571,11 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
    bankroll instead of away) and stay in full color the whole time -- no .dim class applied. */
 .chip-ghost.sweep-down{transform:translateY(130vh);opacity:0;
   transition:transform .55s ease-in,opacity .55s ease-in}
+/* Win-stack drop-in: spawned off the top edge (inline transform set before this class lands),
+   this class is what actually animates it down into its resting spot beside the wager it's
+   paying against. Removed again once the hold beat ends and .sweep-down takes over, so the
+   two transitions never fight over the same transform property at once. */
+.chip-ghost.win-in{transform:translateY(0);transition:transform .48s cubic-bezier(.22,.9,.32,1)}
 
 /* ── CASHOUT VOUCHER MODAL ── */
 @import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
@@ -2753,28 +2758,144 @@ function dynamicGhostChecks(verb,flags){
   });
   return checks;
 }
+// Proposition bets with a single fixed DOM id -- Field, the one-roll center-table bets, and
+// every Hop combo. None of these were ever covered by the ghost system before (loss, win, or
+// push alike): staticGhostChecks only ever indexed Pass/DP/Odds/Buy/Place/Lay/Hardways. Label
+// text taken verbatim from the pP()/pR()/lose() calls in resolve() -- Field's label grows a
+// " (2x)" suffix on a 2 or 12 hit and C&E's grows " (craps)"/" (eleven)", so both use a
+// [^:]* wildcard before the colon rather than an exact label match. The bar-spot id is used
+// for Any Craps (stk-anyCraps) -- the circle-spot split (stk-anyCraps-circle) is a purely
+// visual placement choice for an otherwise single bet, not a second independent wager.
+function propGhostChecks(verb,flags){
+  verb=verb||'lost';flags=flags||'';
+  const checks=[
+    [new RegExp('^Field[^:]*: '+verb,flags),'stk-field'],
+    [new RegExp('^Seven: '+verb,flags),'stk-any7'],
+    [new RegExp('^Midnight: '+verb,flags),'stk-midnight'],
+    [new RegExp('^Aces: '+verb,flags),'stk-aces'],
+    [new RegExp('^Ace-Deuce: '+verb,flags),'stk-ace2'],
+    [new RegExp('^Yo: '+verb,flags),'stk-yo'],
+    [new RegExp('^Eleven: '+verb,flags),'stk-eleven'],
+    [new RegExp('^Any Craps: '+verb,flags),'stk-anyCraps'],
+    [new RegExp('^Horn: '+verb,flags),'stk-horn'],
+    [new RegExp('^C&E[^:]*: '+verb,flags),'stk-cande'],
+  ];
+  for(const key in HOP_MAP){
+    const[a,b]=HOP_MAP[key];
+    checks.push([new RegExp('^Hop '+a+'-'+b+': '+verb,flags),'stk-'+key]);
+  }
+  return checks;
+}
 function spawnLossGhosts(rawLog){
-  staticGhostChecks('lost').concat(dynamicGhostChecks('lost')).forEach(([re,id])=>{
+  staticGhostChecks('lost').concat(dynamicGhostChecks('lost')).concat(propGhostChecks('lost')).forEach(([re,id])=>{
     if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id));
   });
 }
-// Mirror of spawnLossGhosts for winning bets that get returned (contract ends, chips leave the
-// board), swept toward the bottom of the screen and never dimmed. Two earlier attempts guessed
-// at the server's wording (first "<Bet>: won", then a broad "win/WON/made!/returned" net) and
-// neither actually matched -- fixed for real this time by reading the resolve() source directly
-// (roll-crapless/roll-standard Edge Functions). Every winning per-bet line there is built as
-// pP()/pR(): "<Bet name>: +<amount> (stays)" or "(returned)" -- e.g. "Buy 6: +13.30 (returned)",
-// "Hard 6: +45.00 (stays)", "Don't Come (6): +25.00 (seven-out, returned)". The one exception is
-// a Come flat win, which resolve() logs as "Come (N) wins — ..." with no colon at all -- handled
-// as its own special case below rather than forcing it through the shared "<Bet>: +" checks.
+// Reads whatever's currently rendered in a stake box's .chip-amt (or, for the plain-text
+// dc-wait box, its own textContent) and returns it as a number -- used to back out the
+// original stake from a "total returned" log line so the win-stack can be built from PROFIT
+// ONLY, never the full payout. Called before restoreFromServerState()/updateUI() run, so this
+// still reflects the pre-resolution stake, exactly like spawnChipGhost's own label read does.
+function chipAmtValue(el){
+  if(!el)return 0;
+  const span=el.querySelector?el.querySelector('.chip-amt'):null;
+  const txt=span?span.textContent:(el.textContent||'');
+  const m=txt.replace(/,/g,'').match(/[\d.]+/);
+  return m?parseFloat(m[0]):0;
+}
+// Real dealer-style payout: a fresh stack holding ONLY the profit amount drops in from the top
+// of the screen, settles just to the left of the wager it's paying against, holds a beat, then
+// sweeps to the bottom together with the wager -- unless the wager is a standing bet (server
+// logs it "(stays)"), in which case the wager is left untouched on the felt and only the
+// win-stack sweeps away.
+const WIN_DROP_MS=480,WIN_HOLD_MS=420,WIN_SWEEP_MS=550;
+function spawnWinPair(elId,amt,stays){
+  const stakeEl=document.getElementById(elId);
+  if(!stakeEl||!(amt>0))return;
+  const rect=stakeEl.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const feltStageEl=document.getElementById('felt-stage');
+  const liveChipVar=feltStageEl?getComputedStyle(feltStageEl).getPropertyValue('--chip').trim():'';
+  const existingAmtSpan=stakeEl.querySelector('.chip-amt');
+  const isFP=!!(existingAmtSpan&&/^FP\$/.test(existingAmtSpan.textContent));
+  const gap=8;
+  // Prefer landing to the left of the wager (mirrors a dealer squaring a payout next to the
+  // original bet); if that would land off-screen (a bet parked near the felt's left edge),
+  // fall back to the right instead rather than clipping.
+  let targetLeft=rect.left-rect.width-gap;
+  if(targetLeft<4)targetLeft=rect.right+gap;
+
+  const winGhost=document.createElement('div');
+  winGhost.className='chip-ghost';
+  winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
+  winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
+  winGhost.style.setProperty('--chip',liveChipVar||'32px');
+  winGhost.style.transform='translateY(-130vh)';
+  winGhost.innerHTML=chipStackHTML(amt,false,false,isFP);
+  document.body.appendChild(winGhost);
+  requestAnimationFrame(()=>{winGhost.classList.add('win-in');});
+
+  // Only bets that CLEAR (delete the key server-side) take their wager with them -- standing
+  // bets ("stays") keep their real stake box exactly as-is, so no wager ghost is spawned for
+  // them at all.
+  let wagerGhost=null;
+  if(!stays){
+    wagerGhost=document.createElement('div');
+    wagerGhost.className='chip-ghost';
+    wagerGhost.style.left=rect.left+'px';wagerGhost.style.top=rect.top+'px';
+    wagerGhost.style.width=rect.width+'px';wagerGhost.style.height=rect.height+'px';
+    wagerGhost.style.setProperty('--chip',liveChipVar||'32px');
+    wagerGhost.innerHTML=stakeEl.innerHTML;
+    document.body.appendChild(wagerGhost);
+  }
+
+  setTimeout(()=>{
+    winGhost.classList.remove('win-in');
+    winGhost.classList.add('sweep-down');
+    if(wagerGhost)wagerGhost.classList.add('sweep-down');
+  },WIN_DROP_MS+WIN_HOLD_MS);
+  setTimeout(()=>{
+    winGhost.remove();
+    if(wagerGhost)wagerGhost.remove();
+  },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+100);
+}
+// Every winning per-bet line from resolve() is built as pP()/pR(): "<Bet name>: +<amount>
+// (stays)" or "(returned)" -- e.g. "Buy 6: +13.30 (returned)", "Hard 6: +45.00 (stays)". In
+// BOTH helpers the logged amount is profit only (pP pays profit and leaves the stake in place;
+// pR pays stake+profit into the bankroll but still logs just the profit portion) -- so the
+// "+<amount>" capture below is already exactly the win-stack value the spec wants, no math
+// needed. The one exception is a Come flat win, which resolve() logs as "Come (N) wins —
+// <total> returned." with no colon and no profit/stake split -- handled as its own special
+// case, backing profit out of the total using the stake still visible in the live DOM.
 function spawnWinGhosts(rawLog){
-  staticGhostChecks('\\+').concat(dynamicGhostChecks('\\+')).forEach(([re,id])=>{
-    if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id),{direction:'down',noDim:true});
+  staticGhostChecks('\\+').concat(dynamicGhostChecks('\\+')).concat(propGhostChecks('\\+')).forEach(([re,id])=>{
+    const line=rawLog.find(l=>re.test(l));
+    if(!line)return;
+    const m=line.match(/\+([\d.]+)/);
+    if(!m)return;
+    spawnWinPair(id,parseFloat(m[1]),/\(stays\)/.test(line));
   });
   ALL_NUMS.forEach(n=>{
-    if(rawLog.some(l=>new RegExp('^Come \\('+n+'\\) wins').test(l)))
-      spawnChipGhost(document.getElementById('combox-flat-'+n),{direction:'down',noDim:true});
+    const line=rawLog.find(l=>new RegExp('^Come \\('+n+'\\) wins').test(l));
+    if(!line)return;
+    const m=line.match(/([\d.]+)\s*returned/);
+    if(!m)return;
+    const total=parseFloat(m[1]);
+    const flatAmt=chipAmtValue(document.getElementById('combox-flat-'+n));
+    const oddsAmt=chipAmtValue(document.getElementById('combox-odds-'+n));
+    const profit=Math.max(0,+(total-flatAmt-oddsAmt).toFixed(2));
+    spawnWinPair('combox-flat-'+n,profit,/bet stays/.test(line));
   });
+}
+// Pushes (server: returnBet() -> "<Bet>: push — returned <amount>") get the same treatment as
+// a cleared win minus the win-stack: the wager's own chip stack sweeps off the bottom edge,
+// full color, no dimming -- nothing was lost, it's just going back to the bankroll.
+function spawnPushGhosts(rawLog){
+  staticGhostChecks('push').concat(dynamicGhostChecks('push')).concat(propGhostChecks('push')).forEach(([re,id])=>{
+    if(rawLog.some(l=>re.test(l)))spawnChipGhost(document.getElementById(id),{direction:'down',noDim:true});
+  });
+  if(rawLog.some(l=>/^Don't Come \(waiting\).*push/.test(l)))
+    spawnChipGhost(document.getElementById('dc-wait-bar'),{direction:'down',noDim:true});
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
@@ -4276,6 +4397,7 @@ async function rollDice(){
     });
     spawnLossGhosts(rawLog);
     spawnWinGhosts(rawLog);
+    spawnPushGhosts(rawLog);
     const lightJustArmed=G.progressiveArmPending&&!!(data.newState&&data.newState.progressiveActive);
     // Sweep the staged $5 chip away (not dimmed, per Deck's request -- same noDim ghost style
     // as a win-side sweep) BEFORE restoreFromServerState() clears G.progressiveArmPending and
