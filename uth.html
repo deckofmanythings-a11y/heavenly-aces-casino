@@ -502,7 +502,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.5</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1597,6 +1597,29 @@ function applyChipStackVisual(id,locked,silent){
 document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
 
 // ── WIN/LOSS CHIP-GHOST SWEEP -- ported wholesale from craps/sicbo/I Luv Suits ───
+// Ghost/win-stack/wager-ghost elements are position:fixed, appended straight to document.body
+// -- OUTSIDE whatever CSS container the real bet spot's --chip value was declared relative to
+// (#ante-spot etc. set --chip in "cqh", container-query-height units -- see body{--chip:70px}
+// vs #ante-spot{--chip:7cqh}). getComputedStyle(el).getPropertyValue('--chip') returns that raw
+// declared string ("7cqh"), NOT a resolved pixel value -- custom properties are never unit-
+// resolved by getComputedStyle the way real properties like font-size are. Copying that string
+// onto a ghost living in a completely different container silently resolves to a totally
+// different actual size there (confirmed live: real chip-amt renders at ~11.4px, the ghost's
+// copy of the same "7cqh" rendered at ~16.8px).
+// Fixed by measuring .chip-amt's own rendered height instead -- its CSS rule is literally
+// `height:var(--chip)` (see .chip-stack .chip-amt below), a direct 1:1 mapping the browser
+// must resolve to real pixels for layout regardless of what unit --chip was declared in. No
+// back-solving needed, unlike two earlier attempts: measuring .chip-img's height was unreliable
+// (only has width:100% with no explicit height, so it depends on the PNG having already loaded/
+// decoded elsewhere on the page, reading 0 otherwise), and measuring .chip-stack's height and
+// solving back through the --edge:calc(var(--chip)*0.16) ratio was needlessly indirect and, in
+// practice, came out measurably wrong (~19% off) for reasons never fully pinned down.
+function chipPxFor(el){
+  const amt=el?el.querySelector('.chip-amt'):null;
+  const h=amt?amt.getBoundingClientRect().height:0;
+  if(h>0)return h+'px';
+  return getComputedStyle(document.body).getPropertyValue('--chip').trim()||'32px';
+}
 function spawnChipGhost(el,opts){
   opts=opts||{};
   if(!el)return;
@@ -1612,8 +1635,7 @@ function spawnChipGhost(el,opts){
   ghost.className='chip-ghost';
   ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
   ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
-  const liveChipVar=getComputedStyle(el).getPropertyValue('--chip').trim();
-  ghost.style.setProperty('--chip',liveChipVar||'22px');
+  ghost.style.setProperty('--chip',chipPxFor(el));
   if(chipSrc){
     const img=document.createElement('img');
     img.src=chipSrc;img.draggable=false;
@@ -1663,7 +1685,7 @@ function spawnWinPair(elId,amt){
   if(!stakeEl||!(amt>0))return;
   const rect=stakeEl.getBoundingClientRect();
   if(rect.width<=0&&rect.height<=0)return;
-  const liveChipVar=getComputedStyle(stakeEl).getPropertyValue('--chip').trim();
+  const liveChipVar=chipPxFor(stakeEl);
   const existingAmtSpan=stakeEl.querySelector('.chip-amt');
   const isFP=!!(existingAmtSpan&&/^FP\$/.test(existingAmtSpan.textContent));
   const gap=1;
@@ -1677,7 +1699,7 @@ function spawnWinPair(elId,amt){
   winGhost.className='chip-ghost win-start';
   winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
   winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
-  winGhost.style.setProperty('--chip',liveChipVar||'22px');
+  winGhost.style.setProperty('--chip',liveChipVar);
   winGhost.innerHTML=chipStackHTML(amt,false,isFP);
   document.body.appendChild(winGhost);
   // Double rAF, not single -- a single rAF scheduled synchronously right after appendChild()
@@ -1691,7 +1713,7 @@ function spawnWinPair(elId,amt){
   wagerGhost.className='chip-ghost';
   wagerGhost.style.left=rect.left+'px';wagerGhost.style.top=rect.top+'px';
   wagerGhost.style.width=rect.width+'px';wagerGhost.style.height=rect.height+'px';
-  wagerGhost.style.setProperty('--chip',liveChipVar||'22px');
+  wagerGhost.style.setProperty('--chip',liveChipVar);
   wagerGhost.innerHTML=stakeEl.innerHTML;
   document.body.appendChild(wagerGhost);
 
