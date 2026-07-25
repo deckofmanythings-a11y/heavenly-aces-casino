@@ -1664,7 +1664,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.9.0</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.9.1</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4549,22 +4549,19 @@ async function rollDice(){
     // otherwise bury the winner celebration right behind it -- hide it for the celebration's
     // duration and restore it when the modal actually closes.
     if(data.returned>0){
-      // Let the chip-sweep dealer-payout animation (spawnWinGhosts, ~1.6s total: drop-in +
-      // hold + sweep) actually finish playing before the full-screen "Congratulations"
-      // overlay covers the felt -- WinnerModal is z-index 200 (see winner-modal.js) vs the
-      // chip ghosts' 150, and its confetti coins drift across most of the felt, not just
-      // the area right under the counted-up amount, so showing it immediately buried the
-      // whole payout sequence behind the celebration every single time.
-      setTimeout(()=>{
-        if(tutorialActive)document.getElementById('tutorial-box').classList.add('hidden');
-        // Chain the odds prompt off the winner modal's ACTUAL close (timeout or tap-dismiss),
-        // instead of a fixed guessed delay that could fire before or well after it's gone.
-        WinnerModal.show(data.returned,{big:bigWin,onClose:afterWinnerCloses});
-      },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+150);
+      if(tutorialActive)document.getElementById('tutorial-box').classList.add('hidden');
+      // Chain the odds prompt off the winner modal's ACTUAL close (timeout or tap-dismiss),
+      // instead of a fixed guessed delay that could fire before or well after it's gone.
+      // No longer delayed to let the chip-sweep finish first -- chip-ghost is z-index:10000,
+      // above WinnerModal's 200, so the payout animation renders on top of the celebration
+      // regardless of timing now. The delay was a workaround for the wrong bug (turned out to
+      // be the ghost's z-index losing to cloche-dice.js's overlay, plus a separate inline-
+      // transform bug -- see project_craps_win_animation_dealer_sweep memory note).
+      WinnerModal.show(data.returned,{big:bigWin,onClose:afterWinnerCloses});
     }else{
       setTimeout(afterWinnerCloses,300);
     }
-    if(data.capped)setTimeout(openCapModal, data.returned>0?5800:300);
+    if(data.capped)setTimeout(openCapModal, data.returned>0?4200:300);
   }
 }
 
