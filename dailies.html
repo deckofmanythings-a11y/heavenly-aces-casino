@@ -65,13 +65,13 @@ h1{font-size:22px;color:var(--tier-accent);font-weight:800}
 #fp-bar-wrap{max-width:120px;margin-left:auto;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-top:4px}
 #fp-bar{height:100%;background:var(--tier-accent);border-radius:3px;width:0%}
 #tier-box{background:linear-gradient(160deg,var(--tier-box-bg-a),#161616);border:1px solid var(--tier-box-border);border-radius:12px;padding:16px;margin-bottom:8px}
-#tier-card-wrap{position:relative;width:100%;max-width:420px;margin:0 auto;container-type:inline-size}
+#tier-card-wrap{position:relative;width:100%;max-width:600px;margin:0 auto;container-type:inline-size}
 #tier-card-img{display:block;width:100%;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.5)}
 /* Positioned as a % of the card's own box (matches the panel-art measurement convention
    used elsewhere in this family) rather than fixed px, so it stays put across the card's
-   own responsive width. Sized/placed in the open lower-left felt area under the tier
-   name text baked into every card. */
-#tier-card-name{position:absolute;left:6%;bottom:7%;font-family:'Cinzel',serif;font-weight:700;font-size:clamp(10px,3.6cqw,16px);letter-spacing:.08em;text-transform:uppercase;color:var(--tier-name-color);text-shadow:var(--tier-name-shadow)}
+   own responsive width. Right-justified in the open felt right of center, ending near the
+   angel/spade emblem -- bottom-left (under the baked "TIER" subtitle) collided with it. */
+#tier-card-name{position:absolute;left:30%;right:5%;bottom:5%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:right;font-family:'Cinzel',serif;font-weight:700;font-size:clamp(14px,5cqw,22px);letter-spacing:.04em;text-transform:uppercase;color:var(--tier-name-color);text-shadow:var(--tier-name-shadow)}
 #tier-num{text-align:center;font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 </style>
 </head>
