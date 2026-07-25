@@ -8,6 +8,9 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
+/* Matches the tier cards' own engraved-serif title font -- see dailies.html for the same
+   pattern (this is where the "print the username on the card" idea started). */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%}
 
@@ -39,8 +42,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #lobby-title{font-size:26px;font-weight:800;color:#ffd700}
 #lobby-account{display:flex;align-items:center;gap:14px}
 #lobby-player-info{text-align:right;line-height:1.3}
-#lobby-username{font-size:17px;font-weight:700;color:#fff}
-#lobby-bankroll{font-size:14px;color:rgba(255,215,0,.85)}
+#lobby-tier-card-wrap{position:relative;width:130px;margin-left:auto;container-type:inline-size}
+#lobby-tier-card-img{display:block;width:100%;border-radius:7px;box-shadow:0 3px 12px rgba(0,0,0,.5)}
+/* Same engraved/embossed-on-the-card look as dailies.html's tier card, at thumbnail
+   scale -- --tier-name-color/-shadow are set per-tier by applyLobbyTierStyle() below. */
+/* Fixed px, not clamp/cqw -- #lobby-tier-card-wrap's width is a fixed 130px (this is a
+   header thumbnail, not a responsive centerpiece like Dailies' card), so a cqw-based size
+   just bottomed out at its floor for any realistically long username. */
+#lobby-tier-card-name{position:absolute;left:6%;bottom:7%;right:6%;overflow:hidden;white-space:nowrap;font-family:'Cinzel',serif;font-weight:700;font-size:9px;letter-spacing:.02em;text-transform:uppercase;color:var(--tier-name-color,#2a1c05);text-shadow:var(--tier-name-shadow,1px 1px 1px rgba(255,255,255,.55),-1px -1px 1px rgba(0,0,0,.35))}
+#lobby-bankroll{font-size:14px;color:rgba(255,215,0,.85);margin-top:4px}
 #logout-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;padding:7px 14px;font-size:14px;cursor:pointer}
 #logout-btn:hover{background:rgba(255,255,255,.15);color:#fff}
 #options-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;width:34px;height:34px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -111,7 +121,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
     <div id="lobby-title">😇 Heavenly Aces</div>
     <div id="lobby-account">
       <div id="lobby-player-info">
-        <div id="lobby-username"></div>
+        <div id="lobby-tier-card-wrap">
+          <img id="lobby-tier-card-img" src="" alt="">
+          <div id="lobby-tier-card-name"></div>
+        </div>
         <div id="lobby-bankroll"></div>
       </div>
       <button id="options-btn" onclick="openOptionsModal()" title="Options">⚙️</button>
@@ -190,7 +203,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.6.4</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.6.5</div>
 </div>
 
 <script>
@@ -253,11 +266,29 @@ const DISCORD_CLIENT_ID='1528447760653746346';
 
 let currentPlayer=null,_authMode='login';
 
+// Same tier-card-with-printed-name treatment as dailies.html (that's where this started) --
+// img/nameColor/nameShadow are the same per-tier values, kept here rather than shared
+// since this page doesn't need the rest of Dailies' page-wide theming (accent/bg palette).
+const EMBOSS='1px 1px 1px rgba(0,0,0,.6),-1px -1px 1px rgba(255,255,255,.25)';
+const ENGRAVE='1px 1px 1px rgba(255,255,255,.55),-1px -1px 1px rgba(0,0,0,.35)';
+const TIER_META=[
+  {img:'tier-0-mortal.png',nameColor:'#cfcfcf',nameShadow:EMBOSS},
+  {img:'tier-1-nephilim.png',nameColor:'#8ec6ff',nameShadow:EMBOSS},
+  {img:'tier-2-throne.png',nameColor:'#e8c766',nameShadow:EMBOSS},
+  {img:'tier-3-seraphim.png',nameColor:'#2a2a2a',nameShadow:ENGRAVE},
+  {img:'tier-4-archangel.png',nameColor:'#2a1c05',nameShadow:ENGRAVE},
+  {img:'tier-5-horseman.png',nameColor:'#e8c264',nameShadow:EMBOSS},
+];
 function showLobby(player){
   currentPlayer=player;
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('lobby-screen').style.display='flex';
-  document.getElementById('lobby-username').textContent=player.username;
+  const tier=Math.max(0,Math.min(5,player.tier||0));
+  const tm=TIER_META[tier];
+  document.getElementById('lobby-tier-card-img').src=tm.img;
+  document.getElementById('lobby-tier-card-name').textContent=player.username;
+  document.documentElement.style.setProperty('--tier-name-color',tm.nameColor);
+  document.documentElement.style.setProperty('--tier-name-shadow',tm.nameShadow);
   document.getElementById('lobby-bankroll').textContent='$'+(parseFloat(player.bankroll)||0).toFixed(2)+' bankroll';
   loadDailiesBadge();
 }

@@ -8,10 +8,17 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
+/* Matches the tier cards' own engraved-serif title font (HEAVENLY ACES / tier name) as
+   closely as a web font can -- same @import pattern already used elsewhere in this site
+   for the cashout voucher's barcode font. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap');
 /* Defaults match the pre-tier-theming gold look (Archangel-ish) -- renderTier() below
    overrides these per the player's actual tier, sampled from that tier's own card image
    (pixel-sampled via ffmpeg, not eyeballed -- see the panel-art skill's measurement
-   discipline) rather than guessing at "gold" for every tier. */
+   discipline) rather than guessing at "gold" for every tier. --tier-name-color/-shadow
+   are for the username overlay printed onto the card itself: light-on-dark tiers get an
+   embossed (raised) look, the two light-background tiers (Seraphim/Archangel) get a dark
+   engraved look instead, matching which way each card's own baked-in text reads. */
 :root{
   --tier-accent:#ffd700;
   --tier-accent-soft:rgba(255,215,0,.4);
@@ -19,6 +26,8 @@
   --tier-bg-b:#161616;
   --tier-box-bg-a:#1a1030;
   --tier-box-border:rgba(180,120,255,.45);
+  --tier-name-color:#2a1c05;
+  --tier-name-shadow:1px 1px 1px rgba(255,255,255,.55),-1px -1px 1px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow-y:auto;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff}
@@ -56,7 +65,13 @@ h1{font-size:22px;color:var(--tier-accent);font-weight:800}
 #fp-bar-wrap{max-width:120px;margin-left:auto;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-top:4px}
 #fp-bar{height:100%;background:var(--tier-accent);border-radius:3px;width:0%}
 #tier-box{background:linear-gradient(160deg,var(--tier-box-bg-a),#161616);border:1px solid var(--tier-box-border);border-radius:12px;padding:16px;margin-bottom:8px}
-#tier-card-img{display:block;width:100%;max-width:420px;margin:0 auto;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+#tier-card-wrap{position:relative;width:100%;max-width:420px;margin:0 auto;container-type:inline-size}
+#tier-card-img{display:block;width:100%;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+/* Positioned as a % of the card's own box (matches the panel-art measurement convention
+   used elsewhere in this family) rather than fixed px, so it stays put across the card's
+   own responsive width. Sized/placed in the open lower-left felt area under the tier
+   name text baked into every card. */
+#tier-card-name{position:absolute;left:6%;bottom:7%;font-family:'Cinzel',serif;font-weight:700;font-size:clamp(10px,3.6cqw,16px);letter-spacing:.08em;text-transform:uppercase;color:var(--tier-name-color);text-shadow:var(--tier-name-shadow)}
 #tier-num{text-align:center;font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 </style>
 </head>
@@ -98,7 +113,10 @@ h1{font-size:22px;color:var(--tier-accent);font-weight:800}
   <div class="section-title">Tier</div>
   <div id="tier-box">
     <div id="tier-num"></div>
-    <img id="tier-card-img" src="" alt="Tier card">
+    <div id="tier-card-wrap">
+      <img id="tier-card-img" src="" alt="Tier card">
+      <div id="tier-card-name"></div>
+    </div>
   </div>
 </div>
 
@@ -136,6 +154,7 @@ if(isDiscordActivity()){
 const SUPABASE_URL=isDiscordActivity()?(location.origin+'/.proxy/supabase'):'https://qgiksiauptrqmxsupwqe.supabase.co';
 const FUNCTIONS_URL=SUPABASE_URL+'/functions/v1';
 const SUPABASE_ANON_KEY='sb_publishable_4J7VSDzSm3cA3aWHF7hAEg_gC1BKOp_';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{fetch:(url,options)=>fetch(url,{...options,cache:'no-store'})}});
 
 const TASK_META={
   craps:{icon:'🎲',label:'Make one Craps bet'},
@@ -161,19 +180,24 @@ const GAME_URL={
 // palette: pixel-sampled off each tier's own card PNG (ffmpeg raw-RGB extraction, most-
 // saturated readable midtone per card -- not eyeballed), used to theme the whole page to
 // match whichever tier the player is currently on rather than a single fixed gold look.
+// EMBOSS = raised metallic text, for the four light-text-on-dark-felt cards. ENGRAVE =
+// dark recessed text, for the two light/metallic-background cards (Seraphim, Archangel)
+// where the card's own baked-in title text is dark, not light.
+const EMBOSS='1px 1px 1px rgba(0,0,0,.6),-1px -1px 1px rgba(255,255,255,.25)';
+const ENGRAVE='1px 1px 1px rgba(255,255,255,.55),-1px -1px 1px rgba(0,0,0,.35)';
 const TIER_META=[
   {name:'Mortal',    streak:0,  img:'tier-0-mortal.png',
-    palette:{accent:'#b0b0b0',accentSoft:'rgba(176,176,176,.35)',bgA:'#2a2a2a',bgB:'#161616',boxBgA:'#1e1e1e',boxBorder:'rgba(200,200,200,.3)'}},
+    palette:{accent:'#b0b0b0',accentSoft:'rgba(176,176,176,.35)',bgA:'#2a2a2a',bgB:'#161616',boxBgA:'#1e1e1e',boxBorder:'rgba(200,200,200,.3)',nameColor:'#cfcfcf',nameShadow:EMBOSS}},
   {name:'Nephilim',  streak:1,  img:'tier-1-nephilim.png',
-    palette:{accent:'#4a9eff',accentSoft:'rgba(74,158,255,.4)',bgA:'#0c1e38',bgB:'#161616',boxBgA:'#0d2244',boxBorder:'rgba(74,158,255,.45)'}},
+    palette:{accent:'#4a9eff',accentSoft:'rgba(74,158,255,.4)',bgA:'#0c1e38',bgB:'#161616',boxBgA:'#0d2244',boxBorder:'rgba(74,158,255,.45)',nameColor:'#8ec6ff',nameShadow:EMBOSS}},
   {name:'Throne',    streak:7,  img:'tier-2-throne.png',
-    palette:{accent:'#c9a3ff',accentSoft:'rgba(160,110,255,.4)',bgA:'#241a3d',bgB:'#161616',boxBgA:'#1f1738',boxBorder:'rgba(160,110,255,.45)'}},
+    palette:{accent:'#c9a3ff',accentSoft:'rgba(160,110,255,.4)',bgA:'#241a3d',bgB:'#161616',boxBgA:'#1f1738',boxBorder:'rgba(160,110,255,.45)',nameColor:'#e8c766',nameShadow:EMBOSS}},
   {name:'Seraphim',  streak:28, img:'tier-3-seraphim.png',
-    palette:{accent:'#e6e6e6',accentSoft:'rgba(230,230,230,.35)',bgA:'#2a2a2a',bgB:'#161616',boxBgA:'#232323',boxBorder:'rgba(230,230,230,.35)'}},
+    palette:{accent:'#e6e6e6',accentSoft:'rgba(230,230,230,.35)',bgA:'#2a2a2a',bgB:'#161616',boxBgA:'#232323',boxBorder:'rgba(230,230,230,.35)',nameColor:'#2a2a2a',nameShadow:ENGRAVE}},
   {name:'Archangel', streak:28, wager:7000,  img:'tier-4-archangel.png',
-    palette:{accent:'#ffd700',accentSoft:'rgba(255,215,0,.4)',bgA:'#241a05',bgB:'#161616',boxBgA:'#241a05',boxBorder:'rgba(255,215,0,.45)'}},
+    palette:{accent:'#ffd700',accentSoft:'rgba(255,215,0,.4)',bgA:'#241a05',bgB:'#161616',boxBgA:'#241a05',boxBorder:'rgba(255,215,0,.45)',nameColor:'#2a1c05',nameShadow:ENGRAVE}},
   {name:'Horseman',  streak:90, wager:70000, img:'tier-5-horseman.png',
-    palette:{accent:'#e0a930',accentSoft:'rgba(224,169,48,.4)',bgA:'#1a1409',bgB:'#0a0a0a',boxBgA:'#141108',boxBorder:'rgba(224,169,48,.4)'}},
+    palette:{accent:'#e0a930',accentSoft:'rgba(224,169,48,.4)',bgA:'#1a1409',bgB:'#0a0a0a',boxBgA:'#141108',boxBorder:'rgba(224,169,48,.4)',nameColor:'#e8c264',nameShadow:EMBOSS}},
 ];
 function applyTierPalette(tier){
   const p=TIER_META[tier].palette;
@@ -182,18 +206,21 @@ function applyTierPalette(tier){
   root.setProperty('--tier-accent-soft',p.accentSoft);
   root.setProperty('--tier-bg-a',p.bgA);
   root.setProperty('--tier-bg-b',p.bgB);
+  root.setProperty('--tier-name-color',p.nameColor);
+  root.setProperty('--tier-name-shadow',p.nameShadow);
   root.setProperty('--tier-box-bg-a',p.boxBgA);
   root.setProperty('--tier-box-border',p.boxBorder);
 }
 // Streak/weekly-wager progress is still tracked server-side (dailies_state.task_streak
 // and .weekly_wager) regardless of what's shown here -- this just displays the card,
 // no progress bar, per Deck's request.
-function renderTier(tier){
+function renderTier(tier,username){
   tier=Math.max(0,Math.min(5,tier||0));
   document.getElementById('tier-num').textContent='Tier '+tier+' — '+TIER_META[tier].name;
   const img=document.getElementById('tier-card-img');
   if(img.getAttribute('src')!==TIER_META[tier].img)img.src=TIER_META[tier].img;
   applyTierPalette(tier);
+  document.getElementById('tier-card-name').textContent=username||'';
 }
 
 const QUEST_META={
@@ -205,11 +232,11 @@ const QUEST_META={
   breakout:{game:'Breakout Blackjack',label:'Win a Breakout Blackjack round',sub:'Win any hand — pays as if you’d bet $100 on it.'},
 };
 
-function render(dailies,freePlayBalance,tier){
+function render(dailies,freePlayBalance,tier,username){
   document.getElementById('loading').style.display='none';
   document.getElementById('wrap').style.display='block';
   document.getElementById('fp-amt').textContent='$'+(parseFloat(freePlayBalance)||0).toFixed(2);
-  renderTier(tier);
+  renderTier(tier,username);
 
   const list=document.getElementById('task-list');list.innerHTML='';
   Object.keys(TASK_META).forEach(g=>{
@@ -262,7 +289,14 @@ async function load(){
     });
     const data=await res.json();
     if(!data.ok){dNav('index.html');return;}
-    render(data.dailies,data.free_play_balance,data.tier);
+    // dailies-action's 'state' response has no username field -- it's a separate,
+    // read-only lookup rather than adding it server-side for one display value.
+    let username='';
+    try{
+      const{data:player}=await sb.from('players').select('username').eq('session_token',token).maybeSingle();
+      username=(player&&player.username)||'';
+    }catch(e){}
+    render(data.dailies,data.free_play_balance,data.tier,username);
   }catch(e){
     document.getElementById('loading').textContent='Could not load Dailies. Check your connection and reload.';
   }
