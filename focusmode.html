@@ -1652,7 +1652,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.4</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.5</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2847,6 +2847,10 @@ function chipAmtValue(el){
 const WIN_DROP_MS=480,WIN_HOLD_MS=420,WIN_SWEEP_MS=550;
 function spawnWinPair(elId,amt,stays){
   const stakeEl=document.getElementById(elId);
+  // TEMP DEBUG (Deck, 2026-07-25): pinpoint exactly which guard is bailing when a real win
+  // produces no visible chip-sweep. Remove once diagnosed -- see
+  // project_craps_win_animation_dealer_sweep memory note for context.
+  console.log('[DEBUG spawnWinPair]',{elId,amt,stays,found:!!stakeEl,rect:stakeEl?stakeEl.getBoundingClientRect():null});
   if(!stakeEl||!(amt>0))return;
   const rect=stakeEl.getBoundingClientRect();
   if(rect.width<=0&&rect.height<=0)return;
