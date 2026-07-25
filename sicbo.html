@@ -262,15 +262,38 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .bs-label{font-size:min(58px,8.4vw)}
 .bs-sub{font-size:min(30px,5.4vw)}
 .tot-num{font-size:min(56px,8.2vw)}
-.tot-pay{font-size:min(30px,5vw);color:rgba(255,255,255,.75)}
+.tot-pay{font-size:min(30px,5vw)}
 .at-lbl{font-size:36px}
-.at-pay{font-size:27px;color:rgba(220,140,220,.85)}
-.trip-pay{font-size:24px;color:rgba(230,180,230,.85)}
-.dbl-pay{font-size:24px;color:rgba(160,220,235,.85)}
-.dom-pay{font-size:22px;color:rgba(120,215,150,.8)}
-.any-pay{font-size:min(15px,2.6vw);color:rgba(225,205,90,.8)}
+.at-pay{font-size:27px}
+.trip-pay{font-size:24px}
+.dbl-pay{font-size:24px}
+.dom-pay{font-size:22px}
+.any-pay{font-size:min(15px,2.6vw)}
 .dbl-dice img,.trip-dice img,.dom-dice img{width:44px!important;height:44px!important}
 .any-die img{width:42px!important;height:42px!important}
+
+/* ── SIC-BO PANEL GOTHIC/ANGEL RE-SKIN -- Deck swapped sicbo_panel.png for a light cream/gold
+   angel-themed version (same layout). Every payout/label color above was tuned for the old
+   dark metal panel -- white/light-pastel text on a light cream screen would be unreadable, so
+   this darkens all of it while keeping each bet-category's original hue (blue=doubles/small,
+   purple=triples/any-triple, green=combos, gold=any-number) as a dark ink tone instead of a
+   light glow. Exocet is a locally-installed font on Deck's machine (not a licensed asset this
+   repo can hand out), so no @font-face/self-host -- players without it installed silently get
+   the serif fallback. */
+#sb-panel{font-family:'Exocet','Trajan Pro','Cinzel',Georgia,'Times New Roman',serif}
+.bs-label{color:#2b1806}
+.bs-sub{color:rgba(43,24,6,.75)}
+.tot-num{color:#2b1806}
+.tot-pay{color:rgba(43,24,6,.7)}
+.at-lbl{color:#4a1030}
+.at-pay{color:rgba(74,16,48,.75)}
+.trip-pay{color:rgba(74,16,48,.75)}
+.dbl-pay{color:rgba(12,37,64,.75)}
+.dom-pay{color:rgba(18,48,24,.7)}
+.any-pay{color:rgba(74,48,5,.75)}
+/* Gold chip-stack amounts stay gold (matches the site's real chip color everywhere else) --
+   just adds a dark shadow so gold-on-cream still pops instead of washing out. */
+.bs-stk,.tot-stk,.at-stk,.trip-stk,.dbl-stk,.dom-stk,.any-stk{text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 4px rgba(0,0,0,.35)}
 
 /* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
@@ -489,7 +512,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
       <!-- Row 1: SMALL | Any Triple | BIG -->
       <div id="row-top">
         <div class="bs-btn" id="btn-small" onclick="placeBet('small')">
-          <span class="at-lbl" style="color:rgba(255,255,255,.9)">SMALL</span>
+          <span class="at-lbl" style="color:#0c2540">SMALL</span>
           <span class="bs-sub">Numbers from 4 to 10, any triple loses</span>
           <span class="bs-sub">1 pays 1</span>
           <span class="bs-stk" id="stk-small"></span>
@@ -502,7 +525,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
           <span class="at-stk" id="stk-anyTriple"></span>
         </div>
         <div class="bs-btn" id="btn-big" onclick="placeBet('big')">
-          <span class="at-lbl" style="color:rgba(255,255,255,.9)">BIG</span>
+          <span class="at-lbl" style="color:#4a0e0e">BIG</span>
           <span class="bs-sub">Numbers from 11 to 17, any triple loses</span>
           <span class="bs-sub">1 pays 1</span>
           <span class="bs-stk" id="stk-big"></span>
