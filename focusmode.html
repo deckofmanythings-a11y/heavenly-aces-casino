@@ -1652,7 +1652,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.5</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.6</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2850,10 +2850,12 @@ function spawnWinPair(elId,amt,stays){
   // TEMP DEBUG (Deck, 2026-07-25): pinpoint exactly which guard is bailing when a real win
   // produces no visible chip-sweep. Remove once diagnosed -- see
   // project_craps_win_animation_dealer_sweep memory note for context.
-  console.log('[DEBUG spawnWinPair]',{elId,amt,stays,found:!!stakeEl,rect:stakeEl?stakeEl.getBoundingClientRect():null});
-  if(!stakeEl||!(amt>0))return;
+  {const r=stakeEl?stakeEl.getBoundingClientRect():null;
+  console.log('[DEBUG spawnWinPair] elId='+elId+' amt='+amt+' stays='+stays+' found='+(!!stakeEl)+' w='+(r?r.width:'n/a')+' h='+(r?r.height:'n/a')+' top='+(r?r.top:'n/a')+' left='+(r?r.left:'n/a'));}
+  if(!stakeEl||!(amt>0)){console.log('[DEBUG spawnWinPair] BAILED: stakeEl or amt guard');return;}
   const rect=stakeEl.getBoundingClientRect();
-  if(rect.width<=0&&rect.height<=0)return;
+  if(rect.width<=0&&rect.height<=0){console.log('[DEBUG spawnWinPair] BAILED: zero rect guard');return;}
+  console.log('[DEBUG spawnWinPair] PASSED both guards, building ghost now');
   const feltStageEl=document.getElementById('felt-stage');
   const liveChipVar=feltStageEl?getComputedStyle(feltStageEl).getPropertyValue('--chip').trim():'';
   const existingAmtSpan=stakeEl.querySelector('.chip-amt');
