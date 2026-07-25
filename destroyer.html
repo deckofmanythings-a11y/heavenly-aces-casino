@@ -1106,7 +1106,7 @@ let G={
   freeMissiles:4,
   missileQueue:['initial','initial','initial','initial'],
   buyOfferPending:false,
-  placementBet:5,
+  placementBet:0,
   bet:5,
   lastWin:0,
   buyPrice:0,
@@ -1260,7 +1260,7 @@ function resetGameState(){
   G.phase='placement';G.ships=null;G.grid=null;
   G.shipHits=[0,0,0,0];G.shipSunk=[false,false,false,false];
   G.missilesRemaining=4;G.missilesBought=0;G.missilesBoughtUsed=0;G.pendingBuyDim=false;G.sunkenCount=0;
-  G.canBuy=false;G.buyPrice=0;G.firing=false;G.lastWin=0;G.rollHistory=[];G.totalSpent=0;G.freeMissiles=4;G.placementBet=G.placementBet||5;G.buyOfferPending=false;
+  G.canBuy=false;G.buyPrice=0;G.firing=false;G.lastWin=0;G.rollHistory=[];G.totalSpent=0;G.freeMissiles=4;G.placementBet=0;G.buyOfferPending=false;
   G.missileQueue=['initial','initial','initial','initial'];
 }
 
