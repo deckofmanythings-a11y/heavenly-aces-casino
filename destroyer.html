@@ -95,10 +95,24 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    bet. The amount lives back on TOP of the chip (Deck: "Move the bet value on top of the
    chip in the main game"), with Winning/Playable as plain text below it. */
 #fp-bet-circle .fp-bet-chips,#pp-bet-circle .fp-bet-chips{position:relative;width:2.6em;height:2.6em;margin:0 auto;cursor:pointer}
+/* Setup screen's bet circle (I) no longer shows Winning/Playable text (moved to the firing
+   panel's Buy Missile area, see #fp-buy-area below) -- with that vertical space freed up, the
+   chip itself fills nearly the whole screen instead of the old fixed 2.6em (Deck: "Make the
+   chip as LARGE as possible but still in the screen"). */
+#pp-bet-circle .fp-bet-chips{width:88%;height:88%}
 #fp-bet-circle .fp-bet-chips img,#pp-bet-circle .fp-bet-chips img{position:absolute;left:50%;bottom:0;width:100%;transform:translateX(-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 #fp-bet-circle .fp-bet-amt,#pp-bet-circle .fp-bet-amt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;font-size:.8em;font-weight:900;color:#000;text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none}
+#pp-bet-circle .fp-bet-amt{font-size:1.4em}
 #fp-bet-circle .fp-winning-lbl,#pp-bet-circle .fp-winning-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#7ee87e;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 #fp-bet-circle .fp-bankroll-lbl,#pp-bet-circle .fp-bankroll-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#ffe066;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+/* Winning/Playable relocated here (Deck: "move Winning and Playable to the Buy Missile
+   section as that's where it's most useful") -- #fp-buy-winnings is the FIRST child in the
+   HTML, so it takes the top line; moveFiringElements() appendChild()s the timer/Buy Missile/
+   End Game controls after it, which land on their own line below since flex-basis:100% forces
+   a wrap. */
+#fp-buy-area{flex-wrap:wrap}
+#fp-buy-area #fp-buy-winnings{flex-basis:100%;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1em}
+#fp-buy-area .fp-winning-lbl,#fp-buy-area .fp-bankroll-lbl{font-size:.85em}
 /* gap here is the "space between rolls" -- each .fp-roll-pip is one roll's pair of dice. */
 #fp-roll-history{display:flex;gap:.6em;overflow-x:auto;align-items:center;padding:0 .5em;scrollbar-width:none}
 #fp-roll-history::-webkit-scrollbar{display:none}
@@ -215,11 +229,24 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    container doesn't block Randomize/Begin Game/chip row/Game Select sitting underneath it. */
 #pp-grid-cells{position:absolute;inset:0;z-index:2;pointer-events:none}
 #pp-grid-cells .fp-cell{pointer-events:auto}
+/* Small dice-face axis labels along the grid's SW (letter) and SE (number) edges (Deck: "I
+   would like small dice faces along the SW and SE edges of the 6x6 grid to label the axis").
+   Kept small (buildPlacementAxisLabels()) since the grid's west corner sits right up against
+   B's corner -- see the function's own comment for why. */
+#pp-axis-labels{position:absolute;inset:0;z-index:3;pointer-events:none}
+.pp-axis-die{position:absolute;width:2.1%;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
 /* placement-chip-row is normally a flex:1 child of #fire-center; reparented here (not
    rebuilt, same reuse pattern as moveFiringElements' buy-btn/dice canvas) it needs its own
-   sizing since #placement-panel isn't a flex container. */
-#pp-chip-row-wrap #placement-chip-row{position:static;display:flex!important;width:100%;height:100%;padding:0}
-#pp-chip-row-wrap #placement-chip-row .chip{width:4.4em;height:4.4em;font-size:1.3em}
+   sizing since #placement-panel isn't a flex container. Moved to the narrow blank strip below
+   C (Deck's letter mapping) -- chips shrunk from 4.4em and overflow-x added since that strip
+   is much narrower than the old 72%-wide placement, with a scrollbar as a safety net rather
+   than clipping any denomination out of reach. */
+#pp-chip-row-wrap{overflow-x:auto;overflow-y:hidden}
+#pp-chip-row-wrap #placement-chip-row{position:static;display:flex!important;width:max-content;min-width:100%;height:100%;padding:0}
+#pp-chip-row-wrap #placement-chip-row .chip{width:2.2em;height:2.2em;font-size:.7em}
+/* Visible button now (was pp-invisible-btn) -- new art has no baked "Randomize" text at this
+   cutout (C), unlike the old panel art. */
+#pp-randomize-btn{background:rgba(20,40,25,.55);border:1px solid rgba(140,255,157,.4);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;line-height:1.3}
 /* left:0/top:0 collides with the baked-in top bar (Game Select lives there); push it down
    below the top bar to roughly where fp-extra-wins sits on the firing panel. */
 #placement-panel #jackpot-strip{top:14%;border-radius:8px}
@@ -568,19 +595,24 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
       <div class="fp-region" id="fp-ship-1" style="left:86.543%;top:29.149%;width:9.031%;height:9.043%"></div>
       <div class="fp-region" id="fp-ship-2" style="left:86.603%;top:42.66%;width:8.912%;height:9.149%"></div>
       <div class="fp-region" id="fp-ship-3" style="left:86.603%;top:57.021%;width:8.912%;height:15.745%"></div>
+      <!-- Winning/Playable moved out of here into #fp-buy-area below (Deck: "move Winning and
+           Playable to the Buy Missile section as that's where it's most useful"). -->
       <div class="fp-region" id="fp-bet-circle" style="left:73.864%;top:56.596%;width:8.552%;height:15.745%">
         <div class="fp-bet-chips" id="fp-bet-chips" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">
           <span class="fp-bet-amt" id="fp-bet-amt">$0</span>
         </div>
-        <span class="fp-winning-lbl" id="fp-winning-lbl">Winning: $0.00</span>
-        <span class="fp-bankroll-lbl" id="fp-bankroll-lbl">Playable: $0</span>
       </div>
       <div class="fp-region" id="fp-roll-history" style="left:2.093%;top:76.489%;width:80.442%;height:3.617%"></div>
       <div class="fp-region" id="fp-strikes-area" style="left:4.964%;top:55.106%;width:20.036%;height:17.66%">
         <span id="fp-fm-label">Initial Strikes</span>
         <div id="fp-free-missiles-pips"></div>
       </div>
-      <div class="fp-region" id="fp-buy-area" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%"></div>
+      <div class="fp-region" id="fp-buy-area" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%">
+        <div id="fp-buy-winnings">
+          <span class="fp-winning-lbl" id="fp-winning-lbl">Winning: $0.00</span>
+          <span class="fp-bankroll-lbl" id="fp-bankroll-lbl">Playable: $0</span>
+        </div>
+      </div>
       <button class="fp-region" id="fp-fire-btn" onclick="fireMissile()" disabled
               style="left:88.278%;top:82.34%;width:7.656%;height:13.723%"></button>
       <div id="fp-grid-cells"></div>
@@ -600,9 +632,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
            style="left:4.127%;top:3.085%;width:10.048%;height:8.83%">
         🏠 HOME
       </div>
-      <!-- Same region firing screen's #fp-dice-result (the 3D dice results) occupies during
-           the main game -- blank here during setup, so it hosts placement instructions instead. -->
-      <div class="fp-region" id="pp-instructions" style="left:13.816%;top:1.17%;width:72.368%;height:9.681%">Select your bet size by dragging chips to, or tapping, the bet area.
+      <!-- Moved to K (bottom strip) per Deck's letter mapping -- reuses the firing panel's
+           calibrated K coordinates (#fp-buy-area) since it's the same cutout on this
+           companion art. -->
+      <div class="fp-region" id="pp-instructions" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%">Select your bet size by dragging chips to, or tapping, the bet area.
 Alter ship positions via the Randomize Ship Positions button or drag them on the game board to move them.
 Tap the northernmost cell of the ship to rotate it (room permitting, move the ship to clearer space if its not rotating).
 Tap BEGIIN GAME to start the game.</div>
@@ -615,22 +648,31 @@ Tap BEGIIN GAME to start the game.</div>
       <div class="fp-region" id="pp-ship-1" style="left:89.533%;top:28.191%;width:8.732%;height:9.681%"></div>
       <div class="fp-region" id="pp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
       <div class="fp-region" id="pp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
-      <button class="fp-region pp-invisible-btn" id="pp-randomize-btn" onclick="reRandomize()"
-              style="left:76.735%;top:15.745%;width:7.895%;height:12.979%">Randomize</button>
+      <!-- Moved to C (bottom-left big screen), reusing the firing panel's calibrated
+           #fp-strikes-area coordinates. No longer an invisible hitbox (pp-invisible-btn) --
+           the old art had "Randomize Ship Positions" baked into the metal there; this new art
+           doesn't, so the button needs real visible text now that it's on a blank screen. -->
+      <button class="fp-region" id="pp-randomize-btn" onclick="reRandomize()"
+              style="left:4.964%;top:55.106%;width:20.036%;height:17.66%">RANDOMIZE<br>SHIP POSITIONS</button>
       <!-- Sits on the knob now baked as "BEGIN GAME" art in DestroyerPanel_bg_setup_new.png
            (position J, same as the firing panel's #fp-fire-btn on the equivalent knob). -->
       <button class="fp-region pp-invisible-btn" id="pp-begin-btn" onclick="startBattle()"
               style="left:88.278%;top:82.34%;width:7.656%;height:13.723%">Begin</button>
-      <div class="fp-region" id="pp-chip-row-wrap" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%"></div>
+      <!-- Blank metal strip directly below C, above the shelf divider (Deck: "the blank space
+           below the screen at C") -- not a screen cutout itself, just the gap between C and
+           the shelf/K row. -->
+      <div class="fp-region" id="pp-chip-row-wrap" style="left:4.964%;top:73.5%;width:20.036%;height:7.5%"></div>
       <!-- Same structure/style as the firing screen's #fp-bet-circle (Deck: "Make the setup
            phase Bet area look identical to the Main Game's") -- replaces the old circular
-           #bet-circle-wrap widget, which stacked chips and looked visually different. -->
+           #bet-circle-wrap widget, which stacked chips and looked visually different.
+           Winning/Playable labels removed here (Deck: "move Winning and Playable to the Buy
+           Missile section as that's where it's most useful") -- they only exist during firing
+           anyway, so showing them during setup was always a placeholder $0.00. Chip itself
+           sized to fill the screen (I) via the #pp-bet-circle .fp-bet-chips override below. -->
       <div class="fp-region" id="pp-bet-circle" style="left:73.864%;top:56.596%;width:8.552%;height:15.745%">
         <div class="fp-bet-chips" id="pp-bet-chips" onclick="addBetChip()" oncontextmenu="event.preventDefault();removeBetChip()">
           <span class="fp-bet-amt" id="pp-bet-amt">$0</span>
         </div>
-        <span class="fp-winning-lbl" id="pp-winning-lbl">Winning: $0.00</span>
-        <span class="fp-bankroll-lbl" id="pp-bankroll-lbl">Playable: $0</span>
       </div>
       <div id="pp-grid-cells"></div>
     </div>
@@ -2083,6 +2125,50 @@ function fpCellCorners(i,j){
   return [pt(i,j),pt(i+1,j),pt(i+1,j+1),pt(i,j+1)]; // c00,c10,c11,c01 (parallelogram winding order)
 }
 function fpPct(px,total){return px/total*100;}
+// Same L+a*U+b*V point formula as fpCellCorners, but allows fractional a/b so axis-label
+// points can sit just outside the 0..6 cell grid (see buildPlacementAxisLabels below).
+function fpAxisPoint(a,b){
+  const L=FP_GRID_LEFT,U=FP_GRID_U,V=FP_GRID_V;
+  return {x:L.x+a*U.x+b*V.x,y:L.y+a*U.y+b*V.y};
+}
+// Small letter/number dice-face labels along the placement grid's SW and SE edges (Deck: "I
+// would like small dice faces along the SW and SE edges of the 6x6 grid to label the axis.
+// They have to clear the corner of B so they can't be too big"). The grid's West corner
+// (i=0,j=0, i.e. fpCellCorners(0,0)'s first point) sits right up against B's bottom-right
+// corner on this panel art, which is why they're sized down via .pp-axis-die (2.1% of panel
+// width) rather than a full die size. SW edge (j=0, i=0..5) is the letter-column axis --
+// FP_GRID_U's own comment confirms i directly maps A->F -- offset outward along -V (down-
+// left, away from the grid) by half a cell. SE edge (i=6/max column, j=0..5) is the number-
+// row axis -- FP_GRID_V's comment confirms j directly maps 1->6 -- offset outward along +U
+// (further right-down past column F) the same way. Built once (idempotent via the existing-
+// element check) since the labels never move.
+function buildPlacementAxisLabels(){
+  if(document.getElementById('pp-axis-labels'))return;
+  const panel=document.getElementById('placement-panel');
+  if(!panel)return;
+  const wrap=document.createElement('div');
+  wrap.id='pp-axis-labels';
+  const LETTERS=['A','B','C','D','E','F'];
+  for(let i=0;i<6;i++){
+    const p=fpAxisPoint(i+0.5,-0.42);
+    const img=document.createElement('img');
+    img.className='pp-axis-die';
+    img.src=DIE_LETTER_IMG[LETTERS[i]];
+    img.style.left=fpPct(p.x,FP_W)+'%';
+    img.style.top=fpPct(p.y,FP_H)+'%';
+    wrap.appendChild(img);
+  }
+  for(let j=0;j<6;j++){
+    const p=fpAxisPoint(6.42,j+0.5);
+    const img=document.createElement('img');
+    img.className='pp-axis-die';
+    img.src=DIE_NUMBER_IMG[j+1];
+    img.style.left=fpPct(p.x,FP_W)+'%';
+    img.style.top=fpPct(p.y,FP_H)+'%';
+    wrap.appendChild(img);
+  }
+  panel.appendChild(wrap);
+}
 
 // ── PANEL CALIBRATION MODE ──────────────────────────────────────────────────
 // Same drag/resize-box pattern as Focus Mode Craps's calibrator, adapted to the baked-art
@@ -2288,6 +2374,7 @@ function showPlacementPanel(){
   });
   const ps=document.getElementById('placement-screen');if(ps)ps.classList.add('active');
   renderPlacementGrid();
+  buildPlacementAxisLabels();
   sizeDestroyerPanel();
 }
 function hidePlacementPanel(){
