@@ -29,6 +29,57 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* ── GAME SCREEN ── */
 #game-screen{display:none;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a2218}
 
+/* ── SIC-BO PANEL -- baked-art board, same treatment as Destroyer's #firing-panel: a single
+   background image (sicbo_panel.png, 1672x941) with every existing bet-area/UI element
+   repositioned onto it as an absolutely-positioned overlay instead of rebuilt. #top-row/
+   #table-area/#bottom-section/#bottom-left become display:contents -- they keep their
+   children in the DOM (so ids/onclick wiring/JS queries are all untouched) but stop
+   participating in layout themselves, so their children's position:absolute is relative to
+   #sb-panel (the nearest positioned ancestor) regardless of that DOM nesting. Row-level
+   containers only (not individual cells) are repositioned -- each row's existing CSS grid/
+   flex already evenly distributes its own cells, and those column counts already happen to
+   match the art's cutout counts per row (3/6/6/15/14/7), so no per-cell placement is needed.
+   Positions below are a first-pass eyeball estimate off the art, same as Destroyer's initial
+   pass -- see toggleCalibMode() for the drag/resize tool to refine them. */
+#sb-panel{position:relative;aspect-ratio:1672/941;max-width:100%;max-height:100%;width:100%;background-image:url('sicbo_panel.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh;margin:0 auto}
+#top-row,#table-area,#bottom-section,#bottom-left{display:contents!important}
+/* Folded into each cell instead (Deck: "Payout headers will now become part of the number
+   cells themselves") -- see buildTable()'s makeDblCell/makeTripCell/combo-cell for the new
+   .dbl-pay/.trip-pay/.dom-pay text this replaces. */
+#row-dt-hdr,.combo-hdr{display:none!important}
+.sb-region{position:absolute;overflow:hidden}
+/* A: Home button. min-width/max-width reset -- the old vw-clamped sizing would otherwise
+   still constrain this against the OLD #top-row's viewport-relative width instead of the new
+   %-of-panel width. */
+#left-col-header{position:absolute;left:0.9%;top:1.06%;width:18.24%;height:15.41%;min-width:0;max-width:none;display:flex;align-items:center;justify-content:center}
+/* B: Dice Zone -- already 3D (ClocheDice physics engine), just repositioned. */
+#dice-zone{position:absolute;left:20.03%;top:1.06%;width:78.65%;height:15.41%}
+/* C: Info Panel (Redeem/Cash Out/Dailies + HUD). */
+#info-panel{position:absolute;left:81.34%;top:1.06%;width:17.34%;height:15.41%;min-width:0;max-width:none}
+/* D: SMALL / ANY TRIPLE / BIG. */
+#row-top{position:absolute;left:0.9%;top:17.54%;width:97.79%;height:11.16%}
+/* E: Doubles 1-3 + Triples 1-3. */
+#row-dt-top{position:absolute;left:0.9%;top:29.76%;width:97.79%;height:11.69%}
+/* F: Doubles 4-6 + Triples 4-6. */
+#row-dt-bot{position:absolute;left:0.9%;top:42.51%;width:97.79%;height:11.16%}
+/* G: Combos (15 cells). */
+#combos-grid{position:absolute;left:0.9%;top:54.73%;width:97.79%;height:9.03%}
+/* H: Totals 4-17 (14 cells). */
+#totals-row-all{position:absolute;left:0.9%;top:64.82%;width:97.79%;height:11.69%}
+/* I: Any-Number (6 cells + 1 info cell = 7, matching the art's I1-I7). */
+#any-num-row{position:absolute;left:0.9%;top:77.58%;width:97.79%;height:7.44%;grid-template-columns:repeat(7,1fr)}
+/* J-top: Roll History. J-bottom: chip row + P&L/Clear/Double/Repeat -- #bottom-bar's existing
+   internal flex spacer (Deck's own original layout: chips, flex:1 spacer, then P&L+buttons)
+   already puts chips flush left and P&L/buttons flush right within whatever width this
+   container has, which is exactly "chip row left-justified below J" / "P&L+Clear/Double/
+   Repeat immediate left of Roll" once this spans J's full width -- no extra wrapper needed. */
+#history-strip{position:absolute;left:0.9%;top:86.08%;width:94.5%;height:6.2%}
+#bottom-bar{position:absolute;left:0.9%;top:92.5%;width:94.5%;height:6.5%}
+/* K: Roll button -- "ROLL" is baked into the art here, so this becomes a transparent hitbox
+   over it instead of showing its own gold button art (same treatment as Destroyer's
+   #fp-fire-btn/#pp-begin-btn sitting on baked "FIRE"/"BEGIN GAME" knobs). */
+#roll-btn{position:absolute;left:82.84%;top:88%;width:15.85%;height:11%;background:transparent!important;box-shadow:none!important;border:none!important;color:transparent!important;text-shadow:none!important}
+
 /* ── TOP ROW ── */
 #top-row{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 3 / 16);height:calc(100dvh * 3 / 16);border-bottom:1px solid rgba(255,255,255,.12)}
 #left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:0}
@@ -200,6 +251,27 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #roll-btn:active{filter:brightness(.9)}
 #roll-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
 
+/* ── SIC-BO PANEL READABILITY PASS -- Deck: "Fonts need to be large enough to be readable,
+   they can take up as much of the monitor as you can fit, since the info in the monitors is
+   not dynamic." Bumps text sizes across every baked-art cell (roughly 1.3-1.6x their old
+   values) and raises the low-opacity payout text up closer to full brightness, now that it's
+   sitting on its own lit monitor screen instead of dark felt. Dice images bumped from
+   33px to 44px for the same reason. Cascades after the base rules above (same selectors,
+   later wins per-property) rather than editing those in place, so the pre-panel values stay
+   visible in a diff. */
+.bs-label{font-size:min(58px,8.4vw)}
+.bs-sub{font-size:min(30px,5.4vw)}
+.tot-num{font-size:min(56px,8.2vw)}
+.tot-pay{font-size:min(30px,5vw);color:rgba(255,255,255,.75)}
+.at-lbl{font-size:36px}
+.at-pay{font-size:27px;color:rgba(220,140,220,.85)}
+.trip-pay{font-size:24px;color:rgba(230,180,230,.85)}
+.dbl-pay{font-size:24px;color:rgba(160,220,235,.85)}
+.dom-pay{font-size:22px;color:rgba(120,215,150,.8)}
+.any-pay{font-size:min(15px,2.6vw);color:rgba(225,205,90,.8)}
+.dbl-dice img,.trip-dice img,.dom-dice img{width:44px!important;height:44px!important}
+.any-die img{width:42px!important;height:42px!important}
+
 /* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
 .modal-overlay.hidden{display:none}
@@ -283,6 +355,21 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 .voucher-row-expiry{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
 .voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
+
+/* ── SB-PANEL CALIBRATION MODE -- same drag/resize-box pattern as Destroyer's calibrator,
+   adapted to this single 1672x941 sicbo panel canvas. Ghost boxes overlay the baked art so
+   Deck can drag each row region directly onto its target screen cutout, then export a table
+   of exact left/top/width/height back. Purely a dev tool -- #sb-calib-toggle is the only
+   visible entry point. */
+#sb-calib-toggle{position:absolute;left:.3em;top:.15em;z-index:50;background:rgba(0,0,0,.55);border:1px solid rgba(0,255,255,.5);border-radius:4px;color:#0ff;font-size:14px;padding:4px 8px;cursor:pointer}
+#sb-calib-layer{position:absolute;inset:0;z-index:60;pointer-events:none}
+.sb-calib-box{position:absolute;border:2px dashed #0ff;background:rgba(0,255,255,.15);cursor:move;pointer-events:auto;box-sizing:border-box}
+.sb-calib-box.dragging{background:rgba(0,255,255,.3);border-color:#fff}
+.sb-calib-box .sb-calib-label{position:absolute;top:1px;left:2px;font-size:10px;color:#0ff;background:rgba(0,0,0,.6);padding:0 3px;border-radius:2px;white-space:nowrap;pointer-events:none}
+.sb-calib-box .sb-calib-handle{position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;background:#0ff;border:1px solid #003;border-radius:3px;cursor:nwse-resize;pointer-events:auto}
+.sb-calib-box .sb-calib-dot{position:absolute;left:50%;top:50%;width:6px;height:6px;background:#f0f;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+#sb-calib-toolbar{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff}
+#sb-calib-toolbar.hidden{display:none}
 </style>
 </head>
 <body>
@@ -338,6 +425,30 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
     </div>
   </div>
 
+  <!-- SB-PANEL CALIBRATION MODE toolbar + export, same pattern as Destroyer's calibrator. -->
+  <div id="sb-calib-toolbar" class="hidden">
+    <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
+    <span id="sb-calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Drag a box to move it, corner handle to resize</span>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="sbCalibReset()">Reset</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="sbCalibExport()">Export</button>
+    <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleSbCalibMode()">Exit</button>
+  </div>
+  <div class="modal-overlay hidden" id="modal-sb-calib-export" style="z-index:401">
+    <div class="modal-box" style="max-width:520px">
+      <div class="modal-title">Calibration Export</div>
+      <textarea id="sb-calib-export-text" readonly style="width:100%;height:320px;font-family:monospace;font-size:12px;background:#111;color:#0f0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px;margin:10px 0" onclick="this.select()"></textarea>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn" onclick="document.getElementById('sb-calib-export-text').select();document.execCommand('copy')">Copy to Clipboard</button>
+        <button class="modal-btn cancel" onclick="document.getElementById('modal-sb-calib-export').classList.add('hidden')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIC-BO BAKED-ART PANEL -- wraps the existing top-row/table-area/bottom-section markup
+       unchanged (see the #sb-panel CSS block for how their children get repositioned onto the
+       art without any DOM reparenting). -->
+  <div id="sb-panel">
+  <button id="sb-calib-toggle" onclick="toggleSbCalibMode()">🎯 Calibrate</button>
   <!-- TOP ROW -->
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
@@ -447,6 +558,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
     </div>
     <button id="roll-btn" onclick="rollDice()">ROLL</button>
   </div>
+  </div><!-- /#sb-panel -->
 
 
   <!-- CASHOUT VOUCHER MODAL -->
@@ -1014,6 +1126,13 @@ function spawnSicboGhosts(rawLog){
   });
 }
 
+// 3D-look die faces (WhiteDNS_1..6.png -- same "3D dice" asset set used elsewhere in the
+// project, e.g. Destroyer's firing screen) for the monitor cells below, per Deck: "I want 3D
+// dice on (in) the monitors as if they are being displayed." Scoped to just the doubles/
+// triples/combos/any-number cell art -- the dice-zone's actual roll (ClocheDice, already a
+// real 3D physics render) and the roll-history/log strips are untouched, still DIE_B64.
+const DIE3D={1:'WhiteDNS_1.png',2:'WhiteDNS_2.png',3:'WhiteDNS_3.png',4:'WhiteDNS_4.png',5:'WhiteDNS_5.png',6:'WhiteDNS_6.png'};
+
 // ── BUILD TABLE ───────────────────────────────────────────────────────────────
 function buildTable(){
   const DIE_SZ='width:min(33px,5.4vw);height:min(33px,5.4vw);display:inline-block;vertical-align:middle';
@@ -1023,7 +1142,10 @@ function buildTable(){
   const ta=document.getElementById('totals-row-all');
   for(let t=4;t<=17;t++) ta.appendChild(makeTotCell(t));
 
-  // Rows 2-3: Doubles and Triples split into low (1-3) and high (4-6)
+  // Rows 2-3: Doubles and Triples split into low (1-3) and high (4-6). Payout text folded
+  // into each cell now (Deck: "Payout headers will now become part of the number cells
+  // themselves... under the triple dice combos it will read '1 pays 190'") -- replaces the
+  // old shared #row-dt-hdr labels (now display:none).
   function makeDblCell(v){
     const cell=document.createElement('div');cell.className='dbl-cell';cell.id='cell-double'+v;
     cell.onclick=()=>placeBet('double'+v);
@@ -1032,14 +1154,15 @@ function buildTable(){
     dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
     for(let i=0;i<2;i++){
       const img=document.createElement('img');
-      img.src='data:image/png;base64,'+DIE_B64[v];
+      img.src=DIE3D[v];
       img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
       dd.appendChild(img);
     }
+    const pay=document.createElement('div');pay.className='dbl-pay';pay.textContent='1 pays 12';
     const stk=document.createElement('span');stk.className='dbl-stk';stk.id='stk-double'+v;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-double'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet('double'+v);};
-    cell.appendChild(dd);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
     return cell;
   }
   function makeTripCell(v){
@@ -1049,14 +1172,15 @@ function buildTable(){
     dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
     for(let i=0;i<3;i++){
       const img=document.createElement('img');
-      img.src='data:image/png;base64,'+DIE_B64[v];
+      img.src=DIE3D[v];
       img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
       dd.appendChild(img);
     }
+    const pay=document.createElement('div');pay.className='trip-pay';pay.textContent='1 pays 190';
     const stk=document.createElement('span');stk.className='trip-stk';stk.id='stk-triple'+v;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-triple'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet('triple'+v);};
-    cell.appendChild(dd);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
     return cell;
   }
   const dlLow=document.getElementById('doubles-grid-low');
@@ -1066,7 +1190,8 @@ function buildTable(){
   for(let v=1;v<=3;v++){dlLow.appendChild(makeDblCell(v));tlLow.appendChild(makeTripCell(v));}
   for(let v=4;v<=6;v++){dlHigh.appendChild(makeDblCell(v));tlHigh.appendChild(makeTripCell(v));}
 
-  // Row 5: Combos (15 cells, vertical dice, no payout label in cell)
+  // Row 5: Combos (15 cells, vertical dice) -- payout folded in same as doubles/triples,
+  // replacing the old shared .combo-hdr label (now display:none).
   const cg=document.getElementById('combos-grid');
   for(const[a,b]of COMBO_PAIRS){
     const key='combo'+a+'-'+b;
@@ -1075,24 +1200,25 @@ function buildTable(){
     const dd=document.createElement('div');
     dd.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0';
     [a,b].forEach(v=>{
-      const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];
+      const img=document.createElement('img');img.src=DIE3D[v];
       img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
       dd.appendChild(img);
     });
+    const pay=document.createElement('div');pay.className='dom-pay';pay.textContent='1 pays 6';
     const stk=document.createElement('span');stk.className='dom-stk';stk.id='stk-'+key;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-'+key;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet(key);};
-    cell.appendChild(dd);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
     cg.appendChild(cell);
   }
 
-  // Row 6: Any Number (6 cells, no payout label in cell)
+  // Row 6: Any Number (6 cells, no payout label in cell -- that's the 7th info cell below)
   const an=document.getElementById('any-num-row');
   for(let v=1;v<=6;v++){
     const cell=document.createElement('div');cell.className='any-cell';cell.id='cell-any'+v;
     cell.onclick=()=>placeBet('any'+v);
     const die=document.createElement('div');die.className='any-die';
-    const img=document.createElement('img');img.src='data:image/png;base64,'+DIE_B64[v];img.style.cssText=DIE_SZ;
+    const img=document.createElement('img');img.src=DIE3D[v];img.style.cssText=DIE_SZ;
     die.appendChild(img);
     const stk=document.createElement('span');stk.className='any-stk';stk.id='stk-any'+v;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-any'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
@@ -1100,12 +1226,125 @@ function buildTable(){
     cell.appendChild(die);cell.appendChild(stk);cell.appendChild(mb);
     an.appendChild(cell);
   }
-  // 7th cell: payout info
+  // 7th cell: payout info (I7)
   const infoCell=document.createElement('div');
   infoCell.className='any-cell';
   infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(11px,1.8vw);color:rgba(210,190,55,.7);line-height:1.4;pointer-events:none';
   infoCell.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
   an.appendChild(infoCell);
+}
+
+// ── SB-PANEL CALIBRATION MODE ────────────────────────────────────────────────
+// Same drag/resize-box pattern as Destroyer's calibrator, adapted to this single sicbo panel.
+// Unlike Destroyer's fp-region elements (positioned via inline style, which the calibrator
+// reads directly), these row containers are positioned via external #id CSS rules -- so this
+// seeds from live getBoundingClientRect() geometry instead of parsing el.style, which works
+// regardless of where the position actually comes from.
+const SB_W=1672,SB_H=941;
+const SB_CALIB_IDS=['left-col-header','dice-zone','info-panel','row-top','row-dt-top',
+  'row-dt-bot','combos-grid','totals-row-all','any-num-row','history-strip','bottom-bar','roll-btn'];
+let sbCalibActive=false,sbCalibState=null;
+function sbCalibPanel(){return document.getElementById('sb-panel');}
+function sbPxSnap(pct,total){return Math.round(pct/100*total)/total*100;}
+function sbCalibInitState(){
+  const st={};
+  const rect=sbCalibPanel().getBoundingClientRect();
+  SB_CALIB_IDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||!rect.width||!rect.height)return;
+    const r=el.getBoundingClientRect();
+    st[id]={x:(r.left-rect.left)/rect.width*100,y:(r.top-rect.top)/rect.height*100,
+      w:r.width/rect.width*100,h:r.height/rect.height*100};
+  });
+  return st;
+}
+function sbCalibBuildLayer(){
+  const panel=sbCalibPanel();
+  let layer=document.getElementById('sb-calib-layer');
+  if(!layer){layer=document.createElement('div');layer.id='sb-calib-layer';panel.appendChild(layer);}
+  layer.innerHTML='';
+  Object.keys(sbCalibState).forEach(id=>{
+    const s=sbCalibState[id];
+    const box=document.createElement('div');
+    box.className='sb-calib-box';
+    box.dataset.id=id;
+    box.style.left=s.x+'%';box.style.top=s.y+'%';box.style.width=s.w+'%';box.style.height=s.h+'%';
+    const lbl=document.createElement('div');lbl.className='sb-calib-label';lbl.textContent=id;
+    const dot=document.createElement('div');dot.className='sb-calib-dot';
+    const handle=document.createElement('div');handle.className='sb-calib-handle';
+    box.appendChild(lbl);box.appendChild(dot);box.appendChild(handle);
+    box.addEventListener('pointerdown',e=>sbCalibStartDrag(e,box,id));
+    handle.addEventListener('pointerdown',e=>{e.stopPropagation();sbCalibStartResize(e,box,id);});
+    layer.appendChild(box);
+  });
+}
+function sbCalibStatusText(id){
+  const s=sbCalibState[id];
+  const px=Math.round(s.x/100*SB_W),py=Math.round(s.y/100*SB_H);
+  const pw=Math.round(s.w/100*SB_W),ph=Math.round(s.h/100*SB_H);
+  return id+' -- x:'+px+'px y:'+py+'px w:'+pw+'px h:'+ph+'px';
+}
+function sbCalibStartDrag(e,box,id){
+  e.preventDefault();
+  box.classList.add('dragging');
+  document.getElementById('sb-calib-selected').textContent=sbCalibStatusText(id);
+  const rect=sbCalibPanel().getBoundingClientRect();
+  const startX=e.clientX,startY=e.clientY;
+  const orig={x:sbCalibState[id].x,y:sbCalibState[id].y};
+  function move(ev){
+    const dxPct=(ev.clientX-startX)/rect.width*100;
+    const dyPct=(ev.clientY-startY)/rect.height*100;
+    sbCalibState[id].x=sbPxSnap(orig.x+dxPct,SB_W);
+    sbCalibState[id].y=sbPxSnap(orig.y+dyPct,SB_H);
+    box.style.left=sbCalibState[id].x+'%';box.style.top=sbCalibState[id].y+'%';
+    document.getElementById('sb-calib-selected').textContent=sbCalibStatusText(id);
+  }
+  function up(){box.classList.remove('dragging');document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function sbCalibStartResize(e,box,id){
+  e.preventDefault();
+  const rect=sbCalibPanel().getBoundingClientRect();
+  const startX=e.clientX,startY=e.clientY;
+  const orig={w:sbCalibState[id].w,h:sbCalibState[id].h};
+  function move(ev){
+    const dwPct=(ev.clientX-startX)/rect.width*100;
+    const dhPct=(ev.clientY-startY)/rect.height*100;
+    sbCalibState[id].w=sbPxSnap(Math.max(1/SB_W*100,orig.w+dwPct),SB_W);
+    sbCalibState[id].h=sbPxSnap(Math.max(1/SB_H*100,orig.h+dhPct),SB_H);
+    box.style.width=sbCalibState[id].w+'%';box.style.height=sbCalibState[id].h+'%';
+    document.getElementById('sb-calib-selected').textContent=sbCalibStatusText(id);
+  }
+  function up(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);}
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function toggleSbCalibMode(){
+  sbCalibActive=!sbCalibActive;
+  document.getElementById('sb-calib-toolbar').classList.toggle('hidden',!sbCalibActive);
+  if(sbCalibActive){
+    if(!sbCalibState)sbCalibState=sbCalibInitState();
+    sbCalibBuildLayer();
+  }else{
+    const layer=document.getElementById('sb-calib-layer');
+    if(layer)layer.remove();
+  }
+}
+function sbCalibReset(){
+  sbCalibState=sbCalibInitState();
+  sbCalibBuildLayer();
+}
+function sbCalibExport(){
+  let out='// Calibrated via Sic-Bo panel drag tool (whole pixels, '+SB_W+'x'+SB_H+' canvas) -- apply as #id{position:absolute;left:X%;top:Y%;width:W%;height:H%}\n';
+  SB_CALIB_IDS.forEach(id=>{
+    const s=sbCalibState[id];if(!s)return;
+    const px=Math.round(s.x/100*SB_W),py=Math.round(s.y/100*SB_H);
+    const pw=Math.round(s.w/100*SB_W),ph=Math.round(s.h/100*SB_H);
+    out+="  ['"+id+"', "+px+","+py+","+pw+","+ph+"],\n";
+  });
+  document.getElementById('sb-calib-export-text').value=out;
+  document.getElementById('modal-sb-calib-export').classList.remove('hidden');
 }
 
 function makeTotCell(t){
