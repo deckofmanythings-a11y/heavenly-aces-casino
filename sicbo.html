@@ -291,6 +291,22 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .any-pay{font-size:min(15px,2.6vw)}
 .dbl-dice img,.trip-dice img,.dom-dice img{width:44px!important;height:44px!important}
 .any-die img{width:42px!important;height:42px!important}
+/* Any-Info cell (Deck: "double the size", "remove the shading") -- font size doubled at the
+   source (the inline cssText in buildTable(), min(11px,1.8vw) -> min(22px,3.6vw)); shading
+   removal comes from the blanket .any-cell background/border strip below, which this cell
+   inherits since it shares that class. */
+
+/* Deck: "I do want to see what the whole table looks like without any of the shading" --
+   every bet cell's background/border stripped so the cream/gold board art shows through
+   directly. !important since #btn-small/#btn-big/#any-triple-btn set their own background/
+   border-color on top of the shared .bs-btn border, and border:none as a shorthand beats any
+   border-color override regardless (border-style:none makes the color moot). */
+#btn-small,#btn-big,#any-triple-btn,.tot-cell,.trip-cell,.dbl-cell,.dom-cell,.any-cell{background:transparent!important;border:none!important}
+/* ...except doubles/triples, which Deck specifically wants to keep distinguishable -- a very
+   subtle tint (5% alpha) instead of the old bold rgba(...,.22-.28) fill, just enough to read
+   as "these two are a matched pair" without fighting the board art underneath. */
+.dbl-cell{background:rgba(12,37,64,.05)!important}
+.trip-cell{background:rgba(74,16,48,.05)!important}
 
 /* ── SIC-BO PANEL GOTHIC/ANGEL RE-SKIN -- Deck swapped sicbo_panel.png for a light cream/gold
    angel-themed version (same layout). Every payout/label color above was tuned for the old
@@ -1352,7 +1368,7 @@ function buildTable(){
   // 7th cell: payout info (I7)
   const infoCell=document.createElement('div');
   infoCell.className='any-cell';
-  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(11px,1.8vw);color:rgba(210,190,55,.7);line-height:1.4;pointer-events:none';
+  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(22px,3.6vw);color:rgba(210,190,55,.7);line-height:1.4;pointer-events:none';
   infoCell.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
   sbPosition(infoCell,'cell-any-info');
   an.appendChild(infoCell);
