@@ -514,20 +514,20 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
     <div id="table-area">
       <!-- Row 1: SMALL | Any Triple | BIG -->
       <div id="row-top">
-        <div class="bs-btn" id="btn-small" onclick="placeBet('small')">
+        <div class="bs-btn" id="btn-small" onclick="placeBet('small')" oncontextmenu="event.preventDefault();removeBet('small')">
           <span class="at-lbl" style="color:#0c2540">SMALL</span>
           <span class="bs-sub">Numbers from 4 to 10, any triple loses</span>
           <span class="bs-sub">1 pays 1</span>
           <span class="bs-stk" id="stk-small"></span>
           <button class="mbtn-corner" id="m-small" onclick="event.stopPropagation();removeBet('small')">−</button>
         </div>
-        <div id="any-triple-btn" onclick="placeBet('anyTriple')">
+        <div id="any-triple-btn" onclick="placeBet('anyTriple')" oncontextmenu="event.preventDefault();removeBet('anyTriple')">
           <div class="at-lbl">ANY</div>
           <div class="at-lbl">TRIPLE</div>
           <div class="at-pay">1 pays 30</div>
           <span class="at-stk" id="stk-anyTriple"></span>
         </div>
-        <div class="bs-btn" id="btn-big" onclick="placeBet('big')">
+        <div class="bs-btn" id="btn-big" onclick="placeBet('big')" oncontextmenu="event.preventDefault();removeBet('big')">
           <span class="at-lbl" style="color:#4a0e0e">BIG</span>
           <span class="bs-sub">Numbers from 11 to 17, any triple loses</span>
           <span class="bs-sub">1 pays 1</span>
@@ -1245,6 +1245,7 @@ function buildTable(){
   function makeDblCell(v){
     const cell=document.createElement('div');cell.className='dbl-cell';cell.id='cell-double'+v;
     cell.onclick=()=>placeBet('double'+v);
+    cell.oncontextmenu=e=>{e.preventDefault();removeBet('double'+v);};
     // Use a table row to guarantee horizontal dice regardless of flex context
     const dd=document.createElement('div');
     dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
@@ -1265,6 +1266,7 @@ function buildTable(){
   function makeTripCell(v){
     const cell=document.createElement('div');cell.className='trip-cell';cell.id='cell-triple'+v;
     cell.onclick=()=>placeBet('triple'+v);
+    cell.oncontextmenu=e=>{e.preventDefault();removeBet('triple'+v);};
     const dd=document.createElement('div');
     dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
     for(let i=0;i<3;i++){
@@ -1295,6 +1297,7 @@ function buildTable(){
     const key='combo'+a+'-'+b;
     const cell=document.createElement('div');cell.className='dom-cell';cell.id='cell-'+key;
     cell.onclick=()=>placeBet(key);
+    cell.oncontextmenu=e=>{e.preventDefault();removeBet(key);};
     const dd=document.createElement('div');
     dd.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0';
     [a,b].forEach(v=>{
@@ -1316,6 +1319,7 @@ function buildTable(){
   for(let v=1;v<=6;v++){
     const cell=document.createElement('div');cell.className='any-cell';cell.id='cell-any'+v;
     cell.onclick=()=>placeBet('any'+v);
+    cell.oncontextmenu=e=>{e.preventDefault();removeBet('any'+v);};
     const die=document.createElement('div');die.className='any-die';
     const img=document.createElement('img');img.src=DIE3D[v];img.style.cssText=DIE_SZ;
     die.appendChild(img);
@@ -1471,6 +1475,7 @@ function sbCalibExport(){
 function makeTotCell(t){
   const cell=document.createElement('div');cell.className='tot-cell';cell.id='cell-total'+t;
   cell.onclick=()=>placeBet('total'+t);
+  cell.oncontextmenu=e=>{e.preventDefault();removeBet('total'+t);};
   if(t<=10){cell.style.background='rgba(0,80,180,.25)';cell.style.borderColor='rgba(100,160,255,.4)';}
   else{cell.style.background='rgba(180,0,0,.25)';cell.style.borderColor='rgba(255,100,100,.4)';}
   const num=document.createElement('div');num.className='tot-num';num.textContent=t;
