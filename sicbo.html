@@ -89,7 +89,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    three properties were silently winning the cascade over the calibrated width since this
    rule comes later in source order at equal specificity -- same class of bug as the .sb-cell
    fix above. */
-#left-col-header{flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:0}
+#left-col-header{flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:0}
 #game-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0}
 .gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
 .gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
@@ -100,7 +100,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .gmode-btn-home .gmode-sub{font-size:13px!important}
 /* width/min-width/max-width removed here (same cascade bug as #left-col-header above --
    was silently winning over the calibrated width). */
-#info-panel{flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
+#info-panel{flex-shrink:0;padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
 .info-row{display:flex;gap:4px;align-items:center}
 .info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
 .info-btn:hover{background:rgba(255,255,255,.2)}
@@ -217,7 +217,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
 #bottom-left{flex:1;display:flex;flex-direction:column;min-width:0}
-#history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;background:rgba(0,0,0,.35);border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
+#history-strip{display:flex;align-items:center;padding:2px 4px;gap:4px;border-bottom:0.5px solid rgba(255,255,255,.1);flex:1;min-height:0}
 #roll-history{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none;align-items:center}
 #roll-history::-webkit-scrollbar{display:none}
 .roll-pip{min-width:32px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 3px;background:rgba(255,255,255,.1)}
@@ -230,7 +230,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .log-line.win{color:#7ee87e}
 .log-line.lose{color:#f08080}
 #log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
+#bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;flex:1;min-height:0}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .nav-btn:hover{background:rgba(255,255,255,.15)}
 .nav-btn.active-game{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.12)}
@@ -1246,7 +1246,7 @@ const SB_CELL_POS={
   'cell-any4':[43.600,78.321,12.380,7.864],
   'cell-any5':[57.237,78.321,12.500,7.864],
   'cell-any6':[71.172,78.321,12.500,7.864],
-  'cell-any-info':[86.483,77.046,11.244,10.414],
+  'cell-any-info':[86.782,78.215,11.124,8.077],
 };
 // Applies SB_CELL_POS[id] to el as an absolute position, falling back to a visible-but-
 // obviously-wrong spot (so a missing entry is easy to spot) rather than silently no-op-ing.
@@ -1368,7 +1368,7 @@ function buildTable(){
   // 7th cell: payout info (I7)
   const infoCell=document.createElement('div');
   infoCell.className='any-cell';
-  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(22px,3.6vw);color:rgba(210,190,55,.7);line-height:1.4;pointer-events:none';
+  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(22px,3.6vw);color:#111;line-height:1.4;pointer-events:none';
   infoCell.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
   sbPosition(infoCell,'cell-any-info');
   an.appendChild(infoCell);
