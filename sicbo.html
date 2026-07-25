@@ -531,7 +531,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.2</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -931,7 +931,7 @@ function showFinalDice(v1,v2,v3){
 // last), so the dealer bark matches its place in the sentence rather than reusing one clip.
 const SICBO_NUM_WORD={1:'one',2:'two',3:'three',4:'four',5:'five',6:'six'};
 const SICBO_POSITION_PREFIX=['firstposition','secondposition','lastposition'];
-const ANNOUNCEMENT_GAP_MS=400;
+const ANNOUNCEMENT_GAP_MS=180;
 function playAnnouncementSequence(urls){
   const audio=new Audio();
   let i=0;
