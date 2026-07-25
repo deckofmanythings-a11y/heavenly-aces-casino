@@ -1200,6 +1200,16 @@ body.portrait-craps #felt-portrait{display:flex}
       <button class="modal-btn" onclick="closeBulletsSummary()" style="width:100%">OK</button>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="modal-next-bullet">
+    <div class="modal-box" style="max-width:360px">
+      <div class="modal-title" style="margin-bottom:12px">Switch Bullets?</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">This clears the felt back to a Come Out state before your next bullet starts -- same as Reset Point. All non-Contract bets will be returned. All Contract bets will be forfeited<span id="next-bullet-forfeit-wrap"> (<span id="next-bullet-amount" style="color:#ffd700;font-weight:700"></span>)</span>.</div>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn cancel" onclick="cancelNextBullet()">Cancel</button>
+        <button class="modal-btn" onclick="confirmNextBullet()">Switch Bullets</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="modal-reset-point">
     <div class="modal-box" style="max-width:360px">
       <div class="modal-title" style="margin-bottom:12px">Reset to Come Out?</div>
@@ -1668,7 +1678,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.1</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.2</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2415,15 +2425,20 @@ function resetPoint(){
   document.getElementById('reset-point-amount').textContent=fmt(amt);
   document.getElementById('modal-reset-point').classList.remove('hidden');
 }
-function confirmResetPoint(){
-  document.getElementById('modal-reset-point').classList.add('hidden');
+// Shared by Reset Point and switching bullets mid-session -- both need the exact same
+// "back to Come Out" state (refund non-Contract bets, forfeit Contract ones, clear the point).
+function resetTableToComeOut(){
   clearRemovable(); // refunds every non-Contract bet, leaves only the locked Pass flat (if any) in G.bets
   // Forfeit whatever Contract bets clearRemovable() deliberately left behind -- it refunds,
-  // it doesn't forfeit, so this table-reset action is the one that actually drops them.
+  // it doesn't forfeit, so this is the step that actually drops them.
   G.bets={};G.comeBets=[];G.dcBets=[];
   G.bonus=makeInitialG().bonus;
   G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
+}
+function confirmResetPoint(){
+  document.getElementById('modal-reset-point').classList.add('hidden');
+  resetTableToComeOut();
   addLog('Table reset to Come Out — non-Contract bets returned, Contract bets forfeited.','info');
   updateUI();
 }
@@ -2545,12 +2560,29 @@ function endBullets(){
     updateUI();
   });
 }
+// Switching to the next bullet mid-session: banks whatever's left of the current bullet back
+// into the real bankroll (already true the whole time -- G.bankroll is never reduced, see the
+// comment above maxBettable()) and clears the felt exactly like Reset Point before the fresh
+// bullet starts, so the player never carries an old bullet's bets into the new one. Always
+// confirms via a dialog since Contract bets get forfeited, same reasoning as Reset Point.
 function nextBullet(){
   if(!G.bulletActive||G.bulletIndex>=G.bulletCount-1)return;
+  if(isRollInProgress()){addLog('Wait for the current roll to finish before switching bullets.','info');return;}
+  const amt=forfeitAmount();
+  document.getElementById('next-bullet-forfeit-wrap').style.display=amt>0?'inline':'none';
+  document.getElementById('next-bullet-amount').textContent=fmt(amt);
+  document.getElementById('modal-next-bullet').classList.remove('hidden');
+}
+function confirmNextBullet(){
+  document.getElementById('modal-next-bullet').classList.add('hidden');
+  resetTableToComeOut();
   G.bulletIndex++;G.bulletBaseline=G.bankroll;
   saveBullets();
-  addLog('Moved to bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+'.','info');
+  addLog('Bets cleared -- moved to bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+'.','info');
   updateUI();
+}
+function cancelNextBullet(){
+  document.getElementById('modal-next-bullet').classList.add('hidden');
 }
 function renderBullets(){
   const row=document.getElementById('bullets-row');
