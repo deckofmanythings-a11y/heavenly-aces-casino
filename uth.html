@@ -56,24 +56,39 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
 
 /* ── TABLE AREA / FELT PANEL ── */
-/* Baked-art panel: uth_bg.png has the Ante/Blind/Play circles, the Trips diamond,
-   all three paytables, and the "Ante pushes..." qualify line printed directly into
-   the art. Every interactive/informational element below is a %-positioned overlay
-   measured directly off the art's own 3200x1800 pixels (ffmpeg+flood-fill, not
-   eyeballed) -- see the panel-art pattern shared with iLuvSuits_Felt.png. */
+/* Plain CSS felt (no baked full-table art), same architecture as breakout.html --
+   uth_felt_bets.png is a small trimmed module (Trips diamond, the logo, and the
+   Ante/Blind/Play circles, 561x651) placed as one unit in #bets-module, positioned
+   with its own %-of-that-image-only coordinates (measured via canvas flood-fill
+   connected-region bounding boxes, not eyeballed). Everything else -- the felt
+   itself, the Dealer's/Player's Hand labels, and the "Ante pushes..." qualify line
+   -- is drawn directly in the open felt instead of baked into any art, for a more
+   customizable layout going forward. */
 #table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px;container-type:size}
 /* Contain-fit sizing (object-fit:contain equivalent) -- see iluvsuits.html for why
    width:100%+max-height:100% stretches the art at wide aspect ratios. */
-#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('uth_bg.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
+#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);container-type:size}
+
+#bets-module{position:absolute;right:2%;top:57%;height:37%;aspect-ratio:561/651;z-index:2}
+#bets-module img.bets-module-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none}
+
+/* Static felt-printed text, drawn directly on the open felt (not baked into any
+   art) -- an engraved-serif Google Font stands in for real printed felt type, same
+   convention as breakout.html's #felt-rules. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
+.felt-label{position:absolute;text-align:center;font-family:'Cinzel',serif;color:#ffe066;font-weight:800;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;z-index:2}
+#dealers-hand-label{left:30%;top:0.5%;width:40%;font-size:2.6cqh}
+#players-hand-label{left:30%;top:96.5%;width:40%;font-size:2.6cqh}
+#ante-qualify-label{left:2%;top:35%;width:56%;font-size:2cqh;color:#ffd700;font-weight:700;letter-spacing:.02em}
 
 /* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows.
    Positions and card scale (--pc-w:19.2cqh, uniform across all three rows) are
    reproduced exactly from uth_CARD_POSITIONS.png, the designer-supplied placement
-   reference (measured via crops, not the flood-fill/ffmpeg approach used for the
-   circles below, since the reference has no flat felt color to key off). "Dealer's
-   Hand"/"Player's Hand" are now baked into uth_bg.png itself, so the dynamic
-   hand-strength text sits beside the cards (right of dealer's, left of player's)
-   in the open space there instead of below them. */
+   reference (measured via crops, not the flood-fill/connected-region approach used
+   for the bets-module circles). "Dealer's Hand"/"Player's Hand" are now their own
+   plain-CSS #felt-label spans (see above) rather than baked art, so the dynamic
+   hand-strength text still sits beside the cards (right of dealer's, left of
+   player's) in the open space there instead of below them. */
 .card-region{position:absolute;display:flex;align-items:center;gap:1.5cqh}
 #dealer-region{left:39%;top:3%;width:45%;height:30%;flex-direction:row;justify-content:flex-start}
 #community-region{left:3%;top:38%;width:56%;height:29%;justify-content:center}
@@ -105,16 +120,30 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .panel-spot.locked{cursor:default}
 .panel-spot.inert{cursor:not-allowed}
 .panel-spot.active{}
-#ante-spot{left:70.63%;top:72.22%;width:5.28%;height:9.39%;--chip:7cqh}
-#blind-spot{left:80.22%;top:72.22%;width:5.28%;height:9.39%;--chip:6.5cqh}
-#trips-spot{left:70.47%;top:59.89%;width:5.56%;height:9.89%;--chip:6.5cqh}
-#play-spot{left:70.63%;top:84.28%;width:5.28%;height:9.39%;--chip:7cqh}
-/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. Position measured by
-   diffing uth_bg.png against uth_bg_lightON.png (the bulb graphic is already baked into
-   the felt in its OFF state at this exact spot). */
-#light-spot,#light-on-img{left:69%;top:42.667%;width:8.594%;height:15.278%}
+/* Bet-spot positions measured relative to #bets-module (the 561x651 art), not the
+   table panel -- these are now children of #bets-module in the markup. */
+#trips-spot{left:0%;top:7.373%;width:34.938%;height:30.108%;--chip:6.5cqh}
+#ante-spot{left:2.139%;top:42.550%;width:30.481%;height:26.267%;--chip:7cqh}
+#blind-spot{left:49.733%;top:42.550%;width:30.481%;height:26.267%;--chip:6.5cqh}
+#play-spot{left:2.139%;top:73.733%;width:30.481%;height:26.267%;--chip:7cqh}
+/* Circle-i payout-table buttons next to each bet spot -- opens #modal-paytable with
+   the matching table (see openPaytable()/PAYTABLE_CONTENT). Positioned relative to
+   #bets-module like the spots themselves. */
+.paytable-info-btn{position:absolute;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1.5px solid rgba(255,215,0,.6);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0;font-weight:800}
+#trips-info{left:32%;top:5%;width:8%;height:6.5%}
+#ante-info{left:1%;top:40%;width:8%;height:6.5%}
+#blind-info{left:78.5%;top:40%;width:8%;height:6.5%}
+#play-info{left:1%;top:71.2%;width:8%;height:6.5%}
+/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
+   baked-in bulb art, so lightOFF.png sits idle over open felt and swaps for
+   lightON.png once the round's dealt with the light on -- see updateUI(). Positioned
+   in the open felt just above #bets-module (module children are position:absolute,
+   this just extends upward via a negative top), not inside the module itself --
+   there's no free space left inside its own canvas for it. */
+#light-spot,#light-off-img,#light-on-img{left:0%;top:-19%;width:34.938%;height:16%}
+#light-off-img,#light-on-img{object-fit:contain}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
-#light-info-btn{position:absolute;left:78.3%;top:43.5%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+#light-info-btn{position:absolute;left:0%;top:-4.5%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 /* Sweep-to-lit: the $5 chip at #light-spot vanishes (handled by stk-light going blank in
    updateUI() once locked) and lightON.png fades/pops in over the felt's own baked-in OFF
    art -- triggered once, right when a deal with the light on succeeds (see dealHand()). */
@@ -430,11 +459,19 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
     </div>
   </div>
 
+  <div class="modal-overlay hidden" id="modal-paytable">
+    <div class="modal-box dark" style="max-height:80vh;overflow-y:auto">
+      <div class="modal-title" style="text-align:center" id="paytable-title">Paytable</div>
+      <div id="paytable-body"></div>
+      <button class="modal-btn cancel" onclick="closePaytable()" style="margin-top:12px">Close</button>
+    </div>
+  </div>
+
   <!-- TOP ROW -->
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.2</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -482,27 +519,44 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
         <div class="card-row" id="player-row"></div>
       </div>
 
-      <div class="panel-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
-        <span class="panel-spot-stk" id="stk-trips"></span>
-      </div>
-      <div class="panel-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
-        <span class="panel-spot-stk" id="stk-ante"></span>
-      </div>
-      <div class="panel-spot locked" id="blind-spot">
-        <span class="panel-spot-stk" id="stk-blind"></span>
-      </div>
-      <div class="panel-spot inert" id="play-spot">
-        <span class="panel-spot-stk" id="stk-play"></span>
-      </div>
+      <span class="felt-label" id="dealers-hand-label">Dealer's Hand</span>
+      <span class="felt-label" id="players-hand-label">Player's Hand</span>
+      <span class="felt-label" id="ante-qualify-label">Ante pushes if dealer has less than a pair</span>
 
-      <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. Position
-           measured by diffing uth_bg.png against uth_bg_lightON.png (the bulb graphic
-           is already baked into the felt in its OFF state at this exact spot). -->
-      <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
-        <span class="panel-spot-stk" id="stk-light"></span>
+      <!-- uth_felt_bets.png: just the Trips diamond, the logo, and the Ante/Blind/Play
+           circles (561x651), placed as one module -- every interactive/informational
+           element below is a %-of-THIS-IMAGE overlay, so it's a child of this div,
+           not #table-panel directly (see the CSS comment on #bets-module). -->
+      <div id="bets-module">
+        <img class="bets-module-art" src="uth_felt_bets.png" alt="">
+
+        <div class="panel-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
+          <span class="panel-spot-stk" id="stk-trips"></span>
+        </div>
+        <button class="paytable-info-btn" id="trips-info" onclick="event.stopPropagation();openPaytable('trips')" title="Trips Paytable">ⓘ</button>
+        <div class="panel-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
+          <span class="panel-spot-stk" id="stk-ante"></span>
+        </div>
+        <button class="paytable-info-btn" id="ante-info" onclick="event.stopPropagation();openPaytable('ante')" title="Ante Rules">ⓘ</button>
+        <div class="panel-spot locked" id="blind-spot">
+          <span class="panel-spot-stk" id="stk-blind"></span>
+        </div>
+        <button class="paytable-info-btn" id="blind-info" onclick="event.stopPropagation();openPaytable('blind')" title="Blind Paytable">ⓘ</button>
+        <div class="panel-spot inert" id="play-spot">
+          <span class="panel-spot-stk" id="stk-play"></span>
+        </div>
+        <button class="paytable-info-btn" id="play-info" onclick="event.stopPropagation();openPaytable('play')" title="Play Rules">ⓘ</button>
+
+        <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
+             has no baked-in bulb art, so lightOFF.png sits idle over open felt and swaps
+             for lightON.png once the round's dealt with the light on -- see updateUI(). -->
+        <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
+          <span class="panel-spot-stk" id="stk-light"></span>
+        </div>
+        <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
+        <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
+        <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">ⓘ</button>
       </div>
-      <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
-      <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">ⓘ</button>
 
     </div>
   </div>
@@ -948,6 +1002,35 @@ async function openProgressiveModal(){
   document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
 }
 function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
+// Paytables previously baked into uth_bg.png -- now shown via ⓘ buttons next to each
+// bet spot on uth_felt_bets.png, same pattern as breakout.html's PAYTABLE_CONTENT/
+// openPaytable(). Numbers match tripsMultiplier()/blindMultiplier() in roll-uth's
+// index.ts exactly (Trips: Royal 50, SF 40, Quads 30, FH 8, Flush 6, Straight 5,
+// Trips 3, else lose. Blind: Royal 500, SF 50, Quads 10, FH 3, Flush 3:2,
+// Straight 1:1, else push).
+const PAYTABLE_CONTENT={
+  trips:{title:'Trips',rows:[
+    ['Royal Flush','50 to 1'],['Straight Flush','40 to 1'],['Four of a Kind','30 to 1'],
+    ['Full House','8 to 1'],['Flush','6 to 1'],['Straight','5 to 1'],['Three of a Kind','3 to 1'],
+  ],note:'Optional side bet on your best 7-card hand, independent of Ante/Blind/Play. Loses on anything less than three of a kind.'},
+  ante:{title:'Ante',rows:[],note:'Ante pushes if the dealer has less than a pair. Blind always matches your Ante and is locked in together at Deal.'},
+  blind:{title:'Blind',rows:[
+    ['Royal Flush','500 to 1'],['Straight Flush','50 to 1'],['Four of a Kind','10 to 1'],
+    ['Full House','3 to 1'],['Flush','3 to 2'],['Straight','1 to 1'],['All other','Push'],
+  ],note:'Only paid on an outright player win over the dealer -- pushes on anything less than a straight.'},
+  play:{title:'Play',rows:[
+    ['Before the Flop','3x or 4x Ante'],['After the Flop','2x Ante'],['On the River','1x Ante'],
+  ],note:'The earlier you commit, the more you can raise. Always follows the same win/lose/push as your hand.'},
+};
+function openPaytable(key){
+  const p=PAYTABLE_CONTENT[key];if(!p)return;
+  document.getElementById('paytable-title').textContent=p.title;
+  document.getElementById('paytable-body').innerHTML=
+    p.rows.map(r=>'<div class="progressive-tier-row"><span>'+r[0]+'</span><span class="prog-pay">'+r[1]+'</span></div>').join('')
+    +'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:10px">'+p.note+'</div>';
+  document.getElementById('modal-paytable').classList.remove('hidden');
+}
+function closePaytable(){document.getElementById('modal-paytable').classList.add('hidden');}
 // Tracks whichever post-round presentation delay (ghosts/modal-open delay, or the flat
 // loss-path delay) is currently pending -- see commitDecision's afterReveal() above.
 // repeatLastBet() cancels it to fast-forward straight to the betting screen, since the
@@ -1375,6 +1458,7 @@ function updateUI(){
   // there's no locked-chip-stack display for this one, just the bulb art itself.
   document.getElementById('stk-light').textContent=(!locked&&G.bets.progressive)?fmt(G.bets.progressive):'';
   document.getElementById('light-spot').classList.toggle('active',!locked&&(G.bets.progressive||0)>0);
+  document.getElementById('light-off-img').style.display=(locked&&G.locked.progressive)?'none':'';
   document.getElementById('light-on-img').style.display=(locked&&G.locked.progressive)?'':'none';
   renderChipStacks();
 }
