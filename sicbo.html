@@ -277,10 +277,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    dark metal panel -- white/light-pastel text on a light cream screen would be unreadable, so
    this darkens all of it while keeping each bet-category's original hue (blue=doubles/small,
    purple=triples/any-triple, green=combos, gold=any-number) as a dark ink tone instead of a
-   light glow. Exocet is a locally-installed font on Deck's machine (not a licensed asset this
-   repo can hand out), so no @font-face/self-host -- players without it installed silently get
-   the serif fallback. */
-#sb-panel{font-family:'Exocet','Trajan Pro','Cinzel',Georgia,'Times New Roman',serif}
+   light glow. Cinzel replaces Exocet (which Deck has installed locally but isn't a licensed
+   asset this repo can distribute) -- self-hosted like VT323 on Destroyer, so every player sees
+   the same font with no external request. */
+@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:block}
+#sb-panel{font-family:'Cinzel',Georgia,'Times New Roman',serif}
 .bs-label{color:#2b1806}
 .bs-sub{color:rgba(43,24,6,.75)}
 .tot-num{color:#2b1806}
