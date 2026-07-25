@@ -1176,6 +1176,14 @@ body.portrait-craps #felt-portrait{display:flex}
       </div>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="modal-bullets-summary">
+    <div class="modal-box" style="max-width:340px;text-align:center">
+      <div class="modal-title" style="margin-bottom:12px">Bullets Session</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.7);margin-bottom:4px" id="bullets-summary-label">Profit</div>
+      <div style="font-size:32px;font-weight:700;margin-bottom:16px" id="bullets-summary-amount">$0.00</div>
+      <button class="modal-btn" onclick="closeBulletsSummary()" style="width:100%">OK</button>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="modal-reset-point">
     <div class="modal-box" style="max-width:360px">
       <div class="modal-title" style="margin-bottom:12px">Reset to Come Out?</div>
@@ -1644,7 +1652,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.1</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.2</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2417,7 +2425,7 @@ function cancelResetPoint(){
 // it's a personal play-style preference, not real-money state, so it never touches game_state.
 function bulletsStorageKey(pid){return 'craps_bullets_'+pid;}
 function loadBullets(playerId){
-  G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;
+  G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;G.bulletSessionStart=0;
   try{
     const raw=localStorage.getItem(bulletsStorageKey(playerId));
     if(raw){
@@ -2426,6 +2434,7 @@ function loadBullets(playerId){
         G.bulletActive=true;G.bulletSize=d.size;G.bulletCount=d.count;
         G.bulletIndex=Math.min(Math.max(0,d.index||0),d.count-1);
         G.bulletBaseline=(typeof d.baseline==='number')?d.baseline:G.bankroll;
+        G.bulletSessionStart=(typeof d.sessionStart==='number')?d.sessionStart:G.bulletBaseline;
       }
     }
   }catch(e){}
@@ -2434,7 +2443,27 @@ function saveBullets(){
   if(!currentPlayer)return;
   const k=bulletsStorageKey(currentPlayer.id);
   if(!G.bulletActive){try{localStorage.removeItem(k);}catch(e){}return;}
-  try{localStorage.setItem(k,JSON.stringify({size:G.bulletSize,count:G.bulletCount,index:G.bulletIndex,baseline:G.bulletBaseline}));}catch(e){}
+  try{localStorage.setItem(k,JSON.stringify({size:G.bulletSize,count:G.bulletCount,index:G.bulletIndex,baseline:G.bulletBaseline,sessionStart:G.bulletSessionStart}));}catch(e){}
+}
+// Shows the profit/loss made since the current bullets session started (G.bulletSessionStart,
+// set once when "Make Bullets" is confirmed and left untouched by nextBullet() -- only ending
+// or reconfiguring bullets closes out a session) before actually applying whatever change
+// (ending, or replacing with a new configuration) triggered it. actionFn runs on acknowledge.
+let pendingBulletsAction=null;
+function showBulletsSummary(actionFn){
+  const profit=r2(G.bankroll-G.bulletSessionStart);
+  const amtEl=document.getElementById('bullets-summary-amount');
+  const lblEl=document.getElementById('bullets-summary-label');
+  if(profit>0){amtEl.textContent='+'+fmt(profit);amtEl.style.color='#7ee87e';lblEl.textContent='Profit';}
+  else if(profit<0){amtEl.textContent='-'+fmt(Math.abs(profit));amtEl.style.color='#f08080';lblEl.textContent='Loss';}
+  else{amtEl.textContent=fmt(0);amtEl.style.color='#ffe066';lblEl.textContent='Break Even';}
+  pendingBulletsAction=actionFn;
+  document.getElementById('modal-bullets-summary').classList.remove('hidden');
+}
+function closeBulletsSummary(){
+  document.getElementById('modal-bullets-summary').classList.add('hidden');
+  const fn=pendingBulletsAction;pendingBulletsAction=null;
+  if(fn)fn();
 }
 function bulletRemaining(){return r2(G.bulletSize+G.bankroll-G.bulletBaseline);}
 function updateBulletsPreview(){
@@ -2469,18 +2498,25 @@ function confirmBullets(){
   if(!(total>0)||total>G.bankroll+0.001){errEl.textContent='Total can\'t exceed your Playable bankroll ('+fmt(G.bankroll)+').';return;}
   const size=r2(total/count);
   if(size<=0){errEl.textContent='That split is too small -- fewer bullets or a bigger total.';return;}
-  G.bulletActive=true;G.bulletSize=size;G.bulletCount=count;G.bulletIndex=0;G.bulletBaseline=G.bankroll;
-  saveBullets();
+  const applyNewBullets=()=>{
+    G.bulletActive=true;G.bulletSize=size;G.bulletCount=count;G.bulletIndex=0;
+    G.bulletBaseline=G.bankroll;G.bulletSessionStart=G.bankroll;
+    saveBullets();
+    addLog('Made '+count+' bullets of '+fmt(size)+' each.','info');
+    updateUI();
+  };
   document.getElementById('modal-bullets').classList.add('hidden');
-  addLog('Made '+count+' bullets of '+fmt(size)+' each.','info');
-  updateUI();
+  if(G.bulletActive)showBulletsSummary(applyNewBullets);
+  else applyNewBullets();
 }
 function endBullets(){
-  G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;
-  saveBullets();
   document.getElementById('modal-bullets').classList.add('hidden');
-  addLog('Bullets ended -- Playable now shows your full bankroll.','info');
-  updateUI();
+  showBulletsSummary(()=>{
+    G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;G.bulletSessionStart=0;
+    saveBullets();
+    addLog('Bullets ended -- Playable now shows your full bankroll.','info');
+    updateUI();
+  });
 }
 function nextBullet(){
   if(!G.bulletActive||G.bulletIndex>=G.bulletCount-1)return;
@@ -2613,7 +2649,7 @@ function fmtLastWin(b){
   return s+')';
 }
 
-function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline',bulletActive:false,bulletSize:0,bulletCount:0,bulletIndex:0,bulletBaseline:0};}
+function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline',bulletActive:false,bulletSize:0,bulletCount:0,bulletIndex:0,bulletBaseline:0,bulletSessionStart:0};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
 let animating=false,animStart=0,tumbling=false,tumbleStart=0;
