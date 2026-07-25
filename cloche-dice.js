@@ -607,9 +607,16 @@
 
     const R = CFG.clocheRadius, H = CFG.clocheHeight;
 
+    // Real wood-grain / felt photo textures (cloche_wood.png, cloche_felt.png) rather than
+    // flat colors -- tiled with RepeatWrapping since both source images are seamless.
+    const woodTex = new THREE.TextureLoader().load('cloche_wood.png');
+    woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
+    woodTex.repeat.set(3, 1);
+    woodTex.anisotropy = 4;
+
     const pedestal = new THREE.Mesh(
       new THREE.CylinderGeometry(R + 1.1, R + 1.5, 1.2, 48),
-      new THREE.MeshStandardMaterial({ color: 0x2b1d10, roughness: 0.6, metalness: 0.15 }));
+      new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.55, metalness: 0.08 }));
     pedestal.position.y = -0.65;
     pedestal.receiveShadow = true;
     scene.add(pedestal);
@@ -621,9 +628,14 @@
     floor.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
     world.addBody(floor);
 
+    const feltTex = new THREE.TextureLoader().load('cloche_felt.png');
+    feltTex.wrapS = feltTex.wrapT = THREE.RepeatWrapping;
+    feltTex.repeat.set(2, 2);
+    feltTex.anisotropy = 4;
+
     platformMesh = new THREE.Mesh(
       new THREE.CylinderGeometry(R + 0.15, R + 0.15, 0.7, 48),
-      new THREE.MeshStandardMaterial({ color: 0x0d3b2e, roughness: 0.95 }));
+      new THREE.MeshStandardMaterial({ map: feltTex, roughness: 0.95 }));
     platformMesh.receiveShadow = true;
     scene.add(platformMesh);
 
