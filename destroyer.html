@@ -1751,6 +1751,12 @@ async function buyMissile(){
   G.buyPrice=data.buyPrice||0;G.canBuy=data.canBuy||false;
   G.totalSpent=r2((G.totalSpent||G.bet)+(data.pricePaid||G.buyPrice));
   G.freeMissiles=(G.freeMissiles||0)+1; // purchased missile is now ready to fire
+  // fireMissile() gates on THIS counter (G.missilesRemaining<=0 -> silent no-op), not
+  // G.freeMissiles -- the buy-action response's state.missilesRemaining (just applied above
+  // via applyState) doesn't reflect the purchase, only G.freeMissiles was being bumped, so the
+  // auto-fire call below was always a no-op after a purchase (Deck: "Buying missiles is not
+  // firing the missiles").
+  G.missilesRemaining=(G.missilesRemaining||0)+1;
   if(!G.missileQueue)G.missileQueue=[];
   G.missileQueue.push('extra');
   const logLine=data.state.log&&data.state.log.length?data.state.log[data.state.log.length-1]:'Missile purchased.';
