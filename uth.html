@@ -130,9 +130,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .panel-spot.active{}
 /* Bet-spot positions measured relative to #bets-module (the 561x651 art), not the
    table panel -- these are now children of #bets-module in the markup. */
-#trips-spot{left:0%;top:7.373%;width:34.938%;height:30.108%;--chip:6.5cqh}
+/* All five bet spots (Trips/Ante/Blind/Play/Light) share one --chip value so every
+   staked chip graphic renders at the exact same size regardless of how big or what
+   shape its own spot's hit-region/art happens to be. */
+#trips-spot{left:0%;top:7.373%;width:34.938%;height:30.108%;--chip:7cqh}
 #ante-spot{left:2.139%;top:42.550%;width:30.481%;height:26.267%;--chip:7cqh}
-#blind-spot{left:49.733%;top:42.550%;width:30.481%;height:26.267%;--chip:6.5cqh}
+#blind-spot{left:49.733%;top:42.550%;width:30.481%;height:26.267%;--chip:7cqh}
 #play-spot{left:2.139%;top:73.733%;width:30.481%;height:26.267%;--chip:7cqh}
 /* Circle-i payout-table buttons next to each bet spot -- opens #modal-paytable with
    the matching table (see openPaytable()/PAYTABLE_CONTENT). Positioned relative to
@@ -148,7 +151,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    in the open felt just above #bets-module (module children are position:absolute,
    this just extends upward via a negative top), not inside the module itself --
    there's no free space left inside its own canvas for it. */
-#light-spot,#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%}
+#light-spot,#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%;--chip:7cqh}
 #light-off-img,#light-on-img{object-fit:contain}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 #light-info-btn{position:absolute;left:1%;top:-28.8%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
@@ -479,7 +482,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.2</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.3</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
