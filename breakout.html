@@ -76,6 +76,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .card-row.active{opacity:1}
 .crl-hand{position:absolute;left:50%;bottom:-2.6cqh;transform:translateX(-50%);font-size:2.4cqh;color:#ffd700;font-weight:800;white-space:nowrap;letter-spacing:.03em;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 
+/* #player-row (a .card-row) holds one .hand-group per player hand -- normally just
+   one (no split), up to 4 if the player has split (max 3 splits). Splitting is the
+   only thing that ever makes more than one appear. */
+.hand-group{display:flex;flex-direction:column;align-items:center;gap:0.4cqh;padding:0.5cqh 0.8cqh;border-radius:8px;transition:box-shadow .2s,background .2s}
+.hand-group-cards{display:flex;flex-direction:row;gap:0.5cqh;flex-wrap:wrap;justify-content:center}
+.hand-group-label{font-size:2cqh;color:#ffd700;font-weight:800;white-space:nowrap;letter-spacing:.03em;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.hand-group.active-hand{box-shadow:0 0 0 0.3cqh rgba(255,215,0,.75);background:rgba(255,215,0,.1)}
+
 /* ── SIDE-BET BADGE SPOTS (spade/diamond/club/heart icons baked into the art) ──
    Hit-regions padded a little beyond each badge's measured bbox since the icons
    themselves are irregular (diamond/heart/club shapes, not rectangles). */
@@ -196,8 +204,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
 #hud-pnl{font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px}
 
-#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch;width:min(340px,46vw)}
-.action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(20px,3vw);font-weight:900;padding:6px 10px;cursor:pointer;flex:1;letter-spacing:.05em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
+#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch;width:min(460px,58vw)}
+.action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(16px,2.4vw);font-weight:900;padding:6px 4px;cursor:pointer;flex:1;letter-spacing:.03em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
 .action-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%)}
 .action-btn:active{filter:brightness(.9)}
 .action-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
@@ -422,7 +430,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.9.0</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -540,6 +548,8 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
       <button class="action-btn" id="btn-hit" onclick="doHit()" style="display:none">HIT</button>
       <button class="action-btn secondary" id="btn-stand" onclick="doStand()" style="display:none">STAND</button>
       <button class="action-btn danger" id="btn-double" onclick="doDouble()" style="display:none">DOUBLE</button>
+      <button class="action-btn secondary" id="btn-split" onclick="doSplit()" style="display:none">SPLIT</button>
+      <button class="action-btn danger" id="btn-surrender" onclick="doSurrender()" style="display:none">SURRENDER</button>
     </div>
   </div>
 
@@ -1066,35 +1076,68 @@ function repeatLastBet(){
 }
 
 // ── CARD SLOTS ────────────────────────────────────────────────────────────────
+// G.hand = {hands:[{cards,bet,doubled,surrendered,splitAces,done}], dealerHand:[]}.
+// Unified for both modes: breakout mode always has exactly one (already-`done`)
+// hand; player mode has one unless the player has split, up to 4 (max 3 splits).
 function buildCardSlots(){
   if(G.cardEls)return;
-  const dealerRow=document.getElementById('dealer-row');
-  const playerRow=document.getElementById('player-row');
-  G.cardEls={dealer:[],player:[]};
-  G.dealerRow=dealerRow;G.playerRow=playerRow;
+  G.dealerRow=document.getElementById('dealer-row');
+  G.playerRow=document.getElementById('player-row');
+  G.cardEls={dealer:[],player:[]}; // player: array of arrays, one per hand
+  G.handGroupEls=[];
 }
-// Rebuild each row's slot elements to exactly match however many cards this hand
-// currently has (a blackjack game's hand length is variable, unlike UTH's fixed
-// 2/5/2 layout) -- simplest to just wipe and re-populate per render rather than
-// track a max slot pool.
+// Rebuilds #player-row into N .hand-group containers matching G.hand.hands.length
+// (a split changes the hand count mid-round, unlike UTH's fixed layout).
+function buildHandGroups(){
+  G.playerRow.innerHTML='';
+  G.cardEls.player=[];
+  G.handGroupEls=[];
+  G.hand.hands.forEach(()=>{
+    const grp=document.createElement('div');grp.className='hand-group';
+    const cardsEl=document.createElement('div');cardsEl.className='hand-group-cards';
+    const labelEl=document.createElement('div');labelEl.className='hand-group-label';
+    grp.appendChild(cardsEl);grp.appendChild(labelEl);
+    G.playerRow.appendChild(grp);
+    G.handGroupEls.push({grp,cardsEl,labelEl});
+    G.cardEls.player.push([]);
+  });
+}
+function updateHandGroupLabels(){
+  if(!G.handGroupEls)return;
+  const multi=G.hand.hands.length>1;
+  G.handGroupEls.forEach((g,i)=>{
+    const h=G.hand.hands[i];
+    let text=h.surrendered?'Surrendered':handValueLabel(h.cards);
+    g.labelEl.textContent=multi?('Hand '+(i+1)+': '+text):text;
+    g.grp.classList.toggle('active-hand',multi&&G.phase==='playing'&&i===G.activeHand&&!h.done);
+  });
+}
 function renderHandCardsStatic(){
-  G.dealerRow.innerHTML='';G.playerRow.innerHTML='';
+  G.dealerRow.innerHTML='';
   const dealerCards=G.hand.dealerHand||[];
-  const playerCards=G.hand.hand||[];
   G.cardEls.dealer=dealerCards.map(c=>{const el=Cards.makeSlot();Cards.setFront(el,c);Cards.flipUp(el);G.dealerRow.appendChild(el);return el;});
-  G.cardEls.player=playerCards.map(c=>{const el=Cards.makeSlot();Cards.setFront(el,c);Cards.flipUp(el);G.playerRow.appendChild(el);return el;});
+  buildHandGroups();
+  G.hand.hands.forEach((h,hi)=>{
+    h.cards.forEach(c=>{
+      const el=Cards.makeSlot();Cards.setFront(el,c);Cards.flipUp(el);
+      G.handGroupEls[hi].cardsEl.appendChild(el);
+      G.cardEls.player[hi].push(el);
+    });
+  });
+  updateHandGroupLabels();
 }
 const DEAL_STAGGER_MS=170;
 function dealCardsAnimated(){
-  G.dealerRow.innerHTML='';G.playerRow.innerHTML='';
+  G.dealerRow.innerHTML='';
+  buildHandGroups(); // the initial deal is always exactly one hand
+  G.cardEls.dealer=[];
   const dealerCards=G.hand.dealerHand||[];
-  const playerCards=G.hand.hand||[];
+  const playerCards=G.hand.hands[0].cards;
   const order=[];
   // Alternate player/dealer like a real deal: player, dealer, player, dealer...
   const maxLen=Math.max(dealerCards.length,playerCards.length);
-  G.cardEls.dealer=[];G.cardEls.player=[];
   for(let i=0;i<maxLen;i++){
-    if(playerCards[i]){const el=Cards.makeSlot();G.playerRow.appendChild(el);G.cardEls.player.push(el);order.push({el,card:playerCards[i]});}
+    if(playerCards[i]){const el=Cards.makeSlot();G.handGroupEls[0].cardsEl.appendChild(el);G.cardEls.player[0].push(el);order.push({el,card:playerCards[i]});}
     if(dealerCards[i]){const el=Cards.makeSlot();G.dealerRow.appendChild(el);G.cardEls.dealer.push(el);order.push({el,card:dealerCards[i]});}
   }
   order.forEach((item,i)=>{
@@ -1103,18 +1146,27 @@ function dealCardsAnimated(){
     // Every card handed to this function is already meant to be visible -- the
     // server conceals the dealer's hole card by simply omitting it from the
     // response while phase==='playing', not by the client hiding a card it has.
-    // Without this flip, every dealt card sits showing its back forever.
     setTimeout(()=>Cards.flipUp(item.el),i*DEAL_STAGGER_MS+200);
     setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400);
   });
+  updateHandGroupLabels();
   return order.length*DEAL_STAGGER_MS+450;
 }
-// Appends one freshly-drawn card (hit/double) to a row, animated.
-function appendCardAnimated(which,card){
-  const row=which==='player'?G.playerRow:G.dealerRow;
-  const arr=which==='player'?G.cardEls.player:G.cardEls.dealer;
+// Appends one freshly-drawn card to a specific player hand's group, animated.
+function appendCardToHand(handIndex,card){
+  const g=G.handGroupEls[handIndex];
   const el=Cards.makeSlot();
-  row.appendChild(el);arr.push(el);
+  g.cardsEl.appendChild(el);
+  G.cardEls.player[handIndex].push(el);
+  Cards.setFront(el,card);
+  Cards.dealIn(el,0);
+  setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),400);
+  setTimeout(()=>Cards.flipUp(el),200);
+}
+// Dealer-only now (the player side always goes through appendCardToHand/buildHandGroups).
+function appendDealerCardAnimated(card){
+  const el=Cards.makeSlot();
+  G.dealerRow.appendChild(el);G.cardEls.dealer.push(el);
   Cards.setFront(el,card);
   Cards.dealIn(el,0);
   setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),400);
@@ -1125,7 +1177,7 @@ function appendCardAnimated(which,card){
 function revealDealerHand(fullDealerHand){
   fullDealerHand.forEach((c,i)=>{
     if(G.cardEls.dealer[i]){Cards.setFront(G.cardEls.dealer[i],c);Cards.flipUp(G.cardEls.dealer[i]);return;}
-    appendCardAnimated('dealer',c);
+    appendDealerCardAnimated(c);
   });
 }
 
@@ -1139,8 +1191,22 @@ function renderActionButtons(){
   document.getElementById('btn-double').style.display=playing?'':'none';
   const hasMainBet=(G.bets.playerBet||0)>0||(G.bets.breakoutBet||0)>0;
   document.getElementById('btn-deal').disabled=!hasMainBet;
+  const btnSplit=document.getElementById('btn-split');
+  const btnSurrender=document.getElementById('btn-surrender');
   if(playing){
-    document.getElementById('btn-double').disabled=!(G.hand&&G.hand.hand&&G.hand.hand.length===2);
+    const h=G.hand.hands[G.activeHand];
+    const firstDecision=h&&h.cards.length===2&&!h.splitAces;
+    document.getElementById('btn-double').disabled=!firstDecision;
+    const canSplit=firstDecision&&(G.splitCount||0)<3&&h.cards[0].r===h.cards[1].r;
+    btnSplit.style.display=canSplit?'':'none';
+    // Surrender is Tier 2+ only and shown ONLY as the very first decision of the
+    // round (before any split) -- G.surrenderEligible comes straight off the
+    // server's live tier check, so a Tier 0/1 player never even sees the button.
+    const canSurrender=G.surrenderEligible&&G.hand.hands.length===1&&firstDecision;
+    btnSurrender.style.display=canSurrender?'':'none';
+  }else{
+    btnSplit.style.display='none';
+    btnSurrender.style.display='none';
   }
 }
 
@@ -1152,8 +1218,8 @@ function updateStatusZone(){
     document.getElementById('status-phase').textContent='Insurance?';
     document.getElementById('status-sub').innerHTML='Dealer shows an Ace.';
   }else if(G.phase==='playing'){
-    document.getElementById('status-phase').textContent='Your Move';
-    document.getElementById('status-sub').innerHTML='Hit, Stand, or Double (first decision only).';
+    document.getElementById('status-phase').textContent=G.hand&&G.hand.hands.length>1?('Your Move — Hand '+(G.activeHand+1)):'Your Move';
+    document.getElementById('status-sub').innerHTML='Hit, Stand, Double, Split, or Surrender (first decision only).';
   }else{
     document.getElementById('status-phase').textContent='Round Over';
     document.getElementById('status-sub').innerHTML='';
@@ -1172,15 +1238,7 @@ async function dealHand(){
   if((playerBet>0)===(breakoutBet>0)){addLog('Place exactly one of Player Bet or Breakout Bet.','info');return;}
   const superTieAmt=G.bets.superTie||0;
   if(superTieAmt>0&&superTieAmt<SUPER_TIE_MIN){addLog('Super Tie has a $'+SUPER_TIE_MIN+' minimum bet.','info');return;}
-  // Re-entrancy guard: a rapid double-tap (or confirmCut()'s auto-retry racing a
-  // manual tap) could otherwise start a second overlapping deal cycle. Without
-  // this, the button used to flip back to enabled the instant the network response
-  // landed -- well before the card-deal animation/resolution actually finished --
-  // so a second tap in that window could fire a second dealHand() call. If the
-  // first call's delayed finishRound() then ran AFTER the second call's cycle had
-  // already reset the board, G.hand was null and finishRound() crashed outright
-  // (TypeError: Cannot set properties of null (setting 'dealerHand')), which is
-  // indistinguishable from a soft lock since nothing after the crash ever ran.
+  // Re-entrancy guard -- see the shared comment at G.dealInFlight's declaration.
   if(G.dealInFlight)return;
   G.dealInFlight=true;
   const progressive=(G.bets.progressive||0)>0;
@@ -1195,24 +1253,26 @@ async function dealHand(){
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   updateShoeFromResponse(data);
   if(!data.ok){
-    // Only re-enable/unlock on failure -- on success the button stays disabled (and
-    // dealInFlight stays true) through the whole animation+resolution sequence;
-    // resetToBetScreen() is what clears dealInFlight once a new bet can legitimately
-    // be placed.
     document.getElementById('btn-deal').disabled=false;
     G.dealInFlight=false;
     if(data.needsCut){showCutModal();return;}
     addLog(data.message||'Deal failed.','lose');return;
   }
   playSfx(SFX_CARD_SHUFFLE);
-  // Divider so a played-out log reads as a sequence of hands, not one long run-on
-  // list of side-bet/main-bet lines with no visual break between rounds.
   addLog('New Hand — '+(data.mode==='breakout'?'Breakout Bet':'Player Bet')+' '+fmt(data.mode==='breakout'?G.bets.breakoutBet:G.bets.playerBet),'divider');
   G.lastBetSnapshot={...G.bets};
   G.mode=data.mode;
   G.phase=data.phase;
-  G.hand={hand:data.hand,dealerHand:data.dealerHand};
-  G.doubled=false;
+  // Breakout mode's response still carries a flat `hand` array (no split there);
+  // wrap it into the same {hands:[...]} shape player mode already uses so every
+  // renderer downstream can treat both modes identically.
+  const hands=data.mode==='breakout'
+    ? [{cards:data.hand,bet:breakoutBet,doubled:false,surrendered:false,splitAces:false,done:true}]
+    : data.hands;
+  G.hand={hands,dealerHand:data.dealerHand};
+  G.activeHand=data.activeHand||0;
+  G.splitCount=data.splitCount||0;
+  G.surrenderEligible=!!data.surrenderEligible;
   G.locked={progressive:data.progressive};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
@@ -1221,12 +1281,9 @@ async function dealHand(){
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
   document.getElementById('dealer-hand-name').textContent='';
-  document.getElementById('player-hand-name').textContent='';
   document.getElementById('repeat-btn').disabled=false;
   updateStatusZone();
   renderActionButtons();
-  // Sweep the staged $5 chip away (not dimmed -- same noDim ghost style as a win-side
-  // sweep) BEFORE updateUI()/renderChipStacks() blanks #stk-light's text out from under it.
   if(data.progressive)spawnChipGhost(document.getElementById('stk-light'),{noDim:true});
   updateUI();
   if(data.progressive){
@@ -1235,19 +1292,12 @@ async function dealHand(){
   }
   const dealMs=dealCardsAnimated();
   setTimeout(()=>{
-    updateLiveHandDisplay();
     if(data.insuranceAvailable&&data.phase==='insurance'){
-      // Control returns to the player for the Insurance decision -- release the
-      // guard here too (answerInsurance() takes its own lock for that decision).
       G.dealInFlight=false;
       showInsuranceBanner();
     }
     else if(data.resolved)finishRound(data);
     else{
-      // Normal Player Bet deal with no immediate Blackjack -- control returns to the
-      // player for Hit/Stand/Double, so the guard must release here too, or every
-      // action button silently no-ops for the rest of the hand (the same shape of
-      // bug this guard exists to prevent, just moved one step later).
       G.dealInFlight=false;
     }
   },dealMs+120);
@@ -1262,9 +1312,6 @@ function showInsuranceBanner(){
 }
 function hideInsuranceBanner(){document.getElementById('insurance-banner').classList.remove('show');}
 async function answerInsurance(yes){
-  // Same guard family as dealHand()/sendAction() -- hideInsuranceBanner() below
-  // stops a real double-tap (the banner's gone before a second physical click could
-  // land), but this also blocks any programmatic/synchronous double-invocation.
   if(G.dealInFlight)return;
   G.dealInFlight=true;
   hideInsuranceBanner();
@@ -1279,40 +1326,29 @@ async function answerInsurance(yes){
   updateShoeFromResponse(data);
   if(!data.ok){G.dealInFlight=false;addLog(data.message||'Insurance failed.','lose');return;}
   G.phase=data.phase;
+  G.hand.hands=data.hands;
+  G.activeHand=data.activeHand||0;
+  G.surrenderEligible=!!data.surrenderEligible;
   G.hand.dealerHand=data.dealerHand;
   if(data.phase==='done'){
     revealDealerHand(data.dealerHand);
     setTimeout(()=>finishRound(data),300);
   }else{
-    // Insurance settled without ending the hand (dealer didn't have Blackjack) --
-    // control returns to the player for Hit/Stand/Double, so release the guard
-    // dealHand() left set, same as the equivalent branch there.
     G.dealInFlight=false;
     (data.log||[]).forEach(line=>addLog(line,/lost/i.test(line)?'lose':/pays/i.test(line)?'win':'info'));
     if(data.newBankroll!=null)G.bankroll=data.newBankroll;
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+    updateHandGroupLabels();
     renderActionButtons();updateStatusZone();updateUI();
   }
 }
 
-function updateLiveHandDisplay(){
-  if(!G.hand)return;
-  document.getElementById('player-hand-name').textContent=handValueLabel(G.hand.hand);
-  // Dealer total is only shown once the round has resolved (dealerHand[1+] withheld
-  // by the server while phase==='playing') -- showing a total off a single visible
-  // card would be misleading, so leave the dealer banner blank until then.
-  if(G.phase==='done')document.getElementById('dealer-hand-name').textContent=handValueLabel(G.hand.dealerHand);
-}
-
-// ── HIT / STAND / DOUBLE ──────────────────────────────────────────────────────
+// ── HIT / STAND / DOUBLE / SPLIT / SURRENDER ────────────────────────────────
 async function sendAction(action){
-  // Same re-entrancy guard as dealHand() -- a rapid double-tap on Hit/Stand/Double
-  // could otherwise start a second overlapping action while the first's delayed
-  // finishRound() is still pending. Cleared in resetToBetScreen(), and immediately
-  // below on any non-resolving response (a hit that doesn't bust/stand yet).
   if(G.dealInFlight)return;
   G.dealInFlight=true;
-  ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=true);
+  const btnIds=['btn-hit','btn-stand','btn-double','btn-split','btn-surrender'];
+  btnIds.forEach(id=>document.getElementById(id).disabled=true);
   const token=localStorage.getItem('craps_session');
   let data;
   try{
@@ -1322,35 +1358,63 @@ async function sendAction(action){
   updateShoeFromResponse(data);
   if(!data.ok){
     G.dealInFlight=false;
-    ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=false);
+    btnIds.forEach(id=>document.getElementById(id).disabled=false);
     addLog(data.message||'Action failed.','lose');return;
   }
-  const newCard=data.hand[data.hand.length-1];
-  const grewHand=action!=='stand';
+  const wasHandCount=G.hand.hands.length;
+  const prevActive=G.activeHand;
   G.phase=data.phase;
-  G.doubled=!!data.doubled;
-  if(action==='double')G.lastBetSnapshot=G.lastBetSnapshot; // no-op, snapshot already captured at deal
-  G.hand.hand=data.hand;
-  if(grewHand&&newCard)appendCardAnimated('player',newCard);
+  const oldHands=G.hand.hands;
+  G.hand.hands=data.hands;
+  G.activeHand=data.activeHand||0;
+  G.splitCount=data.splitCount||0;
+  G.surrenderEligible=!!data.surrenderEligible;
+
   const afterCard=()=>{
-    updateLiveHandDisplay();
+    updateHandGroupLabels();
     if(data.phase==='done'){
       G.hand.dealerHand=data.dealerHand;
       revealDealerHand(data.dealerHand);
       setTimeout(()=>finishRound(data),500);
     }else{
-      // Still the player's turn (a hit that didn't bust) -- clear the guard so the
-      // next Hit/Stand/Double tap isn't silently ignored.
       G.dealInFlight=false;
-      ['btn-hit','btn-stand','btn-double'].forEach(id=>document.getElementById(id).disabled=false);
+      btnIds.forEach(id=>document.getElementById(id).disabled=false);
       renderActionButtons();updateStatusZone();updateUI();
     }
   };
-  if(grewHand)setTimeout(afterCard,650);else afterCard();
+
+  if(action==='split'){
+    // The active hand's slot became two -- rebuild the whole hand-group layout
+    // (simplest correct option; splits are rare enough per round that a full
+    // rebuild instead of a targeted DOM splice isn't worth the extra complexity)
+    // and flip every card face-up immediately rather than re-running the staggered
+    // deal-in animation.
+    buildHandGroups();
+    G.hand.hands.forEach((h,hi)=>{
+      h.cards.forEach(c=>{
+        const el=Cards.makeSlot();Cards.setFront(el,c);Cards.flipUp(el);
+        G.handGroupEls[hi].cardsEl.appendChild(el);
+        G.cardEls.player[hi].push(el);
+      });
+    });
+    setTimeout(afterCard,300);
+  }else if(action==='surrender'){
+    setTimeout(afterCard,300);
+  }else{
+    const grewHand=action!=='stand';
+    if(grewHand){
+      const h=data.hands[prevActive];
+      const newCard=h&&h.cards[h.cards.length-1];
+      if(newCard)appendCardToHand(prevActive,newCard);
+    }
+    if(grewHand)setTimeout(afterCard,650);else afterCard();
+  }
 }
 function doHit(){sendAction('hit');}
 function doStand(){sendAction('stand');}
 function doDouble(){sendAction('double');}
+function doSplit(){sendAction('split');}
+function doSurrender(){sendAction('surrender');}
 
 // ── ROUND RESOLUTION ──────────────────────────────────────────────────────────
 function finishRound(data){
@@ -1361,8 +1425,9 @@ function finishRound(data){
   if(!G.hand){addLog('Round display lost sync -- resetting the table.','info');resetToBetScreen();return;}
   G.phase='done';
   G.hand.dealerHand=data.dealerHand;
+  G.hand.hands=data.hands||G.hand.hands;
   document.getElementById('dealer-hand-name').textContent=handValueLabel(G.hand.dealerHand);
-  document.getElementById('player-hand-name').textContent=handValueLabel(G.hand.hand);
+  updateHandGroupLabels();
   (data.log||[]).forEach(line=>{
     const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
     addLog(line,cls);
@@ -1371,16 +1436,17 @@ function finishRound(data){
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   G.lastWin=data.payout||0;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-  const mainBetAmt=G.mode==='player'?(G.lastBetSnapshot.playerBet||0):(G.lastBetSnapshot.breakoutBet||0);
+  const mainBetAmt=G.mode==='player'?G.hand.hands.reduce((s,h)=>s+(h.bet||0),0):(G.lastBetSnapshot.breakoutBet||0);
   const sideTotal=(G.lastBetSnapshot.superTie||0)+(G.lastBetSnapshot.breakoutBonus||0)+(G.lastBetSnapshot.sweet17||0)+(G.lastBetSnapshot.pairPlus||0);
-  G.lastBetDisplay=r2(mainBetAmt+(G.doubled?mainBetAmt:0)+sideTotal);
-  const mainLine=(data.log||[]).find(l=>/^Player Bet:|^Breakout Bet:/.test(l))||'';
-  const mainResult=/win|pays/i.test(mainLine)?'win':/push/i.test(mainLine)?'push':/lost/i.test(mainLine)?'lose':(data.payout>0?'win':'lose');
+  G.lastBetDisplay=r2(mainBetAmt+sideTotal);
+  const mainLine=(data.log||[]).find(l=>/^Player Bet:|^Breakout Bet:|^Hand 1:/.test(l))||'';
+  const mainResult=/win|pays/i.test(mainLine)?'win':/push/i.test(mainLine)?'push':/lost|surrendered/i.test(mainLine)?'lose':(data.payout>0?'win':'lose');
+  const label=G.hand.hands.length>1?(G.hand.hands.length+' hands'):(handValueLabel(G.hand.hands[0].cards)||'--');
   let playerDesc='You: '+(G.mode==='player'?'Player Bet':'Breakout Bet')+' '+fmt(mainBetAmt);
   if(G.locked.progressive){
     playerDesc+=data.progressiveTier?' — THE LIGHT: '+data.progressiveTier.toUpperCase()+'!':' — THE LIGHT: no prize';
   }
-  G.history.unshift({result:mainResult,payout:data.payout,label:handValueLabel(G.hand.hand)||'--',
+  G.history.unshift({result:mainResult,payout:data.payout,label,
     playerDesc,
     dealerDesc:'Dealer: '+handValueLabel(G.hand.dealerHand)});
   if(G.history.length>20)G.history.length=20;
@@ -1397,8 +1463,9 @@ function finishRound(data){
   if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
 }
 function resetToBetScreen(){
-  G.phase='betting';G.hand=null;G.doubled=false;G.insurance=0;G.insuranceAvailable=false;
+  G.phase='betting';G.hand=null;G.insurance=0;G.insuranceAvailable=false;
   G.mode=null;G.locked={progressive:false};G.dealInFlight=false;
+  G.activeHand=0;G.splitCount=0;G.surrenderEligible=false;
   document.getElementById('btn-deal').disabled=false;
   hideInsuranceBanner();
   document.getElementById('dealer-row').classList.remove('active');
@@ -1406,7 +1473,6 @@ function resetToBetScreen(){
   document.getElementById('dealer-row').innerHTML='';
   document.getElementById('player-row').innerHTML='';
   document.getElementById('dealer-hand-name').textContent='';
-  document.getElementById('player-hand-name').textContent='';
   renderActionButtons();updateStatusZone();
   updateUI();
 }
