@@ -57,11 +57,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* A: Home button. min-width/max-width reset -- the old vw-clamped sizing would otherwise
    still constrain this against the OLD #top-row's viewport-relative width instead of the new
    %-of-panel width. */
-#left-col-header{position:absolute;left:0.897%;top:1.063%;width:18.48%;height:16.048%;min-width:0;max-width:none;display:flex;align-items:center;justify-content:center}
+#left-col-header{position:absolute;left:0.897%;top:1.063%;width:18.421%;height:15.834%;min-width:0;max-width:none;display:flex;align-items:center;justify-content:center}
 /* B: Dice Zone -- already 3D (ClocheDice physics engine), just repositioned. */
 #dice-zone{position:absolute;left:20.036%;top:1.063%;width:61.722%;height:15.941%}
 /* C: Info Panel (Redeem/Cash Out/Dailies + HUD). */
-#info-panel{position:absolute;left:82.416%;top:1.381%;width:16.447%;height:15.196%;min-width:0;max-width:none}
+#info-panel{position:absolute;left:82.416%;top:1.381%;width:15.251%;height:15.196%;min-width:0;max-width:none}
 /* D-I: SMALL/ANY TRIPLE/BIG, doubles, triples, combos, totals, any-number -- all 51 individual
    cells now, positioned via SB_CELL_POS at creation time (see buildTable()), not here.
    !important required -- .bs-btn/.tot-cell/.trip-cell/.dbl-cell/.dom-cell/.any-cell all
@@ -1157,66 +1157,61 @@ function spawnSicboGhosts(rawLog){
 // dieFaceImg), per Deck: use die_marble_X everywhere dice art shows up on this table.
 const DIE3D={1:'die_marble_1.png?v=1',2:'die_marble_2.png?v=1',3:'die_marble_3.png?v=1',4:'die_marble_4.png?v=1',5:'die_marble_5.png?v=1',6:'die_marble_6.png?v=1'};
 
-// Per-cell positions on the 1672x941 sicbo_panel.png canvas (Deck: "break all those boxes
-// down into individual calibration boxes instead of trying to space out the entire row
-// correctly" -- row-level flex/grid spacing didn't reliably line up with each box baked into
-// the art). Seeded by evenly dividing each row's LAST calibrated bounding box among its
-// cells -- i.e. this reproduces the exact same starting layout the flex/grid auto-spacing
-// produced, just as explicit per-cell values now, so the visual baseline doesn't jump before
-// Deck nudges anything. [x%, y%, w%, h%]. Overwrite this whole object with sbCalibExport()'s
-// output to apply a new calibration pass.
+// Per-cell positions on the 1672x941 sicbo_panel.png canvas. [x%, y%, w%, h%]. This is
+// Deck's own calibrated export from the drag/resize tool (sbCalibExport()'s cell block,
+// pasted in directly) -- overwrite this whole object again to apply a new pass.
 const SB_CELL_POS={
-  'btn-small':[1.136,18.597,32.496,9.989],
-  'any-triple-btn':[33.752,18.597,32.496,9.989],
-  'btn-big':[66.368,18.597,32.496,9.989],
-  'cell-double1':[0.897,29.756,16.218,10.733],
-  'cell-double2':[17.235,29.756,16.218,10.733],
-  'cell-double3':[33.573,29.756,16.218,10.733],
-  'cell-triple1':[49.910,29.756,16.218,10.733],
-  'cell-triple2':[66.248,29.756,16.218,10.733],
-  'cell-triple3':[82.586,29.756,16.218,10.733],
-  'cell-double4':[0.897,42.508,16.198,9.777],
-  'cell-double5':[17.215,42.508,16.198,9.777],
-  'cell-double6':[33.533,42.508,16.198,9.777],
-  'cell-triple4':[49.850,42.508,16.198,9.777],
-  'cell-triple5':[66.168,42.508,16.198,9.777],
-  'cell-triple6':[82.486,42.508,16.198,9.777],
-  'cell-combo1-2':[1.077,64.081,6.411,11.902],
-  'cell-combo1-3':[7.608,64.081,6.411,11.902],
-  'cell-combo1-4':[14.139,64.081,6.411,11.902],
-  'cell-combo1-5':[20.670,64.081,6.411,11.902],
-  'cell-combo1-6':[27.201,64.081,6.411,11.902],
-  'cell-combo2-3':[33.732,64.081,6.411,11.902],
-  'cell-combo2-4':[40.263,64.081,6.411,11.902],
-  'cell-combo2-5':[46.794,64.081,6.411,11.902],
-  'cell-combo2-6':[53.325,64.081,6.411,11.902],
-  'cell-combo3-4':[59.856,64.081,6.411,11.902],
-  'cell-combo3-5':[66.388,64.081,6.411,11.902],
-  'cell-combo3-6':[72.919,64.081,6.411,11.902],
-  'cell-combo4-5':[79.450,64.081,6.411,11.902],
-  'cell-combo4-6':[85.981,64.081,6.411,11.902],
-  'cell-combo5-6':[92.512,64.081,6.411,11.902],
-  'cell-total4':[1.017,54.091,6.874,8.714],
-  'cell-total5':[8.010,54.091,6.874,8.714],
-  'cell-total6':[15.003,54.091,6.874,8.714],
-  'cell-total7':[21.997,54.091,6.874,8.714],
-  'cell-total8':[28.990,54.091,6.874,8.714],
-  'cell-total9':[35.983,54.091,6.874,8.714],
-  'cell-total10':[42.977,54.091,6.874,8.714],
-  'cell-total11':[49.970,54.091,6.874,8.714],
-  'cell-total12':[56.963,54.091,6.874,8.714],
-  'cell-total13':[63.957,54.091,6.874,8.714],
-  'cell-total14':[70.950,54.091,6.874,8.714],
-  'cell-total15':[77.943,54.091,6.874,8.714],
-  'cell-total16':[84.937,54.091,6.874,8.714],
-  'cell-total17':[91.930,54.091,6.874,8.714],
-  'cell-any1':[0.897,77.577,13.867,8.714],
-  'cell-any2':[14.884,77.577,13.867,8.714],
-  'cell-any3':[28.870,77.577,13.867,8.714],
-  'cell-any4':[42.857,77.577,13.867,8.714],
-  'cell-any5':[56.844,77.577,13.867,8.714],
-  'cell-any6':[70.830,77.577,13.867,8.714],
-  'cell-any-info':[84.817,77.577,13.867,8.714],
+  'btn-small':[1.136,18.596,31.459,9.671],
+  'any-triple-btn':[34.091,18.596,31.459,9.671],
+  'btn-big':[67.105,18.596,31.459,9.671],
+  'cell-double1':[1.196,30.393,14.653,9.989],
+  'cell-double2':[17.225,30.393,15.371,9.989],
+  'cell-double3':[33.971,30.393,15.371,9.989],
+  'cell-triple1':[50.478,30.393,15.311,9.989],
+  'cell-triple2':[66.986,30.393,15.431,9.989],
+  'cell-triple3':[83.672,30.393,15.072,9.989],
+  'cell-double4':[1.136,42.721,14.833,9.564],
+  'cell-double5':[17.225,42.721,15.431,9.564],
+  'cell-double6':[33.911,42.721,15.371,9.564],
+  'cell-triple4':[50.478,42.721,15.371,9.564],
+  'cell-triple5':[67.045,42.721,15.311,9.564],
+  'cell-triple6':[83.732,42.721,15.012,9.564],
+  'cell-combo1-2':[1.076,64.081,5.263,11.690],
+  'cell-combo1-3':[7.608,64.081,4.904,11.690],
+  'cell-combo1-4':[14.139,64.081,4.844,11.690],
+  'cell-combo1-5':[20.670,64.081,4.904,11.690],
+  'cell-combo1-6':[27.200,64.081,5.024,11.690],
+  'cell-combo2-3':[33.732,64.081,5.203,11.690],
+  'cell-combo2-4':[40.263,64.081,5.263,11.690],
+  'cell-combo2-5':[46.950,64.081,5.502,11.690],
+  'cell-combo2-6':[53.529,64.081,5.443,11.690],
+  'cell-combo3-4':[60.108,64.081,5.622,11.690],
+  'cell-combo3-5':[66.926,64.081,5.562,11.690],
+  'cell-combo3-6':[73.624,64.081,5.443,11.690],
+  'cell-combo4-5':[80.323,64.081,5.443,11.690],
+  'cell-combo4-6':[86.962,64.081,5.443,11.690],
+  'cell-combo5-6':[93.600,64.081,5.144,11.690],
+  'cell-total4':[1.136,54.304,5.682,7.545],
+  'cell-total5':[8.010,54.304,5.682,7.545],
+  'cell-total6':[15.002,54.304,5.801,7.545],
+  'cell-total7':[21.997,54.304,5.921,7.545],
+  'cell-total8':[29.127,54.304,5.861,7.545],
+  'cell-total9':[36.304,54.304,5.981,7.545],
+  'cell-total10':[43.421,54.304,5.801,7.545],
+  'cell-total11':[50.478,54.304,5.861,7.545],
+  'cell-total12':[57.536,54.304,5.801,7.545],
+  'cell-total13':[64.593,54.304,5.921,7.545],
+  'cell-total14':[71.711,54.304,5.801,7.545],
+  'cell-total15':[78.648,54.304,5.861,7.545],
+  'cell-total16':[85.825,54.304,5.861,7.545],
+  'cell-total17':[93.002,54.304,5.801,7.545],
+  'cell-any1':[1.136,78.321,13.577,7.864],
+  'cell-any2':[16.029,78.321,12.560,7.864],
+  'cell-any3':[29.904,78.321,12.560,7.864],
+  'cell-any4':[43.600,78.321,12.380,7.864],
+  'cell-any5':[57.237,78.321,12.500,7.864],
+  'cell-any6':[71.172,78.321,12.500,7.864],
+  'cell-any-info':[86.483,77.046,11.244,10.414],
 };
 // Applies SB_CELL_POS[id] to el as an absolute position, falling back to a visible-but-
 // obviously-wrong spot (so a missing entry is easy to spot) rather than silently no-op-ing.
