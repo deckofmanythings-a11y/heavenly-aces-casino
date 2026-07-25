@@ -332,6 +332,19 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* Gold chip-stack amounts stay gold (matches the site's real chip color everywhere else) --
    just adds a dark shadow so gold-on-cream still pops instead of washing out. */
 .bs-stk,.tot-stk,.at-stk,.trip-stk,.dbl-stk,.dom-stk,.any-stk{text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 4px rgba(0,0,0,.35)}
+/* Left-Col-Header/Info-Panel/History-Strip/Bottom-Bar text (Deck: "fix those text colors
+   too") -- all of this was white/light-alpha, tuned for the dark background that just got
+   stripped from those 4 regions. Darkened to the same ink tone as everything else. Redeem
+   (gold), Cash Out (green, inline style), Last Win/Playable/Bet (green/gold, inline style)
+   are untouched -- they're already fully-opaque saturated colors that read fine on cream, and
+   in Cash Out/Last Win/Playable/Bet's case an inline style would win over this anyway. */
+.gmode-btn{color:#2b1806}
+.gmode-btn .gmode-sub{color:rgba(43,24,6,.6)}
+.gmode-btn.active .gmode-sub{color:rgba(155,105,10,.8)}
+.hud-lbl{color:rgba(43,24,6,.6)}
+#hud-lastbet{color:rgba(43,24,6,.75)!important}
+.info-btn{color:#2b1806}
+.bar-btn{color:#2b1806}
 
 /* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
