@@ -1144,6 +1144,27 @@ body.portrait-craps #felt-portrait{display:flex}
       </div>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="modal-bullets">
+    <div class="modal-box" style="max-width:360px">
+      <div class="modal-title" style="margin-bottom:12px">Make Bullets</div>
+      <div style="font-size:14px;line-height:1.5;margin-bottom:12px" id="bullets-intro">Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn't change, only how much of it you're using right now.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+        <label style="font-size:13px;color:rgba(255,255,255,.8)">Total to convert
+          <input type="number" id="bullets-total" min="1" step="0.01" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0">
+        </label>
+        <label style="font-size:13px;color:rgba(255,255,255,.8)">Number of bullets
+          <input type="number" id="bullets-count" min="1" step="1" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="updateBulletsPreview()">
+        </label>
+        <div id="bullets-size-preview" style="font-size:13px;color:#ffd700;min-height:16px"></div>
+      </div>
+      <div class="modal-input-error" id="bullets-error" style="font-size:14px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn cancel" onclick="cancelBullets()">Cancel</button>
+        <button class="modal-btn" id="bullets-end-btn" onclick="endBullets()" style="display:none;border-color:rgba(240,120,120,.5);color:#f08080">End Bullets</button>
+        <button class="modal-btn" onclick="confirmBullets()">Make Bullets</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="modal-reset-point">
     <div class="modal-box" style="max-width:360px">
       <div class="modal-title" style="margin-bottom:12px">Reset to Come Out?</div>
@@ -1379,6 +1400,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
         <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
       </div>
+      <div id="bullets-row" style="display:none;align-items:center;gap:3px;margin-top:4px;flex-wrap:wrap"></div>
 
     </div>
   </div><!-- end top-row -->
@@ -1511,6 +1533,7 @@ body.portrait-craps #felt-portrait{display:flex}
             <!-- No std-only gate -- shows in both modes. Sits directly below Across in
                  Crapless (Inside/Outside are std-only and hidden there) and below Outside in
                  Standard, matching wherever the last button in this stack happens to land. -->
+            <button class="sc-btn" id="make-bullets-btn" onclick="openBulletsModal()">Make Bullets</button>
             <button class="sc-btn" onclick="resetPoint()">Reset Point</button>
           </div>
         </div>
@@ -1611,7 +1634,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.2</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.3</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2374,6 +2397,101 @@ function cancelResetPoint(){
   document.getElementById('modal-reset-point').classList.add('hidden');
 }
 
+// Bullets: a self-imposed stop-loss mechanic (button lives right above Reset Point). G.bankroll
+// is NEVER reduced by this -- it always stays the true, server-authoritative Playable total.
+// Instead a bullet is a *watched meter*: bulletBaseline snapshots G.bankroll at the moment the
+// current bullet started, and the meter is bulletSize + (G.bankroll-bulletBaseline), recomputed
+// fresh every time rather than tracked incrementally -- so it can never drift no matter how
+// bankroll changes (bets, wins, losses, server re-syncs on mode switch all just work). Bullets
+// state is local-only (localStorage per player id), same tier as soundMuted/tutorialProgress --
+// it's a personal play-style preference, not real-money state, so it never touches game_state.
+function bulletsStorageKey(pid){return 'craps_bullets_'+pid;}
+function loadBullets(playerId){
+  G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;
+  try{
+    const raw=localStorage.getItem(bulletsStorageKey(playerId));
+    if(raw){
+      const d=JSON.parse(raw);
+      if(d&&d.size>0&&d.count>0){
+        G.bulletActive=true;G.bulletSize=d.size;G.bulletCount=d.count;
+        G.bulletIndex=Math.min(Math.max(0,d.index||0),d.count-1);
+        G.bulletBaseline=(typeof d.baseline==='number')?d.baseline:G.bankroll;
+      }
+    }
+  }catch(e){}
+}
+function saveBullets(){
+  if(!currentPlayer)return;
+  const k=bulletsStorageKey(currentPlayer.id);
+  if(!G.bulletActive){try{localStorage.removeItem(k);}catch(e){}return;}
+  try{localStorage.setItem(k,JSON.stringify({size:G.bulletSize,count:G.bulletCount,index:G.bulletIndex,baseline:G.bulletBaseline}));}catch(e){}
+}
+function bulletRemaining(){return r2(G.bulletSize+G.bankroll-G.bulletBaseline);}
+function updateBulletsPreview(){
+  const total=parseFloat(document.getElementById('bullets-total').value)||0;
+  const count=parseInt(document.getElementById('bullets-count').value)||0;
+  const prev=document.getElementById('bullets-size-preview');
+  prev.textContent=(total>0&&count>0)?(count+' bullets of '+fmt(r2(total/count))+' each'):'';
+}
+function openBulletsModal(){
+  document.getElementById('bullets-error').textContent='';
+  const endBtn=document.getElementById('bullets-end-btn');
+  if(G.bulletActive){
+    document.getElementById('bullets-intro').textContent='You already have bullets going. Making new ones refunds all remaining bullets back into a single total first -- your Playable total won\'t change, just how it\'s split up.';
+    document.getElementById('bullets-total').value=G.bankroll>0?G.bankroll:'';
+    document.getElementById('bullets-count').value=G.bulletCount||'';
+    endBtn.style.display='';
+  }else{
+    document.getElementById('bullets-intro').textContent='Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn\'t change, only how much of it you\'re using right now.';
+    document.getElementById('bullets-total').value='';
+    document.getElementById('bullets-count').value='';
+    endBtn.style.display='none';
+  }
+  updateBulletsPreview();
+  document.getElementById('modal-bullets').classList.remove('hidden');
+}
+function cancelBullets(){document.getElementById('modal-bullets').classList.add('hidden');}
+function confirmBullets(){
+  const total=r2(parseFloat(document.getElementById('bullets-total').value)||0);
+  const count=parseInt(document.getElementById('bullets-count').value)||0;
+  const errEl=document.getElementById('bullets-error');
+  if(count<1||!Number.isInteger(count)){errEl.textContent='Enter a whole number of bullets.';return;}
+  if(!(total>0)||total>G.bankroll+0.001){errEl.textContent='Total can\'t exceed your Playable bankroll ('+fmt(G.bankroll)+').';return;}
+  const size=r2(total/count);
+  if(size<=0){errEl.textContent='That split is too small -- fewer bullets or a bigger total.';return;}
+  G.bulletActive=true;G.bulletSize=size;G.bulletCount=count;G.bulletIndex=0;G.bulletBaseline=G.bankroll;
+  saveBullets();
+  document.getElementById('modal-bullets').classList.add('hidden');
+  addLog('Made '+count+' bullets of '+fmt(size)+' each.','info');
+  updateUI();
+}
+function endBullets(){
+  G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;
+  saveBullets();
+  document.getElementById('modal-bullets').classList.add('hidden');
+  addLog('Bullets ended -- Playable now shows your full bankroll.','info');
+  updateUI();
+}
+function nextBullet(){
+  if(!G.bulletActive||G.bulletIndex>=G.bulletCount-1)return;
+  G.bulletIndex++;G.bulletBaseline=G.bankroll;
+  saveBullets();
+  addLog('Moved to bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+'.','info');
+  updateUI();
+}
+function renderBullets(){
+  const row=document.getElementById('bullets-row');
+  if(!G.bulletActive||G.bulletCount<1){row.style.display='none';row.innerHTML='';return;}
+  row.style.display='flex';
+  let html='';
+  for(let i=0;i<G.bulletCount;i++){
+    const isCurrent=i===G.bulletIndex,isSpent=i<G.bulletIndex,isNext=i===G.bulletIndex+1;
+    const style=isSpent?'opacity:.28;filter:grayscale(1)':isCurrent?'opacity:1;filter:drop-shadow(0 0 4px #ffd700)':'opacity:.55';
+    html+='<img src="bullet.png" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="height:22px;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
+  }
+  row.innerHTML=html;
+}
+
 // Saves a clean come-out state for the current mode to Supabase,
 // clearing props and resetting point/phase/bonus. Called before navigating away.
 //
@@ -2485,7 +2603,7 @@ function fmtLastWin(b){
   return s+')';
 }
 
-function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline'};}
+function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline',bulletActive:false,bulletSize:0,bulletCount:0,bulletIndex:0,bulletBaseline:0};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
 let animating=false,animStart=0,tumbling=false,tumbleStart=0;
@@ -2789,6 +2907,7 @@ function startSession(player){
   G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   G.bankrollAfterLastRoll=G.bankroll;
+  loadBullets(player.id);
   // Focus Mode now plays both buckets (same game_state shape as index.html) -- resume
   // whichever mode the player was last in, unless a link into this page asked for a specific
   // one (?mode=crapless / ?mode=standard, used by the site nav's CRAPLESS/STANDARD entries).
@@ -4273,7 +4392,15 @@ async function rollDice(){
 function updateUI(){
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
-  document.getElementById('hud-bankroll').textContent=fmt(Math.max(0,G.bankroll));
+  const hudBrEl=document.getElementById('hud-bankroll');
+  if(G.bulletActive){
+    hudBrEl.textContent=fmt(Math.max(0,bulletRemaining()));
+    hudBrEl.title='Bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+' -- full bankroll: '+fmt(G.bankroll);
+  }else{
+    hudBrEl.textContent=fmt(Math.max(0,G.bankroll));
+    hudBrEl.title='';
+  }
+  renderBullets();
   document.getElementById('hud-bet').textContent=fmt(tBets());
   document.getElementById('hud-lastbet').textContent=(G._lastBetDisplay&&G._lastBetDisplay>0)?fmt(G._lastBetDisplay):'—';
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtLastWin(G.lastWinBreakdown):'—';
