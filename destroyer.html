@@ -103,6 +103,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #fp-bet-circle .fp-bet-chips img,#pp-bet-circle .fp-bet-chips img{position:absolute;left:50%;bottom:0;width:100%;transform:translateX(-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 #fp-bet-circle .fp-bet-amt,#pp-bet-circle .fp-bet-amt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;font-size:.8em;font-weight:900;color:#000;text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none}
 #pp-bet-circle .fp-bet-amt{font-size:1.4em}
+/* Empty bet ("BET HERE") has no chip image behind it (see renderBetCirclePair) -- just the
+   bare green screen -- so the amount's normal black-on-chip color would be unreadable; swap
+   to the panel's CRT green-white and let the <br> wrap across two lines. */
+.fp-bet-amt-empty{color:#eafff0!important;text-shadow:0 0 2px #dfffe8,0 0 6px rgba(180,255,200,.55)!important;white-space:normal!important;line-height:1.15;text-align:center}
 #fp-bet-circle .fp-winning-lbl,#pp-bet-circle .fp-winning-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#7ee87e;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 #fp-bet-circle .fp-bankroll-lbl,#pp-bet-circle .fp-bankroll-lbl{display:block;width:100%;text-align:center;font-size:.7em;font-weight:700;color:#ffe066;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 /* Winning/Playable relocated here (Deck: "move Winning and Playable to the Buy Missile
@@ -250,7 +254,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* left:0/top:0 collides with the baked-in top bar (Game Select lives there); push it down
    below the top bar to roughly where fp-extra-wins sits on the firing panel. */
 #placement-panel #jackpot-strip{top:14%;border-radius:8px}
-#placement-panel #free-missiles-display{border-top-right-radius:8px}
 .fp-cell.ship{cursor:grab;user-select:none}
 .fp-cell.ship:active{cursor:grabbing}
 .fp-cell.drag-over{box-shadow:inset 0 0 0 3px #4a9eff;background:rgba(74,158,255,.4)}
@@ -658,10 +661,13 @@ Tap BEGIIN GAME to start the game.</div>
            (position J, same as the firing panel's #fp-fire-btn on the equivalent knob). -->
       <button class="fp-region pp-invisible-btn" id="pp-begin-btn" onclick="startBattle()"
               style="left:88.278%;top:82.34%;width:7.656%;height:13.723%">Begin</button>
-      <!-- Blank metal strip directly below C, above the shelf divider (Deck: "the blank space
-           below the screen at C") -- not a screen cutout itself, just the gap between C and
-           the shelf/K row. -->
-      <div class="fp-region" id="pp-chip-row-wrap" style="left:4.964%;top:73.5%;width:20.036%;height:7.5%"></div>
+      <!-- Moved to the panel's flush bottom-left corner (Deck: "The Chip Row needs to go where
+           those four Initial Strike graphics on the setup screen USED to be") -- that legacy
+           #free-missiles-display widget sat at left:0/bottom:0 (see movePlacementElements,
+           now deliberately not reparenting it here anymore). Approximated from that widget's
+           own dimensions (four 96x144px pips + label, see the firing panel's Initial Strikes
+           comment) -- nudge via the calibrator if it doesn't land exactly right. -->
+      <div class="fp-region" id="pp-chip-row-wrap" style="left:0.75%;top:80%;width:26%;height:19%"></div>
       <!-- Same structure/style as the firing screen's #fp-bet-circle (Deck: "Make the setup
            phase Bet area look identical to the Main Game's") -- replaces the old circular
            #bet-circle-wrap widget, which stacked chips and looked visually different.
@@ -2350,19 +2356,21 @@ function hideFiringScreen(){
 let _ppMoved=false,_ppGridBuilt=false;
 // Same reuse pattern as moveFiringElements: reparent existing self-contained widgets
 // (already fully wired -- rendering, click handlers, bet math) into the new panel instead
-// of rebuilding them. jackpot-strip/free-missiles-display are already position:absolute and
-// self-anchoring, so they just need a new positioned ancestor; placement-chip-row is normally
-// a flex:1 child of #fire-center and gets its own sizing rule (see #pp-chip-row-wrap CSS)
-// since #placement-panel isn't a flex container. bet-circle-wrap is NOT reparented here
-// anymore -- #pp-bet-circle (built fresh, matching #fp-bet-circle's markup) replaces it.
+// of rebuilding them. jackpot-strip is already position:absolute and self-anchoring, so it
+// just needs a new positioned ancestor; placement-chip-row is normally a flex:1 child of
+// #fire-center and gets its own sizing rule (see #pp-chip-row-wrap CSS) since #placement-panel
+// isn't a flex container. bet-circle-wrap is NOT reparented here anymore -- #pp-bet-circle
+// (built fresh, matching #fp-bet-circle's markup) replaces it. free-missiles-display
+// (the legacy "INITIAL STRIKES" pips) is deliberately NOT reparented here anymore (Deck: "The
+// four Initial Strike graphics in the lower left corner of the setup screen need to be GONE")
+// -- it stays in its original hidden parent (#main-area) instead, so it simply never renders
+// on the placement screen. #pp-chip-row-wrap now sits where it used to be.
 function movePlacementElements(){
   if(_ppMoved)return;
   _ppMoved=true;
   const panel=document.getElementById('placement-panel');
   const jackpot=document.getElementById('jackpot-strip');
   if(panel&&jackpot)panel.appendChild(jackpot);
-  const strikes=document.getElementById('free-missiles-display');
-  if(panel&&strikes)panel.appendChild(strikes);
   const chipRowWrap=document.getElementById('pp-chip-row-wrap');
   const chipRow=document.getElementById('placement-chip-row');
   if(chipRowWrap&&chipRow)chipRowWrap.appendChild(chipRow);
@@ -2595,8 +2603,14 @@ function renderFiringFireCenter(){
 // same markup structure (chip with the amount overlaid on top, Winning/Playable below), just
 // different id prefixes, per Deck's request that the two look identical.
 function renderBetCirclePair(prefix,amt){
+  // Empty bet (no chip on the circle yet) reads "BET HERE" instead of "$0" -- a bare dollar
+  // amount there looked like a real (zero) bet rather than an empty tap target (Deck: "Start
+  // the bet circle at $0 displaying BET HERE").
   const amtEl=document.getElementById(prefix+'-bet-amt');
-  if(amtEl)amtEl.textContent=fmt(amt);
+  if(amtEl){
+    amtEl.innerHTML=amt>0?fmt(amt):'BET<br>HERE';
+    amtEl.classList.toggle('fp-bet-amt-empty',amt<=0);
+  }
   const chipsEl=document.getElementById(prefix+'-bet-chips');
   if(chipsEl){
     chipsEl.querySelectorAll('img').forEach(img=>img.remove());
