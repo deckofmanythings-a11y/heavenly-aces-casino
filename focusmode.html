@@ -1652,7 +1652,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.3</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.8.4</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4430,6 +4430,12 @@ async function rollDice(){
     // a colon right after the bet name -- barks never have that structure, so that alone is
     // enough to sort reliably without needing anything new from the server.
     const rawLog=data.log||[];
+    // TEMP DEBUG (Deck, 2026-07-25): dump the exact raw array the win-ghost regexes test
+    // against, JSON-quoted so any invisible leading/trailing whitespace shows up as   or
+    // similar rather than being silently trimmed by the console's own display. Remove once the
+    // invisible-win-stack issue is diagnosed -- see project_craps_win_animation_dealer_sweep
+    // memory note for context.
+    console.log('[DEBUG rawLog]',JSON.stringify(rawLog));
     const barks=[],details=[];
     rawLog.forEach(line=>{(/^[^:]+:\s/.test(line)?details:barks).push(line);});
     // Classic craps stickman calls, one flavor line per total. Purely cosmetic, keyed by the
