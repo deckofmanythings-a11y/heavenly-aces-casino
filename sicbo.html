@@ -546,7 +546,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.7</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.8</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1692,7 +1692,14 @@ function renderLoop(now){
 // ── DICE INIT (3 dice version) ───────────────────────────────────────────────
 function initDice(){
   if(renderer)return;
-  THREE=window.THREE;if(!THREE)return;
+  THREE=window.THREE;
+  // three.min.js loads via a blocking <script src> tag positioned AFTER this inline script,
+  // which calls tryRestoreSession() -> login() -> initDice(). Since tryRestoreSession() is
+  // async, the browser can move on to loading the later script tags while that request is in
+  // flight -- on a cold cache the session-restore response can return before three.min.js has
+  // finished downloading, leaving THREE undefined here. Retry instead of giving up forever (same
+  // fix as focusmode.html's initDice — see its comment for the Crapless race-condition report).
+  if(!THREE){setTimeout(initDice,100);return;}
   const W=720,H=168,cvs=document.getElementById('dice-canvas');
   renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
