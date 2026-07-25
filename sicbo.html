@@ -222,7 +222,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 #roll-history::-webkit-scrollbar{display:none}
 .roll-pip{min-width:32px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;padding:2px 3px;background:rgba(255,255,255,.1)}
 .roll-pip .rp-dice{font-size:14px;line-height:1;letter-spacing:1px}
-.roll-pip .rp-sum{font-size:17px;line-height:1;margin-top:1px}
+/* Black outline (Deck), same 4-direction text-shadow stack as #hud-pnl. */
+.roll-pip .rp-sum{font-size:17px;line-height:1;margin-top:1px;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 0 3px rgba(0,0,0,.5)}
 .roll-pip.normal .rp-sum{color:#fff}
 .roll-pip.triple .rp-sum{color:#e87ef0}
 .roll-pip.triple{background:rgba(140,0,140,.35)}
@@ -530,7 +531,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.7.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.0</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
