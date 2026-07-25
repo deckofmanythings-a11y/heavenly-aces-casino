@@ -216,11 +216,22 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
 
-/* Win/loss chip-ghost sweep -- ported wholesale from craps/sicbo */
-.chip-ghost{position:fixed;z-index:150;pointer-events:none;filter:none;opacity:1;transition:filter .35s ease-out}
+/* Win/loss chip-ghost sweep -- ported wholesale from craps/sicbo.
+   z-index MUST beat WinnerModal's own #wm-modal-winner overlay (z-index:200, see
+   winner-modal.js) -- WinnerModal.show() fires in the SAME synchronous block as
+   spawnUthGhosts() with no delay, so a ghost below 200 renders entirely underneath the
+   celebration overlay for its whole ~1.5s lifecycle (found and fixed the same class of bug
+   in craps first, there caused by a different overlay -- cloche-dice.js's dice-roll layer). */
+.chip-ghost{position:fixed;z-index:10000;pointer-events:none;filter:none;opacity:1;transition:filter .35s ease-out}
 .chip-ghost.dim{filter:grayscale(1) brightness(.55)}
 .chip-ghost.sweep{transform:translateY(-130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
 .chip-ghost.sweep-down{transform:translateY(130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
+/* Win-stack drop-in. BOTH classes below must be class-based, never inline styles -- an inline
+   style.transform always beats ANY class rule for the same property in the cascade regardless
+   of specificity. .win-start is applied BEFORE the element is appended (so there's no flash at
+   the wrong position), then swapped for .win-in on the next frame to trigger the transition. */
+.chip-ghost.win-start{transform:translateY(-130vh)}
+.chip-ghost.win-in{transform:translateY(0);transition:transform .48s cubic-bezier(.22,.9,.32,1)}
 #modal-cap .modal-box{text-align:center}
 
 /* ── CASHOUT VOUCHER MODAL ── */
@@ -423,7 +434,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.8.1</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1517,16 +1528,82 @@ function spawnChipGhost(el,opts){
 // Bet-name -> stake-element-id table, matched against roll-uth's exact log-line
 // prefixes. Win/loss is read off the same win|pays / lost keywords addLog() already
 // uses for line coloring, so this stays in sync with the server's wording for free.
+// THE LIGHT is intentionally left out here -- its own $5 stake is swept separately at
+// deal-time (see the noDim sweep a few lines below chipStackHTML), and its win lines
+// ("THE LIGHT: ... wins the JACKPOT!/Major prize!/pays a Minor prize") report a payout that
+// has nothing to do with a stake still sitting on the felt to pair a win-stack against.
 function uthGhostChecks(){
   return [[/^Ante:/,'ante'],[/^Blind:/,'blind'],[/^Trips:/,'trips'],[/^Play/,'play']];
+}
+// Real dealer-style payout: a fresh stack holding ONLY the profit amount drops in from the top
+// of the screen, settles just barely touching the wager it's paying against, holds a beat,
+// then sweeps to the bottom together with the wager. Every UTH bet spot clears every hand
+// (confirmed against roll-uth's resolve logic -- G.locked is reset to all-zero every hand, no
+// bet ever carries state forward), so unlike craps there is no "stays" case at all: the wager
+// always sweeps along with its win-stack.
+const WIN_DROP_MS=480,WIN_HOLD_MS=420,WIN_SWEEP_MS=550;
+function spawnWinPair(elId,amt){
+  const stakeEl=document.getElementById(elId);
+  if(!stakeEl||!(amt>0))return;
+  const rect=stakeEl.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const liveChipVar=getComputedStyle(stakeEl).getPropertyValue('--chip').trim();
+  const existingAmtSpan=stakeEl.querySelector('.chip-amt');
+  const isFP=!!(existingAmtSpan&&/^FP\$/.test(existingAmtSpan.textContent));
+  const gap=1;
+  // Prefer landing to the left of the wager (mirrors a dealer squaring a payout next to the
+  // original bet, chips just barely touching); if that would land off-screen (a bet parked
+  // near the felt's left edge), fall back to the right instead rather than clipping.
+  let targetLeft=rect.left-rect.width-gap;
+  if(targetLeft<4)targetLeft=rect.right+gap;
+
+  const winGhost=document.createElement('div');
+  winGhost.className='chip-ghost win-start';
+  winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
+  winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
+  winGhost.style.setProperty('--chip',liveChipVar||'22px');
+  winGhost.innerHTML=chipStackHTML(amt,false,isFP);
+  document.body.appendChild(winGhost);
+  // Double rAF, not single -- a single rAF scheduled synchronously right after appendChild()
+  // can land in the SAME frame as the element's first paint, so the browser never actually
+  // commits a frame with .win-start applied before swapping to .win-in, and the transition
+  // has nothing to animate from (snaps instantly, no visible motion). The first rAF waits for
+  // the current frame to finish painting .win-start; the nested one swaps on the NEXT frame.
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{winGhost.classList.remove('win-start');winGhost.classList.add('win-in');});});
+
+  const wagerGhost=document.createElement('div');
+  wagerGhost.className='chip-ghost';
+  wagerGhost.style.left=rect.left+'px';wagerGhost.style.top=rect.top+'px';
+  wagerGhost.style.width=rect.width+'px';wagerGhost.style.height=rect.height+'px';
+  wagerGhost.style.setProperty('--chip',liveChipVar||'22px');
+  wagerGhost.innerHTML=stakeEl.innerHTML;
+  document.body.appendChild(wagerGhost);
+
+  setTimeout(()=>{
+    // Clear the real chip stack right as the ghosts start sliding away, same convention as
+    // spawnChipGhost above -- until this instant the ghosts sit exactly on top of it.
+    stakeEl.innerHTML='';
+    stakeEl.classList.remove('has-stack');
+    winGhost.classList.remove('win-in');
+    winGhost.classList.add('sweep-down');
+    wagerGhost.classList.add('sweep-down');
+  },WIN_DROP_MS+WIN_HOLD_MS);
+  setTimeout(()=>{
+    winGhost.remove();
+    wagerGhost.remove();
+  },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+100);
 }
 function spawnUthGhosts(rawLog,folded){
   uthGhostChecks().forEach(([re,key])=>{
     const line=rawLog.find(l=>re.test(l));
     if(!line)return;
     const el=document.getElementById('stk-'+key);
-    if(/lost/i.test(line))spawnChipGhost(el);
-    else if(/win|pays/i.test(line))spawnChipGhost(el,{direction:'down',noDim:true});
+    if(/lost/i.test(line)){spawnChipGhost(el);return;}
+    if(/push/i.test(line)){spawnChipGhost(el,{direction:'down',noDim:true});return;}
+    if(/win|pays/i.test(line)){
+      const m=line.match(/\+([\d.]+)/);
+      if(m)spawnWinPair('stk-'+key,parseFloat(m[1]));
+    }
   });
   // "Folded — Ante & Blind lost." doesn't match the /^Ante:/ or /^Blind:/ prefixes above.
   if(folded){
