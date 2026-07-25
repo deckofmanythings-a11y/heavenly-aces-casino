@@ -41,7 +41,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    match the art's cutout counts per row (3/6/6/15/14/7), so no per-cell placement is needed.
    Positions below are Deck's own calibrated export from the drag/resize tool
    (sbCalibExport(), whole pixels on the 1672x941 canvas), converted to %. */
-#sb-panel{position:relative;aspect-ratio:1672/941;max-width:100%;max-height:100%;width:100%;background-image:url('sicbo_panel.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh;margin:0 auto}
+#sb-panel{position:relative;aspect-ratio:1672/941;max-width:100%;max-height:100%;width:100%;background-image:url('sicbo_panel.png?v=1');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh;margin:0 auto}
 #top-row,#table-area,#bottom-section,#bottom-left{display:contents!important}
 /* Folded into each cell instead (Deck: "Payout headers will now become part of the number
    cells themselves") -- see buildTable()'s makeDblCell/makeTripCell/combo-cell for the new
@@ -280,8 +280,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    light glow. Cinzel replaces Exocet (which Deck has installed locally but isn't a licensed
    asset this repo can distribute) -- self-hosted like VT323 on Destroyer, so every player sees
    the same font with no external request. */
-@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:block}
-@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:block}
+@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Regular.woff2?v=1') format('woff2');font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Bold.woff2?v=1') format('woff2');font-weight:700;font-style:normal;font-display:block}
 #sb-panel{font-family:'Cinzel',Georgia,'Times New Roman',serif}
 .bs-label{color:#2b1806}
 .bs-sub{color:rgba(43,24,6,.75)}
@@ -1154,7 +1154,7 @@ function spawnSicboGhosts(rawLog){
 // Marble die faces (die_marble_1..6.png) -- used for the monitor cells below, the cloche's
 // tumbling 3D dice (ClocheDice.init's faceImages), and the roll-history/log strips (dieImg/
 // dieFaceImg), per Deck: use die_marble_X everywhere dice art shows up on this table.
-const DIE3D={1:'die_marble_1.png',2:'die_marble_2.png',3:'die_marble_3.png',4:'die_marble_4.png',5:'die_marble_5.png',6:'die_marble_6.png'};
+const DIE3D={1:'die_marble_1.png?v=1',2:'die_marble_2.png?v=1',3:'die_marble_3.png?v=1',4:'die_marble_4.png?v=1',5:'die_marble_5.png?v=1',6:'die_marble_6.png?v=1'};
 
 // ── BUILD TABLE ───────────────────────────────────────────────────────────────
 function buildTable(){
