@@ -343,7 +343,9 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #status-sub{display:none}
 
   #table-area{position:absolute;inset:0;padding:0;z-index:1}
-  #table-panel{background-image:url('uth_port_bg.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
+  /* Blank felt, same as landscape -- no baked full-screen art (uth_port_bg.png is
+     retired). Inherits the base rule's plain radial-gradient background unchanged. */
+  #table-panel{aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
 
   #burn-region{left:2%;top:7%;width:14%;height:11%}
   /* Shifted down and shrunk from the original measured position -- the header's own
@@ -356,6 +358,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
      centering within that narrower box lands the fanned cards squarely on the logo,
      which is where they're meant to sit, rather than drifting into the bet-circle column. */
   #player-region{left:23.2%;top:58%;width:43.47%;height:18.85%;flex-direction:row;justify-content:center;align-items:flex-start}
+
+  #dealers-hand-label{left:20.8%;top:7%;width:58.4%;font-size:1.6cqh}
+  #ante-qualify-label{left:3%;top:26%;width:94%;font-size:1.1cqh}
+  /* Same "cards unfold over the label" treatment as landscape -- shares
+     #player-region's exact box with a negative z-index (inherited from the base
+     rule) so the dealt cards paint on top of it. */
+  #players-hand-label{left:23.2%;top:58%;width:43.47%;height:18.85%;font-size:1.6cqh}
 
   /* cqh here is relative to #table-panel's own height, which in portrait is nearly the
      full device height (not landscape's much shorter letterboxed panel) -- the landscape
@@ -381,16 +390,27 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
      break the region's own placement within #table-panel. */
   .crl-hand{position:absolute;left:0;right:0;bottom:-1px;text-align:center;min-height:0;font-size:1.3cqh}
 
-  #trips-spot{left:68.53%;top:59.11%;width:9.07%;height:4.19%}
-  #ante-spot{left:68.53%;top:65.64%;width:9.33%;height:4.31%}
-  #blind-spot{left:88.53%;top:65.64%;width:9.33%;height:4.31%}
-  #play-spot{left:68.8%;top:72.41%;width:8.8%;height:4.06%}
-  /* The Light isn't baked into the portrait art (per Deck) -- placed north of Trips as a
-     plain CSS-drawn spot (background/border/label) rather than an art-matched one. */
-  #light-spot,#light-on-img{left:68.3%;top:52.6%;width:9.5%;height:4.6%}
-  #light-spot{background:radial-gradient(circle,#3a1a5c 0%,#1a0a30 100%);border:1.5px solid #ffd700;display:flex;align-items:center;justify-content:center}
-  #light-spot::before{content:'LIGHT';font-size:1.5cqh;font-weight:800;color:#ffd700;letter-spacing:.04em;pointer-events:none}
-  #light-info-btn{left:78.6%;top:52.9%;width:2.6%;height:2.1%}
+  /* #bets-module reuses the exact same uth_felt_bets.png + module-relative spot
+     coordinates as landscape (see the base, non-media-query rules) -- only the
+     module's own size/position within #table-panel changes here. Trips/Ante/Blind/
+     Play/Light's own left/top/width/height are NOT re-declared: they're already
+     correct as %-of-the-561x651-image, which doesn't change with orientation.
+     Sized/positioned to sit entirely right of #player-region's own right edge
+     (66.66%) -- landscape's much taller module (26% height) would overlap the
+     player's cards here, and since #bets-module has an explicit z-index it would
+     paint OVER them, not behind. 17.35% is the largest height that still fits the
+     available ~32%-wide gap at this aspect ratio (561/651). */
+  #bets-module{right:1%;top:58%;height:17.35%}
+  #trips-info{width:14%;height:9%}
+  #ante-info{width:14%;height:9%}
+  #blind-info{width:14%;height:9%}
+  #play-info{width:14%;height:9%}
+  #light-info-btn{width:14%;height:9%}
+  /* Portrait's #table-panel is much taller relative to its own width than landscape's
+     letterboxed panel, so cqh (relative to #table-panel's height) is a much bigger
+     unit here -- landscape's 7cqh chip would render oversized against these smaller
+     circles. Scaled down proportionally to the module's own much smaller height. */
+  #trips-spot,#ante-spot,#blind-spot,#play-spot,#light-spot{--chip:3.3cqh}
 
   #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
   #bottom-left{flex:1;height:auto}
@@ -482,7 +502,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.3</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.4</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1056,11 +1076,12 @@ function repeatLastBet(){
   }
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
-  const cost=r2((snap.ante||0)*2+(snap.trips||0));
+  const cost=r2((snap.ante||0)*2+(snap.trips||0)+(snap.progressive?PROGRESSIVE_BET:0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
   G.bets.ante=snap.ante||0;G.bets.trips=snap.trips||0;
+  if(snap.progressive)G.bets.progressive=PROGRESSIVE_BET;
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
 }
@@ -1237,7 +1258,7 @@ async function dealHand(){
   if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
   playSfx(SFX_CARD_SHUFFLE);
   G.locked={ante:data.ante,blind:data.blind,trips:data.trips,progressive:data.progressive};
-  G.lastBetSnapshot={ante:data.ante,trips:data.trips};
+  G.lastBetSnapshot={ante:data.ante,trips:data.trips,progressive:!!data.progressive};
   G.hand={playerHole:data.playerHole,community:data.community,dealerHole:null};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
