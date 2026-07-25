@@ -251,9 +251,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 /* Visible button now (was pp-invisible-btn) -- new art has no baked "Randomize" text at this
    cutout (C), unlike the old panel art. */
 #pp-randomize-btn{background:rgba(20,40,25,.55);border:1px solid rgba(140,255,157,.4);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;line-height:1.3}
-/* left:0/top:0 collides with the baked-in top bar (Game Select lives there); push it down
-   below the top bar to roughly where fp-extra-wins sits on the firing panel. */
-#placement-panel #jackpot-strip{top:14%;border-radius:8px}
 .fp-cell.ship{cursor:grab;user-select:none}
 .fp-cell.ship:active{cursor:grabbing}
 .fp-cell.drag-over{box-shadow:inset 0 0 0 3px #4a9eff;background:rgba(74,158,255,.4)}
@@ -635,9 +632,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
            style="left:4.127%;top:3.085%;width:10.048%;height:8.83%">
         🏠 HOME
       </div>
-      <!-- Moved to K (bottom strip) per Deck's letter mapping -- reuses the firing panel's
-           calibrated K coordinates (#fp-buy-area) since it's the same cutout on this
-           companion art. -->
+      <!-- Positions below are Deck's own calibrated export from the drag/resize tool
+           (fpCalibExport(), whole pixels on the 1672x940 canvas), converted to %. -->
       <div class="fp-region" id="pp-instructions" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%">Select your bet size by dragging chips to, or tapping, the bet area.
 Alter ship positions via the Randomize Ship Positions button or drag them on the game board to move them.
 Tap the northernmost cell of the ship to rotate it (room permitting, move the ship to clearer space if its not rotating).
@@ -647,27 +643,23 @@ Tap BEGIIN GAME to start the game.</div>
         <button id="pp-cashout-btn" onclick="cashOut()">Cash Out</button>
         <button onclick="logout()">Log Out</button>
       </div>
-      <div class="fp-region" id="pp-ship-0" style="left:89.533%;top:14.255%;width:8.732%;height:9.681%"></div>
-      <div class="fp-region" id="pp-ship-1" style="left:89.533%;top:28.191%;width:8.732%;height:9.681%"></div>
-      <div class="fp-region" id="pp-ship-2" style="left:89.533%;top:42.128%;width:8.732%;height:9.681%"></div>
-      <div class="fp-region" id="pp-ship-3" style="left:89.533%;top:56.809%;width:8.732%;height:12.34%"></div>
-      <!-- Moved to C (bottom-left big screen), reusing the firing panel's calibrated
-           #fp-strikes-area coordinates. No longer an invisible hitbox (pp-invisible-btn) --
-           the old art had "Randomize Ship Positions" baked into the metal there; this new art
-           doesn't, so the button needs real visible text now that it's on a blank screen. -->
+      <div class="fp-region" id="pp-ship-0" style="left:86.543%;top:15.638%;width:8.971%;height:8.83%"></div>
+      <div class="fp-region" id="pp-ship-1" style="left:86.543%;top:29.149%;width:8.912%;height:9.043%"></div>
+      <div class="fp-region" id="pp-ship-2" style="left:86.543%;top:42.447%;width:8.971%;height:9.362%"></div>
+      <div class="fp-region" id="pp-ship-3" style="left:86.723%;top:57.128%;width:8.672%;height:15.426%"></div>
+      <!-- No longer an invisible hitbox (pp-invisible-btn) -- the old art had "Randomize Ship
+           Positions" baked into the metal there; this new art doesn't, so the button needs
+           real visible text now that it's on a blank screen (C). -->
       <button class="fp-region" id="pp-randomize-btn" onclick="reRandomize()"
               style="left:4.964%;top:55.106%;width:20.036%;height:17.66%">RANDOMIZE<br>SHIP POSITIONS</button>
-      <!-- Sits on the knob now baked as "BEGIN GAME" art in DestroyerPanel_bg_setup_new.png
-           (position J, same as the firing panel's #fp-fire-btn on the equivalent knob). -->
+      <!-- Sits on the knob now baked as "BEGIN GAME" art in DestroyerPanel_bg_setup_new.png. -->
       <button class="fp-region pp-invisible-btn" id="pp-begin-btn" onclick="startBattle()"
               style="left:88.278%;top:82.34%;width:7.656%;height:13.723%">Begin</button>
       <!-- Moved to the panel's flush bottom-left corner (Deck: "The Chip Row needs to go where
            those four Initial Strike graphics on the setup screen USED to be") -- that legacy
            #free-missiles-display widget sat at left:0/bottom:0 (see movePlacementElements,
-           now deliberately not reparenting it here anymore). Approximated from that widget's
-           own dimensions (four 96x144px pips + label, see the firing panel's Initial Strikes
-           comment) -- nudge via the calibrator if it doesn't land exactly right. -->
-      <div class="fp-region" id="pp-chip-row-wrap" style="left:0.75%;top:80%;width:26%;height:19%"></div>
+           now deliberately not reparenting it there anymore). -->
+      <div class="fp-region" id="pp-chip-row-wrap" style="left:0.777%;top:80%;width:26.017%;height:19.043%"></div>
       <!-- Same structure/style as the firing screen's #fp-bet-circle (Deck: "Make the setup
            phase Bet area look identical to the Main Game's") -- replaces the old circular
            #bet-circle-wrap widget, which stacked chips and looked visually different.
@@ -2356,21 +2348,18 @@ function hideFiringScreen(){
 let _ppMoved=false,_ppGridBuilt=false;
 // Same reuse pattern as moveFiringElements: reparent existing self-contained widgets
 // (already fully wired -- rendering, click handlers, bet math) into the new panel instead
-// of rebuilding them. jackpot-strip is already position:absolute and self-anchoring, so it
-// just needs a new positioned ancestor; placement-chip-row is normally a flex:1 child of
-// #fire-center and gets its own sizing rule (see #pp-chip-row-wrap CSS) since #placement-panel
-// isn't a flex container. bet-circle-wrap is NOT reparented here anymore -- #pp-bet-circle
-// (built fresh, matching #fp-bet-circle's markup) replaces it. free-missiles-display
-// (the legacy "INITIAL STRIKES" pips) is deliberately NOT reparented here anymore (Deck: "The
-// four Initial Strike graphics in the lower left corner of the setup screen need to be GONE")
-// -- it stays in its original hidden parent (#main-area) instead, so it simply never renders
-// on the placement screen. #pp-chip-row-wrap now sits where it used to be.
+// of rebuilding them. placement-chip-row is normally a flex:1 child of #fire-center and gets
+// its own sizing rule (see #pp-chip-row-wrap CSS) since #placement-panel isn't a flex
+// container. bet-circle-wrap is NOT reparented here anymore -- #pp-bet-circle (built fresh,
+// matching #fp-bet-circle's markup) replaces it. Neither free-missiles-display (the legacy
+// "INITIAL STRIKES" pips) nor jackpot-strip ("Extra Wins") are reparented here anymore (Deck:
+// "The four Initial Strike graphics... need to be GONE" / "Remove the Extra Wins from the
+// setup screen") -- both stay in their original hidden parent (#main-area) instead, so they
+// simply never render on the placement screen. #pp-chip-row-wrap now sits where
+// free-missiles-display used to.
 function movePlacementElements(){
   if(_ppMoved)return;
   _ppMoved=true;
-  const panel=document.getElementById('placement-panel');
-  const jackpot=document.getElementById('jackpot-strip');
-  if(panel&&jackpot)panel.appendChild(jackpot);
   const chipRowWrap=document.getElementById('pp-chip-row-wrap');
   const chipRow=document.getElementById('placement-chip-row');
   if(chipRowWrap&&chipRow)chipRowWrap.appendChild(chipRow);
