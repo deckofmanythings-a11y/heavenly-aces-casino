@@ -271,16 +271,18 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    later wins per-property) rather than editing those in place, so the pre-panel values stay
    visible in a diff. */
 .bs-label{font-size:min(58px,8.4vw)}
-.bs-sub{font-size:min(30px,5.4vw)}
 /* Shrunk back down (Deck) -- the readability-pass sizes above were tuned before the panel
    moved to individually-calibrated per-cell boxes; Totals cells especially are now much
    tighter (~5.8% x 7.5% of the panel) than the old full-row placement, so 56px/30px badly
    overflowed a 3-line cell (number + payout + stack). */
 .tot-num{font-size:min(32px,5vw)}
 .tot-pay{font-size:min(16px,2.6vw)}
-/* SMALL/BIG only, not the shared .at-lbl class (which Any Triple's ANY/TRIPLE labels also
-   use, and those weren't reported as oversized) -- scoped so this doesn't touch Any Triple. */
-#btn-small .at-lbl,#btn-big .at-lbl{font-size:20px}
+/* SMALL/BIG word swapped to be the dominant size (Deck), with the descriptive sub-text
+   ("Numbers from 4 to 10..."/"1 pays 1") shrunk down to make room instead -- was the reverse
+   (20px label, 30px sub-text). .bs-sub is only ever used inside these two cells, so no
+   scoping needed there like .at-lbl needed. */
+#btn-small .at-lbl,#btn-big .at-lbl{font-size:30px}
+.bs-sub{font-size:min(14px,2.4vw)}
 .at-lbl{font-size:36px}
 .at-pay{font-size:27px}
 .trip-pay{font-size:24px}
