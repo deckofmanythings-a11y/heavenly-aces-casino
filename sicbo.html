@@ -1267,7 +1267,7 @@ const SB_CELL_POS={
   'cell-any4':[43.600,78.321,12.380,7.864],
   'cell-any5':[57.237,78.321,12.500,7.864],
   'cell-any6':[71.172,78.321,12.500,7.864],
-  'cell-any-info':[86.782,78.215,12.022,7.758],
+  'cell-any-info':[86.782,78.533,12.022,7.439],
 };
 // Applies SB_CELL_POS[id] to el as an absolute position, falling back to a visible-but-
 // obviously-wrong spot (so a missing entry is easy to spot) rather than silently no-op-ing.
@@ -1389,7 +1389,7 @@ function buildTable(){
   // 7th cell: payout info (I7)
   const infoCell=document.createElement('div');
   infoCell.className='any-cell';
-  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(22px,3.6vw);color:#111;line-height:1.4;pointer-events:none';
+  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(21px,3.5vw);color:#111;line-height:1.4;pointer-events:none';
   infoCell.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
   sbPosition(infoCell,'cell-any-info');
   an.appendChild(infoCell);
