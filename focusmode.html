@@ -87,6 +87,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .hud-item{display:flex;flex-direction:column}
 .hud-lbl{font-size:17px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
 .hud-val{font-size:19px;font-weight:600;line-height:1.3}
+.info-i{display:inline-block;margin-left:4px;font-size:.85em;color:rgba(255,255,255,.45);cursor:help;text-transform:none;letter-spacing:0}
+.info-i:hover{color:rgba(255,255,255,.85)}
 
 
 /* ── PLAY AREA ── */
@@ -828,7 +830,7 @@ body.felt-mode #felt-stage .off-ov{display:none!important}
 /* ===== FULLSCREEN FELT: top & bottom UI bands ===== */
 body.felt-mode #top-row{display:none!important}
 body.felt-mode #felt-stage #left-col-header{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;flex-direction:column;gap:0;display:flex}
-body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px}
+body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;gap:1px}
 /* #left-col-header and #info-panel are both pinned to a FIXED PERCENTAGE of felt-stage's own
    size (see FELT_LAYOUT), not the viewport -- on a short landscape phone felt-stage itself can
    shrink to just a few hundred px, so a fixed 12.6% width box becomes far too narrow for its
@@ -840,8 +842,12 @@ body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;bac
 body.felt-mode #felt-stage #info-panel .info-btn{font-size:calc(var(--chip)*0.36);padding:calc(var(--chip)*0.08) calc(var(--chip)*0.14);white-space:nowrap}
 body.felt-mode #felt-stage #info-panel .hud-lbl{font-size:calc(var(--chip)*0.26)}
 body.felt-mode #felt-stage #info-panel .hud-val{font-size:calc(var(--chip)*0.32)}
+body.felt-mode #felt-stage #info-panel .info-i{font-size:calc(var(--chip)*0.22)}
+body.felt-mode #felt-stage #info-panel #mute-voices-btn,
+body.felt-mode #felt-stage #info-panel #info-modal-btn{font-size:calc(var(--chip)*0.26)!important;width:calc(var(--chip)*0.36)!important;padding:calc(var(--chip)*0.02) 0!important}
 body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--chip)*0.34)!important}
-body.felt-mode #felt-stage #info-panel .bullet-icon{width:calc(var(--chip)*0.11)!important}
+body.felt-mode #felt-stage #info-panel .info-row:nth-child(2) .info-btn{font-size:calc(var(--chip)*0.30)!important;padding:calc(var(--chip)*0.06) calc(var(--chip)*0.11)!important}
+body.felt-mode #felt-stage #info-panel .bullet-icon{width:calc(var(--chip)*0.12)!important}
 body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.34);padding:calc(var(--chip)*0.1) calc(var(--chip)*0.12)}
 body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.26)}
 /* Game selector went from one collapsed row to an always-visible 3-row grid (Deck: "make all
@@ -861,7 +867,6 @@ body.felt-compact #felt-stage #info-panel .info-row:nth-child(2) .info-btn::befo
 body.felt-compact #felt-stage #info-panel #finances-btn::before{content:"💰"}
 body.felt-compact #felt-stage #info-panel #redeem-btn-top::before{content:"🎟️"}
 body.felt-compact #felt-stage #info-panel #cashout-btn::before{content:"💵"}
-body.felt-compact #felt-stage #info-panel #logout-btn::before{content:"⏻"}
 /* The caret's own text isn't part of the icon swap above (::before adds the icon glyph,
    it doesn't remove the button's real text) -- font-size:0 on .info-btn already silences
    "Finances", but #finances-caret is a separate inline span with its own font-size, so
@@ -1380,7 +1385,7 @@ body.portrait-craps #felt-portrait{display:flex}
       <div class="info-row">
         <span id="top-bar-username" onclick="dNav('index.html')" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
         <button class="info-btn" id="mute-voices-btn" onclick="toggleMuteVoices()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0" title="Mute Voices">🔊</button>
-        <button class="info-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
+        <button class="info-btn" id="info-modal-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
       </div>
       <div class="info-row">
         <div id="finances-wrap">
@@ -1393,15 +1398,14 @@ body.portrait-craps #felt-portrait{display:flex}
           </div>
         </div>
         <button class="info-btn" onclick="dNav('dailies.html')" style="flex:1">🗓️ Dailies</button>
-        <button class="info-btn" id="logout-btn" onclick="logout()" style="flex:1">Log Out</button>
       </div>
-<div class="hud-item" id="hud-lastwin-row"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e;font-size:15px;line-height:1.25">—</div></div>
+<div class="hud-item" id="hud-lastwin-row"><div class="hud-lbl">Last Win<span id="hud-lastwin-info" class="info-i" title="">ⓘ</span></div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e;font-size:15px;line-height:1.25">—</div></div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
         <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
       </div>
-      <div id="bullets-row" style="display:none;align-items:center;gap:2px;flex-wrap:wrap"></div>
+      <div id="bullets-row" style="display:none;align-items:center;gap:3px;flex-wrap:wrap"></div>
 
     </div>
   </div><!-- end top-row -->
@@ -1635,7 +1639,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.4</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.7.5</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1800,7 +1804,7 @@ const FELT_LAYOUT=[
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
-  ['#info-panel',     82.50, 0.70,17.00,17.00,null],
+  ['#info-panel',     82.50, 0.70,17.00,20.50,null],
   // Crapless's OFF-puck anchor (Deck: "smack dab in the middle of the space between Lucky
   // Roller and the upper right info box") -- x is the midpoint of #lucky-roller's right edge
   // (38.125+24.219=62.344) and #info-panel's left edge (82.50): (62.344+82.50)/2=72.422. y is
@@ -2488,7 +2492,7 @@ function renderBullets(){
   for(let i=0;i<G.bulletCount;i++){
     const isCurrent=i===G.bulletIndex,isSpent=i<G.bulletIndex,isNext=i===G.bulletIndex+1;
     const style=isSpent?'opacity:.28;filter:grayscale(1)':isCurrent?'opacity:1;filter:drop-shadow(0 0 4px #ffd700)':'opacity:.55';
-    html+='<img class="bullet-icon" src="bullet.png" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="width:14px;height:auto;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
+    html+='<img class="bullet-icon" src="bullet.png" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="width:18px;height:auto;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
   }
   row.innerHTML=html;
 }
@@ -4404,7 +4408,13 @@ function updateUI(){
   renderBullets();
   document.getElementById('hud-bet').textContent=fmt(tBets());
   document.getElementById('hud-lastbet').textContent=(G._lastBetDisplay&&G._lastBetDisplay>0)?fmt(G._lastBetDisplay):'—';
-  document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtLastWin(G.lastWinBreakdown):'—';
+  {
+    const hasWin=G.lastWin>0;
+    document.getElementById('hud-lastwin').textContent=hasWin?('+'+fmt(G.lastWin)):'—';
+    const infoEl=document.getElementById('hud-lastwin-info');
+    infoEl.title=hasWin?fmtLastWin(G.lastWinBreakdown):'';
+    infoEl.style.visibility=hasWin?'visible':'hidden';
+  }
   const act=bActive();
   const bsEl=document.getElementById('bets-status-bar');bsEl.textContent=act?'ON':'OFF';bsEl.style.color=act?'rgba(100,255,150,.8)':'rgba(255,200,0,.8)';
   const betonBtn=document.getElementById('beton-btn');
