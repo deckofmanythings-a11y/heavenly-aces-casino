@@ -2861,6 +2861,19 @@ function spawnWinPair(elId,amt,stays){
   let targetLeft=rect.left-rect.width-gap;
   if(targetLeft<4)targetLeft=rect.right+gap;
 
+  // TEMP DEBUG (Deck, 2026-07-25): prove this code path actually runs in production by
+  // blanking the felt for the exact duration of the chip-sweep. Remove once the
+  // invisible-win-stack issue is diagnosed -- see project_craps_win_animation_dealer_sweep
+  // memory note for context.
+  document.body.style.background='#ff00ff';
+  const feltStageDbg=document.getElementById('felt-stage');
+  const prevFeltBg=feltStageDbg?feltStageDbg.style.background:'';
+  if(feltStageDbg)feltStageDbg.style.background='#ff00ff';
+  setTimeout(()=>{
+    document.body.style.background='';
+    if(feltStageDbg)feltStageDbg.style.background=prevFeltBg;
+  },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+150);
+
   const winGhost=document.createElement('div');
   winGhost.className='chip-ghost';
   winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
