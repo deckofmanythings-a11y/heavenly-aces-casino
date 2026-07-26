@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Craps — Focus Mode</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
@@ -1704,7 +1706,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.15</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.16</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2463,6 +2465,34 @@ function resetPoint(){
 // client rolled back to the server's stale state -- point and locked bet both came back, and
 // whatever new bets got placed in between were wiped since they were never actually persisted.
 // This mirrors saveCleanState()'s exact write (used when switching game modes) applied in place.
+//
+// All three of these writes used to go straight from the browser to `players` via the anon key
+// (sb.from('players').update(...)) -- worked fine until RLS got enabled on that table with no
+// permissive anon UPDATE policy, at which point every one of them started failing with error
+// 42501 ("new row violates row-level security policy"), silently. That's the actual cause behind
+// "Reset Point seems to work, but the next roll brings the old point/bet back": the reset never
+// reached the server at all, no matter how long the player waited first. Fixed properly (not by
+// opening RLS to anon writes on a table that also holds bankroll/session_token) by moving the
+// write server-side into the save-game-state Edge Function, authenticated by session_token like
+// every roll-*/cashout/redeem call already is. It deliberately only ever writes a hardcoded-clean
+// (always-empty-bets) sub-state or flips which mode is active -- never arbitrary client-supplied
+// bets/point/passLocked -- so there's no path for a client to inject a "won" bet it never paid for.
+async function callSaveGameState(payload){
+  if(!currentPlayer||G.practiceMode)return{ok:true};
+  const token=localStorage.getItem('craps_session');
+  try{
+    const res=await fetch(FUNCTIONS_URL+'/save-game-state',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({session_token:token,...payload})
+    });
+    const data=await res.json();
+    if(data.ok&&data.game_state)currentPlayer.game_state=data.game_state;
+    return data;
+  }catch(e){
+    return{ok:false,message:e&&e.message?e.message:'Network error.'};
+  }
+}
 // Set while the clean state above is still being written to the server -- hiding the modal
 // happens synchronously, so without this a player who hits Roll immediately after confirming
 // (the await below yields to the event loop, and the UI stays clickable during that gap) could
@@ -2480,28 +2510,13 @@ async function resetTableToComeOut(){
   G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
   if(currentPlayer&&!G.practiceMode){
-    const existingGs=currentPlayer.game_state||{};
-    const cleanGs={...existingGs,[activeGame]:{
-      phase:'comeout',point:null,betsOn:false,betsOffThisRoll:false,passLocked:false,
-      bets:{},comeBets:[],dcBets:[],rollHistory:G.rollHistory,
-      lastWin:G.lastWin,bankrollAfterLastRoll:G.bankrollAfterLastRoll,snapshot:G.snapshot,canRepeat:G.canRepeat,
-      bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,
-             lowHit:[],highHit:[],lowComplete:false,highComplete:false,
-             open:true,locked:false,gracePeriod:false},
-    }};
-    currentPlayer.game_state=cleanGs;
     savingTableState=true;
     const rollBtn=document.getElementById('roll-btn');if(rollBtn)rollBtn.disabled=true;
     try{
-      // Never actually checked for a write error before -- if this silently failed (RLS,
-      // network, anything), the client would look reset while the server's stored state
-      // stayed exactly as it was, guaranteeing the next roll gets bounced as a sync error
-      // no matter how long the player waits first. Logged loudly so a real failure here is
-      // finally distinguishable from the race condition savingTableState guards against.
-      const{error}=await sb.from('players').update({game_state:cleanGs}).eq('id',currentPlayer.id);
-      if(error){
-        console.error('[resetTableToComeOut] game_state write failed:',error);
-        addLog('Warning: the table reset may not have saved (' +(error.message||'unknown error')+ '). If your next roll gets reverted, try again.','lose');
+      const data=await callSaveGameState({cleanMode:activeGame,rollHistory:G.rollHistory,lastWin:G.lastWin,bankrollAfterLastRoll:G.bankrollAfterLastRoll,snapshot:G.snapshot,canRepeat:G.canRepeat});
+      if(!data.ok){
+        console.error('[resetTableToComeOut] save-game-state failed:',data.message);
+        addLog('Warning: the table reset may not have saved (' +(data.message||'unknown error')+ '). If your next roll gets reverted, try again.','lose');
       }
     }finally{
       savingTableState=false;
@@ -2703,21 +2718,8 @@ async function saveCleanState(mode){
   G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
   G.comeBets=[];G.dcBets=[];G.bonus=makeInitialG().bonus;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
-  if(currentPlayer){
-    const existingGs=currentPlayer.game_state||{};
-    const cleanGs={...existingGs,[mode]:{
-      phase:'comeout',point:null,betsOn:false,betsOffThisRoll:false,passLocked:false,
-      bets:{},comeBets:[],dcBets:[],rollHistory:G.rollHistory,
-      lastWin:0,bankrollAfterLastRoll:G.bankrollAfterLastRoll,snapshot:null,canRepeat:false,
-      bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,
-             lowHit:[],highHit:[],lowComplete:false,highComplete:false,
-             open:true,locked:false,gracePeriod:false},
-    }};
-    currentPlayer.game_state=cleanGs;
-    await sb.from('players').update({
-      game_state:cleanGs,
-    }).eq('id',currentPlayer.id);
-  }
+  const data=await callSaveGameState({cleanMode:mode,rollHistory:G.rollHistory,bankrollAfterLastRoll:G.bankrollAfterLastRoll});
+  if(!data.ok)console.error('[saveCleanState] save-game-state failed:',data.message);
 }
 
 async function switchGameMode(mode){
@@ -2737,10 +2739,8 @@ async function switchGameMode(mode){
       G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
     }
     if(currentPlayer){
-      const existingGs=currentPlayer.game_state||{};
-      const newGs={...existingGs,activeGame:mode};
-      currentPlayer.game_state=newGs;
-      await sb.from('players').update({game_state:newGs}).eq('id',currentPlayer.id);
+      const data=await callSaveGameState({activeMode:mode});
+      if(!data.ok)console.error('[switchGameMode] save-game-state failed:',data.message);
       // Re-sync bankroll from the server's real value rather than trusting whatever the client
       // currently has -- defense in depth against the two tables' balances ever drifting apart
       // again (see the big comment on saveCleanState for how that happened before).
