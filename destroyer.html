@@ -189,6 +189,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .fp-cell.targeted{outline:2px solid #fff;outline-offset:-2px;z-index:1}
 .fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible}
 .fp-ship-img-wrap img{width:100%;height:auto;opacity:.9;display:block}
+/* Missile flight animation (Deck) -- a ship sprite sweeps the full row or column the strike
+   lands in, off one edge of the board to the other, crossing the target cell partway through
+   (see playMissileFlight()). z-index above everything else on the board (ships z-index:2,
+   hit/miss markers z-index:4) so it's unambiguously flying OVER the board, not part of it.
+   The offset drop-shadow pair (not a centered blur) is what actually sells "elevated" -- a
+   centered shadow just reads as a glow, an offset one reads as a gap between the sprite and
+   the surface below it. */
+#fp-missile-fx{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible}
+.fp-missile-sprite{position:absolute;width:15%;height:auto;transform:translate(-50%,-50%);filter:drop-shadow(10px 16px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(0,0,0,.25));}
 
 /* ── PANEL CALIBRATION MODE -- same drag/resize-box pattern as Focus Mode Craps's calibrator
    (calibExport() there), adapted to each baked-art panel's fixed 1672x940 canvas instead of
@@ -238,6 +247,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    B's corner -- see the function's own comment for why. */
 #pp-axis-labels{position:absolute;inset:0;z-index:3;pointer-events:none}
 .pp-axis-die{position:absolute;width:2.1%;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+/* Firing screen's version of the above -- same grid geometry (shared FP_GRID_LEFT/U/V), same
+   B-corner clearance concern, was just never built when the placement one was (Deck: "The
+   labels for the grid are missing in the Fire mode"). */
+#fp-axis-labels{position:absolute;inset:0;z-index:3;pointer-events:none}
+.fp-axis-die{position:absolute;width:2.1%;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
 /* placement-chip-row is normally a flex:1 child of #fire-center; reparented here (not
    rebuilt, same reuse pattern as moveFiringElements' buy-btn/dice canvas) it needs its own
    sizing since #placement-panel isn't a flex container. Moved to the panel's flush
@@ -972,17 +986,22 @@ function getShipAdjust(key,horiz){
 const DIAMOND_SY = 0.5;
 
 // ── DICE IMAGES ───────────────────────────────────────────────────────────────
-const DIE_LETTER_IMG = {A:'DieA.png',B:'DieB.png',C:'DieC.png',D:'DieD.png',E:'DieE.png',F:'DieF.png'};
-const DIE_NUMBER_IMG = {1:'DieRed1.png',2:'DieRed2.png',3:'DieRed3.png',4:'DieRed4.png',5:'DieRed5.png',6:'DieRed6.png'};
+// Repointed to the RedDNS_X/WhiteDNS_X 3D-look art everywhere (Deck: "You should be using
+// RedDNS_X and WhiteDNS_X for the label dice. The other dice (DieX, DieRedX) should be moved
+// to the OLD assets folder") -- every call site already indexes DIE_LETTER_IMG by letter
+// string and DIE_NUMBER_IMG by 1-6 number, so repointing here covers axis labels, roll
+// history, and result text in one place with no call-site changes needed. DieA-F.png/
+// DieRed1-6.png confirmed unreferenced anywhere else in the project before moving them to
+// OLD_assets/.
+const DIE_LETTER_IMG = {A:'RedDNS_A.png',B:'RedDNS_B.png',C:'RedDNS_C.png',D:'RedDNS_D.png',E:'RedDNS_E.png',F:'RedDNS_F.png'};
+const DIE_NUMBER_IMG = {1:'WhiteDNS_1.png',2:'WhiteDNS_2.png',3:'WhiteDNS_3.png',4:'WhiteDNS_4.png',5:'WhiteDNS_5.png',6:'WhiteDNS_6.png'};
 // ClocheDice.roll() only accepts 1-6 integers, so the letter die's faces are driven by
-// this 1-6 mapping under the hood -- DIE_LETTER_IMG_NUM supplies the matching face art
-// (DieA..DieF) via ClocheDice's faceImagesPerDie so the physics die still shows letters.
+// this 1-6 mapping under the hood -- DIE_LETTER_IMG_NUM_3D below supplies the matching face
+// art via ClocheDice's faceImagesPerDie so the physics die still shows letters.
 const LETTER_TO_NUM = {A:1,B:2,C:3,D:4,E:5,F:6};
 const NUM_TO_LETTER = {1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
-const DIE_LETTER_IMG_NUM = {1:'DieA.png',2:'DieB.png',3:'DieC.png',4:'DieD.png',5:'DieE.png',6:'DieF.png'};
-// 3D-die-only face art (cloche overlay + the small inline settled-result pair) -- distinct
-// from DIE_LETTER_IMG/DIE_NUMBER_IMG above, which stay on the old flat icon set since those
-// are also used for 2D contexts (roll history, missile pips) that weren't part of this request.
+// Same RedDNS_X/WhiteDNS_X art as above, just keyed 1-6 instead of by letter string --
+// needed wherever a 1-6-keyed map is required (ClocheDice's faceImagesPerDie).
 const DIE_LETTER_IMG_NUM_3D = {1:'RedDNS_A.png',2:'RedDNS_B.png',3:'RedDNS_C.png',4:'RedDNS_D.png',5:'RedDNS_E.png',6:'RedDNS_F.png'};
 const DIE_NUMBER_IMG_3D = {1:'WhiteDNS_1.png',2:'WhiteDNS_2.png',3:'WhiteDNS_3.png',4:'WhiteDNS_4.png',5:'WhiteDNS_5.png',6:'WhiteDNS_6.png'};
 
@@ -1048,6 +1067,76 @@ function landDestDice(letter,number){
 
 // ── MISSILE FLAVOR IMAGES ────────────────────────────────────────────────────
 const MISSILE_IMG = {initial:'InitialMissile.png',extra:'ExtraMissile.png'};
+// Ship sprites for the missile-flight animation (Deck) -- each image is already oriented for
+// its named diagonal, matching the firing grid's two axes exactly: the grid is a rotated
+// parallelogram where moving along the letter axis (FP_GRID_U, fixed number) runs top-left to
+// bottom-right on screen, and moving along the number axis (FP_GRID_V, fixed letter) runs
+// bottom-left to top-right -- so a "row" strike (fixed number) flies the topleft_to_botright
+// sprite, and a "column" strike (fixed letter) flies the topright_to_botleft sprite in the
+// opposite (number descending) direction. See playMissileFlight() for the geometry.
+const MISSILE_FLIGHT_IMG={
+  row:{initial:'initialstrike_topleft_to_botright.png',extra:'buymissile_topleft_to_botright.png'},
+  col:{initial:'initialstrike_topright_to_botleft.png',extra:'buymissile_topright_to_botleft.png'}
+};
+function fpMissileFxLayer(){
+  let layer=document.getElementById('fp-missile-fx');
+  if(!layer){
+    layer=document.createElement('div');
+    layer.id='fp-missile-fx';
+    document.getElementById('firing-panel').appendChild(layer);
+  }
+  return layer;
+}
+// Flies a ship sprite across the FULL row or column the target cell sits on (randomly chosen
+// per Deck's ask), entering from off one edge of the board and exiting off the other, firing
+// onHitCross() at the exact instant it passes over the target cell -- callers use that to
+// trigger the hit/miss cell flash in sync with the sprite passing overhead, replacing the old
+// flat 350ms timer. i/j below are the SAME geometric grid coordinates fpCellCorners uses
+// (i=letter column 0-5, j=GRID_SIZE-1-serverRow), not the raw server row/col, so the flight
+// path lines up with the actual baked-art grid exactly like every other overlay on this panel.
+// Returns a Promise resolving once the sprite has flown fully off-board and been removed.
+function playMissileFlight(serverRow,serverCol,missileType,onHitCross){
+  return new Promise(resolve=>{
+    const axis=Math.random()<0.5?'row':'col';
+    const iTarget=serverCol,jTarget=GRID_SIZE-1-serverRow;
+    const MARGIN=0.85; // how far past the board edge the sprite starts/ends (in cell units)
+    let p0,p1,tHit;
+    if(axis==='row'){
+      // Fixed number (j), letter (i) sweeps low-to-high -- matches FP_GRID_U's own comment
+      // that increasing i runs top-left to bottom-right on screen.
+      p0=fpAxisPoint(-MARGIN,jTarget+0.5);
+      p1=fpAxisPoint(GRID_SIZE+MARGIN,jTarget+0.5);
+      tHit=(iTarget+0.5+MARGIN)/(GRID_SIZE+2*MARGIN);
+    }else{
+      // Fixed letter (i), number (j) sweeps high-to-low -- matches FP_GRID_V's own comment
+      // that increasing j runs bottom-left to top-right, so descending j is top-right to
+      // bottom-left, the topright_to_botleft sprite's actual orientation.
+      p0=fpAxisPoint(iTarget+0.5,GRID_SIZE+MARGIN);
+      p1=fpAxisPoint(iTarget+0.5,-MARGIN);
+      tHit=(GRID_SIZE+MARGIN-(jTarget+0.5))/(GRID_SIZE+2*MARGIN);
+    }
+    const layer=fpMissileFxLayer();
+    const img=document.createElement('img');
+    img.className='fp-missile-sprite';
+    img.src=MISSILE_FLIGHT_IMG[axis][missileType==='extra'?'extra':'initial'];
+    img.style.left=fpPct(p0.x,FP_W)+'%';
+    img.style.top=fpPct(p0.y,FP_H)+'%';
+    layer.appendChild(img);
+    const DURATION=2000; // ms -- "slowly fly over"
+    let hitFired=false;
+    const start=performance.now();
+    function frame(now){
+      const t=Math.min(1,(now-start)/DURATION);
+      const x=p0.x+(p1.x-p0.x)*t,y=p0.y+(p1.y-p0.y)*t;
+      img.style.left=fpPct(x,FP_W)+'%';
+      img.style.top=fpPct(y,FP_H)+'%';
+      if(!hitFired&&t>=tHit){hitFired=true;if(onHitCross)onHitCross();}
+      if(t<1)requestAnimationFrame(frame);
+      else{img.remove();resolve();}
+    }
+    requestAnimationFrame(frame);
+  });
+}
 const SHIP_LENGTHS=[2,3,3,4];
 const SHIP_NAMES=['Destroyer','Battleship','Battleship','Carrier'];
 const SHIP_DISPLAY_NAMES=['Destroyer','Battleship 1','Battleship 2','Carrier'];
@@ -1579,23 +1668,25 @@ async function fireMissile(){
   try{await clochePromise;}catch(e){}
   landDestDice(roll.letter,displayNumber);
   document.getElementById('last-result-text').textContent=(hit?'💥 HIT!':'💧 Miss')+' '+roll.letter+displayNumber;
-  // Flash target cell
+  // Track free missiles: decrement one for the fired missile, add back if free earned. Moved
+  // above the flight/flash block below (was after it) so firedType is known in time to pick
+  // the right missile-flight sprite (initial vs. bought).
+  if(!G.missileQueue)G.missileQueue=[];
+  const firedType=G.missileQueue.length?G.missileQueue.shift():'initial';
+  // Fly a ship sprite across the target's full row/column (Deck), triggering the cell flash
+  // at the moment it crosses the target instead of a flat 350ms timer.
   {
     const cellEl=document.querySelector('#fp-grid-cells .fp-cell[data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
     const markerEl=document.querySelector('#fp-grid-cells .fp-cell-marker[data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
-    if(cellEl){
-      cellEl.classList.add('targeted');
-      setTimeout(()=>{
-        cellEl.classList.remove('targeted');
-        cellEl.className='fp-cell '+(hit?'hit':'miss');
-        if(markerEl)markerEl.className='fp-cell-marker '+(hit?'hit':'miss');
-        hit?playHitSound():playMissSound();
-      },350);
-    }
+    if(cellEl)cellEl.classList.add('targeted');
+    playMissileFlight(roll.row,roll.col,firedType,()=>{
+      if(!cellEl)return;
+      cellEl.classList.remove('targeted');
+      cellEl.className='fp-cell '+(hit?'hit':'miss');
+      if(markerEl)markerEl.className='fp-cell-marker '+(hit?'hit':'miss');
+      hit?playHitSound():playMissSound();
+    });
   }
-  // Track free missiles: decrement one for the fired missile, add back if free earned
-  if(!G.missileQueue)G.missileQueue=[];
-  const firedType=G.missileQueue.length?G.missileQueue.shift():'initial';
   const wasPendingBuyDim=G.pendingBuyDim;G.pendingBuyDim=false;
   if(G.freeMissiles>0)G.freeMissiles--;
   if(data.freeMissile){
@@ -2177,6 +2268,36 @@ function buildPlacementAxisLabels(){
   }
   panel.appendChild(wrap);
 }
+// Firing screen's version of buildPlacementAxisLabels -- same geometry, same clearance
+// reasoning, just never built alongside it (Deck: "The labels for the grid are missing in
+// the Fire mode").
+function buildFiringAxisLabels(){
+  if(document.getElementById('fp-axis-labels'))return;
+  const panel=document.getElementById('firing-panel');
+  if(!panel)return;
+  const wrap=document.createElement('div');
+  wrap.id='fp-axis-labels';
+  const LETTERS=['A','B','C','D','E','F'];
+  for(let i=0;i<6;i++){
+    const p=fpAxisPoint(i+0.5,-0.42);
+    const img=document.createElement('img');
+    img.className='fp-axis-die';
+    img.src=DIE_LETTER_IMG[LETTERS[i]];
+    img.style.left=fpPct(p.x,FP_W)+'%';
+    img.style.top=fpPct(p.y,FP_H)+'%';
+    wrap.appendChild(img);
+  }
+  for(let j=0;j<6;j++){
+    const p=fpAxisPoint(6.42,j+0.5);
+    const img=document.createElement('img');
+    img.className='fp-axis-die';
+    img.src=DIE_NUMBER_IMG[j+1];
+    img.style.left=fpPct(p.x,FP_W)+'%';
+    img.style.top=fpPct(p.y,FP_H)+'%';
+    wrap.appendChild(img);
+  }
+  panel.appendChild(wrap);
+}
 
 // ── PANEL CALIBRATION MODE ──────────────────────────────────────────────────
 // Same drag/resize-box pattern as Focus Mode Craps's calibrator, adapted to the baked-art
@@ -2347,6 +2468,7 @@ function showFiringScreen(){
   });
   const fs=document.getElementById('firing-screen');if(fs)fs.classList.add('active');
   if(!_fpGridBuilt)buildFiringGrid();
+  buildFiringAxisLabels();
   sizeDestroyerPanel();
 }
 function hideFiringScreen(){
