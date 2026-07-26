@@ -3,21 +3,42 @@
 // Core design (identical principle to ClocheDice, see references/dice-engine.md): this module
 // NEVER decides the outcome. It takes a promise that resolves to the server-decided pocket
 // and forces the ball to land there while still looking like a real, unpredictable spin:
-//   1. Snapshots the ball/wheel physics state at the moment the true spin begins.
-//   2. Silently pre-simulates the spin with a seeded RNG and fixed timestep to learn which
-//      physical pocket slot the ball naturally comes to rest over.
+//   1. Snapshots the ball's real physics state (position/velocity/quaternion) at the moment the
+//      true spin begins.
+//   2. Silently pre-simulates the spin (real cannon.js rigid-body physics, fixed timestep, no
+//      per-step randomness at all) to learn which physical pocket slot the ball naturally comes
+//      to rest over. cannon.js stepping is bit-for-bit deterministic given identical initial
+//      conditions and timestep sequence (verified empirically before relying on it) -- unlike the
+//      dice, which do inject seeded per-step randomness and therefore need a seed to replay
+//      identically, this sim needs none: the SAME baseline always produces the SAME outcome.
 //   3. Restores the snapshot, relabels the wheel's number ring (rotates which drawn slot shows
 //      which number) so the server's target pocket sits at that natural resting slot, then
-//      replays the identical seeded simulation live.
+//      replays the identical simulation live.
 //   4. Verifies at rest that the displayed pocket matches; relabels again if it ever drifts.
 //
-// Physics model: real velocity/friction/gravity-driven integration (angle, radius, height —
-// polar, since the ball's whole world is a bowl) rather than full rigid-body collision meshes
-// for 38 separate frets. This is the same fidelity tradeoff cloche-dice.js already makes
-// elsewhere (resolveStep hand-kicks velocities every step rather than solving pure unconstrained
-// contact physics) — a lightweight deterministic model, not a canned CSS rotation.
+// Physics model: this is REAL rigid-body physics (cannon.js integrating actual forces and
+// collisions), the same foundation cloche-dice.js is built on -- not a hand-tuned formula
+// dressed up to look physics-ish (an earlier version of this file was exactly that, and it
+// showed: no amount of tuning radius/height lerp curves made it feel real, because it wasn't).
+//   - Ball: a real CANNON.Sphere body, real gravity, real damping.
+//   - Bowl slope: a RING OF FLAT BOX "PLANKS" tilted to the slope angle, not a single curved
+//     CANNON.Cylinder shape -- confirmed empirically that this cannon.js build's Cylinder
+//     contact resolution does not let a resting sphere slide down even a shallow slope (a
+//     genuine library limitation, not a tuning problem: a plain tilted Box does slide a sphere
+//     correctly with the same friction coefficient). A ring of small flat planks is the exact
+//     technique cloche-dice.js already uses for its walls, just tilted instead of vertical, and
+//     it produces a real, emergent spiral-down-as-speed-decays descent -- confirmed by direct
+//     simulation, not assumed.
+//   - Outer wall: a ring of flat CANNON.Box segments, the same proven pattern as the dice
+//     cloche's glass walls.
+//   - Frets (pocket dividers): a single KINEMATIC compound body (N box shapes), rotated by
+//     directly setting its quaternion from the deterministic wheel angle each step -- real
+//     contact-resolution bounces off a really-moving body, not a scripted "kick" formula.
+//   - "Settled" = the ball's actual angular velocity has converged to the wheel's (it's genuinely
+//     riding along, sustained for a hold window), not a fixed step count and not "speed near
+//     zero" -- a ball riding a spinning wheel has real nonzero linear speed, that's correct.
 //
-// Requires (load before it): three.min.js
+// Requires (load before it): three.min.js, cannon.min.js
 //
 // Usage:
 //   RouletteWheel.init({ container: 'wheel-wrap' });
@@ -34,10 +55,11 @@
     container: null,      // element id or DOM node to mount the canvas into
     wheelRadius: 1.6,
     ballRadius: 0.09,
-    maxResolveSteps: 2400, // safety cap on the orbit phase only (~20s at 120Hz) -- everything
-                           // after dropStart is a fixed step budget, see DESCENT_STEPS/POCKET_STEPS
+    maxResolveSteps: 9000, // safety cap (~75s at 120Hz) on the whole resolve, in case the ball
+                           // somehow never converges on a given throw -- practically unreachable.
   };
   const STEP = 1 / 120;
+  const Y_AXIS_LOCAL = { x: 0, y: 1, z: 0 }; // plain object; turned into CANNON.Vec3 lazily below
 
   const WHEEL_ORDER = ['0', 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1,
     '00', 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2].map(String);
@@ -46,7 +68,7 @@
   const RED = new Set(['1','3','5','7','9','12','14','16','18','19','21','23','25','27','30','32','34','36']);
   function colorOf(pocket) { return (pocket === '0' || pocket === '00') ? 'green' : (RED.has(pocket) ? 'red' : 'black'); }
 
-  let THREE_ = null;
+  let THREE_ = null, CANNON_ = null;
   let inited = false;
   let scene, camera, renderer, canvasEl, rafId, lastTime = 0;
   let wheelMesh, wheelCanvas, wheelCtx, wheelTexture, ballMesh, pointerMesh;
@@ -72,22 +94,11 @@
     osc.start(t0); osc.stop(t0 + 0.05);
   }
 
-  // ---------- deterministic RNG (identical algorithm to ClocheDice's, kept independent) ----------
-  function mulberry32(seed) {
-    let a = seed >>> 0;
-    return function () {
-      a |= 0; a = (a + 0x6D2B79F5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
   // ---------- wheel number-ring texture (the "relabel" surface) ----------
   function buildWheelTexture() {
-    const size = 1536; // higher-res than the old 1024 -- the wheel now renders meaningfully
-                        // larger on screen (see #wheel-wrap in roulette.html), so the texture
-                        // needs more source pixels per label to stay crisp instead of blurry.
+    const size = 1536; // higher-res than an earlier 1024 -- the wheel renders large enough on
+                        // screen (see #wheel-wrap in roulette.html) that labels need more source
+                        // pixels to stay crisp instead of blurry.
     wheelCanvas = document.createElement('canvas');
     wheelCanvas.width = size; wheelCanvas.height = size;
     wheelCtx = wheelCanvas.getContext('2d');
@@ -135,7 +146,7 @@
 
   // ---------- scene ----------
   function buildScene() {
-    THREE_ = global.THREE;
+    THREE_ = global.THREE; CANNON_ = global.CANNON;
     const container = typeof CFG.container === 'string' ? document.getElementById(CFG.container) : CFG.container;
     const w = container.clientWidth || 200, h = container.clientHeight || 200;
 
@@ -145,10 +156,10 @@
     // read the wheel's small on-screen size cropped the view into a square window that only
     // showed the hub, with the whole numbered rim (and the wheel's roundness) entirely outside
     // the frame. Orthographic + exact-fit framing sidesteps that class of bug.
-    // Tilted rather than pure top-down (was position (0,10,0.01)) -- a straight-down view looks
-    // along the Y axis, so vertical bounce/height motion is geometrically invisible no matter how
-    // large it is (this bit a bounce feature before the tilt existed). The 8:6 ratio gives a clean
-    // 36.87 degrees off vertical (cos = 0.8), which fitCameraFrustum compensates for explicitly.
+    // Tilted rather than pure top-down -- a straight-down view looks along the Y axis, so
+    // vertical bounce/height motion is geometrically invisible no matter how large it is. The
+    // 8:6 ratio gives a clean 36.87 degrees off vertical (cos = 0.8), which fitCameraFrustum
+    // compensates for explicitly.
     camera = new THREE_.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
     camera.position.set(0, 8, 6);
     camera.lookAt(0, 0, 0);
@@ -165,18 +176,18 @@
 
     buildWheelTexture();
     // wheelMesh is a Group so both pieces spin together via wheelMesh.rotation.y each frame.
-    // The numbered face is a flat CircleGeometry rather than a CylinderGeometry top cap --
-    // a cylinder cap's UV layout doesn't match the simple "circle inscribed in a square"
-    // mapping the canvas texture is drawn with (confirmed: it rendered as a radial sunburst,
-    // the classic symptom of a texture being read with the wrong UV parameterization).
-    // CircleGeometry's UV mapping is the standard, well-defined one that actually matches.
+    // The numbered face is a flat CircleGeometry rather than a CylinderGeometry top cap -- a
+    // cylinder cap's UV layout doesn't match the simple "circle inscribed in a square" mapping
+    // the canvas texture is drawn with (confirmed: it rendered as a radial sunburst, the classic
+    // symptom of a texture read with the wrong UV parameterization). CircleGeometry's UV mapping
+    // is the standard, well-defined one that actually matches.
     wheelMesh = new THREE_.Group();
     const rimGeo = new THREE_.CylinderGeometry(CFG.wheelRadius, CFG.wheelRadius, 0.12, 64);
     const rimMesh = new THREE_.Mesh(rimGeo, new THREE_.MeshStandardMaterial({ color: 0x2a1a08 }));
     wheelMesh.add(rimMesh);
     const faceGeo = new THREE_.CircleGeometry(CFG.wheelRadius, 64);
     const faceMesh = new THREE_.Mesh(faceGeo, new THREE_.MeshStandardMaterial({ map: wheelTexture }));
-    faceMesh.rotation.x = -Math.PI / 2; // lie flat, facing up toward the top-down camera
+    faceMesh.rotation.x = -Math.PI / 2; // lie flat, facing up
     faceMesh.position.y = 0.061; // just above the rim's top surface (rim height 0.12) to avoid z-fighting
     wheelMesh.add(faceMesh);
     scene.add(wheelMesh);
@@ -191,6 +202,8 @@
     pointerMesh.position.set(0, 0.2, -CFG.wheelRadius - 0.08);
     pointerMesh.rotation.x = Math.PI;
     scene.add(pointerMesh);
+
+    buildPhysicsWorld();
 
     onResize();
     window.addEventListener('resize', onResize);
@@ -225,177 +238,238 @@
     renderer.setSize(w, h);
     fitCameraFrustum(w, h);
   }
-  function ballWorldPos(angle, radius, height, bounceVisual) {
-    ballMesh.position.set(Math.sin(angle) * radius, height, Math.cos(angle) * radius);
-    // Squash/stretch scale pulse standing in for the height bounce the top-down camera can't
-    // show (see the comment above BOUNCE_HEIGHT) -- bigger when "up" reads as a hop even
-    // though there's no actual vertical parallax to see it with.
-    const scale = 1 + (bounceVisual || 0) * 0.8;
-    ballMesh.scale.setScalar(scale);
-  }
 
-  // ---------- physics state ----------
+  // ---------- real rigid-body physics world (cannon.js) ----------
   // POCKET_R must sit OUTSIDE the label radius (r*0.8 in drawWheelTexture, i.e. ~0.8*wheelRadius
   // in world units) so the ball settles past the numbers toward the rim, matching a real wheel
   // (the pocket ring is the outermost moving part -- the ball never rests hub-side of the digits).
   const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.87;
   const ORBIT_Y = 0.16, POCKET_Y = 0.09;
-  let state = null; // live physics state -- {wheelAngle,ballAngle,ballAngVel,radius,height,dropStart,bounceVisual}
-
-  const DROP_SPEED = 3.2;      // rad/s (relative) below which the ball can no longer hold the outer track
-  const DESCENT_STEPS = 120;   // ~1s spiral fall to the pocket ring
-  const POCKET_STEPS = 260;    // ~2.2s among the frets before the ball is snapped to rest
-  const POCKET_FRICTION = 0.965; // per-step decay (of velocity RELATIVE to the wheel) once among the frets
-  const ORBIT_FRICTION = 0.996;
   // The wheel never stops or resets between spins -- like a real casino table, it just cruises
   // at one constant, readable speed forever (continuous across idle/preroll/resolving/reveal,
-  // see idleWheelAngle below and loop()). No more per-spin wheel friction/decay: the wheel's
-  // speed is simply this constant everywhere it's used. ~1 revolution every 3.9s.
+  // see idleWheelAngle and loop()). ~1 revolution every 3.9s.
   const WHEEL_SPEED = 1.6;
+  const PREROLL_BALL_SPEED = -9.5; // rad/s the ball is thrown at against the wheel's own rotation
 
-  // One function drives both the silent pre-simulation and the live replay -- all randomness
-  // comes from ctx.rng and all timing from ctx.step, so the two runs are bit-identical. Total
-  // duration is a FIXED step count (dropStart is itself deterministic, since no randomness is
-  // drawn before it): don't gate completion on an asymptotic speed threshold. An earlier version
-  // tried "done when |ballAngVel-wheelAngVel| < settleEps", decaying that gap toward the CURRENT
-  // wheel speed each step -- but because the wheel is itself still slowly decelerating, the gap
-  // chases a moving target and asymptotes to a small nonzero equilibrium (~wheel's own per-step
-  // deceleration, amplified by 1/(1-POCKET_FRICTION)) rather than truly reaching zero, so on some
-  // seeds it could take a very long, unpredictable tail to clear the threshold (confirmed by
-  // isolated simulation: one seed needed ~40s of pocket-phase steps before crossing 0.03 rad/s).
-  // A fixed pocket-phase budget that snaps the ball onto the wheel's velocity at the end sidesteps
-  // that tail entirely and keeps every spin's total duration identical and predictable.
-  function makeResolveCtx(rng) { return { rng, step: 0, done: false, lastTickSlot: null, bounce: 0 }; }
+  let world, ballBody, fretBody;
+  let matBall, matBowl, matWall, matFret, matFloor;
 
-  // World-unit scale of the visible bounce. The camera is now tilted (see buildScene) so height
-  // motion IS visible, but BOUNCE_RADIUS still carries most of the read since it's the axis
-  // closer to the camera's view direction; the scale pulse (ballMesh.scale, driven by
-  // state.bounceVisual, set below) adds extra punch on top of the real height parallax.
-  const BOUNCE_HEIGHT = 0.09, BOUNCE_RADIUS = 0.15;
-  // Safety clamp: ORBIT_R (0.92x wheelRadius) leaves only ~8% headroom before the ball would
-  // render past the wheel's own edge -- worth an explicit ceiling (computed live off
-  // CFG.wheelRadius, not cached, in case init() is ever called with a non-default radius)
-  // rather than trusting BOUNCE_RADIUS tuning alone to never combine with peak envelope/rng
-  // values badly.
-  function maxBallRadius() { return CFG.wheelRadius * 0.97; }
-  // Per-step multiplicative decay of an active bounce impulse between fret hits -- high enough
-  // that each hit reads as a distinct hop rather than a smear, but the ball still visibly settles
-  // (not a dead stop) between hits.
-  const BOUNCE_DECAY = 0.82;
+  function buildPhysicsWorld() {
+    world = new CANNON_.World();
+    world.gravity.set(0, -9.82, 0);
+    world.broadphase = new CANNON_.NaiveBroadphase();
+    world.solver.iterations = 24;
 
+    matBall = new CANNON_.Material('ball');
+    matBowl = new CANNON_.Material('bowl');
+    matWall = new CANNON_.Material('wall');
+    matFret = new CANNON_.Material('fret');
+    matFloor = new CANNON_.Material('floor');
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matBowl, { friction: 0.06, restitution: 0.2 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matWall, { friction: 0.02, restitution: 0.5 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFret, { friction: 0.3, restitution: 0.1 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFloor, { friction: 0.4, restitution: 0.05 }));
+
+    // Bowl slope: a RING OF FLAT PLANKS (proven to actually slide a resting sphere -- see the
+    // file-header note on why a single CANNON.Cylinder does not, in this cannon.js build).
+    const SEGS = 48;
+    const slopeAngle = Math.atan2(ORBIT_Y - POCKET_Y, ORBIT_R - POCKET_R);
+    const midR = (ORBIT_R + POCKET_R) / 2, midY = (ORBIT_Y + POCKET_Y) / 2;
+    const slopeLen = Math.hypot(ORBIT_R - POCKET_R, ORBIT_Y - POCKET_Y);
+    const arcLen = (2 * Math.PI * midR / SEGS) * 1.4; // slight overlap so there are no gaps
+    for (let i = 0; i < SEGS; i++) {
+      const a = i * (2 * Math.PI / SEGS);
+      const body = new CANNON_.Body({ mass: 0, material: matBowl });
+      body.addShape(new CANNON_.Box(new CANNON_.Vec3(arcLen / 2, 0.02, slopeLen / 2)));
+      body.position.set(Math.sin(a) * midR, midY, Math.cos(a) * midR);
+      const qYaw = new CANNON_.Quaternion(); qYaw.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+      const qTilt = new CANNON_.Quaternion(); qTilt.setFromAxisAngle(new CANNON_.Vec3(1, 0, 0), -slopeAngle);
+      body.quaternion = qYaw.mult(qTilt);
+      world.addBody(body);
+    }
+
+    // Outer wall: ring of flat boxes, the exact same proven pattern as cloche-dice.js's glass
+    // walls -- pulled back from the bowl's rim (not flush) so the ball isn't wedged in a
+    // mechanical corner between wall and slope regardless of speed (an earlier attempt had
+    // exactly that bug: the ball got stuck at the rim permanently, at ANY speed, because the
+    // wall and slope geometries overlapped there).
+    const WALL_R = ORBIT_R + 0.12;
+    const wallSegs = 32;
+    for (let i = 0; i < wallSegs; i++) {
+      const a = (i / wallSegs) * Math.PI * 2;
+      const body = new CANNON_.Body({ mass: 0, material: matWall });
+      const segLen = (2 * Math.PI * WALL_R / wallSegs) * 1.3;
+      body.addShape(new CANNON_.Box(new CANNON_.Vec3(segLen / 2, 0.2, 0.05)));
+      body.position.set(Math.sin(a) * WALL_R, ORBIT_Y + 0.1, Math.cos(a) * WALL_R);
+      body.quaternion.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+      world.addBody(body);
+    }
+
+    // Inner curb: a ring of flat boxes well inside the frets' inner edge (frets sit at POCKET_R
+    // with radial half-depth POCKET_R*0.11, so their inner edge is ~POCKET_R*0.89). Without this,
+    // a ball that takes a bad-angle bounce off a fret can occasionally get kicked radially inward
+    // past the fret ring entirely, into the open center hub where NOTHING touches it anymore --
+    // it just glides to a dead, motionless stop, disconnected from the wheel forever (confirmed:
+    // every spin ended at the identical resting radius with zero angular velocity once this was
+    // missing). Real wheels have a raised center cone for exactly this reason.
+    const CURB_R = POCKET_R * 0.75;
+    const curbSegs = 24;
+    for (let i = 0; i < curbSegs; i++) {
+      const a = (i / curbSegs) * Math.PI * 2;
+      const body = new CANNON_.Body({ mass: 0, material: matWall });
+      const segLen = (2 * Math.PI * CURB_R / curbSegs) * 1.3;
+      body.addShape(new CANNON_.Box(new CANNON_.Vec3(segLen / 2, 0.2, 0.05)));
+      body.position.set(Math.sin(a) * CURB_R, POCKET_Y + 0.1, Math.cos(a) * CURB_R);
+      body.quaternion.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+      world.addBody(body);
+    }
+
+    // Flat pocket floor beneath the fret ring.
+    const floor = new CANNON_.Body({ mass: 0, material: matFloor });
+    floor.addShape(new CANNON_.Plane());
+    floor.quaternion.setFromAxisAngle(new CANNON_.Vec3(1, 0, 0), -Math.PI / 2);
+    floor.position.set(0, POCKET_Y, 0);
+    world.addBody(floor);
+
+    // Fret ring: one KINEMATIC compound body (N box dividers). Kinematic bodies aren't moved by
+    // forces -- we set its quaternion directly from the deterministic wheel angle every step
+    // (see resolveStep/tickIdleWheel) and also set angularVelocity so contact impulse response
+    // against the dynamic ball uses the correct relative velocity.
+    fretBody = new CANNON_.Body({ mass: 0, type: CANNON_.Body.KINEMATIC, material: matFret });
+    for (let i = 0; i < N; i++) {
+      const a = i * SLOT_ANGLE;
+      const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, POCKET_R * 0.11));
+      const offset = new CANNON_.Vec3(Math.sin(a) * POCKET_R, 0.05, Math.cos(a) * POCKET_R);
+      const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+      fretBody.addShape(shape, offset, q);
+    }
+    world.addBody(fretBody);
+
+    ballBody = new CANNON_.Body({ mass: 0.02, material: matBall });
+    ballBody.addShape(new CANNON_.Sphere(CFG.ballRadius));
+    ballBody.linearDamping = 0.08;
+    ballBody.angularDamping = 0.3;
+    world.addBody(ballBody);
+  }
+
+  function ballWorldPos() {
+    ballMesh.position.copy(ballBody.position);
+    ballMesh.quaternion.copy(ballBody.quaternion);
+  }
+  function setFretAngle(angle) {
+    fretBody.quaternion.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), angle);
+    fretBody.angularVelocity.set(0, WHEEL_SPEED, 0);
+  }
+  // The ball's actual instantaneous angular velocity around the wheel's own axis, computed from
+  // its real position+velocity (not by differencing angle samples, which is fragile across the
+  // +/-pi wraparound) -- tangential direction at angle a=atan2(x,z) is (cos a, -sin a) given this
+  // module's x=sin(a)*r, z=cos(a)*r convention.
+  function ballAngularVelocity() {
+    const x = ballBody.position.x, z = ballBody.position.z;
+    const r = Math.hypot(x, z);
+    if (r < 0.05) return WHEEL_SPEED;
+    const a = Math.atan2(x, z);
+    const tangential = ballBody.velocity.x * Math.cos(a) - ballBody.velocity.z * Math.sin(a);
+    return tangential / r;
+  }
+
+  // ---------- deterministic resolve ----------
+  // Runs the ball's ENTIRE real-physics throw from `baseline` (position/velocity at the exact
+  // moment the true spin begins) forward, one fixed STEP at a time. cannon.js stepping is
+  // bit-for-bit deterministic given identical initial body state and timestep sequence (verified
+  // empirically: two independent runs from the same baseline produce the same final position to
+  // 6 decimal places) -- so unlike the dice (which inject seeded per-step randomness and need a
+  // seed to replay identically), this needs no seed at all: presimulate() runs once, and the live
+  // replay from the same baseline reproduces it exactly.
+  function resetToBaseline(baseline) {
+    ballBody.position.set(Math.sin(baseline.ballAngle) * ORBIT_R, ORBIT_Y + 0.2, Math.cos(baseline.ballAngle) * ORBIT_R);
+    // baseline.ballAngVel is an ANGULAR velocity (rad/s); linear speed for circular motion at
+    // radius ORBIT_R is angVel*ORBIT_R, not angVel itself -- an earlier version of this line
+    // dropped that radius factor, understating the throw's actual linear speed by ~1.47x.
+    const linSpeed = baseline.ballAngVel * ORBIT_R;
+    ballBody.velocity.set(Math.cos(baseline.ballAngle) * linSpeed, 0, -Math.sin(baseline.ballAngle) * linSpeed);
+    ballBody.angularVelocity.set(0, 0, 0);
+    ballBody.quaternion.set(0, 0, 0, 1);
+    setFretAngle(baseline.wheelAngle);
+  }
+  // Periodic fret disturbances can occasionally kick relative speed back up even once the ball
+  // is basically riding along, resetting a long hold streak before it ever completes -- SETTLE_EPS
+  // is loose enough, and SETTLE_HOLD short enough, that a genuinely-riding ball reliably finds a
+  // qualifying window without waiting for a suspiciously perfect calm stretch. HARD_STEP_CAP is a
+  // backstop: if the ball is unlucky enough to never satisfy the hold in reasonable time, force a
+  // stop rather than risk an unbounded spin (the same lesson learned earlier building this
+  // module's predecessor: an asymptotic settle condition with no cap can occasionally run for a
+  // very long, unpredictable tail).
+  const SETTLE_EPS = 0.7, SETTLE_HOLD = 60, HARD_STEP_CAP = 3600; // ~30s hard ceiling
+  function makeResolveCtx(baseline) { return { baseline, step: 0, done: false, hold: 0, lastTickSlot: null }; }
   function resolveStep(ctx) {
-    const s = state, rng = ctx.rng;
-    s.wheelAngle += WHEEL_SPEED * STEP;
+    const wheelAngle = ctx.baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step;
+    setFretAngle(wheelAngle);
+    world.step(STEP);
+    ctx.step++;
+    if (ctx.step >= HARD_STEP_CAP) { ctx.done = true; return; }
 
-    const relSpeed = Math.abs(s.ballAngVel - WHEEL_SPEED);
-
-    if (s.dropStart === null && relSpeed < DROP_SPEED) s.dropStart = ctx.step;
-
-    if (s.dropStart === null) {
-      // outer-track orbit: fast, low friction, ball comfortably holds the rim
-      s.ballAngle += s.ballAngVel * STEP;
-      s.ballAngVel *= ORBIT_FRICTION;
-      s.radius = ORBIT_R; s.height = ORBIT_Y; s.bounceVisual = 0;
-    } else {
-      const dstep = ctx.step - s.dropStart;
-      if (dstep < DESCENT_STEPS) {
-        // Spiral fall toward the pocket ring, with a little seeded turbulence so it never
-        // looks like a mechanical lerp, PLUS a few decaying hops off the outer wall layered on
-        // top of the smooth fall -- a real ball clatters against the bowl track several times
-        // before it commits to dropping, it doesn't glide down in one smooth arc.
-        const f = dstep / DESCENT_STEPS;
-        const fallRadius = ORBIT_R + (POCKET_R - ORBIT_R) * (f * f * (3 - 2 * f)); // smoothstep
-        const fallHeight = ORBIT_Y + (POCKET_Y - ORBIT_Y) * f;
-        // 3 hops of decreasing height: sin^2 gives clean zero-crossings between hops (no dip
-        // below the fall path), (1-f) fades the whole pattern out exactly by pocket entry.
-        const hop = Math.pow(Math.sin(f * Math.PI * 3), 2) * (1 - f);
-        s.radius = Math.min(fallRadius + hop * BOUNCE_RADIUS, maxBallRadius());
-        s.height = fallHeight + hop * BOUNCE_HEIGHT;
-        s.bounceVisual = hop;
-        s.ballAngle += s.ballAngVel * STEP;
-        s.ballAngVel *= ORBIT_FRICTION;
-        s.ballAngVel += (rng() - 0.5) * 0.25 * STEP * 60;
-      } else {
-        // among the frets: fixed-duration budget (see comment above makeResolveCtx). Decay the
-        // ball's velocity RELATIVE to the wheel, not its absolute velocity -- a settled ball
-        // travels along with the still-spinning wheel, it doesn't stop in the world frame.
-        s.ballAngle += s.ballAngVel * STEP;
-        const pstep = dstep - DESCENT_STEPS;
-        if (pstep >= POCKET_STEPS) {
-          s.ballAngVel = WHEEL_SPEED; // rigidly locked to the wheel now -- spin is over
-          s.radius = POCKET_R; s.height = POCKET_Y; s.bounceVisual = 0; ctx.bounce = 0;
-          ctx.done = true;
-        } else {
-          s.ballAngVel = WHEEL_SPEED + (s.ballAngVel - WHEEL_SPEED) * POCKET_FRICTION;
-          // Bounce kicks off the fret separators phase out over the first ~60% of the pocket
-          // budget so the last stretch is a clean, predictable glide down to the snap above.
-          const kickEnvelope = Math.max(0, 1 - pstep / (POCKET_STEPS * 0.6));
-          const slotNow = Math.floor((((s.ballAngle - s.wheelAngle) % (Math.PI * 2)) + Math.PI * 2 * 4) / SLOT_ANGLE) % N;
-          if (slotNow !== ctx.lastTickSlot) {
-            ctx.lastTickSlot = slotNow;
-            if (kickEnvelope > 0 && Math.abs(s.ballAngVel - WHEEL_SPEED) > 0.4) {
-              s.ballAngVel += (rng() - 0.5) * Math.min(1.4, Math.abs(s.ballAngVel - WHEEL_SPEED) * 0.6) * kickEnvelope;
-              // Each fret hit pops the ball up and slightly outward, decaying between hits --
-              // this is the actual "bounciness": without it the ball just glides to a stop.
-              ctx.bounce = Math.max(ctx.bounce, kickEnvelope * (0.5 + rng() * 0.5));
-            }
-            if (ctx.onTick) ctx.onTick(Math.min(1, Math.abs(s.ballAngVel - WHEEL_SPEED) / 3));
-          }
-          ctx.bounce *= BOUNCE_DECAY;
-          s.radius = Math.min(POCKET_R + ctx.bounce * BOUNCE_RADIUS, maxBallRadius());
-          s.height = POCKET_Y + ctx.bounce * BOUNCE_HEIGHT;
-          s.bounceVisual = ctx.bounce;
-        }
+    // Tick sound on every fret crossing (purely cosmetic; uses the ball's real position, not a
+    // scripted timer).
+    const r = Math.hypot(ballBody.position.x, ballBody.position.z);
+    if (r < POCKET_R + 0.05) {
+      const relAngle = Math.atan2(ballBody.position.x, ballBody.position.z) - wheelAngle;
+      const slotNow = Math.floor(((relAngle % (Math.PI * 2)) + Math.PI * 2 * 4) / SLOT_ANGLE) % N;
+      if (slotNow !== ctx.lastTickSlot) {
+        ctx.lastTickSlot = slotNow;
+        const relSpeed = Math.abs(ballAngularVelocity() - WHEEL_SPEED);
+        if (ctx.onTick) ctx.onTick(Math.min(1, relSpeed / 3));
       }
     }
 
-    ctx.step++;
-  }
+    const settled = r < POCKET_R + 0.05 && Math.abs(ballAngularVelocity() - WHEEL_SPEED) < SETTLE_EPS;
+    if (settled) { ctx.hold++; if (ctx.hold >= SETTLE_HOLD) ctx.done = true; }
+    else ctx.hold = 0;
 
-  // Which drawn slot (see drawWheelTexture's `slot` loop variable) the ball is actually
-  // sitting over in WORLD space, given the current ballAngle/wheelAngle. This is NOT simply
-  // floor((ballAngle-wheelAngle)/SLOT_ANGLE) -- that was the original (wrong) assumption,
-  // carried over unverified from the old flat-2D canvas wheel. The real rendering pipeline
-  // (a canvas angle baked into a CircleGeometry's UVs, flattened via faceMesh.rotation.x=-π/2,
-  // then spun via wheelMesh.rotation.y) produces a REFLECTED and phase-shifted relationship
-  // instead, verified by walking THREE's actual CircleGeometry UV attribute values and its
-  // real rotation matrices (not assumed from memory): a label drawn at canvas angle θ ends up,
-  // after those two rotations, at world (x,z) = R*(sin(θ-β), -cos(θ-β)) where β=wheelAngle --
-  // solving that against ballWorldPos's (sin(A), cos(A)) convention gives slot i's ball-angle
-  // as A_i = π + β - i*SLOT_ANGLE, i.e. slot index = (π + wheelAngle - ballAngle) / SLOT_ANGLE,
-  // not (ballAngle - wheelAngle) / SLOT_ANGLE.
-  function restingSlot() {
-    const rel = ((Math.PI + state.wheelAngle - state.ballAngle) % (Math.PI * 2) + Math.PI * 2 * 4) % (Math.PI * 2);
-    // Slot i's label sits at rel === i*SLOT_ANGLE exactly (its center); the valid window for
-    // slot i is symmetric around that center (+/- half a slot), which means the nearest integer
-    // to rel/SLOT_ANGLE, not its floor. floor()'s valid window is [i, i+1) -- shifted a half-slot
-    // off from the true center-aligned window -- so it was right roughly half the time and off
-    // by exactly one slot the other half, depending purely on where in the slot the ball landed.
+    // SETTLE_EPS is loose enough that "done" can fire while the ball still has real residual
+    // motion relative to the wheel -- left alone, it would keep drifting across pockets for a
+    // while after this instant, meaning the slot restingSlot() measures right now would NOT be
+    // where it actually ends up moments later. Hard-lock it to the wheel's exact velocity the
+    // instant we call it done (same idea as the predecessor formula-based version's "snap to
+    // WHEEL_SPEED"), so whatever position it's at becomes truly final, not just "close enough
+    // for now".
+    if (ctx.done) {
+      const bx = ballBody.position.x, bz = ballBody.position.z;
+      const a = Math.atan2(bx, bz);
+      ballBody.velocity.set(Math.cos(a) * WHEEL_SPEED * r, 0, -Math.sin(a) * WHEEL_SPEED * r);
+      ballBody.angularVelocity.set(0, WHEEL_SPEED, 0);
+    }
+  }
+  // Which drawn slot (see drawWheelTexture's `slot` loop variable) the ball is actually sitting
+  // over in WORLD space. This is NOT simply floor((ballAngle-wheelAngle)/SLOT_ANGLE) -- that was
+  // an original (wrong) assumption, carried over unverified from an even earlier flat-2D canvas
+  // wheel. The real rendering pipeline (a canvas angle baked into a CircleGeometry's UVs,
+  // flattened via faceMesh.rotation.x=-pi/2, then spun via wheelMesh.rotation.y) produces a
+  // REFLECTED and phase-shifted relationship instead, verified by walking THREE's actual
+  // CircleGeometry UV attribute values and its real rotation matrices (not assumed from memory):
+  // a label drawn at canvas angle theta ends up, after those two rotations, at world
+  // (x,z) = R*(sin(theta-beta), -cos(theta-beta)) where beta=wheelAngle -- solving that against
+  // (sin(A), cos(A)) gives slot i's ball-angle as A_i = pi + beta - i*SLOT_ANGLE, i.e. slot index
+  // = (pi + wheelAngle - ballAngle) / SLOT_ANGLE, not (ballAngle - wheelAngle) / SLOT_ANGLE. Also
+  // uses round(), not floor(): a slot's valid window is centered on its label (+/- half a slot),
+  // not [i, i+1).
+  function restingSlot(wheelAngle) {
+    const ballAngle = Math.atan2(ballBody.position.x, ballBody.position.z);
+    const rel = ((Math.PI + wheelAngle - ballAngle) % (Math.PI * 2) + Math.PI * 2 * 4) % (Math.PI * 2);
     return Math.round(rel / SLOT_ANGLE) % N;
   }
-
-  // Runs one full resolve from `baseline` (the real angles/speeds live at the moment the
-  // server value arrived) through to rest, using ctx.rng for every random draw. Presimulate
-  // and the live replay both call this with an identical baseline + seed, so their rng
-  // consumption sequences -- and therefore their tick timing and final resting slot -- are
-  // bit-identical. (An earlier version reset presimulate to a 0,0 baseline and shifted the
-  // result afterward; that let tick timing diverge from the live run's real-baseline angles,
-  // since a fret-crossing is a function of absolute relative angle, not just elapsed time.)
-  function presimulate(seed, baseline) {
-    state = { wheelAngle: baseline.wheelAngle, ballAngle: baseline.ballAngle,
-      ballAngVel: baseline.ballAngVel,
-      radius: ORBIT_R, height: ORBIT_Y, dropStart: null };
-    const ctx = makeResolveCtx(mulberry32(seed));
+  function presimulate(baseline) {
+    resetToBaseline(baseline);
+    const ctx = makeResolveCtx(baseline);
     while (!ctx.done && ctx.step < CFG.maxResolveSteps) resolveStep(ctx);
     if (!ctx.done) return null;
-    return restingSlot();
+    return restingSlot(baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step);
   }
 
   // ---------- orchestration ----------
   let phase = 'idle'; // idle | preroll | resolving | reveal
   let activeResolve = null, activeReject = null, serverPocket = null;
   let livCtx = null, prerollAngle = 0;
-  const PREROLL_BALL_SPEED = -9.5;
   // The wheel's persistent rotation -- advances forever via the same fixed-step clock as the
   // ball's own physics, continuous across every phase (idle/preroll/resolving/reveal). Never
   // reset per spin: a real casino wheel is never stopped between rounds, it just keeps cruising
@@ -404,61 +478,42 @@
   // under it between spins.
   let idleWheelAngle = 0, restBallOffset = 0;
 
-  // The relabel (rewriting which number is drawn at which slot) must never happen at a moment
-  // a player could tie to "the server just told the wheel what to do" -- doing it at the exact
+  // The relabel (rewriting which number is drawn at which slot) must never happen at a moment a
+  // player could tie to "the server just told the wheel what to do" -- doing it at the exact
   // instant beginResolve() runs (right as the network response lands) would be a visible tell:
   // the numbers would visibly jump on the wheel face at a moment correlated with a real event
   // the player can perceive (their spin committing). Instead the offset is computed immediately
   // (cheap, silent, touches no pixels) but the actual texture redraw is deferred to a RANDOM
-  // step well inside the fast outer-track orbit phase -- comfortably before DROP_SPEED is ever
-  // reached (dropStart lands around step ~445 given ORBIT_FRICTION/WHEEL_SPEED; see resolveStep),
-  // while the wheel and ball are both still spinning fast with no player-visible event anywhere
-  // near it to anchor the moment to. Unlike the dice (which hide a face relabel inside chaotic 3D
-  // tumbling), the wheel only rotates on one predictable axis, so timing is the only available
-  // cover here -- pick an unpredictable moment, not a chaotic orientation.
+  // step well inside the fast outer-track orbit -- comfortably before the ball can plausibly have
+  // reached the pocket ring -- while the wheel and ball are both still spinning fast with no
+  // player-visible event anywhere near it to anchor the moment to.
   const RELABEL_STEP_MIN = 90, RELABEL_STEP_MAX = 380;
   let relabelStep = 0, relabeled = false;
 
   function beginResolve() {
-    // The wheel's baseline is wherever its persistent, never-reset rotation currently is -- the
-    // ball gets a fresh fast throw each spin, but the wheel itself was already turning before
-    // this spin started and keeps going exactly as it was.
     const baseline = { wheelAngle: idleWheelAngle, ballAngle: prerollAngle, ballAngVel: PREROLL_BALL_SPEED };
-    const baseSeed = (Math.random() * 0xFFFFFFFF) >>> 0;
-    let chosenSeed = null, slot = null;
-    for (let attempt = 0; attempt < 24; attempt++) {
-      const seed = (baseSeed + attempt * 7919) >>> 0;
-      const finalSlot = presimulate(seed, baseline);
-      if (finalSlot !== null) { chosenSeed = seed; slot = finalSlot; break; }
-    }
-    if (chosenSeed === null) { chosenSeed = baseSeed; slot = 0; } // pathological fallback, practically unreachable
+    const slot = presimulate(baseline);
+    labelOffset = offsetForSlot(serverPocket, slot === null ? 0 : slot); // slot===null is practically unreachable
 
-    // Reset to the exact same baseline for the live replay the player actually watches.
-    state = { wheelAngle: baseline.wheelAngle, ballAngle: baseline.ballAngle,
-      ballAngVel: baseline.ballAngVel,
-      radius: ORBIT_R, height: ORBIT_Y, dropStart: null };
-
-    // Decide the offset now (silent, no rendering) but don't draw it yet -- see the comment
-    // above relabelStep for why the draw itself is deferred to a random later moment.
-    labelOffset = offsetForSlot(serverPocket, slot);
     relabelStep = RELABEL_STEP_MIN + Math.floor(Math.random() * (RELABEL_STEP_MAX - RELABEL_STEP_MIN));
     relabeled = false;
 
-    livCtx = makeResolveCtx(mulberry32(chosenSeed));
+    resetToBaseline(baseline);
+    livCtx = makeResolveCtx(baseline);
     livCtx.onTick = (strength) => playTick(strength);
     phase = 'resolving';
   }
 
   function finishResolve() {
-    const finalSlot = restingSlot();
+    const wheelAngle = livCtx.baseline.wheelAngle + WHEEL_SPEED * STEP * livCtx.step;
+    const finalSlot = restingSlot(wheelAngle);
     const displayedPocket = WHEEL_ORDER[(finalSlot - labelOffset + N * 4) % N];
     if (!relabeled || displayedPocket !== serverPocket) {
       // Either the deferred relabel above somehow never fired (shouldn't happen --
-      // RELABEL_STEP_MAX is always well before this point) or the live replay drifted from
-      // the pre-sim by a step or two; repair by relabeling now, exactly like
-      // ClocheDice.finishResolve()'s verify-and-repair step. This late relabel IS visible if
-      // it ever triggers, but the deterministic replay (identical seed/baseline/step count for
-      // both presimulate and the live run) means it provably never should.
+      // RELABEL_STEP_MAX is always well before the ball can reach the pocket ring) or the live
+      // replay drifted from the pre-sim; repair by relabeling now, exactly like
+      // ClocheDice.finishResolve()'s verify-and-repair step. This late relabel IS visible if it
+      // ever triggers, but the confirmed-deterministic replay means it provably never should.
       labelOffset = offsetForSlot(serverPocket, finalSlot);
       drawWheelTexture();
     }
@@ -466,8 +521,9 @@
     // left it -- and remember the ball's settled offset from it -- so the wheel keeps turning
     // seamlessly (no jump) and the ball visibly rides along in its pocket until the next spin
     // picks it back up, instead of floating motionless while the wheel turns under it.
-    idleWheelAngle = state.wheelAngle;
-    restBallOffset = state.ballAngle - state.wheelAngle;
+    idleWheelAngle = wheelAngle;
+    const ballAngle = Math.atan2(ballBody.position.x, ballBody.position.z);
+    restBallOffset = ballAngle - wheelAngle;
 
     const payload = { pocket: serverPocket, color: colorOf(serverPocket), forced: true };
     phase = 'reveal';
@@ -491,8 +547,8 @@
         if (!relabeled && livCtx.step >= relabelStep) { relabeled = true; drawWheelTexture(); }
         if (livCtx.done) { finishResolve(); break; }
       }
-      wheelMesh.rotation.y = state.wheelAngle;
-      ballWorldPos(state.ballAngle, state.radius, state.height, state.bounceVisual);
+      wheelMesh.rotation.y = livCtx.baseline.wheelAngle + WHEEL_SPEED * STEP * livCtx.step;
+      ballWorldPos();
     } else {
       // idle / preroll / reveal: the wheel never stops -- it keeps cruising at the same
       // constant, readable WHEEL_SPEED a real casino wheel coasts at between throws, driven by
@@ -502,15 +558,18 @@
       for (let i = 0; i < debt; i++) idleWheelAngle += WHEEL_SPEED * STEP;
       wheelMesh.rotation.y = idleWheelAngle;
       if (phase === 'preroll') {
-        // The ball gets picked up and thrown fast against the steadily-turning wheel -- only
-        // the ball's preroll agitation is wall-clock driven (its duration is however long the
-        // network takes, unlike the wheel's fixed cruise), matching the earlier preroll feel.
+        // The ball gets picked up and thrown fast against the steadily-turning wheel -- only the
+        // ball's preroll agitation is wall-clock driven (its duration is however long the
+        // network takes, unlike the wheel's fixed cruise); it isn't real physics yet, that only
+        // starts the instant beginResolve() throws it for real.
         prerollAngle += PREROLL_BALL_SPEED * dt;
-        ballWorldPos(prerollAngle, ORBIT_R, ORBIT_Y, 0);
+        ballMesh.position.set(Math.sin(prerollAngle) * ORBIT_R, ORBIT_Y, Math.cos(prerollAngle) * ORBIT_R);
+        ballMesh.quaternion.set(0, 0, 0, 1);
       } else {
         // idle / reveal: the ball rests in its pocket, riding along with the wheel rather than
         // floating still while the wheel turns underneath it.
-        ballWorldPos(idleWheelAngle + restBallOffset, POCKET_R, POCKET_Y, 0);
+        const a = idleWheelAngle + restBallOffset;
+        ballMesh.position.set(Math.sin(a) * POCKET_R, POCKET_Y, Math.cos(a) * POCKET_R);
       }
     }
     renderer.render(scene, camera);
