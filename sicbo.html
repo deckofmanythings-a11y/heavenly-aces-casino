@@ -145,21 +145,21 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #btn-big{background:rgba(180,0,0,.25);border-color:rgba(255,100,100,.4)}
 #btn-big:hover{background:rgba(180,0,0,.4)}
 #btn-big.active{background:rgba(220,0,0,.45);border-color:#f66}
-.bs-label{font-size:min(42px,6.6vw);font-weight:700;letter-spacing:.06em}
-.bs-sub{font-size:min(24px,4.5vw);color:rgba(255,255,255,.9)}
-.bs-stk{font-size:min(39px,6.0vw);color:#ffd700;position:absolute;bottom:3px;right:6px}
+.bs-label{font-size:min(42px,6.6cqw);font-weight:700;letter-spacing:.06em}
+.bs-sub{font-size:min(24px,4.5cqw);color:rgba(255,255,255,.9)}
+.bs-stk{font-size:min(39px,6.0cqw);color:#ffd700;position:absolute;bottom:3px;right:6px}
 .mbtn-corner{display:none;position:absolute;top:2px;right:3px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:13px;text-align:center;cursor:pointer;z-index:5;padding:0}
 .bs-btn:hover .mbtn-corner.vis{display:block}
 .mbtn-corner:hover{background:rgba(180,0,0,.7)}
 
 /* Totals strip */
 .totals-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.6 / 16)} /* legacy, unused */
-.tot-cell{background:rgba(0,0,0,.25);border:0.5px solid rgba(255,255,255,.15);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:1px}
+.tot-cell{background:rgba(0,0,0,.25);border:0.5px solid rgba(255,255,255,.15);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:1px;overflow:hidden}
 .tot-cell:hover{background:rgba(255,255,255,.08)}
 .tot-cell.active{}
-.tot-num{font-size:min(42px,6.6vw);font-weight:700;line-height:1}
-.tot-pay{font-size:min(24px,4.2vw);color:rgba(255,255,255,.4);line-height:1}
-.tot-stk{font-size:min(27px,4.5vw);color:#ffd700;line-height:1;min-height:8px}
+.tot-num{font-size:min(42px,6.6cqw);font-weight:700;line-height:1}
+.tot-pay{font-size:min(24px,4.2cqw);color:rgba(255,255,255,.4);line-height:1}
+.tot-stk{font-size:min(27px,4.5cqw);color:#ffd700;line-height:1;min-height:8px}
 .mbtn-tot{display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:39px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0}
 .tot-cell:hover .mbtn-tot.vis{display:block}
 .mbtn-tot:hover{background:rgba(180,0,0,.7)}
@@ -178,35 +178,46 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #any-triple-btn{flex:1;background:rgba(150,0,150,.22);border:0.5px solid rgba(200,80,200,.35);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s}
 #any-triple-btn:hover{background:rgba(160,0,160,.38)}
 #any-triple-btn.active{background:rgba(180,0,180,.45);border-color:#d060d0}
-.at-lbl{font-size:27px;font-weight:700;color:rgba(255,200,255,.9);line-height:1}
-.at-pay{font-size:21px;color:rgba(220,140,220,.5);line-height:1}
-.at-stk{font-size:24px;color:#ffd700;position:absolute;bottom:2px;right:4px}
+.at-lbl{font-size:min(27px,4.2cqw);font-weight:700;color:rgba(255,200,255,.9);line-height:1}
+.at-pay{font-size:min(21px,3.5cqw);color:rgba(220,140,220,.5);line-height:1}
+.at-stk{font-size:min(24px,4cqw);color:#ffd700;position:absolute;bottom:2px;right:4px}
 /* #specific-triples-grid removed */
-.trip-cell{background:rgba(90,0,90,.22);border:0.5px solid rgba(170,55,170,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
+.trip-cell{background:rgba(90,0,90,.22);border:0.5px solid rgba(170,55,170,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s;overflow:hidden}
 .trip-cell:hover{background:rgba(110,0,110,.38)}
 .trip-cell.active{background:rgba(140,0,140,.45);border-color:#c050c0}
 .trip-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
 .trip-dice img{display:inline-block}
-.trip-pay{font-size:18px;color:rgba(210,150,210,.45);line-height:1}
-.trip-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+.trip-pay{font-size:min(18px,3cqw);color:rgba(210,150,210,.45);line-height:1}
+.trip-stk{font-size:min(21px,3.5cqw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 
 /* Right col: doubles + combos */
 /* #doubles-grid removed */
-.dbl-cell{background:rgba(0,65,95,.28);border:0.5px solid rgba(75,165,195,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
+.dbl-cell{background:rgba(0,65,95,.28);border:0.5px solid rgba(75,165,195,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s;overflow:hidden}
 .dbl-cell:hover{background:rgba(0,80,120,.42)}
 .dbl-cell.active{background:rgba(0,100,150,.5);border-color:#50b4d4}
 .dbl-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
 .dbl-dice img{display:inline-block}
-.dbl-pay{font-size:18px;color:rgba(120,200,220,.45);line-height:1}
-.dbl-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+.dbl-pay{font-size:min(18px,3cqw);color:rgba(120,200,220,.45);line-height:1}
+.dbl-stk{font-size:min(21px,3.5cqw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 #combos-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:2px;flex:1;min-height:0}
-.dom-cell{background:rgba(0,50,32,.35);border:0.5px solid rgba(65,165,105,.25);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s}
+.dom-cell{background:rgba(0,50,32,.35);border:0.5px solid rgba(65,165,105,.25);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s;overflow:hidden}
 .dom-cell:hover{background:rgba(0,70,45,.5)}
 .dom-cell.active{background:rgba(0,90,58,.55);border-color:#40b870}
 .dom-dice{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1}
 .dom-dice img{display:inline-block}
-.dom-pay{font-size:18px;color:rgba(75,185,115,.4);line-height:1}
-.dom-stk{font-size:21px;color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+.dom-pay{font-size:min(18px,3cqw);color:rgba(75,185,115,.4);line-height:1}
+.dom-stk{font-size:min(21px,3.5cqw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+/* Doubles/Triples/Combos/Totals cells: dice icons + folded-in payout text (Deck: "every cell
+   needs scaling-tech"). Their calibrated boxes are far too tight at some panel sizes for a
+   single fixed CSS ratio to serve all four cell shapes at once -- doubles/triples are wide-and-
+   short (2-3 dice side by side, height is scarce), combos are narrow-and-tall (3 dice stacked,
+   width is scarce), so whichever axis you pick as the scaling basis starves the other cell type.
+   fitSicboCells() (below) measures each cell's actual natural content size against its real
+   available box and transform:scale()s this wrapper down only as much as needed -- correct
+   for every cell shape without hand-tuned per-class ratios. .dbl-stk/.trip-stk/.dom-stk stay
+   OUTSIDE this wrapper (they're position:absolute corner overlays, not part of the flow content
+   being fit); .tot-stk is INSIDE it since totals cells stack num/pay/stk in-flow, not overlaid. */
+.cell-fit{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
 
 /* Any Number row */
 /* any-num-row legacy removed */
@@ -214,8 +225,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .any-cell:hover{background:rgba(60,55,0,.55)}
 .any-cell.active{background:rgba(80,70,0,.6);border-color:#d4c040}
 .any-die img{display:inline-block}
-.any-pay{font-size:min(12px,2.2vw);color:rgba(210,190,55,.5);line-height:1}
-.any-stk{font-size:min(12px,2.2vw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+.any-pay{font-size:min(12px,2.2cqw);color:rgba(210,190,55,.5);line-height:1}
+.any-stk{font-size:min(12px,2.2cqw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -277,27 +288,27 @@ input,textarea{-webkit-user-select:text;user-select:text}
    33px to 44px for the same reason. Cascades after the base rules above (same selectors,
    later wins per-property) rather than editing those in place, so the pre-panel values stay
    visible in a diff. */
-.bs-label{font-size:min(58px,8.4vw)}
+.bs-label{font-size:min(58px,8.4cqw)}
 /* Shrunk back down (Deck) -- the readability-pass sizes above were tuned before the panel
    moved to individually-calibrated per-cell boxes; Totals cells especially are now much
    tighter (~5.8% x 7.5% of the panel) than the old full-row placement, so 56px/30px badly
    overflowed a 3-line cell (number + payout + stack). */
-.tot-num{font-size:min(32px,5vw)}
-.tot-pay{font-size:min(16px,2.6vw)}
+.tot-num{font-size:min(32px,5cqw)}
+.tot-pay{font-size:min(16px,2.6cqw)}
 /* SMALL/BIG word swapped to be the dominant size (Deck), with the descriptive sub-text
    ("Numbers from 4 to 10..."/"1 pays 1") shrunk down to make room instead -- was the reverse
    (20px label, 30px sub-text). .bs-sub is only ever used inside these two cells, so no
    scoping needed there like .at-lbl needed. */
-#btn-small .at-lbl,#btn-big .at-lbl{font-size:30px}
-.bs-sub{font-size:min(14px,2.4vw)}
-.at-lbl{font-size:36px}
-.at-pay{font-size:27px}
-.trip-pay{font-size:24px}
-.dbl-pay{font-size:24px}
-.dom-pay{font-size:22px}
-.any-pay{font-size:min(15px,2.6vw)}
-.dbl-dice img,.trip-dice img,.dom-dice img{width:44px!important;height:44px!important}
-.any-die img{width:42px!important;height:42px!important}
+#btn-small .at-lbl,#btn-big .at-lbl{font-size:min(30px,4.4cqw)}
+.bs-sub{font-size:min(14px,2.4cqw)}
+.at-lbl{font-size:min(36px,5.2cqw)}
+.at-pay{font-size:min(27px,4.4cqw)}
+.trip-pay{font-size:min(24px,3.9cqw)}
+.dbl-pay{font-size:min(24px,3.9cqw)}
+.dom-pay{font-size:min(22px,3.6cqw)}
+.any-pay{font-size:min(15px,2.6cqw)}
+.dbl-dice img,.trip-dice img,.dom-dice img{width:min(44px,7.3cqw)!important;height:min(44px,7.3cqw)!important}
+.any-die img{width:min(42px,7cqw)!important;height:min(42px,7cqw)!important}
 /* Any-Info cell (Deck: "double the size", "remove the shading") -- font size doubled at the
    source (the inline cssText in buildTable(), min(11px,1.8vw) -> min(22px,3.6vw)); shading
    removal comes from the blanket .any-cell background/border strip below, which this cell
@@ -646,7 +657,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.1.9</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.0</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -728,8 +739,8 @@ const fmtS=n=>'$'+Math.abs(n).toFixed(0);
 const TOTAL_PAY={4:62,5:31,6:18,7:12,8:8,9:7,10:6,11:6,12:7,13:8,14:12,15:18,16:31,17:62};
 const COMBO_PAIRS=[];
 for(let a=1;a<=5;a++)for(let b=a+1;b<=6;b++)COMBO_PAIRS.push([a,b]);
-const DIE_IMG_SZ='min(13px,2vw)'; // size for inline pip images in bet cells
-const DIE_IMG_SZ_LG='min(18px,2.8vw)'; // any-number row
+const DIE_IMG_SZ='min(13px,2cqw)'; // size for inline pip images in bet cells
+const DIE_IMG_SZ_LG='min(18px,2.8cqw)'; // any-number row
 
 // ── STATE ────────────────────────────────────────────────────────────────────
 let G={bankroll:0,freePlay:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
@@ -1371,7 +1382,7 @@ function buildTable(){
     const el=document.getElementById(id);
     if(el)sbPosition(el,id);
   });
-  const DIE_SZ='width:min(33px,5.4vw);height:min(33px,5.4vw);display:inline-block;vertical-align:middle';
+  const DIE_SZ='width:min(33px,5.4cqw);height:min(33px,5.4cqw);display:inline-block;vertical-align:middle';
   const MB_CSS='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
 
   // Row 4: All 14 totals in one row (4-17)
@@ -1392,14 +1403,15 @@ function buildTable(){
     for(let i=0;i<2;i++){
       const img=document.createElement('img');
       img.src=DIE3D[v];
-      img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
+      img.style.cssText='width:min(33px,5.4cqw);height:min(33px,5.4cqw);flex-shrink:0';
       dd.appendChild(img);
     }
     const pay=document.createElement('div');pay.className='dbl-pay';pay.textContent='1 pays 12';
+    const wrap=document.createElement('div');wrap.className='cell-fit';wrap.appendChild(dd);wrap.appendChild(pay);
     const stk=document.createElement('span');stk.className='dbl-stk';stk.id='stk-double'+v;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-double'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet('double'+v);};
-    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(wrap);cell.appendChild(stk);cell.appendChild(mb);
     sbPosition(cell,cell.id);
     return cell;
   }
@@ -1412,14 +1424,15 @@ function buildTable(){
     for(let i=0;i<3;i++){
       const img=document.createElement('img');
       img.src=DIE3D[v];
-      img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
+      img.style.cssText='width:min(33px,5.4cqw);height:min(33px,5.4cqw);flex-shrink:0';
       dd.appendChild(img);
     }
     const pay=document.createElement('div');pay.className='trip-pay';pay.textContent='1 pays 190';
+    const wrap=document.createElement('div');wrap.className='cell-fit';wrap.appendChild(dd);wrap.appendChild(pay);
     const stk=document.createElement('span');stk.className='trip-stk';stk.id='stk-triple'+v;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-triple'+v;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet('triple'+v);};
-    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(wrap);cell.appendChild(stk);cell.appendChild(mb);
     sbPosition(cell,cell.id);
     return cell;
   }
@@ -1442,14 +1455,15 @@ function buildTable(){
     dd.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0';
     [a,b].forEach(v=>{
       const img=document.createElement('img');img.src=DIE3D[v];
-      img.style.cssText='width:min(33px,5.4vw);height:min(33px,5.4vw);flex-shrink:0';
+      img.style.cssText='width:min(33px,5.4cqw);height:min(33px,5.4cqw);flex-shrink:0';
       dd.appendChild(img);
     });
     const pay=document.createElement('div');pay.className='dom-pay';pay.textContent='1 pays 6';
+    const wrap=document.createElement('div');wrap.className='cell-fit';wrap.appendChild(dd);wrap.appendChild(pay);
     const stk=document.createElement('span');stk.className='dom-stk';stk.id='stk-'+key;
     const mb=document.createElement('button');mb.className='mbtn-corner';mb.id='m-'+key;mb.textContent='−';mb.style.cssText=MB_CSS;
     mb.onclick=e=>{e.stopPropagation();removeBet(key);};
-    cell.appendChild(dd);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
+    cell.appendChild(wrap);cell.appendChild(stk);cell.appendChild(mb);
     sbPosition(cell,cell.id);
     cg.appendChild(cell);
   }
@@ -1473,10 +1487,29 @@ function buildTable(){
   // 7th cell: payout info (I7)
   const infoCell=document.createElement('div');
   infoCell.className='any-cell';
-  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(21px,3.5vw);color:#111;line-height:1.4;pointer-events:none';
+  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(21px,3.5cqw);color:#111;line-height:1.4;pointer-events:none';
   infoCell.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
   sbPosition(infoCell,'cell-any-info');
   an.appendChild(infoCell);
+  fitSicboCells();
+}
+// Shrinks each .cell-fit wrapper (dice icons + folded-in payout text) down just enough to fit
+// its cell's real calibrated box -- see the .cell-fit CSS comment for why a single fixed ratio
+// can't serve doubles/triples (wide-short) and combos (narrow-tall) at once. Re-run whenever the
+// panel's actual pixel size changes (sizeSbPanel()'s callers), since the fit is measured in real
+// px, not relative units.
+function fitSicboCells(){
+  document.querySelectorAll('.cell-fit').forEach(wrap=>{
+    const cell=wrap.parentElement;
+    if(!cell)return;
+    wrap.style.transform='none';
+    const availW=cell.clientWidth-4,availH=cell.clientHeight-4; // -4: cell's own 2px padding
+    if(availW<=0||availH<=0)return;
+    const w=wrap.scrollWidth,h=wrap.scrollHeight;
+    if(w<=0||h<=0)return;
+    const scale=Math.min(1,availW/w,availH/h);
+    wrap.style.transform=scale<0.995?'scale('+scale+')':'none';
+  });
 }
 
 // ── SB-PANEL CALIBRATION MODE ────────────────────────────────────────────────
@@ -1621,9 +1654,10 @@ function makeTotCell(t){
   const num=document.createElement('div');num.className='tot-num';num.textContent=t;
   const pay=document.createElement('div');pay.className='tot-pay';pay.textContent='1 pays '+TOTAL_PAY[t];
   const stk=document.createElement('div');stk.className='tot-stk';stk.id='stk-total'+t;
+  const wrap=document.createElement('div');wrap.className='cell-fit';wrap.appendChild(num);wrap.appendChild(pay);wrap.appendChild(stk);
   const mb=document.createElement('button');mb.className='mbtn-tot';mb.id='m-total'+t;mb.textContent='−';
   mb.onclick=e=>{e.stopPropagation();removeBet('total'+t);};
-  cell.appendChild(num);cell.appendChild(pay);cell.appendChild(stk);cell.appendChild(mb);
+  cell.appendChild(wrap);cell.appendChild(mb);
   sbPosition(cell,cell.id);
   return cell;
 }
@@ -1738,6 +1772,7 @@ function sizeSbPanel(){
   if(h>H){h=H;w=h*RATIO;}
   panel.style.width=w+'px';
   panel.style.height=h+'px';
+  if(typeof fitSicboCells==='function')fitSicboCells();
 }
 window.addEventListener('resize',sizeSbPanel);
 // resize alone isn't reliable on rotation -- some mobile browsers (notably iOS Safari) don't
