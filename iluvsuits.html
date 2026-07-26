@@ -105,6 +105,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    Super Flush Rush circle and the I Luv Suits logo (per Deck's direction), sized to
    match the other circle spots. */
 #light-spot,#light-off-img,#light-on-img{left:73.5%;top:37.1%;width:5.28%;height:9.39%}
+/* Explicit z-index required: light-off-img/light-on-img carry their own positive
+   z-index, which paints above any sibling left at the default z-index:auto
+   regardless of DOM order -- without this, the $5 chip label underneath got
+   covered by the bulb art. */
+#light-spot{z-index:6}
 #light-info-btn{position:absolute;left:79.4%;top:38.6%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
@@ -394,7 +399,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.2</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -904,11 +909,11 @@ function repeatLastBet(){
   }
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
-  const cost=r2((snap.ante||0)+(snap.flushRush||0)+(snap.superFlushRush||0));
+  const cost=r2((snap.ante||0)+(snap.flushRush||0)+(snap.superFlushRush||0)+(snap.progressive||0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
-  G.bets.ante=snap.ante||0;G.bets.flushRush=snap.flushRush||0;G.bets.superFlushRush=snap.superFlushRush||0;
+  G.bets.ante=snap.ante||0;G.bets.flushRush=snap.flushRush||0;G.bets.superFlushRush=snap.superFlushRush||0;G.bets.progressive=snap.progressive||0;
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
 }
@@ -1386,7 +1391,7 @@ async function dealHand(){
   if(!data.ok){dealAnimInProgress=false;addLog(data.message||'Deal failed.','lose');return;}
   playSfx(SFX_CARD_SHUFFLE);
   G.locked={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush,progressive:data.progressive};
-  G.lastBetSnapshot={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush};
+  G.lastBetSnapshot={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush,progressive:data.progressive?PROGRESSIVE_BET:0};
   G.hand={playerHand:data.playerHand,dealerHand:null};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
