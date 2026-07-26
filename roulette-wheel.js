@@ -277,7 +277,7 @@
   // at one constant, readable speed forever (continuous across idle/preroll/resolving/reveal,
   // see idleWheelAngle and loop()). ~1 revolution every 3.9s.
   const WHEEL_SPEED = 1.6;
-  const PREROLL_BALL_SPEED = -9.5; // rad/s the ball is thrown at against the wheel's own rotation
+  const PREROLL_BALL_SPEED = -15; // rad/s the ball is thrown at against the wheel's own rotation
 
   let world, ballBody, fretBody;
   let matBall, matBowl, matWall, matFret, matFloor;
@@ -293,17 +293,25 @@
     matWall = new CANNON_.Material('wall');
     matFret = new CANNON_.Material('fret');
     matFloor = new CANNON_.Material('floor');
-    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matBowl, { friction: 0.06, restitution: 0.2 }));
-    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matWall, { friction: 0.02, restitution: 0.5 }));
-    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFret, { friction: 0.3, restitution: 0.1 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matBowl, { friction: 0.015, restitution: 0.2 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matWall, { friction: 0.004, restitution: 0.5 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFret, { friction: 0.25, restitution: 0.25 }));
     world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFloor, { friction: 0.4, restitution: 0.05 }));
 
     // Bowl slope: a RING OF FLAT PLANKS (proven to actually slide a resting sphere -- see the
     // file-header note on why a single CANNON.Cylinder does not, in this cannon.js build).
+    // The planks extend OUTWARD past ORBIT_R to beyond the wall's inner face (SLOPE_EXT_R,
+    // continuing the same incline) so the bowl surface runs continuously under the wall with no
+    // gap at the seam. When the thick wall's inner face moved outward, the old planks (ending
+    // exactly at ORBIT_R) left a 0.12 radial gap at the corner -- wider than the ball's 0.09
+    // radius -- and the ball wedged into that V-groove and rode it forever, never dropping
+    // (the same corner-trap class of bug hit once before at this exact seam).
     const SEGS = 48;
+    const SLOPE_EXT_R = ORBIT_R + 0.25; // safely past the wall's inner face (ORBIT_R + 0.12)
     const slopeAngle = Math.atan2(ORBIT_Y - POCKET_Y, ORBIT_R - POCKET_R);
-    const midR = (ORBIT_R + POCKET_R) / 2, midY = (ORBIT_Y + POCKET_Y) / 2;
-    const slopeLen = Math.hypot(ORBIT_R - POCKET_R, ORBIT_Y - POCKET_Y);
+    const SLOPE_EXT_Y = POCKET_Y + (SLOPE_EXT_R - POCKET_R) * Math.tan(slopeAngle); // same incline, extended
+    const midR = (SLOPE_EXT_R + POCKET_R) / 2, midY = (SLOPE_EXT_Y + POCKET_Y) / 2;
+    const slopeLen = Math.hypot(SLOPE_EXT_R - POCKET_R, SLOPE_EXT_Y - POCKET_Y);
     const arcLen = (2 * Math.PI * midR / SEGS) * 1.4; // slight overlap so there are no gaps
     for (let i = 0; i < SEGS; i++) {
       const a = i * (2 * Math.PI / SEGS);
@@ -327,8 +335,15 @@
       const a = (i / wallSegs) * Math.PI * 2;
       const body = new CANNON_.Body({ mass: 0, material: matWall });
       const segLen = (2 * Math.PI * WALL_R / wallSegs) * 1.3;
-      body.addShape(new CANNON_.Box(new CANNON_.Vec3(segLen / 2, 0.2, 0.05)));
-      body.position.set(Math.sin(a) * WALL_R, ORBIT_Y + 0.1, Math.cos(a) * WALL_R);
+      // Tall AND thick wall. Tall (half-height 0.6, top ~1.1): a fast throw presses the ball
+      // hard into the wall and it can ride UP the face -- with a 0.4-high wall the ball escaped
+      // clean over the top (measured: radius grew to 64). Thick (half-thickness 0.35): at the
+      // real throw speed (~22 m/s) the ball travels ~0.18 units per 1/120s step, MORE than a
+      // thin wall's total thickness, so it could tunnel straight through between steps
+      // (measured: escaped within 1s of the throw at r=5+). Box center is pushed outward by
+      // the half-thickness so the INNER face stays at WALL_R regardless of thickness.
+      body.addShape(new CANNON_.Box(new CANNON_.Vec3(segLen / 2, 0.6, 0.35)));
+      body.position.set(Math.sin(a) * (WALL_R + 0.35), ORBIT_Y + 0.5, Math.cos(a) * (WALL_R + 0.35));
       body.quaternion.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
       world.addBody(body);
     }
@@ -375,8 +390,13 @@
 
     ballBody = new CANNON_.Body({ mass: 0.02, material: matBall });
     ballBody.addShape(new CANNON_.Sphere(CFG.ballRadius));
-    ballBody.linearDamping = 0.08;
-    ballBody.angularDamping = 0.3;
+    // Damping is the master pacing dial, and it is NONLINEAR -- lowering it does not simply
+    // lengthen the spin. Measured on this exact geometry: 0.012/0.05 -> ~14s total;
+    // 0.008/0.028 -> ~20-23s; 0.007/0.024 -> ~17-20s (SHORTER -- retained ball spin changes how
+    // it rolls through the descent); 0.009/0.035 with a geometry bug -> stuck forever. Re-measure
+    // across several spins after ANY change here; do not extrapolate from one sample.
+    ballBody.linearDamping = 0.008;
+    ballBody.angularDamping = 0.028;
     world.addBody(ballBody);
   }
 
@@ -428,7 +448,9 @@
   // stop rather than risk an unbounded spin (the same lesson learned earlier building this
   // module's predecessor: an asymptotic settle condition with no cap can occasionally run for a
   // very long, unpredictable tail).
-  const SETTLE_EPS = 0.7, SETTLE_HOLD = 60, HARD_STEP_CAP = 3600; // ~30s hard ceiling
+  // HARD_STEP_CAP: measured spins run ~19.5-23.4s (2340-2810 steps) with natural variance, so
+  // 45s gives comfortable headroom for outlier throws without ever risking an unbounded spin.
+  const SETTLE_EPS = 0.7, SETTLE_HOLD = 60, HARD_STEP_CAP = 5400;
   function makeResolveCtx(baseline) { return { baseline, step: 0, done: false, hold: 0, lastTickSlot: null }; }
   function resolveStep(ctx) {
     const wheelAngle = ctx.baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step;
