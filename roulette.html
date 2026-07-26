@@ -97,6 +97,34 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .out-cell.active{box-shadow:inset 0 0 0 2px #ffd700}
 .out-cell.red-txt{color:#ff8080}
 .out-cell.black-txt{color:#ddd}
+.cell-label{display:inline-block}
+
+/* ── PORTRAIT MODE -- the felt panel rotates 90deg CW to run tall instead of being squeezed
+   into a thin horizontal strip across the middle of the screen; top-row (wheel/info) shrinks
+   to leave more height for the table. #rl-panel's own left/top/width/height percentages (set
+   inline by buildTable()) are untouched -- they rotate rigidly along with the background image
+   and stay pixel-aligned to it automatically. Only the readable text (.cell-label/.cell-stk/
+   .mbtn-corner) gets an individual -90deg counter-rotation so it stays upright; everything else
+   about each cell's box (its position, size, hit-test region) is exactly as calibrated for
+   landscape, just carried along by the parent's rotation like a rigid sticker on the art.
+   Sizing math: after rotating an unrotated WxH box 90deg, its on-screen footprint becomes HxW
+   -- so the largest box that (a) keeps the felt's real 1919:594 aspect ratio and (b) fits
+   inside #table-area once rotated is found by solving for the tallest H (unrotated) such that
+   H <= table-area's width AND H*(1919/594) <= table-area's height, i.e.
+   H = min(100cqw, 100cqh * 594/1919). */
+@media (orientation:portrait){
+  #top-row{height:calc(100dvh * 2.6 / 16)}
+  #left-col-header{width:16vw;min-width:70px;max-width:120px}
+  #info-panel{width:26vw;min-width:130px;max-width:220px}
+  #table-area{container-type:size}
+  #rl-panel{
+    aspect-ratio:unset;max-width:none;max-height:none;
+    height:min(100cqw,30.954cqh);
+    width:calc(min(100cqw,30.954cqh) * 3.23064);
+    transform:rotate(90deg);
+  }
+  .cell-label,.cell-stk,.mbtn-corner{transform:rotate(-90deg)}
+}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -248,7 +276,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.17</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.18</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">
@@ -281,11 +309,11 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <div id="table-area">
     <div id="rl-panel">
       <div id="zero-col">
-        <div class="bet-cell zero-cell zero-top" data-key="straight-0" onclick="placeBet('straight-0')">0
+        <div class="bet-cell zero-cell zero-top" data-key="straight-0" onclick="placeBet('straight-0')"><span class="cell-label">0</span>
           <span class="cell-stk" id="stk-straight-0"></span>
           <button class="mbtn-corner" onclick="event.stopPropagation();removeBet('straight-0')">−</button>
         </div>
-        <div class="bet-cell zero-cell zero-bot" data-key="straight-00" onclick="placeBet('straight-00')">00
+        <div class="bet-cell zero-cell zero-bot" data-key="straight-00" onclick="placeBet('straight-00')"><span class="cell-label">00</span>
           <span class="cell-stk" id="stk-straight-00"></span>
           <button class="mbtn-corner" onclick="event.stopPropagation();removeBet('straight-00')">−</button>
         </div>
@@ -652,7 +680,7 @@ function outCell(key,label,colorCls,rect,title){
   if(title)d.title=title;
   d.onclick=()=>placeBet(key);
   d.oncontextmenu=(e)=>{e.preventDefault();removeBet(key);};
-  d.innerHTML=label+'<span class="cell-stk" id="stk-'+key+'"></span>';
+  d.innerHTML='<span class="cell-label">'+label+'</span><span class="cell-stk" id="stk-'+key+'"></span>';
   setRect(d,rect.left,rect.top,rect.width,rect.height);
   return d;
 }
@@ -682,7 +710,7 @@ function buildTable(){
       d.dataset.key=key;
       d.onclick=()=>placeBet(key);
       d.oncontextmenu=(e)=>{e.preventDefault();removeBet(key);};
-      d.innerHTML=n+'<span class="cell-stk" id="stk-'+key+'"></span><button class="mbtn-corner" onclick="event.stopPropagation();removeBet(\''+key+'\')">−</button>';
+      d.innerHTML='<span class="cell-label">'+n+'</span><span class="cell-stk" id="stk-'+key+'"></span><button class="mbtn-corner" onclick="event.stopPropagation();removeBet(\''+key+'\')">−</button>';
       grid.appendChild(d);
     }
   }
