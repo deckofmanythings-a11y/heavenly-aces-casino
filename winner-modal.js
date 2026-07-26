@@ -29,7 +29,12 @@
   function buildOverlay() {
     const style = document.createElement('style');
     style.textContent = [
-      '#wm-modal-winner{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:8vh}',
+      // pointer-events:none -- this used to be tap-to-dismiss, which meant it had to capture
+      // clicks over the whole viewport. Deck: let it just play out on its own timer instead and
+      // never block betting/Repeat/moving bets underneath it; only Roll/Fire still waits (via
+      // WinnerModal.isOpen(), checked by each host page's own roll trigger), since firing while
+      // the last payout is still animating would double up on requests mid-settlement.
+      '#wm-modal-winner{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:8vh;pointer-events:none}',
       '#wm-modal-winner.hidden{display:none}',
       '.wm-winner-box{position:relative;background:transparent;border:none;padding:20px 36px;text-align:center;box-shadow:none;animation:wmWinnerPop .3s cubic-bezier(.34,1.56,.64,1)}',
       '@keyframes wmWinnerPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}',
@@ -69,7 +74,6 @@
       '  88%{transform:translate(-50%,-50%) scale(1.08)}',
       '  100%{transform:translate(-50%,-50%) scale(1)}',
       '}',
-      '.wm-winner-tap{position:relative;z-index:2;font-size:18px;color:rgba(255,255,255,.75);margin-top:14px;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.6)}',
       '#wm-modal-winner.big .wm-winner-box{animation:wmWinnerPop .35s cubic-bezier(.34,1.56,.64,1),wmBigWinPulse 1.1s ease-in-out infinite .35s}',
       '@keyframes wmBigWinPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}',
       '#wm-modal-winner.big .wm-winner-title{font-size:48px}',
@@ -101,7 +105,6 @@
           '<div class="wm-winner-coins"></div>' +
           '<div class="wm-winner-amount">$0.00</div>' +
         '</div>' +
-        '<div class="wm-winner-tap">tap to dismiss</div>' +
       '</div>';
     document.body.appendChild(overlayEl);
     amtEl = overlayEl.querySelector('.wm-winner-amount');
@@ -223,7 +226,7 @@
       if (winnerTimer) clearTimeout(winnerTimer);
       _winnerAmount = amount; _winnerAnimating = true; _onClose = options.onClose || null;
       overlayEl.classList.toggle('big', !!options.big);
-      overlayEl.classList.remove('hidden'); overlayEl.onclick = () => WinnerModal._tap(fmt);
+      overlayEl.classList.remove('hidden');
       amtEl.textContent = '$0.00';
       sizeWinnerRays(amount, fmt);
       spawnCoinWaterfall(options.big ? 56 : 34);
@@ -239,18 +242,10 @@
       }
       requestAnimationFrame(tick);
     },
-    // exposed so a host page's own onclick wiring (if it needs the current fmt) can call it;
-    // show() above already wires overlayEl.onclick to this automatically.
-    _tap(fmt) {
-      if (winnerTimer) clearTimeout(winnerTimer);
-      if (_winnerAnimating) { _winnerAnimating = false; amtEl.textContent = (fmt || defaultFmt)(_winnerAmount); winnerTimer = setTimeout(() => WinnerModal.close(), 200); }
-      else WinnerModal.close();
-    },
     close() {
       if (!overlayEl) return;
       overlayEl.classList.add('hidden');
       overlayEl.classList.remove('big');
-      overlayEl.onclick = null;
       if (winnerTimer) { clearTimeout(winnerTimer); winnerTimer = null; }
       const cb = _onClose; _onClose = null;
       if (cb) cb();
@@ -264,7 +259,6 @@
       if (!overlayEl) return;
       overlayEl.classList.add('hidden');
       overlayEl.classList.remove('big');
-      overlayEl.onclick = null;
       if (winnerTimer) { clearTimeout(winnerTimer); winnerTimer = null; }
       _winnerAnimating = false;
       _onClose = null;
