@@ -1441,7 +1441,7 @@ body.portrait-craps #felt-portrait{display:flex}
     <!-- Info Panel (upper right) -->
     <div id="info-panel">
       <div class="info-row">
-        <span id="top-bar-username" onclick="dNav('index.html')" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
+        <span id="top-bar-username" onclick="navigateAway('index.html')" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
         <button class="info-btn" id="mute-voices-btn" onclick="toggleMuteVoices()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0" title="Mute Voices">🔊</button>
         <button class="info-btn" id="info-modal-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
       </div>
@@ -1697,7 +1697,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.4</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.5</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2651,8 +2651,18 @@ function renderBullets(){
 // re-syncing G.bankroll from the server's real result, switching tables would have silently and
 // permanently overwritten the server's correct bankroll with the client's stale one -- causing
 // the two tables' balances to drift out of sync with each other exactly like Deck reported.
+//
+// G.bets={} below (a locked Pass flat is the only thing clearRemovable() ever leaves behind)
+// was missing for a while -- the DB write already always persisted a clean bets:{}, but local
+// G.bets kept the stale locked flat in memory afterward. Harmless for navigateAway/logout since
+// the page fully reloads right after, but switchGameMode never reloads, and a "forfeited" Pass
+// bet whose $ was already gone from bankroll but which still LOOKED like a live unlocked bet in
+// G.bets could resurface as if freshly placed the next time this same mode came back around --
+// same root cause as the Reset Point bug (client and server state disagreeing), just reachable
+// from a different angle.
 async function saveCleanState(mode){
   clearRemovable();
+  G.bets={};
   G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
   G.comeBets=[];G.dcBets=[];G.bonus=makeInitialG().bonus;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
