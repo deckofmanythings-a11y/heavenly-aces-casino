@@ -181,6 +181,20 @@
     // the canvas texture is drawn with (confirmed: it rendered as a radial sunburst, the classic
     // symptom of a texture read with the wrong UV parameterization). CircleGeometry's UV mapping
     // is the standard, well-defined one that actually matches.
+    // Real-photo wood swatches (cropped from real_roulette.png -- see wheel-rim-wood.png /
+    // wheel-cone-wood.png, both plain material grain with no pockets/trim in frame) tiled via
+    // RepeatWrapping across the static wood parts below. These carry real baked directional
+    // lighting (a photographed glossy wood surface, not a flat color) -- that's exactly why the
+    // parts wearing them must never rotate, or the baked highlight would visibly sweep around
+    // like a spinning disco light instead of reading as a fixed light source hitting still wood.
+    const woodLoader = new THREE_.TextureLoader();
+    const rimWoodTex = woodLoader.load('wheel-rim-wood.png');
+    rimWoodTex.wrapS = rimWoodTex.wrapT = THREE_.RepeatWrapping;
+    rimWoodTex.repeat.set(10, 1);
+    const coneWoodTex = woodLoader.load('wheel-cone-wood.png');
+    coneWoodTex.wrapS = coneWoodTex.wrapT = THREE_.RepeatWrapping;
+    coneWoodTex.repeat.set(7, 1);
+
     wheelMesh = new THREE_.Group();
     const rimGeo = new THREE_.CylinderGeometry(CFG.wheelRadius, CFG.wheelRadius, 0.12, 64);
     const rimMesh = new THREE_.Mesh(rimGeo, new THREE_.MeshStandardMaterial({ color: 0x2a1a08 }));
@@ -190,6 +204,7 @@
     faceMesh.rotation.x = -Math.PI / 2; // lie flat, facing up
     faceMesh.position.y = 0.061; // just above the rim's top surface (rim height 0.12) to avoid z-fighting
     wheelMesh.add(faceMesh);
+    scene.add(wheelMesh);
 
     // Center hub: real wheels rise into a cone from inside the numbered band up to a small brass
     // turret -- the flat CircleGeometry face alone read as far cheaper/flatter than a real wheel.
@@ -197,20 +212,19 @@
     // single-vertex apex, which shades badly and doesn't match the real turret's flat top anyway.
     // Base radius is kept well inside the label radius (r*0.8 in drawWheelTexture) so the cone
     // never covers any numbers, only the plain colored wedges near the center.
+    // Added directly to the SCENE, not wheelMesh -- unlike the numbered ring, the cone wears the
+    // photographed wood texture above, so (per the same reasoning as the outer bowl) it must stay
+    // static rather than spin with the wheelhead.
     const CONE_BASE_R = CFG.wheelRadius * 0.62, CONE_TOP_R = CFG.wheelRadius * 0.05, CONE_H = CFG.wheelRadius * 0.34;
     const coneGeo = new THREE_.CylinderGeometry(CONE_TOP_R, CONE_BASE_R, CONE_H, 48);
-    const coneMesh = new THREE_.Mesh(coneGeo, new THREE_.MeshStandardMaterial({ color: 0x5c3a1a, roughness: 0.35 }));
+    const coneMesh = new THREE_.Mesh(coneGeo, new THREE_.MeshStandardMaterial({ map: coneWoodTex, roughness: 0.35 }));
     coneMesh.position.y = faceMesh.position.y + CONE_H / 2 + 0.001;
-    wheelMesh.add(coneMesh);
-    // Small brass turret cap on the cone's flat top -- a rotationally symmetric shape spinning
-    // about its own vertical axis reads as static, so it's fine to spin with the wheelhead rather
-    // than needing a separate stationary group (a real spindle assembly IS stationary, but nobody
-    // can tell the difference on a shape with no visible features to track).
+    scene.add(coneMesh);
+    // Small brass turret cap on the cone's flat top -- stays with the (now static) cone.
     const capGeo = new THREE_.SphereGeometry(CONE_TOP_R * 1.6, 16, 16);
     const capMesh = new THREE_.Mesh(capGeo, new THREE_.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.7, roughness: 0.3 }));
     capMesh.position.y = coneMesh.position.y + CONE_H / 2 + CONE_TOP_R * 0.5;
-    wheelMesh.add(capMesh);
-    scene.add(wheelMesh);
+    scene.add(capMesh);
 
     const ballGeo = new THREE_.SphereGeometry(CFG.ballRadius, 20, 20);
     const ballMat = new THREE_.MeshStandardMaterial({ color: 0xf5f5f5, metalness: 0.3, roughness: 0.25 });
@@ -222,8 +236,8 @@
     // agree) wooden ring past the wheel's edge. Inner face sits exactly at the physics wall's
     // inner radius (WALL_INNER_R) so the ball visibly bounces off actual wood instead of thin
     // air at the disc's edge, which is how it looked before this existed.
-    const bowlWallMat = new THREE_.MeshStandardMaterial({ color: 0x33220f, roughness: 0.7, side: THREE_.DoubleSide });
-    const bowlTopMat = new THREE_.MeshStandardMaterial({ color: 0x4a331a, roughness: 0.6, side: THREE_.DoubleSide });
+    const bowlWallMat = new THREE_.MeshStandardMaterial({ map: rimWoodTex, roughness: 0.7, side: THREE_.DoubleSide });
+    const bowlTopMat = new THREE_.MeshStandardMaterial({ map: rimWoodTex, roughness: 0.6, side: THREE_.DoubleSide });
     const wallFaceGeo = new THREE_.CylinderGeometry(WALL_INNER_R, WALL_INNER_R, BOWL_VIS_TOP_Y, 64, 1, true);
     const wallFace = new THREE_.Mesh(wallFaceGeo, bowlWallMat);
     wallFace.position.y = BOWL_VIS_TOP_Y / 2;
