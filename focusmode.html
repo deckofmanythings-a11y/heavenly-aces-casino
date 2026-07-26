@@ -256,7 +256,8 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
    it for mouse users, a JS-toggled .show class covers tap-to-open/tap-to-close on touch. */
 #fibo-wrap{position:relative;display:inline-flex;flex-shrink:0;cursor:pointer}
 #fibo-icon{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.3);display:block}
-#fibo-hint{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:50;background:rgba(10,10,10,.95);border:1px solid rgba(255,215,0,.4);border-radius:6px;padding:8px 10px;font-size:12px;line-height:1.6;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+#fibo-hint{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:9998;background:rgba(10,10,10,.95);border:1px solid rgba(255,215,0,.4);border-radius:6px;padding:8px 10px;font-size:12px;line-height:1.6;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+#fibo-wrap{z-index:9998}
 #fibo-wrap:hover #fibo-hint,#fibo-hint.show{display:block}
 body.felt-mode #felt-stage #left-col-header #fibo-icon{width:calc(var(--chip)*0.55);height:calc(var(--chip)*0.55)}
 body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip)*0.24)}
@@ -1347,7 +1348,7 @@ body.portrait-craps #felt-portrait{display:flex}
   <div id="top-row">
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
-      <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
+      <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px;position:relative;z-index:9998">
         <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <div id="fibo-wrap" onclick="toggleFiboHint(event)">
           <img src="fibo.png" id="fibo-icon" alt="Fibonacci press guide">
@@ -1697,7 +1698,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.5</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.6</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
