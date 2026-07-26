@@ -1704,7 +1704,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.12</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.13</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4550,10 +4550,17 @@ async function rollDice(){
   if(!data.ok){
     failRoll(new Error(data.message||'roll failed')); // closes the cloche overlay
     if(data.error==='sync'&&data.lastGoodState){
-      addLog(data.message||'Sync Error. Restoring last known good bet and bankroll state.','lose');
+      // data.detail is validateAgainstContract()'s specific reason (e.g. "Pass Line contract
+      // bet was altered.") -- never surfaced before, so every prior report of "board reset to
+      // blank" had no way to tell us WHY the server rejected the roll. Logged (console, not
+      // addLog -- this is diagnostic noise, not something a player needs to read) so the next
+      // occurrence is actually diagnosable instead of guessed at.
+      console.warn('[roll sync error]',data.detail||'(no detail)','lastGoodState:',data.lastGoodState);
+      addLog((data.message||'Sync Error. Restoring last known good bet and bankroll state.')+(data.detail?' ['+data.detail+']':''),'lose');
       restoreFromServerState(data.lastGoodState);
       if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     }else{
+      console.warn('[roll error]',data.error,data.message);
       addLog(data.message||'Roll failed. Try again.','lose');
     }
     document.getElementById('roll-btn').disabled=false;
