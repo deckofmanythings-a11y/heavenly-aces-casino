@@ -190,6 +190,26 @@
     faceMesh.rotation.x = -Math.PI / 2; // lie flat, facing up
     faceMesh.position.y = 0.061; // just above the rim's top surface (rim height 0.12) to avoid z-fighting
     wheelMesh.add(faceMesh);
+
+    // Center hub: real wheels rise into a cone from inside the numbered band up to a small brass
+    // turret -- the flat CircleGeometry face alone read as far cheaper/flatter than a real wheel.
+    // CylinderGeometry with a small (not zero) top radius gives a flat plateau instead of a
+    // single-vertex apex, which shades badly and doesn't match the real turret's flat top anyway.
+    // Base radius is kept well inside the label radius (r*0.8 in drawWheelTexture) so the cone
+    // never covers any numbers, only the plain colored wedges near the center.
+    const CONE_BASE_R = CFG.wheelRadius * 0.62, CONE_TOP_R = CFG.wheelRadius * 0.05, CONE_H = CFG.wheelRadius * 0.34;
+    const coneGeo = new THREE_.CylinderGeometry(CONE_TOP_R, CONE_BASE_R, CONE_H, 48);
+    const coneMesh = new THREE_.Mesh(coneGeo, new THREE_.MeshStandardMaterial({ color: 0x5c3a1a, roughness: 0.35 }));
+    coneMesh.position.y = faceMesh.position.y + CONE_H / 2 + 0.001;
+    wheelMesh.add(coneMesh);
+    // Small brass turret cap on the cone's flat top -- a rotationally symmetric shape spinning
+    // about its own vertical axis reads as static, so it's fine to spin with the wheelhead rather
+    // than needing a separate stationary group (a real spindle assembly IS stationary, but nobody
+    // can tell the difference on a shape with no visible features to track).
+    const capGeo = new THREE_.SphereGeometry(CONE_TOP_R * 1.6, 16, 16);
+    const capMesh = new THREE_.Mesh(capGeo, new THREE_.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.7, roughness: 0.3 }));
+    capMesh.position.y = coneMesh.position.y + CONE_H / 2 + CONE_TOP_R * 0.5;
+    wheelMesh.add(capMesh);
     scene.add(wheelMesh);
 
     const ballGeo = new THREE_.SphereGeometry(CFG.ballRadius, 20, 20);
@@ -326,7 +346,21 @@
       w = container.clientWidth || 200; h = container.clientHeight || 200;
     }
     renderer.setSize(w, h);
-    fitCameraFrustum(w, h);
+    if (showcaseOpen) fitShowcaseFrustum(w, h); else fitCameraFrustum(w, h);
+  }
+  // Straight top-down framing for the "show wheel" showcase (see openShowcase below) -- no
+  // TILT_COS compensation needed since there's no tilt to correct for, unlike fitCameraFrustum.
+  function fitShowcaseFrustum(w, h) {
+    const extentX = CFG.wheelRadius * 1.19; // same margin as the normal tilted framing
+    const aspect = w / h;
+    if (aspect >= 1) { camera.top = extentX; camera.bottom = -extentX; camera.left = -extentX * aspect; camera.right = extentX * aspect; }
+    else { camera.left = -extentX; camera.right = extentX; camera.top = extentX / aspect; camera.bottom = -extentX / aspect; }
+    // z=0.001, not 0: looking perfectly straight down with up=(0,1,0) is a degenerate lookAt
+    // (the camera's right-vector cross product collapses to zero) -- confirmed the same fix
+    // was needed for the same reason elsewhere in this file's camera code.
+    camera.position.set(0, 10, 0.001);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
   }
 
   // ---------- fullscreen spin overlay ----------
@@ -338,12 +372,26 @@
   // second renderer. z-index 150: above the table, below the winner modal (200), so the coin
   // waterfall plays over the tight final wheel shot, and below the cashout voucher (300).
   let overlayEl = null, overlayOpen = false, overlayCloseTimer = null;
+  // Manual "show wheel" showcase: a full-screen, straight-down, frozen (no spin, no ball) look at
+  // the layout, entirely separate from the spin overlay's own state machine -- it reuses the same
+  // fullscreen div/canvas-reparent plumbing but never runs while a real spin is in progress.
+  let showcaseOpen = false, showcaseCloseBtn = null;
   function buildOverlay() {
     overlayEl = document.createElement('div');
     overlayEl.id = 'rw-spin-overlay';
     overlayEl.style.cssText = 'position:fixed;inset:0;z-index:150;background:rgba(3,10,7,.94);' +
       'display:none;opacity:0;transition:opacity .3s ease;';
     document.body.appendChild(overlayEl);
+
+    // Only the showcase gets a close control -- closing mid-spin makes no sense (it closes
+    // itself on resolve), but the showcase has no other exit since it isn't tied to any game event.
+    showcaseCloseBtn = document.createElement('button');
+    showcaseCloseBtn.textContent = '✕ Close';
+    showcaseCloseBtn.style.cssText = 'position:absolute;top:16px;right:16px;z-index:151;' +
+      'background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:6px;' +
+      'color:#fff;font-size:16px;padding:8px 14px;cursor:pointer;display:none';
+    showcaseCloseBtn.onclick = () => RouletteWheel.hideWheel();
+    overlayEl.appendChild(showcaseCloseBtn);
   }
   function openOverlay() {
     clearTimeout(overlayCloseTimer);
@@ -375,6 +423,20 @@
       settleZoom = 0;
       onResize();
     }, 320);
+  }
+  function openShowcase() {
+    if (phase !== 'idle' || showcaseOpen) return;
+    showcaseOpen = true; // must be set before openOverlay() so its onResize() picks the top-down framing
+    ballMesh.visible = false;
+    showcaseCloseBtn.style.display = 'block';
+    openOverlay();
+  }
+  function closeShowcase() {
+    if (!showcaseOpen) return;
+    showcaseOpen = false;
+    ballMesh.visible = true;
+    showcaseCloseBtn.style.display = 'none';
+    closeOverlay();
   }
 
   // ---------- real rigid-body physics world (cannon.js) ----------
@@ -734,6 +796,14 @@
     lastTime = now;
     if (!inited) return;
 
+    if (showcaseOpen) {
+      // Full-screen static presentation: wheel frozen at whatever angle it was at, ball hidden,
+      // camera locked top-down -- entirely bypasses the idle/preroll/resolving/reveal state
+      // machine below rather than trying to make that machine understand a "frozen" phase.
+      renderer.render(scene, camera);
+      return;
+    }
+
     if (phase === 'resolving') {
       const debt = Math.min(dt / STEP, 6);
       for (let i = 0; i < debt; i++) {
@@ -796,6 +866,7 @@
     // pocketOrPromise: '17' / '0' / '00' (string or number) or a Promise resolving to one
     spin(pocketOrPromise) {
       if (!inited) return Promise.reject(new Error('RouletteWheel.init() first'));
+      if (showcaseOpen) closeShowcase(); // a player who left the showcase open shouldn't block spinning
       if (phase !== 'idle') return Promise.reject(new Error('spin in progress'));
       return new Promise((resolve, reject) => {
         activeResolve = resolve; activeReject = reject; serverPocket = null;
@@ -815,6 +886,11 @@
       });
     },
     isSpinning: () => phase !== 'idle',
+    // Full-screen, straight-down, frozen (no ball, no spin) look at the wheel's layout -- purely
+    // presentational, no-ops while a real spin is in progress. showWheel() is a no-op if already
+    // open; hideWheel() also runs from the in-canvas close button.
+    showWheel: () => openShowcase(),
+    hideWheel: () => closeShowcase(),
     WHEEL_ORDER,
     colorOf,
   };
