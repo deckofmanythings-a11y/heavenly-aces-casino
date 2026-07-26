@@ -251,6 +251,15 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 .gmode-btn:disabled{opacity:.35;cursor:not-allowed}
 .gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(255,255,255,.4);display:block}
 .gmode-btn.active .gmode-sub{color:rgba(255,215,0,.6)}
+/* Fibonacci press-progression cheat sheet, next to Home. Native title= can't hold a click-to-
+   open state for touch users, so this is a small hand-rolled popover instead: CSS :hover shows
+   it for mouse users, a JS-toggled .show class covers tap-to-open/tap-to-close on touch. */
+#fibo-wrap{position:relative;display:inline-flex;flex-shrink:0;cursor:pointer}
+#fibo-icon{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.3);display:block}
+#fibo-hint{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:50;background:rgba(10,10,10,.95);border:1px solid rgba(255,215,0,.4);border-radius:6px;padding:8px 10px;font-size:12px;line-height:1.6;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+#fibo-wrap:hover #fibo-hint,#fibo-hint.show{display:block}
+body.felt-mode #felt-stage #left-col-header #fibo-icon{width:calc(var(--chip)*0.55);height:calc(var(--chip)*0.55)}
+body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip)*0.24)}
 /* Don't Pass stub */
 #dont-pass-stub{display:none;flex:1;min-height:0;border-radius:4px;background:rgba(40,0,0,.3);border:0.5px solid rgba(255,80,80,.2);align-items:center;justify-content:center;flex-direction:column;opacity:.5;cursor:not-allowed}
 .dp-stub-name{font-size:16px;font-weight:900;letter-spacing:.08em;color:rgba(255,100,100,.7)}
@@ -644,7 +653,7 @@ body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
    exists to hide. Without this, the images were forced display:none while their (correctly
    sized/positioned) container divs stayed visible -- exactly the "toggle appears to work but
    nothing ever shows" symptom Deck reported. */
-body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img):not(.bullet-icon){display:none!important}
+body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img):not(.bullet-icon):not(#fibo-icon){display:none!important}
 #roll-history img{display:inline!important}
 body.felt-mode #felt-stage #roll-history img:not(#felt-img){display:inline!important}
 body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .nb-buy,
@@ -1338,8 +1347,18 @@ body.portrait-craps #felt-portrait{display:flex}
   <div id="top-row">
     <!-- Left col header: mode buttons + game mode toggle -->
     <div id="left-col-header" style="flex-direction:column;gap:0">
-      <div id="game-mode-toggle" style="display:block">
-        <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
+      <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
+        <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
+        <div id="fibo-wrap" onclick="toggleFiboHint(event)">
+          <img src="fibo.png" id="fibo-icon" alt="Fibonacci press guide">
+          <div id="fibo-hint">
+            <div>6/8 (9-18-36-42-90...)</div>
+            <div>5/9 (15-25-35-75-150...)</div>
+            <div>4/10 (2x)</div>
+            <div>3/11 (2x both 3 and 11)</div>
+            <div>2/12 (5-15-25-50... both 2 and 12)</div>
+          </div>
+        </div>
       </div>
       <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
         <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
@@ -1678,7 +1697,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.2</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.3</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3164,6 +3183,14 @@ function closeFinancesDropdown(){
   document.getElementById('finances-dropdown').classList.add('hidden');
   document.getElementById('finances-btn').classList.remove('open');
 }
+function toggleFiboHint(e){
+  e.stopPropagation();
+  document.getElementById('fibo-hint').classList.toggle('show');
+}
+document.addEventListener('click',e=>{
+  const wrap=document.getElementById('fibo-wrap');
+  if(wrap&&!wrap.contains(e.target))document.getElementById('fibo-hint').classList.remove('show');
+});
 async function navigateAway(url){
   exitFocusPracticeForNav();
   attemptLeave(async()=>{
