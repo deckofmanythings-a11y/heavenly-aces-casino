@@ -72,6 +72,7 @@
   let inited = false;
   let scene, camera, renderer, canvasEl, rafId, lastTime = 0;
   let wheelMesh, wheelCanvas, wheelCtx, wheelTexture, ballMesh, pointerMesh;
+  let pocketsPhotoImg; // real-photo pocket ring, drawn (and rotated for relabeling) onto wheelCanvas -- see drawWheelTexture
   let labelOffset = 0; // which WHEEL_ORDER index is drawn at texture-slot 0 (the relabel knob)
 
   // ---------- audio (ticks only; reuses site-wide AudioSettings like every other module) ----------
@@ -95,6 +96,10 @@
   }
 
   // ---------- wheel number-ring texture (the "relabel" surface) ----------
+  // wheel-pockets-photo.jpg is a real photo of the pocket ring, cropped square (center on the
+  // wheel, radius out to just past the last pocket, no gold trim/rim in frame) with pocket '0'
+  // centered at the top -- i.e. it already matches this file's own labelOffset=0 layout exactly,
+  // since WHEEL_ORDER is the real American wheel sequence the photo itself was shot in.
   function buildWheelTexture() {
     const size = 1536; // higher-res than an earlier 1024 -- the wheel renders large enough on
                         // screen (see #wheel-wrap in roulette.html) that labels need more source
@@ -103,35 +108,26 @@
     wheelCanvas.width = size; wheelCanvas.height = size;
     wheelCtx = wheelCanvas.getContext('2d');
     wheelTexture = new THREE_.CanvasTexture(wheelCanvas);
+    pocketsPhotoImg = new Image();
+    pocketsPhotoImg.onload = drawWheelTexture; // first draw is likely still loading synchronously here
+    pocketsPhotoImg.src = 'wheel-pockets-photo.jpg';
     drawWheelTexture();
   }
+  // Relabeling used to redraw each pocket's color+number individually (the "which number is
+  // physically where" trick); with a real photo standing in for the whole ring at once, the same
+  // trick becomes ONE rigid rotation of that single image -- every pocket needs the identical
+  // angular shift (labelOffset slots), since the photo's native layout already matches
+  // WHEEL_ORDER's slot 0..37 positions one-for-one. Verified algebraically: the old per-slot rule
+  // "slot s shows WHEEL_ORDER[(s-labelOffset)%N]" means a pocket native to slot i is drawn at slot
+  // i+labelOffset for every i -- a uniform rotation, not a per-slot remap.
   function drawWheelTexture() {
-    const ctx = wheelCtx, size = wheelCanvas.width, cx = size / 2, cy = size / 2, r = size / 2 - 4;
+    const ctx = wheelCtx, size = wheelCanvas.width, cx = size / 2, cy = size / 2;
     ctx.clearRect(0, 0, size, size);
-    for (let slot = 0; slot < N; slot++) {
-      const pocket = WHEEL_ORDER[(slot - labelOffset + N * 4) % N];
-      const start = slot * SLOT_ANGLE - Math.PI / 2 - SLOT_ANGLE / 2;
-      const end = start + SLOT_ANGLE;
-      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
-      const c = colorOf(pocket);
-      ctx.fillStyle = c === 'red' ? '#a01818' : c === 'black' ? '#181818' : '#0a6b30';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,215,0,.25)'; ctx.lineWidth = 2; ctx.stroke();
+    if (pocketsPhotoImg && pocketsPhotoImg.complete && pocketsPhotoImg.naturalWidth) {
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(start + SLOT_ANGLE / 2);
-      ctx.translate(r * 0.8, 0);
-      ctx.rotate(Math.PI / 2);
-      // Bold outline behind the fill so white text stays legible against both the dark
-      // slots and the (similarly light) gold slot-boundary lines at small render sizes.
-      const fontPx = Math.round(size * (pocket.length > 1 ? 0.058 : 0.072));
-      ctx.font = 'bold ' + fontPx + 'px system-ui,sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.lineJoin = 'round'; ctx.miterLimit = 2;
-      ctx.strokeStyle = 'rgba(0,0,0,.9)'; ctx.lineWidth = fontPx * 0.22;
-      ctx.strokeText(pocket, 0, 0);
-      ctx.fillStyle = '#fff';
-      ctx.fillText(pocket, 0, 0);
+      ctx.rotate(labelOffset * SLOT_ANGLE);
+      ctx.drawImage(pocketsPhotoImg, -cx, -cy, size, size);
       ctx.restore();
     }
     if (wheelTexture) wheelTexture.needsUpdate = true;
@@ -181,19 +177,23 @@
     // the canvas texture is drawn with (confirmed: it rendered as a radial sunburst, the classic
     // symptom of a texture read with the wrong UV parameterization). CircleGeometry's UV mapping
     // is the standard, well-defined one that actually matches.
-    // Real-photo wood swatches (cropped from real_roulette.png -- see wheel-rim-wood.png /
-    // wheel-cone-wood.png, both plain material grain with no pockets/trim in frame) tiled via
-    // RepeatWrapping across the static wood parts below. These carry real baked directional
-    // lighting (a photographed glossy wood surface, not a flat color) -- that's exactly why the
-    // parts wearing them must never rotate, or the baked highlight would visibly sweep around
-    // like a spinning disco light instead of reading as a fixed light source hitting still wood.
+    // Real-photo wood, used whole rather than a small tiled swatch (a small repeating crop looked
+    // cheap and, worse, wasn't actually usable at all on these curved surfaces -- a top-down photo
+    // doesn't wrap onto a CylinderGeometry side via its default (angle, height) UV without visible
+    // distortion, since that UV expects an "unrolled around the surface" image, not a plan view).
+    // wheel-cone-unwrap.jpg / wheel-rim-unwrap.jpg are real POLAR unwraps of the photo (each
+    // destination pixel (angle, radius) sampled straight from the source photo around the wheel's
+    // true center) -- confirmed seamless left-to-right by inspection before use. wheel-rim-full.jpg
+    // is the plain square crop (same "circle inscribed in a square" convention as the numbered
+    // face below) for the flat rim-top ring, whose UV is a square projection, not angle/height.
+    // All three carry the photo's own baked directional lighting, which is exactly why every mesh
+    // wearing one is attached directly to the scene, never to the spinning wheelMesh group.
     const woodLoader = new THREE_.TextureLoader();
-    const rimWoodTex = woodLoader.load('wheel-rim-wood.png');
-    rimWoodTex.wrapS = rimWoodTex.wrapT = THREE_.RepeatWrapping;
-    rimWoodTex.repeat.set(10, 1);
-    const coneWoodTex = woodLoader.load('wheel-cone-wood.png');
-    coneWoodTex.wrapS = coneWoodTex.wrapT = THREE_.RepeatWrapping;
-    coneWoodTex.repeat.set(7, 1);
+    const rimFullTex = woodLoader.load('wheel-rim-full.jpg');
+    const rimUnwrapTex = woodLoader.load('wheel-rim-unwrap.jpg');
+    rimUnwrapTex.wrapS = THREE_.RepeatWrapping; // seamless around the full circumference
+    const coneUnwrapTex = woodLoader.load('wheel-cone-unwrap.jpg');
+    coneUnwrapTex.wrapS = THREE_.RepeatWrapping;
 
     wheelMesh = new THREE_.Group();
     const rimGeo = new THREE_.CylinderGeometry(CFG.wheelRadius, CFG.wheelRadius, 0.12, 64);
@@ -217,7 +217,7 @@
     // static rather than spin with the wheelhead.
     const CONE_BASE_R = CFG.wheelRadius * 0.62, CONE_TOP_R = CFG.wheelRadius * 0.05, CONE_H = CFG.wheelRadius * 0.34;
     const coneGeo = new THREE_.CylinderGeometry(CONE_TOP_R, CONE_BASE_R, CONE_H, 48);
-    const coneMesh = new THREE_.Mesh(coneGeo, new THREE_.MeshStandardMaterial({ map: coneWoodTex, roughness: 0.35 }));
+    const coneMesh = new THREE_.Mesh(coneGeo, new THREE_.MeshStandardMaterial({ map: coneUnwrapTex, roughness: 0.35 }));
     coneMesh.position.y = faceMesh.position.y + CONE_H / 2 + 0.001;
     scene.add(coneMesh);
     // Small brass turret cap on the cone's flat top -- stays with the (now static) cone.
@@ -236,8 +236,8 @@
     // agree) wooden ring past the wheel's edge. Inner face sits exactly at the physics wall's
     // inner radius (WALL_INNER_R) so the ball visibly bounces off actual wood instead of thin
     // air at the disc's edge, which is how it looked before this existed.
-    const bowlWallMat = new THREE_.MeshStandardMaterial({ map: rimWoodTex, roughness: 0.7, side: THREE_.DoubleSide });
-    const bowlTopMat = new THREE_.MeshStandardMaterial({ map: rimWoodTex, roughness: 0.6, side: THREE_.DoubleSide });
+    const bowlWallMat = new THREE_.MeshStandardMaterial({ map: rimUnwrapTex, roughness: 0.7, side: THREE_.DoubleSide });
+    const bowlTopMat = new THREE_.MeshStandardMaterial({ map: rimFullTex, roughness: 0.6, side: THREE_.DoubleSide });
     const wallFaceGeo = new THREE_.CylinderGeometry(WALL_INNER_R, WALL_INNER_R, BOWL_VIS_TOP_Y, 64, 1, true);
     const wallFace = new THREE_.Mesh(wallFaceGeo, bowlWallMat);
     wallFace.position.y = BOWL_VIS_TOP_Y / 2;
