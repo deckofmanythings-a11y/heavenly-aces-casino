@@ -111,7 +111,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
 /* position:relative removed here -- was overriding the calibrated position:absolute above,
    which would have broken #dice-zone's placement entirely (not just its size). */
-#dice-zone{background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center}
+#dice-zone{display:flex;align-items:center;justify-content:center}
 #dice-canvas-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
 #dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:26px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
 
@@ -233,7 +233,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .log-line{font-size:11px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .log-line.win{color:#7ee87e}
 .log-line.lose{color:#f08080}
-#log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);box-shadow:0 0 0 1.5px #000;color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;flex:1;min-height:0}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .nav-btn:hover{background:rgba(255,255,255,.15)}
@@ -456,8 +456,9 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
    adapted to this single 1672x941 sicbo panel canvas. Ghost boxes overlay the baked art so
    Deck can drag each row region directly onto its target screen cutout, then export a table
    of exact left/top/width/height back. Purely a dev tool -- #sb-calib-toggle is the only
-   visible entry point. */
-#sb-calib-toggle{position:absolute;left:.3em;top:.15em;z-index:50;background:rgba(0,0,0,.55);border:1px solid rgba(0,255,255,.5);border-radius:4px;color:#0ff;font-size:14px;padding:4px 8px;cursor:pointer}
+   visible entry point. Hidden for now (Deck: "I will let you know if I need it back") -- kept
+   in the DOM/JS untouched, just display:none, so re-enabling is a one-line revert. */
+#sb-calib-toggle{display:none;position:absolute;left:.3em;top:.15em;z-index:50;background:rgba(0,0,0,.55);border:1px solid rgba(0,255,255,.5);border-radius:4px;color:#0ff;font-size:14px;padding:4px 8px;cursor:pointer}
 #sb-calib-layer{position:absolute;inset:0;z-index:60;pointer-events:none}
 .sb-calib-box{position:absolute;border:2px dashed #0ff;background:rgba(0,255,255,.15);cursor:move;pointer-events:auto;box-sizing:border-box}
 .sb-calib-box.dragging{background:rgba(0,255,255,.3);border-color:#fff}
@@ -549,7 +550,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.5</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.6</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
