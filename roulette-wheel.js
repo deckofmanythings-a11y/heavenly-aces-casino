@@ -170,6 +170,29 @@
     scene.add(new THREE_.AmbientLight(0xffffff, 0.75));
     const dl = new THREE_.DirectionalLight(0xffffff, 0.8); dl.position.set(1, 3, 1); scene.add(dl);
 
+    // A fully metallic PBR material has almost no diffuse response -- nearly all its brightness
+    // comes from reflecting its surroundings, not from being lit. With no environment to reflect,
+    // metalness:1 renders as flat black regardless of scene lights (confirmed: this is exactly
+    // what happened before this existed). A real HDRI is overkill for one small ball; a plain
+    // procedural gradient (bright "sky" top, dark "floor" bottom, one bright band standing in for
+    // a window/light fixture) assigned as scene.environment gives every metallic material in the
+    // scene something to reflect, which is all a convincing chrome look actually requires.
+    const envCanvas = document.createElement('canvas');
+    envCanvas.width = 256; envCanvas.height = 128;
+    const envCtx = envCanvas.getContext('2d');
+    const envGrad = envCtx.createLinearGradient(0, 0, 0, 128);
+    envGrad.addColorStop(0, '#ffffff');
+    envGrad.addColorStop(0.18, '#cfd8e3');
+    envGrad.addColorStop(0.5, '#3a4552');
+    envGrad.addColorStop(0.85, '#14171c');
+    envGrad.addColorStop(1, '#05060a');
+    envCtx.fillStyle = envGrad; envCtx.fillRect(0, 0, 256, 128);
+    envCtx.fillStyle = 'rgba(255,255,255,.95)';
+    envCtx.fillRect(0, 22, 256, 10); // a bright horizontal band -- the "window" reflection
+    const envTex = new THREE_.CanvasTexture(envCanvas);
+    envTex.mapping = THREE_.EquirectangularReflectionMapping;
+    scene.environment = envTex;
+
     buildWheelTexture();
     // wheelMesh is a Group so both pieces spin together via wheelMesh.rotation.y each frame.
     // The numbered face is a flat CircleGeometry rather than a CylinderGeometry top cap -- a
@@ -456,10 +479,16 @@
   }
 
   // ---------- real rigid-body physics world (cannon.js) ----------
-  // POCKET_R must sit OUTSIDE the label radius (r*0.8 in drawWheelTexture, i.e. ~0.8*wheelRadius
-  // in world units) so the ball settles past the numbers toward the rim, matching a real wheel
-  // (the pocket ring is the outermost moving part -- the ball never rests hub-side of the digits).
-  const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.87;
+  // POCKET_R targets the real photo's actual pocket floor, NOT the number -- the pocket art has
+  // TWO concentric rings inside the numbered band (confirmed by radial pixel scans through both
+  // a green '0' and a red '9', so it's the pockets' actual shape, not an artifact of one cell):
+  // a plain-color inner ring with no text (photo r 304-380, center ~342) is the true pocket floor,
+  // separated by a thin gold trim line (~382-388) from the outer ring where the number itself is
+  // printed (text centered ~r 410-416). wheel-pockets-photo.jpg is cropped so photo r=480 = this
+  // constant's own 1.0 (i.e. CFG.wheelRadius) with no other scaling, so 342/480 = 0.7125 converts
+  // directly. (Superseded the old 0.87 -- that value intentionally put the ball OUTSIDE the label
+  // radius, tuned back when pockets were flat procedural fills with no separate pocket art at all.)
+  const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.7125;
   const ORBIT_Y = 0.16, POCKET_Y = 0.09;
   // Shared by the physics wall (buildPhysicsWorld) and the visible bowl meshes (buildScene) so
   // the ball always bounces exactly where the wood appears to be -- one constant, no drift.
@@ -644,6 +673,15 @@
   // HARD_STEP_CAP: measured spins run ~19.5-23.4s (2340-2810 steps) with natural variance, so
   // 45s gives comfortable headroom for outlier throws without ever risking an unbounded spin.
   const SETTLE_EPS = 0.7, SETTLE_HOLD = 60, HARD_STEP_CAP = 5400;
+  // Guardrail: discrete collision detection has no protection against a fast-enough ball
+  // tunneling straight through the outer wall in a single step (the tall/thick wall made this
+  // rare, not impossible) -- an escaped ball just flies off forever, never satisfies the settle
+  // condition, and the spin silently eats the full HARD_STEP_CAP (45s) before giving up. Rather
+  // than chase every possible tunneling edge case, clamp the ball back in bounds every step: a
+  // direct position check can't be tunneled through the way a collision can. SAFETY_R sits well
+  // past the visible camera frame (extentX is wheelRadius*1.19) so if this ever fires, the ball
+  // was already off-screen and about to be lost -- a graceful recovery, not just a crash guard.
+  const SAFETY_R = WALL_INNER_R + 2.0;
   function makeResolveCtx(baseline) { return { baseline, step: 0, done: false, hold: 0, lastTickSlot: null }; }
   function resolveStep(ctx) {
     const wheelAngle = ctx.baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step;
@@ -651,6 +689,18 @@
     world.step(STEP);
     ctx.step++;
     if (ctx.step >= HARD_STEP_CAP) { ctx.done = true; return; }
+
+    // See SAFETY_R above -- recover a tunneled-through-the-wall ball onto the orbit track,
+    // riding with the wheel, instead of letting it fly off and burn the full step cap. This is a
+    // deterministic correction (same baseline + step sequence -> same trigger, same recovery), so
+    // it can't break the presimulate/live-replay determinism the whole forced-landing trick relies on.
+    const escapedR = Math.hypot(ballBody.position.x, ballBody.position.z);
+    if (escapedR > SAFETY_R) {
+      const a = Math.atan2(ballBody.position.x, ballBody.position.z);
+      ballBody.position.set(Math.sin(a) * ORBIT_R, ORBIT_Y + 0.1, Math.cos(a) * ORBIT_R);
+      ballBody.velocity.set(Math.cos(a) * WHEEL_SPEED * ORBIT_R, 0, -Math.sin(a) * WHEEL_SPEED * ORBIT_R);
+      ballBody.angularVelocity.set(0, WHEEL_SPEED, 0);
+    }
 
     // Tick sound on every fret crossing (purely cosmetic; uses the ball's real position, not a
     // scripted timer).
