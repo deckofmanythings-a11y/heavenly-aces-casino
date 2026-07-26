@@ -31,9 +31,9 @@
     style.textContent = [
       // pointer-events:none -- this used to be tap-to-dismiss, which meant it had to capture
       // clicks over the whole viewport. Deck: let it just play out on its own timer instead and
-      // never block betting/Repeat/moving bets underneath it; only Roll/Fire still waits (via
-      // WinnerModal.isOpen(), checked by each host page's own roll trigger), since firing while
-      // the last payout is still animating would double up on requests mid-settlement.
+      // never block anything underneath it, including Roll/Fire -- show() below already just
+      // restarts cleanly (clears the old timer, resets the amount/animation) if it's called
+      // again while still open.
       '#wm-modal-winner{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:8vh;pointer-events:none}',
       '#wm-modal-winner.hidden{display:none}',
       '.wm-winner-box{position:relative;background:transparent;border:none;padding:20px 36px;text-align:center;box-shadow:none;animation:wmWinnerPop .3s cubic-bezier(.34,1.56,.64,1)}',

@@ -1704,7 +1704,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.11</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.12</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4483,10 +4483,6 @@ function totalActiveBetValue(){
 }
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
-  // The winner modal no longer blocks the felt (Deck: let players Repeat/bet/move bets while
-  // it plays out) -- Roll is the one action that still has to wait for it, since rolling while
-  // last roll's payout animation is still resolving would double up on requests mid-settlement.
-  if(window.WinnerModal&&WinnerModal.isOpen()){addLog('Wait for the win animation to finish.','info');return;}
   // Same logic-level gate as placeBet() -- the CSS pointer-events rule on #roll-btn should
   // already stop this, but a second, DOM-independent check costs nothing and can't be
   // bypassed by anything that slips past the CSS.

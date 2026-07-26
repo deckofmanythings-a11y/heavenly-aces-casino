@@ -546,7 +546,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.2</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -967,7 +967,6 @@ function announceSicboResult(d1,d2,d3){
 }
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
-  if(window.WinnerModal&&WinnerModal.isOpen()){addLog('Wait for the win animation to finish.','info');return;}
   if(tBets()===0){addLog('Place at least one bet before rolling.','info');return;}
   document.getElementById('roll-btn').disabled=true;
   G.lastBetDisplay=tBets();

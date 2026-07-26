@@ -917,7 +917,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="info-btn gold" id="redeem-btn-top" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
       </div>
-      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.8.6</div>
+      <div id="version-tag" style="text-align:center;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;padding:2px 0 0">Ver. 0.8.7</div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e">—</div></div>
@@ -3102,7 +3102,6 @@ function totalActiveBetValue(){
 }
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
-  if(window.WinnerModal&&WinnerModal.isOpen()){addLog('Wait for the win animation to finish.','info');return;}
   if(!hasWorkingBets()){addLog('Place an active bet before rolling.','info');return;}
   G.bonus.gracePeriod=false;
   document.getElementById('roll-btn').disabled=true;
