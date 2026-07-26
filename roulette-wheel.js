@@ -204,6 +204,7 @@
     scene.add(pointerMesh);
 
     buildPhysicsWorld();
+    buildOverlay();
 
     onResize();
     window.addEventListener('resize', onResize);
@@ -253,16 +254,24 @@
   // this and the ball itself can leave the frame on the far side, which defeats the point.
   const SETTLE_SCALE = 0.7;
   let settleZoom = 0; // smoothed 0..1, eased every frame toward its target (see loop)
-  function applyCameraZoom(t, ballX, ballZ) {
+  // Spielberg dolly: a continuous, barely-perceptible push-in across the whole spin (1.0 down
+  // to 0.86 over the first ~12s) -- the audience shouldn't consciously notice the frame
+  // tightening, just feel the tension build. Composed under the two explicit zooms below.
+  const DOLLY_END_SCALE = 0.86, DOLLY_STEPS = 1440;
+  function dollyScaleAt(step) {
+    return 1 - Math.min(step / DOLLY_STEPS, 1) * (1 - DOLLY_END_SCALE);
+  }
+  function applyCameraZoom(t, ballX, ballZ, step) {
     // t: 0 = normal framing, 1 = fully punched in on the ball. Same ease both directions so the
     // move reads as one continuous camera motion, not a hard cut in either direction.
     const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     // The two zooms never meaningfully overlap in time (relabel is early in the orbit phase,
     // settle only starts once the ball is down among the frets), but compose them anyway:
-    // whichever wants the tighter frame wins the scale, and only the relabel zoom pans.
+    // whichever wants the tighter frame wins the scale, and only the relabel zoom pans. The slow
+    // dolly rides underneath both as the resting frame.
     const relabelScale = 1 - eased * (1 - ZOOM_SCALE);
     const settleScale = 1 - settleZoom * (1 - SETTLE_SCALE);
-    const scale = Math.min(relabelScale, settleScale);
+    const scale = Math.min(step === undefined ? 1 : dollyScaleAt(step), relabelScale, settleScale);
     const extentY = baseExtentY * scale;
     const aspect = lastAspect;
     if (aspect >= 1) { camera.top = extentY; camera.bottom = -extentY; camera.left = -extentY * aspect; camera.right = extentY * aspect; }
@@ -283,11 +292,65 @@
     if (Math.abs(settleZoom - target) < 0.002) settleZoom = target;
   }
   function onResize() {
-    const container = typeof CFG.container === 'string' ? document.getElementById(CFG.container) : CFG.container;
-    if (!container || !renderer) return;
-    const w = container.clientWidth || 200, h = container.clientHeight || 200;
+    if (!renderer) return;
+    let w, h;
+    if (overlayOpen) {
+      w = window.innerWidth || 800; h = window.innerHeight || 600;
+    } else {
+      const container = typeof CFG.container === 'string' ? document.getElementById(CFG.container) : CFG.container;
+      if (!container) return;
+      w = container.clientWidth || 200; h = container.clientHeight || 200;
+    }
     renderer.setSize(w, h);
     fitCameraFrustum(w, h);
+  }
+
+  // ---------- fullscreen spin overlay ----------
+  // During a spin the wheel takes over the whole viewport, exactly like the dice cloche does for
+  // a roll -- the rest of the table doesn't matter mid-spin, and a fullscreen wheel gives the
+  // camera choreography (dolly + relabel punch-in + settle close-up) room to actually play as
+  // drama instead of shuffling inside a 200px corner box. The SAME canvas/renderer is reparented
+  // into the overlay and back out (the family's "reuse by reparenting" convention) -- never a
+  // second renderer. z-index 150: above the table, below the winner modal (200), so the coin
+  // waterfall plays over the tight final wheel shot, and below the cashout voucher (300).
+  let overlayEl = null, overlayOpen = false, overlayCloseTimer = null;
+  function buildOverlay() {
+    overlayEl = document.createElement('div');
+    overlayEl.id = 'rw-spin-overlay';
+    overlayEl.style.cssText = 'position:fixed;inset:0;z-index:150;background:rgba(3,10,7,.94);' +
+      'display:none;opacity:0;transition:opacity .3s ease;';
+    document.body.appendChild(overlayEl);
+  }
+  function openOverlay() {
+    clearTimeout(overlayCloseTimer);
+    if (overlayOpen) {
+      // Re-opened mid-close (next spin started during the linger/fade): cancel the pending
+      // close and restore full visibility -- without this the overlay stays faded-out but
+      // display:block, an invisible wheel for the whole next spin.
+      overlayEl.style.display = 'block';
+      overlayEl.style.opacity = '1';
+      return;
+    }
+    overlayOpen = true;
+    overlayEl.style.display = 'block';
+    overlayEl.appendChild(canvasEl);
+    onResize();
+    // Next frame so the display:none -> block transition actually animates the fade.
+    requestAnimationFrame(() => { overlayEl.style.opacity = '1'; });
+  }
+  function closeOverlay() {
+    if (!overlayOpen) return;
+    overlayEl.style.opacity = '0';
+    overlayCloseTimer = setTimeout(() => {
+      overlayOpen = false;
+      overlayEl.style.display = 'none';
+      const container = typeof CFG.container === 'string' ? document.getElementById(CFG.container) : CFG.container;
+      if (container) container.appendChild(canvasEl);
+      // Snap the settle zoom off during the reparent -- nobody can perceive a camera cut across
+      // a DOM move, and it beats the corner wheel visibly un-zooming for 3 seconds.
+      settleZoom = 0;
+      onResize();
+    }, 320);
   }
 
   // ---------- real rigid-body physics world (cannon.js) ----------
@@ -629,6 +692,11 @@
       const done = activeResolve; activeResolve = null; activeReject = null; serverPocket = null;
       if (done) done(payload);
     }, 350);
+    // The fullscreen overlay lingers well past the promise resolution (which stays at 350ms so
+    // payouts/log/winner-modal aren't delayed) -- the player gets a beat to read the winning
+    // number off the tight final shot before the wheel fades back to its corner. The winner
+    // modal (z 200) plays OVER the lingering wheel shot (z 150), which is exactly the drama.
+    overlayCloseTimer = setTimeout(closeOverlay, 2600);
   }
 
   function loop(now) {
@@ -653,17 +721,18 @@
       easeSettleZoom(ballR < POCKET_R + 0.08 ? 1 : 0, dt);
       // Relabel-zoom progress is a pure function of step, so it's automatically back to 0
       // (normal framing) once its window passes -- no separate "reset" needed, calling this
-      // every frame is enough.
-      applyCameraZoom(zoomProgressAt(livCtx.step), ballBody.position.x, ballBody.position.z);
+      // every frame is enough. `step` drives the slow underlying dolly push-in.
+      applyCameraZoom(zoomProgressAt(livCtx.step), ballBody.position.x, ballBody.position.z, livCtx.step);
     } else {
       // idle / preroll / reveal: the wheel never stops -- it keeps cruising at the same
       // constant, readable WHEEL_SPEED a real casino wheel coasts at between throws, driven by
       // the same fixed-step clock (not raw wall-clock dt) as the resolve simulation so there's
       // no seam when a spin picks the wheel angle back up as its baseline.
-      // Camera: hold the tight settle framing through the reveal (the player is reading the
-      // winning number off the close-up), then ease back out to normal once idle; preroll of the
-      // NEXT spin also eases out if a new throw starts before the ease finished.
-      easeSettleZoom(phase === 'reveal' ? 1 : 0, dt);
+      // Camera: hold the tight settle framing for as long as the fullscreen overlay is up (the
+      // player is reading the winning number off the close-up through the reveal+linger); once
+      // the overlay is gone the settle zoom is snapped off during the reparent (see
+      // closeOverlay), so no visible un-zoom ever plays in the corner box.
+      easeSettleZoom(phase === 'reveal' || (overlayOpen && phase === 'idle') ? 1 : 0, dt);
       applyCameraZoom(0, 0, 0);
       const debt = Math.min(dt / STEP, 6);
       for (let i = 0; i < debt; i++) idleWheelAngle += WHEEL_SPEED * STEP;
@@ -702,6 +771,7 @@
       return new Promise((resolve, reject) => {
         activeResolve = resolve; activeReject = reject; serverPocket = null;
         phase = 'preroll';
+        openOverlay(); // wheel takes over the screen for the whole spin, like the dice cloche
         Promise.resolve(pocketOrPromise).then(p => {
           const pocket = String(p);
           if (WHEEL_ORDER.indexOf(pocket) === -1) throw new Error('unknown pocket: ' + p);
@@ -709,6 +779,7 @@
           beginResolve();
         }).catch(err => {
           phase = 'idle';
+          closeOverlay(); // failed spin (network error etc) -- give the table back immediately
           const rej = activeReject; activeResolve = null; activeReject = null;
           if (rej) rej(err);
         });
