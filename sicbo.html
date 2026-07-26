@@ -233,7 +233,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .log-line{font-size:11px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .log-line.win{color:#7ee87e}
 .log-line.lose{color:#f08080}
-#log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);box-shadow:0 0 0 1.5px #000;color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);box-shadow:0 0 0 2px #000;color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;flex:1;min-height:0}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .nav-btn:hover{background:rgba(255,255,255,.15)}
@@ -550,7 +550,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.6</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.7</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1741,6 +1741,17 @@ function sizeSbPanel(){
   panel.style.height=h+'px';
 }
 window.addEventListener('resize',sizeSbPanel);
+// resize alone isn't reliable on rotation -- some mobile browsers (notably iOS Safari) don't
+// fire it on orientationchange, or fire it with window.innerWidth/innerHeight still holding the
+// pre-rotation values for a frame (Deck: "Sic-Bo won't switch to landscape, stuck rendering the
+// table in portrait" -- the panel was frozen at its portrait-computed px size since nothing ever
+// re-ran sizeSbPanel() after the rotation). Same two-listener safety-net pattern already used in
+// iluvsuits.html's recomputeFanGeometry().
+window.addEventListener('orientationchange',sizeSbPanel);
+// Extra fallback: unlike iluvsuits's matchMedia() read (always live), this reads
+// clientWidth/clientHeight, which iOS Safari can report mid-transition for a frame or two right
+// at the orientationchange event -- one more pass shortly after catches that stale reading.
+window.addEventListener('orientationchange',()=>setTimeout(sizeSbPanel,300));
 function startTumble(){
   src1.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6,Math.random()*5));
   src2.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6+Math.PI,Math.random()*5));
