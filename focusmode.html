@@ -856,7 +856,13 @@ body.felt-mode #felt-stage #dp-main.has-oddscell .has-stack{left:60.53%}
 body.felt-mode #felt-stage .off-ov{display:none!important}
 /* ===== FULLSCREEN FELT: top & bottom UI bands ===== */
 body.felt-mode #top-row{display:none!important}
-body.felt-mode #felt-stage #left-col-header{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;flex-direction:column;gap:0;display:flex}
+/* z-index:700 -- the fibo popover inside here is a descendant, so it can only ever stack as
+   high as THIS box does among its felt-abs siblings (the felt's own Hardways label/art sits
+   later in the DOM at the default auto stacking level and was painting over it otherwise, no
+   matter how high the popover's own z-index was set -- a descendant can't out-stack a sibling
+   of its ancestor unless the ancestor itself is elevated too). Comfortably under the tutorial
+   overlay's 8999+ range and chip-ghost's 10000. */
+body.felt-mode #felt-stage #left-col-header{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;flex-direction:column;gap:0;display:flex;z-index:700}
 body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;gap:1px}
 /* #left-col-header and #info-panel are both pinned to a FIXED PERCENTAGE of felt-stage's own
    size (see FELT_LAYOUT), not the viewport -- on a short landscape phone felt-stage itself can
@@ -1698,7 +1704,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.7</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.8</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
