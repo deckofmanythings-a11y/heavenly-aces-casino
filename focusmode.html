@@ -1698,7 +1698,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.6</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.7</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2773,7 +2773,10 @@ function tBets(){let t=Object.values(G.bets).reduce((a,b)=>r2(a+b),0);G.comeBets
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
 function bActive(){return G.betsOn&&!G.betsOffThisRoll;}
 function comeOddsActive(){return G.betsOn;}
-function dblCost(){let c=0;for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy')))c=r2(c+G.bets[k]);return c;}
+// Capped at MAX_BET per spot -- a bet already at or past half the table max doubles only up to
+// the max, not to a full double, same "clamp the increment, not just the target" fix as
+// pressAll()/placeChipOnSet() needed for the same table-limit gap.
+function dblCost(){let c=0;for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy'))){const cur=G.bets[k];c=r2(c+Math.max(0,Math.min(cur,MAX_BET-cur)));}return c;}
 function betTotal(keys){return r2(keys.reduce((s,k)=>r2(s+(G.bets[k]||0)),0));}
 function snap(){const b={};for(const k in G.bets)b[k]=G.bets[k];G.snapshot={bets:b,comeBets:G.comeBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),dcBets:G.dcBets.map(c=>({num:c.num,flat:c.flat,odds:c.odds||0})),bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high}};}
 function chkRepeat(){
@@ -4322,10 +4325,12 @@ function pressAll(){
   ALL_NUMS.forEach(n=>{
     ['place','buy'].forEach(t=>{
       const k=t+n;
-      if(!(G.bets[k]>0))return;
-      const add=(t==='place'&&(n===6||n===8))?place68Amount(G.chip):G.chip;
+      const cur=G.bets[k]||0;
+      if(!(cur>0))return;
+      if(cur>=MAX_BET)return;
+      const add=Math.min((t==='place'&&(n===6||n===8))?place68Amount(G.chip):G.chip,MAX_BET-cur);
       if(add>maxBettable())return;
-      G.bets[k]=r2(G.bets[k]+add);G.bankroll=r2(G.bankroll-add);
+      G.bets[k]=r2(cur+add);G.bankroll=r2(G.bankroll-add);
     });
   });
   updateUI();
@@ -4337,16 +4342,27 @@ function pressAll(){
 function placeChipOnSet(nums){
   nums.filter(n=>n!==G.point).forEach(n=>{
     const k='place'+n;
-    const add=(n===6||n===8)?place68Amount(G.chip):G.chip;
+    const cur=G.bets[k]||0;
+    if(cur>=MAX_BET)return;
+    const add=Math.min((n===6||n===8)?place68Amount(G.chip):G.chip,MAX_BET-cur);
     if(add>maxBettable())return;
-    G.bets[k]=r2((G.bets[k]||0)+add);G.bankroll=r2(G.bankroll-add);
+    G.bets[k]=r2(cur+add);G.bankroll=r2(G.bankroll-add);
   });
   updateUI();
 }
 function acrossAll(){placeChipOnSet([4,5,6,8,9,10]);}
 function insideAll(){placeChipOnSet([5,6,8,9]);}
 function outsideAll(){placeChipOnSet([4,5,9,10]);}
-function doubleBet(){const c=dblCost();if(!c||c>maxBettable()){addLog(c?'Not enough.':'No place/buy bets.','info');return;}for(const k in G.bets)if(!CONTRACT.has(k)&&(k.startsWith('place')||k.startsWith('buy')))G.bets[k]=r2(G.bets[k]*2);G.bankroll=r2(G.bankroll-c);addLog('Doubled.','info');updateUI();}
+function doubleBet(){
+  const c=dblCost();
+  if(!c||c>maxBettable()){addLog(c?'Not enough.':'No place/buy bets.','info');return;}
+  for(const k in G.bets){
+    if(CONTRACT.has(k)||!(k.startsWith('place')||k.startsWith('buy')))continue;
+    const cur=G.bets[k],inc=Math.max(0,Math.min(cur,MAX_BET-cur));
+    if(inc>0)G.bets[k]=r2(cur+inc);
+  }
+  G.bankroll=r2(G.bankroll-c);addLog('Doubled.','info');updateUI();
+}
 function repeatLastBet(){
   if(!G.snapshot||!G.canRepeat)return;
   let cost=0;const tr={};
