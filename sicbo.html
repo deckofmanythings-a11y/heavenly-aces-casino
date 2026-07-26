@@ -64,7 +64,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* B: Dice Zone -- already 3D (ClocheDice physics engine), just repositioned. */
 #dice-zone{position:absolute;left:20.036%;top:1.063%;width:61.722%;height:15.941%}
 /* C: Info Panel (Redeem/Cash Out/Dailies + HUD). */
-#info-panel{position:absolute;left:82.416%;top:1.381%;width:15.251%;height:15.196%;min-width:0;max-width:none}
+#info-panel{position:absolute;left:82.416%;top:1.381%;width:15.251%;height:15.196%;min-width:0;max-width:none;overflow:hidden}
 /* D-I: SMALL/ANY TRIPLE/BIG, doubles, triples, combos, totals, any-number -- all 51 individual
    cells now, positioned via SB_CELL_POS at creation time (see buildTable()), not here.
    !important required -- .bs-btn/.tot-cell/.trip-cell/.dbl-cell/.dom-cell/.any-cell all
@@ -103,7 +103,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .gmode-btn-home .gmode-sub{font-size:13px!important}
 /* width/min-width/max-width removed here (same cascade bug as #left-col-header above --
    was silently winning over the calibrated width). */
-#info-panel{flex-shrink:0;padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between}
+#info-panel{flex-shrink:0;padding:4px 6px}
 .info-row{display:flex;gap:4px;align-items:center}
 .info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
 .info-btn:hover{background:rgba(255,255,255,.2)}
@@ -138,7 +138,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Big / Small */
 #big-small-row{display:none} /* removed — SMALL and BIG are now column headers */
-.bs-btn{border-radius:4px;border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:background .1s;flex:1;padding:4px 6px;text-align:center}
+.bs-btn{border-radius:4px;border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:background .1s;flex:1;padding:4px 6px;text-align:center;overflow:hidden}
 #btn-small{background:rgba(0,80,180,.25);border-color:rgba(100,160,255,.4)}
 #btn-small:hover{background:rgba(0,80,180,.4)}
 #btn-small.active{background:rgba(0,100,220,.45);border-color:#6af}
@@ -175,7 +175,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .trip-hdr{color:rgba(210,150,210,.7);background:rgba(90,0,90,.15)}
 .full-width-hdr{flex-shrink:0;height:20px;font-size:17px;font-weight:700;text-align:center;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;border-radius:2px}
 .combo-hdr{color:rgba(75,185,115,.7);background:rgba(0,50,32,.2)}
-#any-triple-btn{flex:1;background:rgba(150,0,150,.22);border:0.5px solid rgba(200,80,200,.35);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s}
+#any-triple-btn{flex:1;background:rgba(150,0,150,.22);border:0.5px solid rgba(200,80,200,.35);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;overflow:hidden}
 #any-triple-btn:hover{background:rgba(160,0,160,.38)}
 #any-triple-btn.active{background:rgba(180,0,180,.45);border-color:#d060d0}
 .at-lbl{font-size:min(27px,4.2cqw);font-weight:700;color:rgba(255,200,255,.9);line-height:1}
@@ -207,6 +207,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .dom-dice img{display:inline-block}
 .dom-pay{font-size:min(18px,3cqw);color:rgba(75,185,115,.4);line-height:1}
 .dom-stk{font-size:min(21px,3.5cqw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
+/* Never wrap these onto multiple lines -- fitSicboCells() measures natural (unscaled) content
+   size and scales it down to fit, so a wrapped "1 pays 6" (Deck: "line breaking X pays Y so each
+   element is on its own line") just gets scaled as a tall 3-line block instead of a single
+   readable line at a smaller size. */
+.tot-pay,.at-pay,.trip-pay,.dbl-pay,.dom-pay{white-space:nowrap}
 /* Doubles/Triples/Combos/Totals cells: dice icons + folded-in payout text (Deck: "every cell
    needs scaling-tech"). Their calibrated boxes are far too tight at some panel sizes for a
    single fixed CSS ratio to serve all four cell shapes at once -- doubles/triples are wide-and-
@@ -221,7 +226,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Any Number row */
 /* any-num-row legacy removed */
-.any-cell{background:rgba(45,40,0,.4);border:0.5px solid rgba(210,190,55,.28);border-radius:3px;display:flex;flex-direction:row;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:3px;padding:1px 2px}
+.any-cell{background:rgba(45,40,0,.4);border:0.5px solid rgba(210,190,55,.28);border-radius:3px;display:flex;flex-direction:row;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:3px;padding:1px 2px;overflow:hidden}
 .any-cell:hover{background:rgba(60,55,0,.55)}
 .any-cell.active{background:rgba(80,70,0,.6);border-color:#d4c040}
 .any-die img{display:inline-block}
@@ -244,7 +249,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .log-line{font-size:11px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .log-line.win{color:#7ee87e}
 .log-line.lose{color:#f08080}
-#log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);box-shadow:0 0 0 2px #000;color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* Black outline on the "?" glyph itself, not just the button ring -- same 4-directional
+   text-shadow stroke trick as #hud-pnl (Deck: "the ? ... should be outlined black on its own"). */
+#log-btn-sb{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);box-shadow:0 0 0 2px #000;color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;flex:1;min-height:0}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .nav-btn:hover{background:rgba(255,255,255,.15)}
@@ -308,7 +315,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .dom-pay{font-size:min(22px,3.6cqw)}
 .any-pay{font-size:min(15px,2.6cqw)}
 .dbl-dice img,.trip-dice img,.dom-dice img{width:min(44px,7.3cqw)!important;height:min(44px,7.3cqw)!important}
-.any-die img{width:min(42px,7cqw)!important;height:min(42px,7cqw)!important}
+.any-die img{width:min(34px,5.6cqw)!important;height:min(34px,5.6cqw)!important}
 /* Any-Info cell (Deck: "double the size", "remove the shading") -- font size doubled at the
    source (the inline cssText in buildTable(), min(11px,1.8vw) -> min(22px,3.6vw)); shading
    removal comes from the blanket .any-cell background/border strip below, which this cell
@@ -574,19 +581,21 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
     </div>
     <!-- Info panel (matches craps) -->
     <div id="info-panel">
-      <div class="info-row">
-        <span id="top-bar-username" onclick="dNav('index.html')" style="font-size:19px;font-weight:700;color:#7a5c00;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
-      </div>
-      <div class="info-row">
-        <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
-        <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(20,82,20,.5);color:#145214">Cash Out</button>
-        <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
-      </div>
-      <div class="hud-grid">
-        <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:#2b1806">—</div></div>
-        <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#145214">—</div></div>
-        <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#7a5c00">$0</div></div>
-        <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#7a5c00">$0</div></div>
+      <div class="cell-fit" style="display:flex;flex-direction:column;gap:3px;align-items:stretch;justify-content:flex-start;width:100%">
+        <div class="info-row">
+          <span id="top-bar-username" onclick="dNav('index.html')" style="font-size:19px;font-weight:700;color:#7a5c00;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
+        </div>
+        <div class="info-row">
+          <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
+          <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(20,82,20,.5);color:#145214">Cash Out</button>
+          <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
+        </div>
+        <div class="hud-grid">
+          <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:#2b1806">—</div></div>
+          <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#145214">—</div></div>
+          <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#7a5c00">$0</div></div>
+          <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#7a5c00">$0</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -596,22 +605,28 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
       <!-- Row 1: SMALL | Any Triple | BIG -->
       <div id="row-top">
         <div class="bs-btn" id="btn-small" onclick="placeBet('small')" oncontextmenu="event.preventDefault();removeBet('small')">
-          <span class="at-lbl" style="color:#0c2540">SMALL</span>
-          <span class="bs-sub">Numbers from 4 to 10, any triple loses</span>
-          <span class="bs-sub">1 pays 1</span>
+          <div class="cell-fit">
+            <span class="at-lbl" style="color:#0c2540">SMALL</span>
+            <span class="bs-sub">Numbers from 4 to 10, any triple loses</span>
+            <span class="bs-sub">1 pays 1</span>
+          </div>
           <span class="bs-stk" id="stk-small"></span>
           <button class="mbtn-corner" id="m-small" onclick="event.stopPropagation();removeBet('small')">−</button>
         </div>
         <div id="any-triple-btn" onclick="placeBet('anyTriple')" oncontextmenu="event.preventDefault();removeBet('anyTriple')">
-          <div class="at-lbl">ANY</div>
-          <div class="at-lbl">TRIPLE</div>
-          <div class="at-pay">1 pays 30</div>
+          <div class="cell-fit">
+            <div class="at-lbl">ANY</div>
+            <div class="at-lbl">TRIPLE</div>
+            <div class="at-pay">1 pays 30</div>
+          </div>
           <span class="at-stk" id="stk-anyTriple"></span>
         </div>
         <div class="bs-btn" id="btn-big" onclick="placeBet('big')" oncontextmenu="event.preventDefault();removeBet('big')">
-          <span class="at-lbl" style="color:#4a0e0e">BIG</span>
-          <span class="bs-sub">Numbers from 11 to 17, any triple loses</span>
-          <span class="bs-sub">1 pays 1</span>
+          <div class="cell-fit">
+            <span class="at-lbl" style="color:#4a0e0e">BIG</span>
+            <span class="bs-sub">Numbers from 11 to 17, any triple loses</span>
+            <span class="bs-sub">1 pays 1</span>
+          </div>
           <span class="bs-stk" id="stk-big"></span>
           <button class="mbtn-corner" id="m-big" onclick="event.stopPropagation();removeBet('big')">−</button>
         </div>
@@ -657,7 +672,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.0</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.1</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -1487,8 +1502,12 @@ function buildTable(){
   // 7th cell: payout info (I7)
   const infoCell=document.createElement('div');
   infoCell.className='any-cell';
-  infoCell.style.cssText='cursor:default;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;gap:2px;font-size:min(21px,3.5cqw);color:#111;line-height:1.4;pointer-events:none';
-  infoCell.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
+  infoCell.style.cssText='cursor:default;padding:3px 5px;color:#111;pointer-events:none';
+  const infoWrap=document.createElement('div');
+  infoWrap.className='cell-fit';
+  infoWrap.style.cssText='align-items:flex-start;justify-content:center;gap:2px;font-size:min(21px,3.5cqw);line-height:1.4;white-space:nowrap';
+  infoWrap.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
+  infoCell.appendChild(infoWrap);
   sbPosition(infoCell,'cell-any-info');
   an.appendChild(infoCell);
   fitSicboCells();
