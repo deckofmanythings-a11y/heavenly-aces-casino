@@ -399,7 +399,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.3</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.4</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -834,6 +834,11 @@ function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.
 // server-authoritative check in roll-iluvsuits; this is UX only, the server rejects
 // independently.
 const MIN_BET=1,MAX_BET=300;
+// Play can reach 3x Ante (raiseMultiplier's own max, for a 6-7 card flush) -- capping
+// it at the flat MAX_BET would mean a player betting the real table max on Ante could
+// never fully raise it, so Play gets its own ceiling: 3x the table max, not the table
+// max itself.
+const PLAY_MAX_BET=MAX_BET*3;
 function placeBet(key){
   if(G.phase!=='betting')return;
   // Free Play counts toward what a player can stage -- roll-iluvsuits already validates
@@ -938,7 +943,7 @@ function updateRaiseButtonStates(){
   opts.forEach(mult=>{
     const btn=document.getElementById(RAISE_BTN_ID[mult]);if(!btn)return;
     const amt=r2(G.locked.ante*mult);
-    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll+G.freePlay&&amt<=MAX_BET);
+    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll+G.freePlay&&amt<=PLAY_MAX_BET);
   });
 }
 function doRaise(mult){
@@ -947,7 +952,7 @@ function doRaise(mult){
   const btn=document.getElementById(RAISE_BTN_ID[mult]);
   if(btn&&btn.disabled)return;
   const amt=r2(G.locked.ante*mult);
-  if(amt<=0||amt>G.bankroll+G.freePlay||amt>MAX_BET)return;
+  if(amt<=0||amt>G.bankroll+G.freePlay||amt>PLAY_MAX_BET)return;
   G.playBet=amt;
   G.bankroll=r2(G.bankroll-amt);
   updateUI();
