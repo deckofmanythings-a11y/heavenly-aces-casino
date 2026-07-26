@@ -1704,7 +1704,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.8</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.9</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2612,18 +2612,24 @@ function endBullets(){
 // Switching to the next bullet mid-session: banks whatever's left of the current bullet back
 // into the real bankroll (already true the whole time -- G.bankroll is never reduced, see the
 // comment above maxBettable()) and clears the felt exactly like Reset Point before the fresh
-// bullet starts, so the player never carries an old bullet's bets into the new one. Always
-// confirms via a dialog since Contract bets get forfeited, same reasoning as Reset Point.
+// bullet starts, so the player never carries an old bullet's bets into the new one. Only
+// confirms via a dialog when there's actually something to forfeit (a locked Contract bet) --
+// same reasoning as Reset Point, but with nothing on the felt worth losing there's nothing to
+// warn about, so it just switches immediately instead of interrupting with an empty dialog.
 function nextBullet(){
   if(!G.bulletActive||G.bulletIndex>=G.bulletCount-1)return;
   if(isRollInProgress()){addLog('Wait for the current roll to finish before switching bullets.','info');return;}
+  if(!hasForfeitableBets()){doNextBullet();return;}
   const amt=forfeitAmount();
-  document.getElementById('next-bullet-forfeit-wrap').style.display=amt>0?'inline':'none';
+  document.getElementById('next-bullet-forfeit-wrap').style.display='inline';
   document.getElementById('next-bullet-amount').textContent=fmt(amt);
   document.getElementById('modal-next-bullet').classList.remove('hidden');
 }
 async function confirmNextBullet(){
   document.getElementById('modal-next-bullet').classList.add('hidden');
+  await doNextBullet();
+}
+async function doNextBullet(){
   await resetTableToComeOut();
   G.bulletIndex++;G.bulletBaseline=G.bankroll;
   saveBullets();
