@@ -219,16 +219,44 @@
   // 8/10 = 0.8) -- this is exact geometry, not a fudge factor, so it has to stay in lockstep if
   // the camera position above ever changes.
   const TILT_COS = 0.8;
+  let baseExtentY = 1, lastAspect = 1; // cached normal (non-zoomed) framing, reused by the relabel camera-zoom below
   function fitCameraFrustum(w, h) {
     const extentX = CFG.wheelRadius * 1.15;
     const extentY = extentX / TILT_COS; // compensate for the tilt-foreshortened vertical axis
     const aspect = w / h;
+    baseExtentY = extentY; lastAspect = aspect;
     // #wheel-wrap is CSS-enforced square (aspect-ratio:1 in roulette.html) so aspect===1 is the
     // only case that actually runs in this app; both branches stay generous (extentY, the larger
     // of the two, wins the shared axis) rather than tightly fitting extentX, trading a bit of
     // unused horizontal margin for zero risk of re-cropping if the container ratio ever changes.
     if (aspect >= 1) { camera.top = extentY; camera.bottom = -extentY; camera.left = -extentY * aspect; camera.right = extentY * aspect; }
     else { camera.left = -extentY; camera.right = extentY; camera.top = extentY / aspect; camera.bottom = -extentY / aspect; }
+    camera.position.set(0, 8, 6);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }
+  // Relabel camera-zoom: the relabel (rewriting which number is drawn at which slot, see
+  // relabelStep below) is a visible tell if it happens in full view of the whole wheel -- a
+  // player watching could catch every number on the ring shift at once. This punches in tight on
+  // the ball itself for a moment (pulling the label ring, and everything on the far side of the
+  // wheel, out of frame) exactly when the swap happens, then eases back out -- "look at the ball,
+  // not the numbers" as an actual camera move, not a hope. ZOOM_SCALE is how tight the punch-in
+  // gets (fraction of normal framing); the ball orbits at ORBIT_R while labels sit at
+  // wheelRadius*0.8 (a real gap, ~0.19 units) so a tight-enough zoom keeps the label ring mostly
+  // or entirely outside the frame while the ball itself stays framed.
+  const ZOOM_SCALE = 0.16;
+  function applyCameraZoom(t, ballX, ballZ) {
+    // t: 0 = normal framing, 1 = fully punched in on the ball. Same ease both directions so the
+    // move reads as one continuous camera motion, not a hard cut in either direction.
+    const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const scale = 1 - eased * (1 - ZOOM_SCALE);
+    const extentY = baseExtentY * scale;
+    const aspect = lastAspect;
+    if (aspect >= 1) { camera.top = extentY; camera.bottom = -extentY; camera.left = -extentY * aspect; camera.right = extentY * aspect; }
+    else { camera.left = -extentY; camera.right = extentY; camera.top = extentY / aspect; camera.bottom = -extentY / aspect; }
+    const panX = ballX * eased, panZ = ballZ * eased;
+    camera.position.set(panX, 8, panZ + 6);
+    camera.lookAt(panX, 0, panZ);
     camera.updateProjectionMatrix();
   }
   function onResize() {
@@ -489,6 +517,13 @@
   // player-visible event anywhere near it to anchor the moment to.
   const RELABEL_STEP_MIN = 90, RELABEL_STEP_MAX = 380;
   let relabelStep = 0, relabeled = false;
+  // Camera-zoom window bracketing the relabel step (see applyCameraZoom above): ramp in, hold
+  // through the swap, ramp back out. Ball orbits fast here (well before dropStart), so "look at
+  // the ball" is itself a natural, unremarkable camera move at this point in the spin, not a
+  // jarring cut -- the swap is the thing hiding inside a normal-looking camera beat, not the
+  // other way around.
+  const ZOOM_RAMP = 24, ZOOM_HOLD = 20; // steps (~0.2s / ~0.17s at 120Hz)
+  let zoomWindowStart = 0;
 
   function beginResolve() {
     const baseline = { wheelAngle: idleWheelAngle, ballAngle: prerollAngle, ballAngVel: PREROLL_BALL_SPEED };
@@ -497,11 +532,22 @@
 
     relabelStep = RELABEL_STEP_MIN + Math.floor(Math.random() * (RELABEL_STEP_MAX - RELABEL_STEP_MIN));
     relabeled = false;
+    zoomWindowStart = relabelStep - ZOOM_RAMP; // peak zoom (t=1) covers relabelStep itself
 
     resetToBaseline(baseline);
     livCtx = makeResolveCtx(baseline);
     livCtx.onTick = (strength) => playTick(strength);
     phase = 'resolving';
+  }
+  // Returns the zoom-in progress (0-1) for the current step: ramps in, holds through the swap,
+  // ramps back out. Returns 0 outside the window entirely (normal framing).
+  function zoomProgressAt(step) {
+    const t = step - zoomWindowStart;
+    const total = ZOOM_RAMP + ZOOM_HOLD + ZOOM_RAMP;
+    if (t < 0 || t > total) return 0;
+    if (t < ZOOM_RAMP) return t / ZOOM_RAMP;
+    if (t < ZOOM_RAMP + ZOOM_HOLD) return 1;
+    return 1 - (t - ZOOM_RAMP - ZOOM_HOLD) / ZOOM_RAMP;
   }
 
   function finishResolve() {
@@ -549,11 +595,16 @@
       }
       wheelMesh.rotation.y = livCtx.baseline.wheelAngle + WHEEL_SPEED * STEP * livCtx.step;
       ballWorldPos();
+      // Zoom progress is a pure function of step, so it's automatically back to 0 (normal
+      // framing) once the window passes -- no separate "reset" needed, calling this every frame
+      // is enough.
+      applyCameraZoom(zoomProgressAt(livCtx.step), ballBody.position.x, ballBody.position.z);
     } else {
       // idle / preroll / reveal: the wheel never stops -- it keeps cruising at the same
       // constant, readable WHEEL_SPEED a real casino wheel coasts at between throws, driven by
       // the same fixed-step clock (not raw wall-clock dt) as the resolve simulation so there's
       // no seam when a spin picks the wheel angle back up as its baseline.
+      applyCameraZoom(0, 0, 0); // always normal framing outside the resolving phase's zoom window
       const debt = Math.min(dt / STEP, 6);
       for (let i = 0; i < debt; i++) idleWheelAngle += WHEEL_SPEED * STEP;
       wheelMesh.rotation.y = idleWheelAngle;
