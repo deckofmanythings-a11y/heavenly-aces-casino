@@ -245,11 +245,24 @@
   // wheelRadius*0.8 (a real gap, ~0.19 units) so a tight-enough zoom keeps the label ring mostly
   // or entirely outside the frame while the ball itself stays framed.
   const ZOOM_SCALE = 0.16;
+  // Settle camera-zoom: a second, gentler punch-in for the END of the spin -- once the ball has
+  // dropped into the pocket ring, the camera tightens on the whole wheel (centered, no pan) so
+  // the final fret-bounces read close-up, and holds there through the reveal before easing back
+  // out in idle. SETTLE_SCALE is the tightest framing that still keeps the entire pocket ring
+  // (POCKET_R ~1.39 + ball) in frame no matter where around the ring the ball is -- tighter than
+  // this and the ball itself can leave the frame on the far side, which defeats the point.
+  const SETTLE_SCALE = 0.7;
+  let settleZoom = 0; // smoothed 0..1, eased every frame toward its target (see loop)
   function applyCameraZoom(t, ballX, ballZ) {
     // t: 0 = normal framing, 1 = fully punched in on the ball. Same ease both directions so the
     // move reads as one continuous camera motion, not a hard cut in either direction.
     const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-    const scale = 1 - eased * (1 - ZOOM_SCALE);
+    // The two zooms never meaningfully overlap in time (relabel is early in the orbit phase,
+    // settle only starts once the ball is down among the frets), but compose them anyway:
+    // whichever wants the tighter frame wins the scale, and only the relabel zoom pans.
+    const relabelScale = 1 - eased * (1 - ZOOM_SCALE);
+    const settleScale = 1 - settleZoom * (1 - SETTLE_SCALE);
+    const scale = Math.min(relabelScale, settleScale);
     const extentY = baseExtentY * scale;
     const aspect = lastAspect;
     if (aspect >= 1) { camera.top = extentY; camera.bottom = -extentY; camera.left = -extentY * aspect; camera.right = extentY * aspect; }
@@ -258,6 +271,16 @@
     camera.position.set(panX, 8, panZ + 6);
     camera.lookAt(panX, 0, panZ);
     camera.updateProjectionMatrix();
+  }
+  // Ease settleZoom toward `target` (0 or 1) with a per-frame exponential glide -- dt-scaled so
+  // the ease speed doesn't depend on display refresh rate. Push-in closes most of the gap in
+  // ~1.5s (deliberate, not a snap); pull-back is slower still (~3s) so the camera lingers on the
+  // settled ball through the reveal (the reveal phase itself is only 350ms -- the lingering
+  // comes from this slow ease, not from holding a phase open, so payouts aren't delayed).
+  function easeSettleZoom(target, dt) {
+    const rate = target > settleZoom ? 2.2 : 1.1;
+    settleZoom += (target - settleZoom) * Math.min(1, dt * rate);
+    if (Math.abs(settleZoom - target) < 0.002) settleZoom = target;
   }
   function onResize() {
     const container = typeof CFG.container === 'string' ? document.getElementById(CFG.container) : CFG.container;
@@ -537,14 +560,20 @@
   // step well inside the fast outer-track orbit -- comfortably before the ball can plausibly have
   // reached the pocket ring -- while the wheel and ball are both still spinning fast with no
   // player-visible event anywhere near it to anchor the moment to.
-  const RELABEL_STEP_MIN = 90, RELABEL_STEP_MAX = 380;
+  // Window sits inside the ~11s outer-track orbit with room for the full camera beat: earliest
+  // window start is RELABEL_STEP_MIN - ZOOM_RAMP = 150 steps (must stay >= 0 or the spin begins
+  // mid-zoom, a visible pop), and the latest window end is RELABEL_STEP_MAX + ZOOM_HOLD +
+  // ZOOM_RAMP = ~1140 steps (~9.5s), still comfortably before the ball leaves the track.
+  const RELABEL_STEP_MIN = 300, RELABEL_STEP_MAX = 850;
   let relabelStep = 0, relabeled = false;
   // Camera-zoom window bracketing the relabel step (see applyCameraZoom above): ramp in, hold
   // through the swap, ramp back out. Ball orbits fast here (well before dropStart), so "look at
   // the ball" is itself a natural, unremarkable camera move at this point in the spin, not a
   // jarring cut -- the swap is the thing hiding inside a normal-looking camera beat, not the
-  // other way around.
-  const ZOOM_RAMP = 24, ZOOM_HOLD = 20; // steps (~0.2s / ~0.17s at 120Hz)
+  // other way around. Paced as a deliberate, dramatic push (~1.25s in, ~1.2s held, ~1.25s out --
+  // a ~3.7s beat total): the first cut of this ran the whole beat in ~0.6s and read as a glitch,
+  // not a camera move.
+  const ZOOM_RAMP = 150, ZOOM_HOLD = 140; // steps (~1.25s / ~1.17s at 120Hz)
   let zoomWindowStart = 0;
 
   function beginResolve() {
@@ -617,16 +646,25 @@
       }
       wheelMesh.rotation.y = livCtx.baseline.wheelAngle + WHEEL_SPEED * STEP * livCtx.step;
       ballWorldPos();
-      // Zoom progress is a pure function of step, so it's automatically back to 0 (normal
-      // framing) once the window passes -- no separate "reset" needed, calling this every frame
-      // is enough.
+      // Settle zoom pushes in once the ball has genuinely dropped into the pocket ring (real
+      // measured radius, not a scripted time) so the final fret-bounces read close-up. The
+      // relabel zoom window is long over by then, so the two never fight.
+      const ballR = Math.hypot(ballBody.position.x, ballBody.position.z);
+      easeSettleZoom(ballR < POCKET_R + 0.08 ? 1 : 0, dt);
+      // Relabel-zoom progress is a pure function of step, so it's automatically back to 0
+      // (normal framing) once its window passes -- no separate "reset" needed, calling this
+      // every frame is enough.
       applyCameraZoom(zoomProgressAt(livCtx.step), ballBody.position.x, ballBody.position.z);
     } else {
       // idle / preroll / reveal: the wheel never stops -- it keeps cruising at the same
       // constant, readable WHEEL_SPEED a real casino wheel coasts at between throws, driven by
       // the same fixed-step clock (not raw wall-clock dt) as the resolve simulation so there's
       // no seam when a spin picks the wheel angle back up as its baseline.
-      applyCameraZoom(0, 0, 0); // always normal framing outside the resolving phase's zoom window
+      // Camera: hold the tight settle framing through the reveal (the player is reading the
+      // winning number off the close-up), then ease back out to normal once idle; preroll of the
+      // NEXT spin also eases out if a new throw starts before the ease finished.
+      easeSettleZoom(phase === 'reveal' ? 1 : 0, dt);
+      applyCameraZoom(0, 0, 0);
       const debt = Math.min(dt / STEP, 6);
       for (let i = 0; i < debt; i++) idleWheelAngle += WHEEL_SPEED * STEP;
       wheelMesh.rotation.y = idleWheelAngle;
