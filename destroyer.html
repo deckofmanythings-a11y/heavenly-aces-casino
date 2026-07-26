@@ -187,6 +187,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    the ship layer (z-index:2) regardless of its own z-index:4. */
 .fp-cell-next-pay{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.65em;font-weight:900;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;z-index:4;letter-spacing:.02em}
 .fp-cell.targeted{outline:2px solid #fff;outline-offset:-2px;z-index:1}
+/* Crosshair flash across the target's row+column during the missile flight (Deck: "flash the
+   row and column of the attack during the attack animation... looks cool"). Pulses so it
+   reads as "active targeting" rather than a static highlight; higher specificity than the
+   base/hit/miss/ship .fp-cell rules so it isn't lost under whatever state a cell is already
+   in (e.g. an already-hit cell earlier in the same row). */
+.fp-cell.line-flash{box-shadow:inset 0 0 0 2px rgba(255,70,70,.9),inset 0 0 14px rgba(255,70,70,.5),0 0 8px rgba(255,60,60,.6);animation:fpLineFlashPulse .6s ease-in-out infinite}
+@keyframes fpLineFlashPulse{0%,100%{opacity:.55}50%{opacity:1}}
 .fp-ship-img-wrap{position:absolute;pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:visible}
 .fp-ship-img-wrap img{width:100%;height:auto;opacity:.9;display:block}
 /* Missile flight animation (Deck) -- a ship sprite sweeps the full row or column the strike
@@ -215,6 +222,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
 .fp-calib-box .fp-calib-dot{position:absolute;left:50%;top:50%;width:6px;height:6px;background:#f0f;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
 #fp-calib-toolbar{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff}
 #fp-calib-toolbar.hidden{display:none}
+/* Offset below #fp-calib-toolbar (top:52px vs its 8px) so the two don't overlap on the rare
+   chance both get toggled on at once. */
+#missile-calib-toolbar{position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;color:#fff;max-width:90vw}
+#missile-calib-toolbar.hidden{display:none}
+.fp-missile-calib-preview{opacity:.9}
 
 /* ── PLACEMENT SCREEN (same baked-art-panel treatment as the firing screen, companion
    background DestroyerPanel_bg_setup_new.png -- same CRT-monitor panel art as the firing
@@ -587,6 +599,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
   <div id="firing-screen">
     <div id="firing-panel">
       <button class="fp-calib-toggle-btn" onclick="toggleCalibMode('firing')">🎯 Calibrate</button>
+      <button class="fp-calib-toggle-btn" style="top:1.55em" onclick="toggleMissileCalibMode()">🚀 Calibrate Missiles</button>
       <!-- Region positions below are Deck's own calibrated export from the drag/resize tool
            (fpCalibExport(), whole pixels on the 1672x940 FP_W/FP_H canvas), converted to %. -->
       <!-- Swapped from the Game Select dropdown to a plain Home button (Deck: "have it work
@@ -712,6 +725,39 @@ Tap BEGIIN GAME to start the game.</div>
       <div style="display:flex;gap:8px">
         <button class="modal-btn" onclick="document.getElementById('fp-calib-export-text').select();document.execCommand('copy')">Copy to Clipboard</button>
         <button class="modal-btn cancel" onclick="document.getElementById('modal-fp-calib-export').classList.add('hidden')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Missile-flight rotation calibrator (Deck: "I want to adjust the graphic of the
+       missiles... give me an editor and I nudge the graphics"). Shows both sprites parked at
+       the grid's center, each independently rotatable, so Deck can compare their fuselage
+       angle against the diamond grid's own real edges right there on the board -- see
+       toggleMissileCalibMode() etc. below. -->
+  <div id="missile-calib-toolbar" class="hidden">
+    <span style="color:#0ff;font-weight:700">MISSILE ANGLE</span>
+    <span id="missile-calib-readout" style="min-width:170px;color:rgba(255,255,255,.7)">row: 0°&nbsp;&nbsp;col: 0°</span>
+    <span style="color:rgba(255,255,255,.5)">Row:</span>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('row',-5)">-5°</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('row',-1)">-1°</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('row',1)">+1°</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('row',5)">+5°</button>
+    <span style="color:rgba(255,255,255,.5)">Col:</span>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('col',-5)">-5°</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('col',-1)">-1°</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('col',1)">+1°</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="nudgeMissileRotate('col',5)">+5°</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="missileCalibReset()">Reset</button>
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="exportMissileCalib()">Export</button>
+    <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleMissileCalibMode()">Exit</button>
+  </div>
+  <div class="modal-overlay hidden" id="modal-missile-calib-export" style="z-index:401">
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-title">Missile Angle Export</div>
+      <textarea id="missile-calib-export-text" readonly style="width:100%;height:80px;font-family:monospace;font-size:12px;background:#111;color:#0f0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px;margin:10px 0" onclick="this.select()"></textarea>
+      <div style="display:flex;gap:8px">
+        <button class="modal-btn" onclick="document.getElementById('missile-calib-export-text').select();document.execCommand('copy')">Copy to Clipboard</button>
+        <button class="modal-btn cancel" onclick="document.getElementById('modal-missile-calib-export').classList.add('hidden')">Close</button>
       </div>
     </div>
   </div>
@@ -1078,6 +1124,13 @@ const MISSILE_FLIGHT_IMG={
   row:{initial:'initialstrike_topleft_to_botright.png',extra:'buymissile_topleft_to_botright.png'},
   col:{initial:'initialstrike_topright_to_botleft.png',extra:'buymissile_topright_to_botleft.png'}
 };
+// Fine-tune rotation (degrees) applied on TOP of each sprite's native artwork orientation --
+// the art is already roughly angled for its named diagonal, but not exactly the grid's real
+// slope (~24.4 deg, from FP_GRID_U/V), which is why Deck reported "off... can't clearly see
+// which row they're flying down." Nudge via toggleMissileCalibMode() (🎯 Calibrate Missiles
+// button) rather than eyeballing degrees blind -- same "give me an editor" pattern as every
+// other calibrator on this panel, just rotation instead of position/size.
+let MISSILE_ROTATE_DEG={row:0,col:0};
 function fpMissileFxLayer(){
   let layer=document.getElementById('fp-missile-fx');
   if(!layer){
@@ -1128,6 +1181,7 @@ function playMissileFlight(serverRow,serverCol,missileType,onHitCross){
     img.src=MISSILE_FLIGHT_IMG[axis][missileType==='extra'?'extra':'initial'];
     img.style.left=fpPct(p0.x,FP_W)+'%';
     img.style.top=fpPct(p0.y,FP_H)+'%';
+    img.style.transform='translate(-50%,-50%) rotate('+(MISSILE_ROTATE_DEG[axis]||0)+'deg)';
     layer.appendChild(img);
     const DURATION=2000; // ms -- "slowly fly over"
     let hitFired=false;
@@ -1144,6 +1198,68 @@ function playMissileFlight(serverRow,serverCol,missileType,onHitCross){
     requestAnimationFrame(frame);
   });
 }
+
+// ── MISSILE ANGLE CALIBRATOR ─────────────────────────────────────────────────
+// Parks both flight sprites at the grid's center, statically, so Deck can compare each one's
+// fuselage angle directly against the diamond grid's own real edges and nudge rotation in
+// place -- same "editor to nudge the graphics" pattern as every other calibrator here, applied
+// to rotation instead of position/size since the sprites always travel a fixed, already-
+// correct path (playMissileFlight's geometry), only their own baked-in art angle needed
+// adjusting.
+let missileCalibActive=false;
+const missileCalibPreview={row:null,col:null};
+function buildMissileCalibPreview(){
+  removeMissileCalibPreview();
+  const layer=fpMissileFxLayer();
+  const center=fpAxisPoint(GRID_SIZE/2,GRID_SIZE/2);
+  ['row','col'].forEach(axis=>{
+    const img=document.createElement('img');
+    img.className='fp-missile-sprite fp-missile-calib-preview';
+    img.src=MISSILE_FLIGHT_IMG[axis].initial;
+    img.style.left=fpPct(center.x,FP_W)+'%';
+    img.style.top=fpPct(center.y,FP_H)+'%';
+    img.style.transform='translate(-50%,-50%) rotate('+(MISSILE_ROTATE_DEG[axis]||0)+'deg)';
+    layer.appendChild(img);
+    missileCalibPreview[axis]=img;
+  });
+  updateMissileCalibReadout();
+}
+function removeMissileCalibPreview(){
+  ['row','col'].forEach(axis=>{
+    if(missileCalibPreview[axis]){missileCalibPreview[axis].remove();missileCalibPreview[axis]=null;}
+  });
+}
+function updateMissileCalibReadout(){
+  const el=document.getElementById('missile-calib-readout');
+  if(el)el.innerHTML='row: '+MISSILE_ROTATE_DEG.row+'°&nbsp;&nbsp;col: '+MISSILE_ROTATE_DEG.col+'°';
+}
+function nudgeMissileRotate(axis,deltaDeg){
+  MISSILE_ROTATE_DEG[axis]=Math.round(((MISSILE_ROTATE_DEG[axis]||0)+deltaDeg)*10)/10;
+  const img=missileCalibPreview[axis];
+  if(img)img.style.transform='translate(-50%,-50%) rotate('+MISSILE_ROTATE_DEG[axis]+'deg)';
+  updateMissileCalibReadout();
+}
+function missileCalibReset(){
+  MISSILE_ROTATE_DEG={row:0,col:0};
+  ['row','col'].forEach(axis=>{
+    const img=missileCalibPreview[axis];
+    if(img)img.style.transform='translate(-50%,-50%) rotate(0deg)';
+  });
+  updateMissileCalibReadout();
+}
+function exportMissileCalib(){
+  const out='let MISSILE_ROTATE_DEG={row:'+MISSILE_ROTATE_DEG.row+',col:'+MISSILE_ROTATE_DEG.col+'};';
+  const ta=document.getElementById('missile-calib-export-text');
+  if(ta)ta.value=out;
+  document.getElementById('modal-missile-calib-export').classList.remove('hidden');
+}
+function toggleMissileCalibMode(){
+  missileCalibActive=!missileCalibActive;
+  document.getElementById('missile-calib-toolbar').classList.toggle('hidden',!missileCalibActive);
+  if(missileCalibActive)buildMissileCalibPreview();
+  else removeMissileCalibPreview();
+}
+
 const SHIP_LENGTHS=[2,3,3,4];
 const SHIP_NAMES=['Destroyer','Battleship','Battleship','Carrier'];
 const SHIP_DISPLAY_NAMES=['Destroyer','Battleship 1','Battleship 2','Carrier'];
@@ -1681,17 +1797,29 @@ async function fireMissile(){
   if(!G.missileQueue)G.missileQueue=[];
   const firedType=G.missileQueue.length?G.missileQueue.shift():'initial';
   // Fly a ship sprite across the target's full row/column (Deck), triggering the cell flash
-  // at the moment it crosses the target instead of a flat 350ms timer.
+  // at the moment it crosses the target instead of a flat 350ms timer. Suppress the target
+  // cell's own hit/miss paint until that same moment (Deck: "Don't paint in the hit or miss
+  // marker until the missile flies over that cell") -- renderFiringGrid() (called inside
+  // updateUI() at the end of this function, well before the flight finishes) checks
+  // _fpPendingReveal and skips painting that one cell until it's cleared below.
+  _fpPendingReveal={r:roll.row,c:roll.col};
   {
     const cellEl=document.querySelector('#fp-grid-cells .fp-cell[data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
-    const markerEl=document.querySelector('#fp-grid-cells .fp-cell-marker[data-fr="'+roll.row+'"][data-fc="'+roll.col+'"]');
+    // Crosshair flash across the target's whole row + column, purely cosmetic (Deck: "flash
+    // the row and column of the attack during the attack animation... doesn't help calibrate,
+    // but it does look cool") -- on for the full flight, off once the sprite's flown clear.
+    const lineEls=[...document.querySelectorAll(
+      '#fp-grid-cells .fp-cell[data-fr="'+roll.row+'"], #fp-grid-cells .fp-cell[data-fc="'+roll.col+'"]'
+    )];
+    lineEls.forEach(el=>el.classList.add('line-flash'));
     if(cellEl)cellEl.classList.add('targeted');
     playMissileFlight(roll.row,roll.col,firedType,()=>{
-      if(!cellEl)return;
-      cellEl.classList.remove('targeted');
-      cellEl.className='fp-cell '+(hit?'hit':'miss');
-      if(markerEl)markerEl.className='fp-cell-marker '+(hit?'hit':'miss');
+      _fpPendingReveal=null;
+      renderFiringGrid();
+      if(cellEl)cellEl.classList.remove('targeted');
       hit?playHitSound():playMissSound();
+    }).then(()=>{
+      lineEls.forEach(el=>el.classList.remove('line-flash'));
     });
   }
   const wasPendingBuyDim=G.pendingBuyDim;G.pendingBuyDim=false;
@@ -2567,18 +2695,29 @@ function buildFiringGrid(){
   }
   _fpGridBuilt=true;
 }
+// Suppresses the just-fired cell's hit/miss paint until the missile sprite actually reaches
+// it (Deck: "Don't paint in the hit or miss marker until the missile flies over that cell")
+// -- set by fireMissile() right before it calls updateUI() (which calls renderFiringGrid()
+// synchronously, well before the ~2s flight animation finishes), cleared by
+// playMissileFlight()'s onHitCross callback at the moment the sprite crosses the cell.
+let _fpPendingReveal=null;
+function fpIsShipCell(r,c){
+  return !!(G.ships&&G.ships.some(ship=>ship.some(([sr,sc])=>sr===r&&sc===c)));
+}
 function renderFiringGrid(){
   if(!_fpGridBuilt||!G.grid)return;
   document.querySelectorAll('#fp-grid-cells .fp-cell').forEach(el=>{
     const r=+el.dataset.fr,c=+el.dataset.fc;
-    const state=G.grid[r]&&G.grid[r][c];
+    const pending=_fpPendingReveal&&_fpPendingReveal.r===r&&_fpPendingReveal.c===c;
+    const state=pending?(fpIsShipCell(r,c)?'ship':null):(G.grid[r]&&G.grid[r][c]);
     el.className='fp-cell'+(state&&state!=='empty'?' '+state:'');
   });
   // fp-cell-next-pay labels are siblings of .fp-cell now (see below), rebuilt fresh each call.
   document.querySelectorAll('#fp-grid-cells .fp-cell-next-pay').forEach(el=>el.remove());
   document.querySelectorAll('#fp-grid-cells .fp-cell-marker').forEach(el=>{
     const r=+el.dataset.fr,c=+el.dataset.fc;
-    const state=G.grid[r]&&G.grid[r][c];
+    const pending=_fpPendingReveal&&_fpPendingReveal.r===r&&_fpPendingReveal.c===c;
+    const state=pending?null:(G.grid[r]&&G.grid[r][c]);
     el.className='fp-cell-marker'+(state==='hit'||state==='miss'?' '+state:'');
   });
   // Overlay total win value on unhit cells of ships that have at least 1 hit -- same logic
