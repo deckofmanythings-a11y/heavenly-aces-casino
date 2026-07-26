@@ -62,43 +62,40 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #wheel-result.win-black{color:#ddd}
 #wheel-result.win-green{color:#4ade80}
 
-/* ── TABLE AREA ── */
-#table-area{flex:1;display:flex;flex-direction:column;gap:3px;padding:4px;min-height:0;overflow:hidden}
-#numbers-grid-wrap{display:flex;flex:1;min-height:0;gap:2px}
-#zero-col{display:flex;flex-direction:column;gap:2px;width:9%}
-/* 12 number columns / 3 number rows as explicit "1fr" tracks, with real (not CSS-`gap`)
-   thin tracks interleaved between them -- those gap tracks are real grid cells now, not
-   empty gutter, so split/corner bet targets can actually occupy and be clicked/tapped
-   exactly where a real felt shows the line between two numbers. */
-#num-grid{flex:1;display:grid;grid-template-columns:repeat(11,1fr 7px) 1fr;grid-template-rows:repeat(2,1fr 7px) 1fr;gap:0;min-width:0}
-.bet-cell{border-radius:3px;border:0.5px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-weight:800;font-size:min(20px,2.6vw);transition:filter .1s;user-select:none}
-.bet-cell:hover{filter:brightness(1.3)}
+/* ── TABLE AREA -- baked-art panel, same treatment as Sic-Bo's #sb-panel: a single background
+   image (roulett_felt.png, 1919x594 -- real red/black/green cell fills and gold pinstripe
+   borders already baked in) with every bet cell absolutely positioned on top of it instead of
+   drawn via CSS grid/borders. Unlike Sic-Bo's hand-placed art, this felt's grid is perfectly
+   regular, so cell rects are computed from measured pixel boundaries (RL_COL_X/RL_ROW_Y/etc.
+   in the script below) instead of needing a manual drag/resize calibration tool. Numbers
+   themselves are NOT baked into the art (only the color fills are), so buildTable() still
+   renders each number as text, same as before -- just as a transparent overlay now instead of
+   a colored box. */
+#table-area{flex:1;display:flex;align-items:center;justify-content:center;padding:4px;min-height:0;overflow:hidden}
+#rl-panel{position:relative;aspect-ratio:1919/594;max-width:100%;max-height:100%;width:100%;background-image:url('roulett_felt.png?v=1');background-size:100% 100%;background-repeat:no-repeat;container-type:size;margin:auto}
+#zero-col,#num-grid,#col21-strip,#dozens-row,#evens-row{display:contents}
+.bet-cell{position:absolute;background:transparent;border:none;border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:800;font-size:min(20px,2.6cqw);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.7);transition:background .1s;user-select:none}
+.bet-cell:hover{background:rgba(255,215,0,.25)}
 .bet-cell.active{box-shadow:inset 0 0 0 2px #ffd700}
-.num-red{background:#a01818}
-.num-black{background:#181818}
-.num-green{background:#0a6b30}
-.zero-cell{flex:1;font-size:min(18px,2.6vw)}
-.cell-stk{position:absolute;bottom:1px;right:2px;font-size:min(11px,1.6vw);color:#ffd700;font-weight:700;pointer-events:none}
+.zero-cell{font-size:min(18px,2.6cqw)}
+.zero-top{left:0.104%;top:0.168%;width:8.234%;height:31.229%}
+.zero-bot{left:0.104%;top:31.397%;width:8.234%;height:29.63%}
+.cell-stk{position:absolute;bottom:1px;right:2px;font-size:min(11px,1.6cqw);color:#ffd700;font-weight:700;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.9)}
 .mbtn-corner{display:none;position:absolute;top:1px;right:2px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.65);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:11px;line-height:12px;text-align:center;cursor:pointer;z-index:5;padding:0}
 .bet-cell:hover .mbtn-corner.vis{display:block}
 .mbtn-corner:hover{background:rgba(180,0,0,.7)}
-/* Split/corner targets: thin (or small square, for corners) click zones sitting exactly in
-   the gap tracks between number cells. overflow:visible + a raised z-index so a placed
-   chip's stack (rendered at full --chip size, same as a straight bet) is allowed to spill
-   visually onto the neighboring numbers it straddles, matching how a real chip actually
-   looks resting on a line instead of being clipped to the thin gap itself. */
-.split-cell,.corner-cell{background:rgba(0,0,0,.55);border:none;border-radius:1px;overflow:visible}
+/* Split/corner targets: thin (or small square, for corners) click zones straddling the gold
+   pinstripe border lines baked into the art between number cells. Fully transparent at rest
+   (the baked border already reads fine on its own) -- only a hover/active highlight shows. */
+.split-cell,.corner-cell{background:transparent;border-radius:1px}
 .split-cell:hover,.corner-cell:hover{background:rgba(255,215,0,.35)}
 .corner-cell{z-index:3}
 .split-cell{z-index:2}
 
-#outside-area{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
-.outside-row{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;height:calc(100dvh * 1.5 / 16)}
-.outside-row.dozens{grid-template-columns:repeat(3,1fr)}
-.out-cell{background:rgba(0,0,0,.3);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-weight:700;font-size:min(16px,2.2vw);transition:filter .1s}
-.out-cell:hover{filter:brightness(1.3)}
+.out-cell{position:absolute;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:min(16px,2.2cqw);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.7);transition:background .1s}
+.out-cell:hover{background:rgba(255,215,0,.25)}
 .out-cell.active{box-shadow:inset 0 0 0 2px #ffd700}
-.out-cell.red-txt{color:#ff5555}
+.out-cell.red-txt{color:#ff8080}
 .out-cell.black-txt{color:#ddd}
 
 /* ── BOTTOM SECTION ── */
@@ -251,7 +248,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.16</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.17</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">
@@ -278,25 +275,25 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
     </div>
   </div>
 
-  <!-- TABLE AREA -->
+  <!-- TABLE AREA -- baked-art panel (roulett_felt.png). All bet cells are built + individually
+       positioned by buildTable() in the script below; only the two static 0/00 cells (fixed
+       position, never rebuilt) are hardcoded here. -->
   <div id="table-area">
-    <div id="numbers-grid-wrap">
+    <div id="rl-panel">
       <div id="zero-col">
-        <div class="bet-cell zero-cell num-green" data-key="straight-0" onclick="placeBet('straight-0')">0
+        <div class="bet-cell zero-cell zero-top" data-key="straight-0" onclick="placeBet('straight-0')">0
           <span class="cell-stk" id="stk-straight-0"></span>
           <button class="mbtn-corner" onclick="event.stopPropagation();removeBet('straight-0')">−</button>
         </div>
-        <div class="bet-cell zero-cell num-green" data-key="straight-00" onclick="placeBet('straight-00')">00
+        <div class="bet-cell zero-cell zero-bot" data-key="straight-00" onclick="placeBet('straight-00')">00
           <span class="cell-stk" id="stk-straight-00"></span>
           <button class="mbtn-corner" onclick="event.stopPropagation();removeBet('straight-00')">−</button>
         </div>
       </div>
       <div id="num-grid"></div>
-    </div>
-    <div id="outside-area">
-      <div class="outside-row dozens" id="dozens-row"></div>
-      <div class="outside-row" id="evens-row"></div>
-      <div class="outside-row dozens" id="cols-row"></div>
+      <div id="col21-strip"></div>
+      <div id="dozens-row"></div>
+      <div id="evens-row"></div>
     </div>
   </div>
 
@@ -632,24 +629,33 @@ function repeatLastBet(){
 }
 
 // ── BUILD TABLE ───────────────────────────────────────────────────────────────
-function outCell(key,label,colorCls){
+// Cell geometry for the roulett_felt.png baked-art panel (1919x594), measured directly from
+// the image's pixel grid (gold pinstripe border positions) rather than eyeballed -- every
+// value below is a % of the panel's width/height. This grid is perfectly regular (12 equal
+// columns, 3 equal rows, etc.), unlike Sic-Bo's hand-placed art, so cell rects are computed
+// from these boundary arrays instead of needing a manual drag/resize calibration tool.
+const RL_COL_X=[8.338,15.878,23.267,30.667,38.145,45.44,52.71,60.057,67.353,74.57,81.735,88.64,95.518]; // 13 boundaries -> 12 number columns
+const RL_ROW_Y=[0.168,20.202,40.657,61.027]; // 4 boundaries -> 3 number rows
+const RL_SLIVER_X=[95.518,99.739]; // "2:1" column-bet strip, right of the grid
+const RL_OUT_X=[8.494,95.362]; // dozens-row / evens-row full span
+const RL_DOZEN_Y=[61.027,80.471];
+const RL_OUTSIDE_Y=[80.471,99.495];
+const RL_SPLIT_T=1.04, RL_SPLIT_T_H=3.367; // split hitbox thickness: %width (vertical border), %height (horizontal border)
+const RL_CORNER_T=1.355, RL_CORNER_T_H=4.377; // corner hitbox size (slightly larger, it's a point target)
+function setRect(d,left,top,width,height){
+  d.style.left=left+'%';d.style.top=top+'%';d.style.width=width+'%';d.style.height=height+'%';
+}
+function outCell(key,label,colorCls,rect,title){
   const d=document.createElement('div');
   d.className='out-cell'+(colorCls?' '+colorCls:'');
   d.dataset.key=key;
+  if(title)d.title=title;
   d.onclick=()=>placeBet(key);
   d.oncontextmenu=(e)=>{e.preventDefault();removeBet(key);};
   d.innerHTML=label+'<span class="cell-stk" id="stk-'+key+'"></span>';
+  setRect(d,rect.left,rect.top,rect.width,rect.height);
   return d;
 }
-// Track-index helpers for #num-grid's interleaved "1fr 7px 1fr 7px ... 1fr" layout: content
-// column/row c/r (0-based) sits at ODD track (2c+1); the gap track BETWEEN content c and c+1
-// sits at EVEN track (2c+2). Plain integer assignment to style.gridColumn/gridRow places an
-// element in exactly that one track (confirmed by the straight cells below, which already
-// relied on this same single-integer-per-track behavior before this grid had gap tracks at all).
-function colTrack(c){return 2*c+1;}
-function colGapTrack(c){return 2*c+2;} // gap between content col c and c+1 (c: 0..10)
-function rowTrack(r){return 2*r+1;}
-function rowGapTrack(r){return 2*r+2;} // gap between content row r and r+1 (r: 0..1)
 // number -> {row,col} in the 3x12 grid -- mirrors the layout math directly below (must stay
 // in lockstep with roll-roulette's own copy of this same grid, which validates split/corner
 // keys server-side against real adjacency rather than trusting the client).
@@ -662,6 +668,7 @@ function buildTable(){
   const grid=document.getElementById('num-grid');
   if(grid.childElementCount)return; // already built
   // 3 rows x 12 cols: row1 = 3,6,9...36 (top), row2 = 2,5,8...35 (mid), row3 = 1,4,7...34 (bottom)
+  // -- confirmed against the felt's own baked red/black fills pixel-by-pixel before shipping.
   const POS=gridPos();
   const cellAt={}; // {row,col} -> number, for the split/corner generators below
   for(const n in POS){const p=POS[n];cellAt[p.row+','+p.col]=+n;}
@@ -670,8 +677,8 @@ function buildTable(){
       const n=col*3+(3-row);
       const key='straight-'+n;
       const d=document.createElement('div');
-      d.className='bet-cell '+(pocketColor(n)==='red'?'num-red':'num-black');
-      d.style.gridColumn=colTrack(col);d.style.gridRow=rowTrack(row);
+      d.className='bet-cell';
+      setRect(d,RL_COL_X[col],RL_ROW_Y[row],RL_COL_X[col+1]-RL_COL_X[col],RL_ROW_Y[row+1]-RL_ROW_Y[row]);
       d.dataset.key=key;
       d.onclick=()=>placeBet(key);
       d.oncontextmenu=(e)=>{e.preventDefault();removeBet(key);};
@@ -679,16 +686,15 @@ function buildTable(){
       grid.appendChild(d);
     }
   }
-  // Split bets (2 adjacent numbers, 17:1) -- one target per gap track: vertical splits sit in
-  // the row-gap tracks (same column, adjacent rows), horizontal splits in the col-gap tracks
-  // (same row, adjacent columns). Corner bets (4 numbers meeting at a point, 8:1) sit at every
-  // intersection of a row-gap track and a col-gap track. Keys are always sorted ascending so
-  // there's exactly one canonical key per spot regardless of click order -- roll-roulette
-  // validates these against the identical grid-adjacency rule, not an arbitrary allowlist.
-  function addCombo(cls,key,label,gridCol,gridRow){
+  // Split bets (2 adjacent numbers, 17:1) -- one thin hitbox straddling each border line the
+  // felt already draws. Corner bets (4 numbers meeting at a point, 8:1) sit at every column-
+  // border x row-border intersection. Keys are always sorted ascending so there's exactly one
+  // canonical key per spot regardless of click order -- roll-roulette validates these against
+  // the identical grid-adjacency rule, not an arbitrary allowlist.
+  function addCombo(cls,key,label,left,top,width,height){
     const d=document.createElement('div');
     d.className='bet-cell '+cls;
-    d.style.gridColumn=gridCol;d.style.gridRow=gridRow;
+    setRect(d,left,top,width,height);
     d.dataset.key=key;
     d.title=label;
     d.onclick=()=>placeBet(key);
@@ -697,40 +703,47 @@ function buildTable(){
     grid.appendChild(d);
   }
   for(let col=0;col<12;col++){
-    for(let row=0;row<2;row++){ // vertical split: rows [row, row+1] in this column
+    for(let row=0;row<2;row++){ // vertical split: rows [row, row+1] in this column -- sits on the horizontal border
       const a=cellAt[row+','+col],b=cellAt[(row+1)+','+col];
       const [lo,hi]=[a,b].sort((x,y)=>x-y);
-      addCombo('split-cell','split-'+lo+'-'+hi,'Split '+lo+'/'+hi,colTrack(col),rowGapTrack(row));
+      addCombo('split-cell','split-'+lo+'-'+hi,'Split '+lo+'/'+hi,RL_COL_X[col],RL_ROW_Y[row+1]-RL_SPLIT_T_H/2,RL_COL_X[col+1]-RL_COL_X[col],RL_SPLIT_T_H);
     }
   }
   for(let row=0;row<3;row++){
-    for(let col=0;col<11;col++){ // horizontal split: cols [col, col+1] in this row
+    for(let col=0;col<11;col++){ // horizontal split: cols [col, col+1] in this row -- sits on the vertical border
       const a=cellAt[row+','+col],b=cellAt[row+','+(col+1)];
       const [lo,hi]=[a,b].sort((x,y)=>x-y);
-      addCombo('split-cell','split-'+lo+'-'+hi,'Split '+lo+'/'+hi,colGapTrack(col),rowTrack(row));
+      addCombo('split-cell','split-'+lo+'-'+hi,'Split '+lo+'/'+hi,RL_COL_X[col+1]-RL_SPLIT_T/2,RL_ROW_Y[row],RL_SPLIT_T,RL_ROW_Y[row+1]-RL_ROW_Y[row]);
     }
   }
   for(let row=0;row<2;row++){
     for(let col=0;col<11;col++){ // corner: the 2x2 block [row,row+1] x [col,col+1]
       const nums=[cellAt[row+','+col],cellAt[row+','+(col+1)],cellAt[(row+1)+','+col],cellAt[(row+1)+','+(col+1)]].sort((x,y)=>x-y);
-      addCombo('corner-cell','corner-'+nums.join('-'),'Corner '+nums.join('/'),colGapTrack(col),rowGapTrack(row));
+      addCombo('corner-cell','corner-'+nums.join('-'),'Corner '+nums.join('/'),RL_COL_X[col+1]-RL_CORNER_T/2,RL_ROW_Y[row+1]-RL_CORNER_T_H/2,RL_CORNER_T,RL_CORNER_T_H);
     }
   }
   const dozens=document.getElementById('dozens-row');
-  dozens.appendChild(outCell('dozen1','1st 12'));
-  dozens.appendChild(outCell('dozen2','2nd 12'));
-  dozens.appendChild(outCell('dozen3','3rd 12'));
+  const dozW=(RL_OUT_X[1]-RL_OUT_X[0])/3;
+  dozens.appendChild(outCell('dozen1','1st 12',null,{left:RL_OUT_X[0],top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]}));
+  dozens.appendChild(outCell('dozen2','2nd 12',null,{left:RL_OUT_X[0]+dozW,top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]}));
+  dozens.appendChild(outCell('dozen3','3rd 12',null,{left:RL_OUT_X[0]+2*dozW,top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]}));
   const evens=document.getElementById('evens-row');
-  evens.appendChild(outCell('low','1-18'));
-  evens.appendChild(outCell('even','EVEN'));
-  evens.appendChild(outCell('red','RED','red-txt'));
-  evens.appendChild(outCell('black','BLACK','black-txt'));
-  evens.appendChild(outCell('odd','ODD'));
-  evens.appendChild(outCell('high','19-36'));
-  const cols=document.getElementById('cols-row');
-  cols.appendChild(outCell('col1','2:1 (3,6..36)'));
-  cols.appendChild(outCell('col2','2:1 (2,5..35)'));
-  cols.appendChild(outCell('col3','2:1 (1,4..34)'));
+  const outW=(RL_OUT_X[1]-RL_OUT_X[0])/6,outH=RL_OUTSIDE_Y[1]-RL_OUTSIDE_Y[0];
+  const outRect=i=>({left:RL_OUT_X[0]+i*outW,top:RL_OUTSIDE_Y[0],width:outW,height:outH});
+  evens.appendChild(outCell('low','1-18',null,outRect(0)));
+  evens.appendChild(outCell('even','EVEN',null,outRect(1)));
+  evens.appendChild(outCell('red','RED','red-txt',outRect(2)));
+  evens.appendChild(outCell('black','BLACK','black-txt',outRect(3)));
+  evens.appendChild(outCell('odd','ODD',null,outRect(4)));
+  evens.appendChild(outCell('high','19-36',null,outRect(5)));
+  // "2:1" column bets sit in the thin vertical strip to the right of the number grid (real-table
+  // convention), one cell per grid row -- row0 (top) = multiples of 3, row1 (mid) = 2,5,8...35,
+  // row2 (bottom) = 1,4,7...34, matching the felt's own 3-way split of that strip.
+  const col21=document.getElementById('col21-strip');
+  const sliverW=RL_SLIVER_X[1]-RL_SLIVER_X[0];
+  col21.appendChild(outCell('col1','2:1',null,{left:RL_SLIVER_X[0],top:RL_ROW_Y[0],width:sliverW,height:RL_ROW_Y[1]-RL_ROW_Y[0]},'2:1 (3,6..36)'));
+  col21.appendChild(outCell('col2','2:1',null,{left:RL_SLIVER_X[0],top:RL_ROW_Y[1],width:sliverW,height:RL_ROW_Y[2]-RL_ROW_Y[1]},'2:1 (2,5..35)'));
+  col21.appendChild(outCell('col3','2:1',null,{left:RL_SLIVER_X[0],top:RL_ROW_Y[2],width:sliverW,height:RL_ROW_Y[3]-RL_ROW_Y[2]},'2:1 (1,4..34)'));
 }
 
 // ── WHEEL VISUAL ──────────────────────────────────────────────────────────────
