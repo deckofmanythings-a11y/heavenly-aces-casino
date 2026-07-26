@@ -1191,13 +1191,17 @@ body.portrait-craps #felt-portrait{display:flex}
       <div class="modal-title" style="margin-bottom:12px">Make Bullets</div>
       <div style="font-size:14px;line-height:1.5;margin-bottom:12px" id="bullets-intro">Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn't change, only how much of it you're using right now.</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
-        <label style="font-size:13px;color:rgba(255,255,255,.8)">Total to convert
-          <input type="number" id="bullets-total" min="1" step="0.01" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0">
+        <div style="display:flex;gap:8px">
+          <label style="font-size:13px;color:rgba(255,255,255,.8);flex:1">Total to Convert
+            <input type="number" id="bullets-total" min="0.01" step="0.01" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="onBulletsTotalInput()">
+          </label>
+          <label style="font-size:13px;color:rgba(255,255,255,.8);flex:1">Amount per Bullet
+            <input type="number" id="bullets-per" min="0.01" step="0.01" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="onBulletsPerInput()">
+          </label>
+        </div>
+        <label style="font-size:13px;color:rgba(255,255,255,.8)">Number of Bullets
+          <input type="number" id="bullets-count" min="1" step="1" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="onBulletsCountInput()">
         </label>
-        <label style="font-size:13px;color:rgba(255,255,255,.8)">Number of bullets
-          <input type="number" id="bullets-count" min="1" step="1" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="updateBulletsPreview()">
-        </label>
-        <div id="bullets-size-preview" style="font-size:13px;color:#ffd700;min-height:16px"></div>
         <label style="font-size:13px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="bullets-hard" style="width:16px;height:16px;margin:0">
           Hard Bullets <span style="color:rgba(255,255,255,.5);font-weight:400">-- everything outside the bullet is off-limits until you switch or end (unchecked = Soft: you can always dip into the rest of your bankroll)</span>
@@ -1707,7 +1711,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.18</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.19</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2594,40 +2598,53 @@ function closeBulletsSummary(){
   if(fn)fn();
 }
 function bulletRemaining(){return r2(G.bulletSize+G.bankroll-G.bulletBaseline);}
-function updateBulletsPreview(){
+// Total/Per-Bullet/Count are three mutually-derived fields -- Number of Bullets is the one
+// that never gets silently recomputed by the other two (it's the multiplier, not a result), so
+// editing Total or Per-Bullet always solves for the OTHER amount field, holding Count fixed;
+// editing Count always re-solves Total from the current Per-Bullet, holding bullet size fixed
+// (changing how many bullets you want shouldn't secretly change the size of each one).
+function bulletsCountVal(){return Math.max(1,parseInt(document.getElementById('bullets-count').value)||1);}
+function onBulletsTotalInput(){
   const total=parseFloat(document.getElementById('bullets-total').value)||0;
-  const count=parseInt(document.getElementById('bullets-count').value)||0;
-  const prev=document.getElementById('bullets-size-preview');
-  prev.textContent=(total>0&&count>0)?(count+' bullets of '+fmt(r2(total/count))+' each'):'';
+  const count=bulletsCountVal();
+  document.getElementById('bullets-per').value=total>0?r2(total/count):'';
+}
+function onBulletsPerInput(){
+  const per=parseFloat(document.getElementById('bullets-per').value)||0;
+  const count=bulletsCountVal();
+  document.getElementById('bullets-total').value=per>0?r2(per*count):'';
+}
+function onBulletsCountInput(){
+  const per=parseFloat(document.getElementById('bullets-per').value)||0;
+  const count=bulletsCountVal();
+  document.getElementById('bullets-total').value=per>0?r2(per*count):'';
 }
 function openBulletsModal(){
   document.getElementById('bullets-error').textContent='';
   const endBtn=document.getElementById('bullets-end-btn');
+  document.getElementById('bullets-count').value=1;
   if(G.bulletActive){
     document.getElementById('bullets-intro').textContent='You already have bullets going. Making new ones refunds all remaining bullets back into a single total first -- your Playable total won\'t change, just how it\'s split up.';
     document.getElementById('bullets-total').value=G.bankroll>0?G.bankroll:'';
-    document.getElementById('bullets-count').value=G.bulletCount||'';
+    document.getElementById('bullets-count').value=G.bulletCount||1;
     endBtn.style.display='';
     document.getElementById('bullets-hard').checked=G.bulletHard;
   }else{
     document.getElementById('bullets-intro').textContent='Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn\'t change, only how much of it you\'re using right now.';
     document.getElementById('bullets-total').value='';
-    document.getElementById('bullets-count').value='';
     endBtn.style.display='none';
     document.getElementById('bullets-hard').checked=false;
   }
-  updateBulletsPreview();
+  onBulletsTotalInput();
   document.getElementById('modal-bullets').classList.remove('hidden');
 }
 function cancelBullets(){document.getElementById('modal-bullets').classList.add('hidden');}
 function confirmBullets(){
-  const total=r2(parseFloat(document.getElementById('bullets-total').value)||0);
-  const count=parseInt(document.getElementById('bullets-count').value)||0;
+  const count=bulletsCountVal();
+  const size=r2(parseFloat(document.getElementById('bullets-per').value)||0);
+  const total=r2(size*count);
   const errEl=document.getElementById('bullets-error');
-  if(count<1||!Number.isInteger(count)){errEl.textContent='Enter a whole number of bullets.';return;}
   if(!(total>0)||total>G.bankroll+0.001){errEl.textContent='Total can\'t exceed your Playable bankroll ('+fmt(G.bankroll)+').';return;}
-  const size=r2(total/count);
-  if(size<=0){errEl.textContent='That split is too small -- fewer bullets or a bigger total.';return;}
   const hard=document.getElementById('bullets-hard').checked;
   const applyNewBullets=()=>{
     G.bulletActive=true;G.bulletSize=size;G.bulletCount=count;G.bulletIndex=0;
