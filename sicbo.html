@@ -546,7 +546,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector (matches craps left-col-header) -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.2</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.3</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -921,7 +921,7 @@ function startSession(player){
     G.lastBetSnapshot=gs.sicbo.lastBet;
     document.getElementById('repeat-btn').disabled=false;
   }
-  updateUI();initDice();
+  updateUI();initDice();sizeSbPanel();
 }
 async function logout(){
   if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
@@ -1714,6 +1714,29 @@ function initDice(){
   src1=new THREE.Quaternion();src2=new THREE.Quaternion();src3=new THREE.Quaternion();
   requestAnimationFrame(renderLoop3);
 }
+// #sb-panel relies on CSS aspect-ratio + width:100% + max-height:100% to stay locked to the
+// art's real 1672x941 ratio, but that combo has a real gap: aspect-ratio only computes the AUTO
+// dimension from the DEFINITE one. Width is definite (100%) here, so on a narrow/short window
+// (e.g. a phone) the width-derived height can exceed the panel's available height, max-height
+// clamps that overflow, but width is left exactly where it was -- the box stops being 1672:941
+// shaped, and background-size:100% 100% stretches the art to fill that wrong shape (Deck: "the
+// background graphic is stretching horizontally" / elements not shrinking enough on phone --
+// same root cause, since every element is positioned as a % of this now-wrong-shaped box).
+// Same bug/fix as sizeDestroyerPanel() in destroyer.html: explicit inline px width/height
+// computed from whichever of width/height is actually the tighter constraint, so the box can
+// never end up off-ratio regardless of window shape.
+function sizeSbPanel(){
+  const RATIO=1672/941;
+  const parent=document.getElementById('game-screen'),panel=document.getElementById('sb-panel');
+  if(!parent||!panel)return;
+  const W=parent.clientWidth,H=parent.clientHeight;
+  if(!W||!H)return;
+  let w=W,h=w/RATIO;
+  if(h>H){h=H;w=h*RATIO;}
+  panel.style.width=w+'px';
+  panel.style.height=h+'px';
+}
+window.addEventListener('resize',sizeSbPanel);
 function startTumble(){
   src1.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6,Math.random()*5));
   src2.setFromEuler(new THREE.Euler(Math.random()*8+2,Math.random()*6+Math.PI,Math.random()*5));
