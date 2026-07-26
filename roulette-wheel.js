@@ -197,9 +197,31 @@
     ballMesh = new THREE_.Mesh(ballGeo, ballMat);
     scene.add(ballMesh);
 
+    // Visible outer bowl: a static (NON-spinning -- on a real table only the wheelhead rotates,
+    // the surrounding bowl doesn't, and the physics wall is static too, so visual and physics
+    // agree) wooden ring past the wheel's edge. Inner face sits exactly at the physics wall's
+    // inner radius (WALL_INNER_R) so the ball visibly bounces off actual wood instead of thin
+    // air at the disc's edge, which is how it looked before this existed.
+    const bowlWallMat = new THREE_.MeshStandardMaterial({ color: 0x33220f, roughness: 0.7, side: THREE_.DoubleSide });
+    const bowlTopMat = new THREE_.MeshStandardMaterial({ color: 0x4a331a, roughness: 0.6, side: THREE_.DoubleSide });
+    const wallFaceGeo = new THREE_.CylinderGeometry(WALL_INNER_R, WALL_INNER_R, BOWL_VIS_TOP_Y, 64, 1, true);
+    const wallFace = new THREE_.Mesh(wallFaceGeo, bowlWallMat);
+    wallFace.position.y = BOWL_VIS_TOP_Y / 2;
+    scene.add(wallFace);
+    const bowlRingGeo = new THREE_.RingGeometry(WALL_INNER_R, BOWL_OUTER_R, 64);
+    const bowlRing = new THREE_.Mesh(bowlRingGeo, bowlTopMat);
+    bowlRing.rotation.x = -Math.PI / 2;
+    bowlRing.position.y = BOWL_VIS_TOP_Y;
+    scene.add(bowlRing);
+    const bowlSkirtGeo = new THREE_.CylinderGeometry(BOWL_OUTER_R, BOWL_OUTER_R, BOWL_VIS_TOP_Y + 0.06, 64, 1, true);
+    const bowlSkirt = new THREE_.Mesh(bowlSkirtGeo, bowlWallMat);
+    bowlSkirt.position.y = (BOWL_VIS_TOP_Y + 0.06) / 2 - 0.06;
+    scene.add(bowlSkirt);
+
+    // Marker floats above the bowl rim (raised so the bowl ring doesn't swallow it).
     const ptrGeo = new THREE_.ConeGeometry(0.05, 0.16, 12);
     pointerMesh = new THREE_.Mesh(ptrGeo, new THREE_.MeshStandardMaterial({ color: 0xffd700 }));
-    pointerMesh.position.set(0, 0.2, -CFG.wheelRadius - 0.08);
+    pointerMesh.position.set(0, BOWL_VIS_TOP_Y + 0.14, -(WALL_INNER_R + BOWL_OUTER_R) / 2);
     pointerMesh.rotation.x = Math.PI;
     scene.add(pointerMesh);
 
@@ -222,7 +244,9 @@
   const TILT_COS = 0.8;
   let baseExtentY = 1, lastAspect = 1; // cached normal (non-zoomed) framing, reused by the relabel camera-zoom below
   function fitCameraFrustum(w, h) {
-    const extentX = CFG.wheelRadius * 1.15;
+    // Frame out to the visible bowl's outer edge (WALL_INNER_R + 0.22 ~= 1.81) plus margin --
+    // was wheelRadius*1.15 when the disc edge was the outermost visible thing.
+    const extentX = CFG.wheelRadius * 1.19;
     const extentY = extentX / TILT_COS; // compensate for the tilt-foreshortened vertical axis
     const aspect = w / h;
     baseExtentY = extentY; lastAspect = aspect;
@@ -359,6 +383,11 @@
   // (the pocket ring is the outermost moving part -- the ball never rests hub-side of the digits).
   const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.87;
   const ORBIT_Y = 0.16, POCKET_Y = 0.09;
+  // Shared by the physics wall (buildPhysicsWorld) and the visible bowl meshes (buildScene) so
+  // the ball always bounces exactly where the wood appears to be -- one constant, no drift.
+  const WALL_INNER_R = ORBIT_R + 0.12;
+  const BOWL_OUTER_R = WALL_INNER_R + 0.22; // visible bowl ring's outer edge
+  const BOWL_VIS_TOP_Y = 0.42; // visible bowl rim height -- covers everything the ball visibly does
   // The wheel never stops or resets between spins -- like a real casino table, it just cruises
   // at one constant, readable speed forever (continuous across idle/preroll/resolving/reveal,
   // see idleWheelAngle and loop()). ~1 revolution every 3.9s.
@@ -415,7 +444,7 @@
     // mechanical corner between wall and slope regardless of speed (an earlier attempt had
     // exactly that bug: the ball got stuck at the rim permanently, at ANY speed, because the
     // wall and slope geometries overlapped there).
-    const WALL_R = ORBIT_R + 0.12;
+    const WALL_R = WALL_INNER_R; // shared with the visible bowl meshes -- see its definition
     const wallSegs = 32;
     for (let i = 0; i < wallSegs; i++) {
       const a = (i / wallSegs) * Math.PI * 2;
