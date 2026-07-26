@@ -1704,7 +1704,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.14</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.15</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2493,7 +2493,16 @@ async function resetTableToComeOut(){
     savingTableState=true;
     const rollBtn=document.getElementById('roll-btn');if(rollBtn)rollBtn.disabled=true;
     try{
-      await sb.from('players').update({game_state:cleanGs}).eq('id',currentPlayer.id);
+      // Never actually checked for a write error before -- if this silently failed (RLS,
+      // network, anything), the client would look reset while the server's stored state
+      // stayed exactly as it was, guaranteeing the next roll gets bounced as a sync error
+      // no matter how long the player waits first. Logged loudly so a real failure here is
+      // finally distinguishable from the race condition savingTableState guards against.
+      const{error}=await sb.from('players').update({game_state:cleanGs}).eq('id',currentPlayer.id);
+      if(error){
+        console.error('[resetTableToComeOut] game_state write failed:',error);
+        addLog('Warning: the table reset may not have saved (' +(error.message||'unknown error')+ '). If your next roll gets reverted, try again.','lose');
+      }
     }finally{
       savingTableState=false;
       if(rollBtn)rollBtn.disabled=false;
