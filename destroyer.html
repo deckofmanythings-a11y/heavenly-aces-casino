@@ -197,7 +197,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-s
    centered shadow just reads as a glow, an offset one reads as a gap between the sprite and
    the surface below it. */
 #fp-missile-fx{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible}
-.fp-missile-sprite{position:absolute;width:15%;height:auto;transform:translate(-50%,-50%);filter:drop-shadow(10px 16px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(0,0,0,.25));}
+.fp-missile-sprite{position:absolute;width:7.5%;height:auto;transform:translate(-50%,-50%);filter:drop-shadow(10px 16px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(0,0,0,.25));}
 
 /* ── PANEL CALIBRATION MODE -- same drag/resize-box pattern as Focus Mode Craps's calibrator
    (calibExport() there), adapted to each baked-art panel's fixed 1672x940 canvas instead of
@@ -1097,9 +1097,16 @@ function fpMissileFxLayer(){
 // Returns a Promise resolving once the sprite has flown fully off-board and been removed.
 function playMissileFlight(serverRow,serverCol,missileType,onHitCross){
   return new Promise(resolve=>{
-    const axis=Math.random()<0.5?'row':'col';
     const iTarget=serverCol,jTarget=GRID_SIZE-1-serverRow;
     const MARGIN=0.85; // how far past the board edge the sprite starts/ends (in cell units)
+    // Not random (Deck's correction) -- pick whichever axis's fixed entry point is FARTHER
+    // from the target, so the missile always gets the longest possible flight in before
+    // impact. Row-flight always enters at i=-MARGIN; col-flight always enters at
+    // j=GRID_SIZE+MARGIN (both fixed by which edge each sprite's art is oriented for), so
+    // this is just comparing the two candidate travel distances, not a coin flip.
+    const distRow=iTarget+0.5+MARGIN;
+    const distCol=(GRID_SIZE+MARGIN)-(jTarget+0.5);
+    const axis=distRow>=distCol?'row':'col';
     let p0,p1,tHit;
     if(axis==='row'){
       // Fixed number (j), letter (i) sweeps low-to-high -- matches FP_GRID_U's own comment
