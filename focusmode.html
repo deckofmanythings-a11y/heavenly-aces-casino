@@ -1697,7 +1697,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.3</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.4</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2446,7 +2446,17 @@ function resetPoint(){
 }
 // Shared by Reset Point and switching bullets mid-session -- both need the exact same
 // "back to Come Out" state (refund non-Contract bets, forfeit Contract ones, clear the point).
-function resetTableToComeOut(){
+//
+// MUST also push this to the player's stored game_state, not just mutate local G -- roll-standard/
+// roll-crapless are server-authoritative for point/passLocked (incomingState.point/passLocked are
+// always taken from the DB's stored game_state, never trusted from the client's request body, see
+// validateAgainstContract()). Reset Point originally only changed G locally: the server still had
+// the old point/locked-pass-bet on file, so the next roll's contract check saw the pass bet
+// "disappear" out from under a still-locked contract, rejected the roll with a sync error, and the
+// client rolled back to the server's stale state -- point and locked bet both came back, and
+// whatever new bets got placed in between were wiped since they were never actually persisted.
+// This mirrors saveCleanState()'s exact write (used when switching game modes) applied in place.
+async function resetTableToComeOut(){
   clearRemovable(); // refunds every non-Contract bet, leaves only the locked Pass flat (if any) in G.bets
   // Forfeit whatever Contract bets clearRemovable() deliberately left behind -- it refunds,
   // it doesn't forfeit, so this is the step that actually drops them.
@@ -2454,10 +2464,23 @@ function resetTableToComeOut(){
   G.bonus=makeInitialG().bonus;
   G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
+  if(currentPlayer&&!G.practiceMode){
+    const existingGs=currentPlayer.game_state||{};
+    const cleanGs={...existingGs,[activeGame]:{
+      phase:'comeout',point:null,betsOn:false,betsOffThisRoll:false,passLocked:false,
+      bets:{},comeBets:[],dcBets:[],rollHistory:G.rollHistory,
+      lastWin:G.lastWin,bankrollAfterLastRoll:G.bankrollAfterLastRoll,snapshot:G.snapshot,canRepeat:G.canRepeat,
+      bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,
+             lowHit:[],highHit:[],lowComplete:false,highComplete:false,
+             open:true,locked:false,gracePeriod:false},
+    }};
+    currentPlayer.game_state=cleanGs;
+    await sb.from('players').update({game_state:cleanGs}).eq('id',currentPlayer.id);
+  }
 }
-function confirmResetPoint(){
+async function confirmResetPoint(){
   document.getElementById('modal-reset-point').classList.add('hidden');
-  resetTableToComeOut();
+  await resetTableToComeOut();
   addLog('Table reset to Come Out — non-Contract bets returned, Contract bets forfeited.','info');
   updateUI();
 }
@@ -2592,9 +2615,9 @@ function nextBullet(){
   document.getElementById('next-bullet-amount').textContent=fmt(amt);
   document.getElementById('modal-next-bullet').classList.remove('hidden');
 }
-function confirmNextBullet(){
+async function confirmNextBullet(){
   document.getElementById('modal-next-bullet').classList.add('hidden');
-  resetTableToComeOut();
+  await resetTableToComeOut();
   G.bulletIndex++;G.bulletBaseline=G.bankroll;
   saveBullets();
   addLog('Bets cleared -- moved to bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+'.','info');
