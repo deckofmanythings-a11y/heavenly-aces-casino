@@ -158,6 +158,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:#fff;font-size:15px;padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
 .sc-btn:hover{background:rgba(255,255,255,.2)}
 .sc-btn.on{background:rgba(100,200,100,.25);border-color:#7ee87e;color:#7ee87e}
+.sc-btn.locked{background:rgba(255,190,60,.25);border-color:#ffbe3c;color:#ffbe3c}
+.sc-btn.locked:hover{background:rgba(255,190,60,.35)}
+
+/* Quick toast for Bets On/Off lock feedback */
+#quick-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-14px);background:rgba(20,20,20,.92);border:0.5px solid rgba(255,190,60,.6);color:#ffe066;font-size:15px;font-weight:700;padding:8px 16px;border-radius:6px;z-index:100000;pointer-events:none;opacity:0;transition:opacity .2s ease,transform .2s ease;white-space:nowrap}
+#quick-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Main right */
 #main-right{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:3px 3px 3px 0}
@@ -1079,6 +1085,8 @@ body.portrait-craps #felt-portrait{display:flex}
 </head>
 <body>
 
+<div id="quick-toast"></div>
+
 <!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
@@ -1602,7 +1610,7 @@ body.portrait-craps #felt-portrait{display:flex}
             </div>
           </div>
           <div class="sc-stack">
-            <button class="sc-btn" id="beton-btn" onclick="toggleBetsOn()">Bets Off</button>
+            <button class="sc-btn" id="beton-btn" onclick="toggleBetsOn(event)">Bets Off</button>
             <button class="sc-btn" onclick="pressAll()">Press</button>
             <button class="sc-btn" onclick="acrossAll()">Across</button>
             <button class="sc-btn std-only" onclick="insideAll()">Inside</button>
@@ -2512,7 +2520,7 @@ async function resetTableToComeOut(){
   // it doesn't forfeit, so this is the step that actually drops them.
   G.bets={};G.comeBets=[];G.dcBets=[];
   G.bonus=makeInitialG().bonus;
-  G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
+  G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.betsLock=null;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
   if(currentPlayer&&!G.practiceMode){
     savingTableState=true;
@@ -2733,7 +2741,7 @@ function renderBullets(){
 async function saveCleanState(mode){
   clearRemovable();
   G.bets={};
-  G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;
+  G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.betsLock=null;
   G.comeBets=[];G.dcBets=[];G.bonus=makeInitialG().bonus;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
   const data=await callSaveGameState({cleanMode:mode,rollHistory:G.rollHistory,bankrollAfterLastRoll:G.bankrollAfterLastRoll});
@@ -2752,7 +2760,7 @@ async function switchGameMode(mode){
     }else{
       G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
       dualSplit.anyCraps={bar:0,circle:0};
-      G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
+      G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.betsLock=null;G.rollHistory=[];
       G.bonus=makeInitialG().bonus;
       G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
     }
@@ -2815,7 +2823,7 @@ function fmtLastWin(b){
   return s+')';
 }
 
-function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline',bulletActive:false,bulletSize:0,bulletCount:0,bulletIndex:0,bulletBaseline:0,bulletSessionStart:0,bulletHard:false};}
+function makeInitialG(){return{bankroll:0,freePlay:0,startingBankroll:0,point:null,phase:'comeout',chip:25,bets:{},wins:0,losses:0,passLocked:false,comeBets:[],dcBets:[],betsOn:false,betsOffThisRoll:false,betsLock:null,rollHistory:[],lastWin:0,bankrollAfterLastRoll:0,_lastBetDisplay:null,snapshot:null,canRepeat:false,comeOddsPrompted:new Set(),dcOddsPrompted:new Set(),bonus:{low:0,all:0,high:0,lowMax:0,allMax:0,highMax:0,lowHit:new Set(),highHit:new Set(),lowComplete:false,highComplete:false,open:true,locked:false,gracePeriod:false},progressiveActive:false,progressiveStreak:0,progressiveArmPending:false,progressivePool:1000,portraitMode:'passline',bulletActive:false,bulletSize:0,bulletCount:0,bulletIndex:0,bulletBaseline:0,bulletSessionStart:0,bulletHard:false};}
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login',oddsCtx=null,moveCtx=null;
 let animating=false,animStart=0,tumbling=false,tumbleStart=0;
@@ -3149,6 +3157,14 @@ function exportShooterCSV(){
   URL.revokeObjectURL(url);
 }
 function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.appendChild(p);while(el.children.length>80)el.removeChild(el.firstChild);el.scrollTop=el.scrollHeight;}
+let quickToastTimer=null;
+function showToast(msg){
+  const el=document.getElementById('quick-toast');if(!el)return;
+  el.textContent=msg;
+  clearTimeout(quickToastTimer);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  quickToastTimer=setTimeout(()=>el.classList.remove('show'),1600);
+}
 function openInfoModal(){document.getElementById('modal-info').classList.remove('hidden');}
 function closeInfoModal(){document.getElementById('modal-info').classList.add('hidden');}
 
@@ -3227,6 +3243,7 @@ function applyServerGameState(player,forcedMode){
   G.betsOn=!!gs.betsOn;
   G.betsOffThisRoll=!!gs.betsOffThisRoll;
   G.passLocked=!!gs.passLocked;
+  G.betsLock=null; // a locked position never carries over from a prior mode/session load
   if(gs.bonus){
     G.bonus.low=gs.bonus.low||0;G.bonus.all=gs.bonus.all||0;G.bonus.high=gs.bonus.high||0;
     G.bonus.lowMax=gs.bonus.lowMax||0;G.bonus.allMax=gs.bonus.allMax||0;G.bonus.highMax=gs.bonus.highMax||0;
@@ -4429,7 +4446,22 @@ function repeatLastBet(){
   for(const t in bonusR){G.bonus[t]=r2(G.bonus[t]+bonusR[t]);G.bonus[t+'Max']=G.bonus[t];G.bankroll=r2(G.bankroll-bonusR[t]);}
   addLog('Last bets restored ('+fmt(cost)+').','info');updateUI();
 }
-function toggleBetsOn(){
+function toggleBetsOn(ev){
+  // Shift-click locks the button at its current On/Off position -- a plain click on a locked
+  // button only releases the lock (it doesn't also toggle), so the very next click is a fresh,
+  // predictable toggle rather than an accidental flip the instant it unlocks.
+  if(ev&&ev.shiftKey){
+    G.betsLock=bActive()?'on':'off';
+    showToast('Bets locked '+(G.betsLock==='on'?'On':'Off'));
+    updateUI();
+    return;
+  }
+  if(G.betsLock){
+    G.betsLock=null;
+    showToast('Bets unlocked');
+    updateUI();
+    return;
+  }
   if(G.phase==='comeout'){G.betsOn=!G.betsOn;}
   else{
     // Point phase only ever toggles betsOffThisRoll -- it was never meant to also manage
@@ -4490,6 +4522,15 @@ function restoreFromServerState(state){
   G.dcBets=(state.dcBets||[]).map(c=>({num:c.num,flat:c.flat,odds:c.odds||0}));
   G.point=state.point??null;G.phase=state.phase||'comeout';
   G.betsOn=!!state.betsOn;G.betsOffThisRoll=!!state.betsOffThisRoll;G.passLocked=!!state.passLocked;
+  // A locked Bets On/Off position survives whatever the server (or the practice-mode local
+  // resolve) decided for this roll -- re-assert it every time state comes in, same phase-aware
+  // mapping toggleBetsOn() itself uses, so the lock actually holds across rolls instead of only
+  // blocking the button's own click handler.
+  if(G.betsLock){
+    const wantOn=G.betsLock==='on';
+    if(G.phase==='point'){G.betsOn=true;G.betsOffThisRoll=!wantOn;}
+    else{G.betsOn=wantOn;G.betsOffThisRoll=false;}
+  }
   G.progressiveActive=!!state.progressiveActive;G.progressiveStreak=state.progressiveStreak||0;
   G.progressiveArmPending=false;
   if(state.bonus){
@@ -4792,8 +4833,17 @@ function updateUI(){
   const act=bActive();
   const bsEl=document.getElementById('bets-status-bar');bsEl.textContent=act?'ON':'OFF';bsEl.style.color=act?'rgba(100,255,150,.8)':'rgba(255,200,0,.8)';
   const betonBtn=document.getElementById('beton-btn');
-  if(G.phase==='point'){betonBtn.textContent=G.betsOffThisRoll?'Bets On':'Bets Off';betonBtn.classList.toggle('on',!G.betsOffThisRoll);}
-  else{betonBtn.textContent=G.betsOn?'Bets Off':'Bets On';betonBtn.classList.toggle('on',G.betsOn);}
+  if(G.betsLock){
+    betonBtn.textContent='🔒 Bets '+(G.betsLock==='on'?'On':'Off')+' (Locked)';
+    betonBtn.classList.add('locked');
+    betonBtn.classList.toggle('on',G.betsLock==='on');
+    betonBtn.title='Locked -- click to unlock';
+  }else{
+    betonBtn.classList.remove('locked');
+    betonBtn.title='Shift-click to lock bets in their current position';
+    if(G.phase==='point'){betonBtn.textContent=G.betsOffThisRoll?'Bets On':'Bets Off';betonBtn.classList.toggle('on',!G.betsOffThisRoll);}
+    else{betonBtn.textContent=G.betsOn?'Bets Off':'Bets On';betonBtn.classList.toggle('on',G.betsOn);}
+  }
   document.getElementById('repeat-btn').disabled=!G.canRepeat;
   // THE LIGHT: staged (pre-roll) shows a $5 stake like any other spot; once the arming
   // roll succeeds the stake sweeps away (no locked-chip display, matching UTH) and
@@ -6519,7 +6569,7 @@ function tutorialCurrentStep(){const l=tutorialCurrentLesson();return l?l.steps[
 function tutorialResetTable(){
   G.bets={};G.comeBets=[];G.dcBets=[];G.point=null;G.phase='comeout';
   dualSplit.anyCraps={bar:0,circle:0};
-  G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.rollHistory=[];
+  G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.betsLock=null;G.rollHistory=[];
   updateUI();
 }
 
