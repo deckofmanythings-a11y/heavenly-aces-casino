@@ -1704,7 +1704,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.13</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.14</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2463,6 +2463,14 @@ function resetPoint(){
 // client rolled back to the server's stale state -- point and locked bet both came back, and
 // whatever new bets got placed in between were wiped since they were never actually persisted.
 // This mirrors saveCleanState()'s exact write (used when switching game modes) applied in place.
+// Set while the clean state above is still being written to the server -- hiding the modal
+// happens synchronously, so without this a player who hits Roll immediately after confirming
+// (the await below yields to the event loop, and the UI stays clickable during that gap) could
+// get their roll request to the server BEFORE this write lands. The server would then validate
+// against the still-stale stored state (old point/locked bet), reject the roll as a sync error,
+// and roll the client back -- the exact "reset works, but the next roll brings the old point/bet
+// back" report. rollDice() below checks this and refuses to roll until it's clear.
+let savingTableState=false;
 async function resetTableToComeOut(){
   clearRemovable(); // refunds every non-Contract bet, leaves only the locked Pass flat (if any) in G.bets
   // Forfeit whatever Contract bets clearRemovable() deliberately left behind -- it refunds,
@@ -2482,7 +2490,14 @@ async function resetTableToComeOut(){
              open:true,locked:false,gracePeriod:false},
     }};
     currentPlayer.game_state=cleanGs;
-    await sb.from('players').update({game_state:cleanGs}).eq('id',currentPlayer.id);
+    savingTableState=true;
+    const rollBtn=document.getElementById('roll-btn');if(rollBtn)rollBtn.disabled=true;
+    try{
+      await sb.from('players').update({game_state:cleanGs}).eq('id',currentPlayer.id);
+    }finally{
+      savingTableState=false;
+      if(rollBtn)rollBtn.disabled=false;
+    }
   }
 }
 async function confirmResetPoint(){
@@ -4483,6 +4498,11 @@ function totalActiveBetValue(){
 }
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
+  // See the comment on savingTableState above resetTableToComeOut() -- Reset Point/switching
+  // bullets hides its modal (and re-enables the felt) before its cleanup write to the server
+  // actually lands; rolling in that gap would race the write and get bounced by the server's
+  // still-stale stored state.
+  if(savingTableState){addLog('Just a moment — finishing the table reset before you can roll.','info');return;}
   // Same logic-level gate as placeBet() -- the CSS pointer-events rule on #roll-btn should
   // already stop this, but a second, DOM-independent check costs nothing and can't be
   // bypassed by anything that slips past the CSS.
