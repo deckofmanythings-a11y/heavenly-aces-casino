@@ -399,7 +399,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.2</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.3</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1654,6 +1654,10 @@ function renderChipStacks(){
   applyChipStackVisual('stk-flushrush',contractLocked);
   applyChipStackVisual('stk-superflushrush',contractLocked);
   applyChipStackVisual('stk-play',G.phase==='showdown');
+  // stk-light's text only ever holds a value pre-deal (cleared to '' once locked, when
+  // the bulb art takes over instead -- see updateUI()), so this never needs a "locked"
+  // badge of its own; false just matches that it's always shown as an editable stake.
+  applyChipStackVisual('stk-light',false);
 }
 function applyChipStackVisual(id,locked){
   const el=document.getElementById(id);
