@@ -226,8 +226,10 @@
     capMesh.position.y = coneMesh.position.y + CONE_H / 2 + CONE_TOP_R * 0.5;
     scene.add(capMesh);
 
-    const ballGeo = new THREE_.SphereGeometry(CFG.ballRadius, 20, 20);
-    const ballMat = new THREE_.MeshStandardMaterial({ color: 0xf5f5f5, metalness: 0.3, roughness: 0.25 });
+    // Higher segment count than the old 20/20 -- a chrome ball's tight specular highlight shows
+    // faceting on a coarse sphere much more readily than the old matte-ish look did.
+    const ballGeo = new THREE_.SphereGeometry(CFG.ballRadius, 32, 32);
+    const ballMat = new THREE_.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.05 });
     ballMesh = new THREE_.Mesh(ballGeo, ballMat);
     scene.add(ballMesh);
 
@@ -856,13 +858,19 @@
         // network takes, unlike the wheel's fixed cruise); it isn't real physics yet, that only
         // starts the instant beginResolve() throws it for real.
         prerollAngle += PREROLL_BALL_SPEED * dt;
-        ballMesh.position.set(Math.sin(prerollAngle) * ORBIT_R, ORBIT_Y, Math.cos(prerollAngle) * ORBIT_R);
+        // ORBIT_Y/POCKET_Y below are TRACK SURFACE heights (same convention as the real physics
+        // floor, see buildPhysicsWorld's `floor.position.set(0, POCKET_Y, 0)`) -- the ball's
+        // CENTER when resting on a surface is surface height + its own radius, exactly like
+        // ballWorldPos() gets for free from real physics during the resolving phase. This
+        // placeholder path is hand-set (no physics running in preroll/idle), so it has to add
+        // that radius itself or the ball renders sunk into the surface by one full radius.
+        ballMesh.position.set(Math.sin(prerollAngle) * ORBIT_R, ORBIT_Y + CFG.ballRadius, Math.cos(prerollAngle) * ORBIT_R);
         ballMesh.quaternion.set(0, 0, 0, 1);
       } else {
         // idle / reveal: the ball rests in its pocket, riding along with the wheel rather than
         // floating still while the wheel turns underneath it.
         const a = idleWheelAngle + restBallOffset;
-        ballMesh.position.set(Math.sin(a) * POCKET_R, POCKET_Y, Math.cos(a) * POCKET_R);
+        ballMesh.position.set(Math.sin(a) * POCKET_R, POCKET_Y + CFG.ballRadius, Math.cos(a) * POCKET_R);
       }
     }
     renderer.render(scene, camera);
