@@ -515,9 +515,9 @@
     matWall = new CANNON_.Material('wall');
     matFret = new CANNON_.Material('fret');
     matFloor = new CANNON_.Material('floor');
-    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matBowl, { friction: 0.015, restitution: 0.2 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matBowl, { friction: 0.045, restitution: 0.2 }));
     world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matWall, { friction: 0.004, restitution: 0.5 }));
-    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFret, { friction: 0.25, restitution: 0.25 }));
+    world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFret, { friction: 0.12, restitution: 0.65 }));
     world.addContactMaterial(new CANNON_.ContactMaterial(matBall, matFloor, { friction: 0.4, restitution: 0.05 }));
 
     // Bowl slope: a RING OF FLAT PLANKS (proven to actually slide a resting sphere -- see the
@@ -613,12 +613,19 @@
     ballBody = new CANNON_.Body({ mass: 0.02, material: matBall });
     ballBody.addShape(new CANNON_.Sphere(CFG.ballRadius));
     // Damping is the master pacing dial, and it is NONLINEAR -- lowering it does not simply
-    // lengthen the spin. Measured on this exact geometry: 0.012/0.05 -> ~14s total;
-    // 0.008/0.028 -> ~20-23s; 0.007/0.024 -> ~17-20s (SHORTER -- retained ball spin changes how
-    // it rolls through the descent); 0.009/0.035 with a geometry bug -> stuck forever. Re-measure
-    // across several spins after ANY change here; do not extrapolate from one sample.
-    ballBody.linearDamping = 0.008;
-    ballBody.angularDamping = 0.028;
+    // lengthen the spin. The 0.008/0.028 map below (0.012/0.05 -> ~14s; 0.008/0.028 -> ~20-23s;
+    // 0.007/0.024 -> ~17-20s) was measured on the OLD, much shorter/steeper slope (POCKET_R was
+    // 0.87*wheelRadius, an 0.08 radial run down from ORBIT_R). Moving POCKET_R to 0.7125 (see its
+    // own comment -- the ball now targets the real pocket floor, not the number) more than
+    // quadrupled that run to 0.32, and on the OLD damping the ball spent ~40s just spiraling down
+    // the now-much-longer, shallower bank before ever reaching the frets -- nearly every throw
+    // hit HARD_STEP_CAP instead of settling. Re-measured with a synchronous test harness (bypasses
+    // real-time rendering entirely -- runs presimulate's exact step loop and reads back the step
+    // count) across 15+ random baselines per candidate value rather than eyeballing one spin.
+    // 0.022/0.065 clusters mainly ~22-28s with some natural fast outliers, no cap hits observed.
+    // Re-measure the same way after ANY future change to POCKET_R, ORBIT_R, ORBIT_Y, or POCKET_Y.
+    ballBody.linearDamping = 0.022;
+    ballBody.angularDamping = 0.065;
     world.addBody(ballBody);
   }
 
@@ -751,12 +758,26 @@
     const rel = ((Math.PI + wheelAngle - ballAngle) % (Math.PI * 2) + Math.PI * 2 * 4) % (Math.PI * 2);
     return Math.round(rel / SLOT_ANGLE) % N;
   }
-  function presimulate(baseline) {
+  // Runs the whole presimulated throw in small chunks via setTimeout rather than one uninterrupted
+  // while loop -- measured the synchronous version at ~576ms of solid main-thread block on a real
+  // throw (2700+ steps, each with a 24-iteration contact solver), easily enough to read as a
+  // visible hitch. Chunking doesn't reduce the total work, but it hands control back to the
+  // browser between chunks so nothing ever freezes for more than one chunk's worth of computation,
+  // and it happens while `phase` is still 'preroll' -- the ball's already-agitating preroll
+  // animation just keeps playing normally through it, exactly like it already tolerates however
+  // long the network response takes.
+  const PRESIM_CHUNK_STEPS = 150;
+  function presimulateChunked(baseline, onDone) {
     resetToBaseline(baseline);
     const ctx = makeResolveCtx(baseline);
-    while (!ctx.done && ctx.step < CFG.maxResolveSteps) resolveStep(ctx);
-    if (!ctx.done) return null;
-    return restingSlot(baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step);
+    (function chunk() {
+      for (let i = 0; i < PRESIM_CHUNK_STEPS && !ctx.done && ctx.step < CFG.maxResolveSteps; i++) resolveStep(ctx);
+      if (ctx.done || ctx.step >= CFG.maxResolveSteps) {
+        onDone(ctx.done ? restingSlot(baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step) : null);
+      } else {
+        setTimeout(chunk, 0);
+      }
+    })();
   }
 
   // ---------- orchestration ----------
@@ -798,17 +819,21 @@
 
   function beginResolve() {
     const baseline = { wheelAngle: idleWheelAngle, ballAngle: prerollAngle, ballAngVel: PREROLL_BALL_SPEED };
-    const slot = presimulate(baseline);
-    labelOffset = offsetForSlot(serverPocket, slot === null ? 0 : slot); // slot===null is practically unreachable
+    // phase stays 'preroll' (ball still visibly agitating) for the chunked presimulation's
+    // duration -- same "however long it takes" tolerance the preroll already has for the network
+    // response, just extended slightly further.
+    presimulateChunked(baseline, (slot) => {
+      labelOffset = offsetForSlot(serverPocket, slot === null ? 0 : slot); // slot===null is practically unreachable
 
-    relabelStep = RELABEL_STEP_MIN + Math.floor(Math.random() * (RELABEL_STEP_MAX - RELABEL_STEP_MIN));
-    relabeled = false;
-    zoomWindowStart = relabelStep - ZOOM_RAMP; // peak zoom (t=1) covers relabelStep itself
+      relabelStep = RELABEL_STEP_MIN + Math.floor(Math.random() * (RELABEL_STEP_MAX - RELABEL_STEP_MIN));
+      relabeled = false;
+      zoomWindowStart = relabelStep - ZOOM_RAMP; // peak zoom (t=1) covers relabelStep itself
 
-    resetToBaseline(baseline);
-    livCtx = makeResolveCtx(baseline);
-    livCtx.onTick = (strength) => playTick(strength);
-    phase = 'resolving';
+      resetToBaseline(baseline);
+      livCtx = makeResolveCtx(baseline);
+      livCtx.onTick = (strength) => playTick(strength);
+      phase = 'resolving';
+    });
   }
   // Returns the zoom-in progress (0-1) for the current step: ramps in, holds through the swap,
   // ramps back out. Returns 0 outside the window entirely (normal framing).
