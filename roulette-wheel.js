@@ -73,6 +73,35 @@
     '00', 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2].map(String);
   const N = WHEEL_ORDER.length; // 38
   const SLOT_ANGLE = (Math.PI * 2) / N;
+  // Fret dividers must sit at the BOUNDARY between two pockets, not at a pocket's own center.
+  // drawWheelTexture() draws the photo with pocket '0' (and every other pocket) CENTERED at
+  // canvas angle i*SLOT_ANGLE (that's the whole point of "pocket '0' centered at the top" --
+  // see buildWheelTexture's comment), so i*SLOT_ANGLE is a pocket's LABEL angle, and the
+  // boundary it shares with its neighbor is a half-slot off from that, at (i+0.5)*SLOT_ANGLE.
+  // Every fret-angle use (real physics shapes, debug markers, the live calibrator's rebuild)
+  // MUST go through this one function -- an earlier version used the bare i*SLOT_ANGLE directly
+  // in all four places, which put every fret exactly on a pocket's printed number instead of its
+  // edge (Deck caught this by eye: "the yellow line, practically down the middle, of 5... or 7...
+  // or single 0"). Confirmed empirically after the fix with the debug overlay, not just reasoned
+  // through -- see the physics memory file.
+  // Per-fret correction (degrees) on top of the uniform (i+0.5)*SLOT_ANGLE formula -- measured
+  // 2026-07-27 with a temporary in-browser calibrator (sampled real rendered pixel colors at
+  // each fret's exact projected screen position via camera.project(), found the true color-
+  // transition angle, since built to shipped screenshots ---see the physics memory file).
+  // 35 of 38 got a real, verified measurement; indices 18, 19, 37 stayed at 0 (the uniform
+  // fallback) because pockets 1, 00-adjacent 27, and 2 are genuinely compressed to a sliver
+  // (<2deg) in the real photo right next to the two greens -- a simple two-color transition
+  // search reliably lands mid-pocket instead of on-edge whenever a third, very thin pocket is
+  // squeezed into the search window, confirmed by tracing raw pixel colors directly. Re-running
+  // the calibration for those 3 would need a search that explicitly accounts for a thin third
+  // pocket in between, not just attempted harder with the same two-color method.
+  const FRET_ANGLE_OFFSET_DEG = [
+    -0.05, 1.45, 1.4, 1.15, 1.35, 1.3, 1.3, 1.25, 0.85, 0.15,
+    0.65, 1.05, 0.95, 0.9, 0.8, 0.75, 0.75, 0.65, 0, 0,
+    0, 1.25, 1.4, 1.55, 1.7, 2, 2.35, 2.5, 2.4, 2.55,
+    2.45, 2.4, 2.25, 2.05, 1.85, 1.7, 1.45, 0
+  ];
+  function fretAngleAt(i) { return (i + 0.5) * SLOT_ANGLE + FRET_ANGLE_OFFSET_DEG[i] * Math.PI / 180; }
   const RED = new Set(['1','3','5','7','9','12','14','16','18','19','21','23','25','27','30','32','34','36']);
   function colorOf(pocket) { return (pocket === '0' || pocket === '00') ? 'green' : (RED.has(pocket) ? 'red' : 'black'); }
 
@@ -627,7 +656,7 @@
     // against the dynamic ball uses the correct relative velocity.
     fretBody = new CANNON_.Body({ mass: 0, type: CANNON_.Body.KINEMATIC, material: matFret });
     for (let i = 0; i < N; i++) {
-      const a = i * SLOT_ANGLE;
+      const a = fretAngleAt(i);
       const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, FRET_HALF_DEPTH));
       const offset = new CANNON_.Vec3(Math.sin(a) * FRET_CENTER_R, 0.05, Math.cos(a) * FRET_CENTER_R);
       const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
@@ -636,18 +665,18 @@
     world.addBody(fretBody);
 
     // Dev-only alignment aid (see RouletteWheel.debugFrets in the public API) -- renders the
-    // REAL physics fret positions (identical i*SLOT_ANGLE angle + FRET_CENTER_R/FRET_HALF_DEPTH
+    // REAL physics fret positions (identical fretAngleAt(i) angle + FRET_CENTER_R/FRET_HALF_DEPTH
     // the CANNON shapes above use, just as visible THREE meshes) so we can visually check whether
     // the printed photo's pocket boundaries actually line up with where the physics dividers
     // really are, instead of guessing from how "sus" a ball's resting spot looks. Deliberately
     // does NOT re-derive the angle from any of restingSlot()'s reflection/phase math -- it reuses
-    // the exact same `a = i*SLOT_ANGLE` value the fret body itself is built from, so any mismatch
+    // the exact same fretAngleAt(i) value the fret body itself is built from, so any mismatch
     // this reveals is a real photo/texture registration issue, not a re-derivation error.
     // Hidden by default; toggle from the browser console with RouletteWheel.debugFrets(true).
     fretDebugGroup = new THREE_.Group();
     fretDebugGroup.visible = false;
     for (let i = 0; i < N; i++) {
-      const a = i * SLOT_ANGLE;
+      const a = fretAngleAt(i);
       const color = i % 5 === 0 ? 0xffff00 : (i % 2 ? 0x00ffff : 0xff00ff); // every 5th marker yellow, for easy counting
       const geo = new THREE_.BoxGeometry(0.02, 0.2, FRET_HALF_DEPTH * 2);
       const mesh = new THREE_.Mesh(geo, new THREE_.MeshBasicMaterial({ color, depthTest: false }));
@@ -700,7 +729,7 @@
     if (fretBody) {
       fretBody.shapes = []; fretBody.shapeOffsets = []; fretBody.shapeOrientations = [];
       for (let i = 0; i < N; i++) {
-        const a = i * SLOT_ANGLE;
+        const a = fretAngleAt(i);
         const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, FRET_HALF_DEPTH));
         const offset = new CANNON_.Vec3(Math.sin(a) * FRET_CENTER_R, 0.05, Math.cos(a) * FRET_CENTER_R);
         const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
@@ -709,7 +738,7 @@
     }
     if (fretDebugGroup) {
       fretDebugGroup.children.forEach((mesh, i) => {
-        const a = i * SLOT_ANGLE;
+        const a = fretAngleAt(i);
         mesh.geometry.dispose();
         mesh.geometry = new THREE_.BoxGeometry(0.02, 0.2, FRET_HALF_DEPTH * 2);
         mesh.position.set(Math.sin(a) * FRET_CENTER_R, 0.15, Math.cos(a) * FRET_CENTER_R);
