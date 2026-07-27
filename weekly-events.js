@@ -22,7 +22,12 @@ const WeeklyEvents = (function () {
       desc: 'Max-hit payouts are doubled on every ship.' },
   ];
 
-  function todayDay() { return new Date().getUTCDay(); }
+  // Pacific calendar day, matching Dailies' own midnight-Pacific rollover -- not the
+  // browser's local timezone. Same en-CA-stamp trick as the server's todayPacific().
+  function todayDay() {
+    const stamp = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
+    return new Date(stamp + 'T00:00:00Z').getUTCDay();
+  }
   function active(tier) {
     if ((tier || 0) < MIN_TIER) return null;
     return EVENTS.find(e => e.day === todayDay()) || null;
