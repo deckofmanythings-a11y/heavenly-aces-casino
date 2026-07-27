@@ -1719,7 +1719,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.19</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.20</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2705,6 +2705,13 @@ function cancelNextBullet(){
   document.getElementById('modal-next-bullet').classList.add('hidden');
 }
 function renderBullets(){
+  // Button itself swaps label+action based on state -- once bullets are active there's no
+  // reason to route back through the modal just to end them, so it calls endBullets() directly.
+  const mbBtn=document.getElementById('make-bullets-btn');
+  if(mbBtn){
+    if(G.bulletActive){mbBtn.textContent='End Bullets';mbBtn.onclick=endBullets;}
+    else{mbBtn.textContent='Make Bullets';mbBtn.onclick=openBulletsModal;}
+  }
   const row=document.getElementById('bullets-row');
   if(!G.bulletActive||G.bulletCount<1){row.style.display='none';row.innerHTML='';return;}
   row.style.display='flex';
