@@ -499,6 +499,18 @@
   // radius, tuned back when pockets were flat procedural fills with no separate pocket art at all.)
   const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.7125;
   const ORBIT_Y = 0.16, POCKET_Y = 0.09;
+  // Fret ring radial span. Deck: the ball had to slide "over halfway into the well" (in practice
+  // nearly the ENTIRE bare slope, from SLOPE_EXT_R down to the old fret band's outer edge
+  // ~1.11*POCKET_R) before ever touching a fret, since the old fret band was only a thin ring
+  // right at the pocket floor. On a real wheel the frets run the full height of the printed
+  // colored band, not just its innermost floor -- FRET_OUTER_R now reaches out to 0.87 of
+  // wheelRadius, the same radius the label text itself sits at (this file's own OLD POCKET_R
+  // value, back when the ball targeted the label instead of the floor -- see POCKET_R's own
+  // comment). FRET_INNER_R is unchanged from the old fret band's inner edge (POCKET_R*0.89,
+  // the pocket floor's own inner boundary, where the curb picks up). Re-verify settle timing
+  // with the synchronous harness after any future change here, same as POCKET_R/ballRadius.
+  const FRET_INNER_R = POCKET_R * 0.89, FRET_OUTER_R = CFG.wheelRadius * 0.87;
+  const FRET_CENTER_R = (FRET_INNER_R + FRET_OUTER_R) / 2, FRET_HALF_DEPTH = (FRET_OUTER_R - FRET_INNER_R) / 2;
   // Shared by the physics wall (buildPhysicsWorld) and the visible bowl meshes (buildScene) so
   // the ball always bounces exactly where the wood appears to be -- one constant, no drift.
   const WALL_INNER_R = ORBIT_R + 0.12;
@@ -612,20 +624,20 @@
     fretBody = new CANNON_.Body({ mass: 0, type: CANNON_.Body.KINEMATIC, material: matFret });
     for (let i = 0; i < N; i++) {
       const a = i * SLOT_ANGLE;
-      const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, POCKET_R * 0.11));
-      const offset = new CANNON_.Vec3(Math.sin(a) * POCKET_R, 0.05, Math.cos(a) * POCKET_R);
+      const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, FRET_HALF_DEPTH));
+      const offset = new CANNON_.Vec3(Math.sin(a) * FRET_CENTER_R, 0.05, Math.cos(a) * FRET_CENTER_R);
       const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
       fretBody.addShape(shape, offset, q);
     }
     world.addBody(fretBody);
 
     // Dev-only alignment aid (see RouletteWheel.debugFrets in the public API) -- renders the
-    // REAL physics fret positions (identical i*SLOT_ANGLE angle + POCKET_R radius the CANNON
-    // shapes above use, just as visible THREE meshes) so we can visually check whether the
-    // printed photo's pocket boundaries actually line up with where the physics dividers really
-    // are, instead of guessing from how "sus" a ball's resting spot looks. Deliberately does NOT
-    // re-derive the angle from any of restingSlot()'s reflection/phase math -- it reuses the
-    // exact same `a = i*SLOT_ANGLE` value the fret body itself is built from, so any mismatch
+    // REAL physics fret positions (identical i*SLOT_ANGLE angle + FRET_CENTER_R/FRET_HALF_DEPTH
+    // the CANNON shapes above use, just as visible THREE meshes) so we can visually check whether
+    // the printed photo's pocket boundaries actually line up with where the physics dividers
+    // really are, instead of guessing from how "sus" a ball's resting spot looks. Deliberately
+    // does NOT re-derive the angle from any of restingSlot()'s reflection/phase math -- it reuses
+    // the exact same `a = i*SLOT_ANGLE` value the fret body itself is built from, so any mismatch
     // this reveals is a real photo/texture registration issue, not a re-derivation error.
     // Hidden by default; toggle from the browser console with RouletteWheel.debugFrets(true).
     fretDebugGroup = new THREE_.Group();
@@ -633,9 +645,9 @@
     for (let i = 0; i < N; i++) {
       const a = i * SLOT_ANGLE;
       const color = i % 5 === 0 ? 0xffff00 : (i % 2 ? 0x00ffff : 0xff00ff); // every 5th marker yellow, for easy counting
-      const geo = new THREE_.BoxGeometry(0.02, 0.2, POCKET_R * 0.3);
+      const geo = new THREE_.BoxGeometry(0.02, 0.2, FRET_HALF_DEPTH * 2);
       const mesh = new THREE_.Mesh(geo, new THREE_.MeshBasicMaterial({ color, depthTest: false }));
-      mesh.position.set(Math.sin(a) * POCKET_R, 0.15, Math.cos(a) * POCKET_R);
+      mesh.position.set(Math.sin(a) * FRET_CENTER_R, 0.15, Math.cos(a) * FRET_CENTER_R);
       mesh.rotation.y = a;
       mesh.renderOrder = 999;
       fretDebugGroup.add(mesh);
