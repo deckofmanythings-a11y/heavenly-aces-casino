@@ -9,7 +9,7 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="roulette-wheel.js?v=16"></script>
+<script src="roulette-wheel.js?v=17"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -107,6 +107,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    non-number cells") -- straight/split/corner cells skip this, either implied (straight is
    always 35:1) or too small a hitbox to fit a second line legibly. */
 .cell-pay{display:inline-block;font-size:min(13px,1.8cqw);font-weight:400;color:rgba(255,255,255,.65);letter-spacing:.03em}
+#fret-calib-panel.hidden{display:none}
 /* Dolly -- the real croupier's marker, placed on the winning number after a spin resolves and
    cleared when the next spin starts (see placeDolly()/clearDolly() in the script below). Sized
    by width with auto height (the source photo is tall/narrow) and allowed to stand taller than
@@ -300,7 +301,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.21</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.22</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">
@@ -317,6 +318,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
         <button class="info-btn" onclick="showWheelView()">👁️ Show Wheel</button>
+        <button class="info-btn" id="fret-calib-toggle" onclick="toggleFretCalib()">🎯 Frets</button>
       </div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
@@ -398,6 +400,30 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
         <button class="voucher-btn print" onclick="window.print()">Print</button>
         <button class="voucher-btn close" onclick="closeCashoutModal()">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- FRET CALIBRATOR -- dev-only, drag-a-slider tool so Deck can tune the fret band's
+       inner/outer radius and feel the result live (real physics, not just a preview) instead of
+       going back and forth over chat for every value. See toggleFretCalib()/RouletteWheel.
+       setFretBand in the script below. Hidden until toggled; never shown to a real player. -->
+  <div id="fret-calib-panel" class="hidden" style="position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;background:rgba(10,20,15,.95);border:1px solid rgba(0,255,255,.4);border-radius:10px;padding:14px 18px;width:100%;max-width:340px;color:#fff;font-size:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <strong style="color:#0ff">🎯 Fret Band Calibrator</strong>
+      <button onclick="closeFretCalib()" style="background:rgba(255,255,255,.1);border:none;border-radius:4px;color:#fff;padding:2px 8px;cursor:pointer">✕</button>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between"><span>Inner radius</span><span id="fc-inner-val">0.634</span></div>
+      <input type="range" id="fc-inner" min="0.50" max="0.85" step="0.001" style="width:100%" oninput="onFretCalibChange()">
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between"><span>Outer radius</span><span id="fc-outer-val">0.870</span></div>
+      <input type="range" id="fc-outer" min="0.60" max="0.92" step="0.001" style="width:100%" oninput="onFretCalibChange()">
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px">Both are fractions of wheelRadius. Outer must stay below ~0.92 (ORBIT_R) or frets start fighting the ball's orbit track.</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="RouletteWheel.testSpin()" style="flex:1;background:rgba(0,255,255,.15);border:1px solid rgba(0,255,255,.4);border-radius:5px;color:#0ff;padding:8px;cursor:pointer;font-weight:700">▶ Test Spin</button>
+      <button onclick="resetFretCalib()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;padding:8px 10px;cursor:pointer">Reset</button>
     </div>
   </div>
 
@@ -812,6 +838,42 @@ function initWheel(){
 function showWheelView(){
   if(spinning||RouletteWheel.isSpinning())return; // no-op mid-spin, the overlay is already busy
   RouletteWheel.showWheel();
+}
+
+// ── FRET CALIBRATOR (dev-only) ──────────────────────────────────────────────────
+// Drag-a-slider tool for RouletteWheel.setFretBand -- opens Show Wheel + the debug fret overlay
+// together so the sliders' effect is immediately visible, and a Test Spin button runs a real,
+// server-free spin so the actual physics feel (not just the frozen top-down layout) can be
+// judged live. See roulette-wheel.js's rebuildFretBand for what the sliders actually drive.
+function toggleFretCalib(){
+  const panel=document.getElementById('fret-calib-panel');
+  if(!panel.classList.contains('hidden')){closeFretCalib();return;}
+  if(spinning||RouletteWheel.isSpinning())return;
+  const band=RouletteWheel.getFretBand();
+  document.getElementById('fc-inner').value=band.inner;
+  document.getElementById('fc-outer').value=band.outer;
+  document.getElementById('fc-inner-val').textContent=band.inner.toFixed(3);
+  document.getElementById('fc-outer-val').textContent=band.outer.toFixed(3);
+  panel.classList.remove('hidden');
+  RouletteWheel.showWheel();
+  RouletteWheel.debugFrets(true);
+}
+function closeFretCalib(){
+  document.getElementById('fret-calib-panel').classList.add('hidden');
+  RouletteWheel.debugFrets(false);
+  if(!RouletteWheel.isSpinning())RouletteWheel.hideWheel();
+}
+function onFretCalibChange(){
+  const inner=+document.getElementById('fc-inner').value;
+  const outer=+document.getElementById('fc-outer').value;
+  document.getElementById('fc-inner-val').textContent=inner.toFixed(3);
+  document.getElementById('fc-outer-val').textContent=outer.toFixed(3);
+  RouletteWheel.setFretBand(inner,outer);
+}
+function resetFretCalib(){
+  document.getElementById('fc-inner').value=0.634;
+  document.getElementById('fc-outer').value=0.87;
+  onFretCalibChange();
 }
 
 // ── SPIN ──────────────────────────────────────────────────────────────────────

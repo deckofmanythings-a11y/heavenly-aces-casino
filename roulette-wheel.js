@@ -509,8 +509,12 @@
   // comment). FRET_INNER_R is unchanged from the old fret band's inner edge (POCKET_R*0.89,
   // the pocket floor's own inner boundary, where the curb picks up). Re-verify settle timing
   // with the synchronous harness after any future change here, same as POCKET_R/ballRadius.
-  const FRET_INNER_R = POCKET_R * 0.89, FRET_OUTER_R = CFG.wheelRadius * 0.87;
-  const FRET_CENTER_R = (FRET_INNER_R + FRET_OUTER_R) / 2, FRET_HALF_DEPTH = (FRET_OUTER_R - FRET_INNER_R) / 2;
+  // `let`, not `const` -- rebuildFretBand() (see below, driven by the live calibrator panel in
+  // roulette.html) reassigns these and rebuilds both the real physics shapes and the debug
+  // markers from the new values, so Deck can drag sliders and feel the actual settle behavior
+  // change in real time instead of waiting on a round trip through me each time.
+  let FRET_INNER_R = POCKET_R * 0.89, FRET_OUTER_R = CFG.wheelRadius * 0.87;
+  let FRET_CENTER_R = (FRET_INNER_R + FRET_OUTER_R) / 2, FRET_HALF_DEPTH = (FRET_OUTER_R - FRET_INNER_R) / 2;
   // Shared by the physics wall (buildPhysicsWorld) and the visible bowl meshes (buildScene) so
   // the ball always bounces exactly where the wood appears to be -- one constant, no drift.
   const WALL_INNER_R = ORBIT_R + 0.12;
@@ -680,6 +684,37 @@
   function setFretAngle(angle) {
     fretBody.quaternion.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), angle);
     fretBody.angularVelocity.set(0, WHEEL_SPEED, 0);
+  }
+  // Live-rebuilds the fret band (both the REAL physics shapes and the debug visual markers) from
+  // new inner/outer radius fractions of wheelRadius -- powers the drag-a-slider calibrator panel
+  // in roulette.html (RouletteWheel.setFretBand) so radii can be tuned and felt in a live test
+  // spin without a round trip through code edits each time. CANNON's addShape just pushes onto
+  // shapes/shapeOffsets/shapeOrientations (confirmed from cannon.min.js source, not assumed), so
+  // clearing those three arrays and re-adding all N shapes is a safe, correct rebuild -- fretBody
+  // is mass:0/KINEMATIC so there's no mass-property recompute to worry about either.
+  function rebuildFretBand(innerFrac, outerFrac) {
+    FRET_INNER_R = CFG.wheelRadius * innerFrac;
+    FRET_OUTER_R = CFG.wheelRadius * outerFrac;
+    FRET_CENTER_R = (FRET_INNER_R + FRET_OUTER_R) / 2;
+    FRET_HALF_DEPTH = (FRET_OUTER_R - FRET_INNER_R) / 2;
+    if (fretBody) {
+      fretBody.shapes = []; fretBody.shapeOffsets = []; fretBody.shapeOrientations = [];
+      for (let i = 0; i < N; i++) {
+        const a = i * SLOT_ANGLE;
+        const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, FRET_HALF_DEPTH));
+        const offset = new CANNON_.Vec3(Math.sin(a) * FRET_CENTER_R, 0.05, Math.cos(a) * FRET_CENTER_R);
+        const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+        fretBody.addShape(shape, offset, q);
+      }
+    }
+    if (fretDebugGroup) {
+      fretDebugGroup.children.forEach((mesh, i) => {
+        const a = i * SLOT_ANGLE;
+        mesh.geometry.dispose();
+        mesh.geometry = new THREE_.BoxGeometry(0.02, 0.2, FRET_HALF_DEPTH * 2);
+        mesh.position.set(Math.sin(a) * FRET_CENTER_R, 0.15, Math.cos(a) * FRET_CENTER_R);
+      });
+    }
   }
   // The ball's actual instantaneous angular velocity around the wheel's own axis, computed from
   // its real position+velocity (not by differencing angle samples, which is fragile across the
@@ -1036,6 +1071,18 @@
     // fretDebugGroup) -- combine with showWheel() for a frozen top-down view of all 38 at once.
     // Never wired to any player-facing button; console-only: RouletteWheel.debugFrets(true).
     debugFrets: (on) => { if (fretDebugGroup) fretDebugGroup.visible = !!on; },
+    // Dev-only: live-rebuilds the fret band from inner/outer radius FRACTIONS OF wheelRadius
+    // (e.g. setFretBand(0.634, 0.87)) -- see rebuildFretBand's own comment. Powers the drag-a-
+    // slider calibrator panel in roulette.html; never touched by normal play.
+    setFretBand: (innerFrac, outerFrac) => rebuildFretBand(innerFrac, outerFrac),
+    // Current fret band as fractions of wheelRadius, so the calibrator panel can initialize its
+    // sliders from whatever is actually live right now instead of a hardcoded guess.
+    getFretBand: () => ({ inner: FRET_INNER_R / CFG.wheelRadius, outer: FRET_OUTER_R / CFG.wheelRadius }),
+    // Dev-only: fires a real spin animation forced onto a given (or random) pocket WITHOUT the
+    // server round-trip or any bet/bankroll involvement -- lets the calibrator panel's "Test
+    // Spin" button show the actual live physics feel (not just the frozen showWheel() layout)
+    // for whatever fret band is currently dialed in.
+    testSpin: (pocket) => RouletteWheel.spin(Promise.resolve(pocket || WHEEL_ORDER[Math.floor(Math.random() * WHEEL_ORDER.length)])),
     WHEEL_ORDER,
     colorOf,
   };
