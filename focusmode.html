@@ -1299,6 +1299,10 @@ body.portrait-craps #felt-portrait{display:flex}
         <button class="modal-btn" onclick="focusShowAll()">Show All</button>
         <button class="modal-btn cancel" onclick="closeFocusPanel()">Done</button>
       </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="modal-btn" onclick="saveLayout()" title="Saves whatever's on the felt right now as your Load Layout starting bets">Save Current as Layout</button>
+        <button class="modal-btn cancel" onclick="clearSavedLayout()" title="Deletes the saved layout">Clear Saved Layout</button>
+      </div>
       <div style="margin-top:8px;text-align:right;display:flex;gap:8px;justify-content:flex-end">
         <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleCalibMode()">🎯 Calibrate Positions (Debug)</button>
         <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleTutorialDebug()">🎓 Tutorial (Debug)</button>
@@ -1719,12 +1723,13 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.20</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.21</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
         <button class="bar-btn" id="double-btn" onclick="doubleBet()">Double</button>
         <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
+        <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
       </div>
     </div>
     <!-- ROLL spans both rows -->
@@ -4518,6 +4523,57 @@ function toggleBetsOn(ev){
     G.betsOn=true;
     G.betsOffThisRoll=!G.betsOffThisRoll;
   }
+  updateUI();
+}
+// Saved bet layout: a personal "starting spread" (Place/Buy/Field/Props/Hardways/Lucky Roller --
+// anything legal to have on the felt at a fresh Come Out) so a session can start with one click
+// instead of re-placing the same dozen bets by hand every time. Local-only (localStorage per
+// player+mode), same tier as Bullets/tutorial progress -- it's a personal convenience, not real-
+// money state. Bypasses placeBet()'s per-click flow entirely (it writes G.bets directly) since
+// it's replaying a whole saved spread at once, but still runs every amount through the same
+// MAX_BET-per-spot and maxBettable() (bullets-aware) caps placeBet() itself enforces, so it can
+// never place more than a single click would have allowed.
+function focusLayoutKey(){return currentPlayer?('craps_layout_'+activeGame+'_'+currentPlayer.id):null;}
+function saveLayout(){
+  const key=focusLayoutKey();if(!key)return;
+  const snapshot={bets:{...G.bets},bonus:{low:G.bonus.low,all:G.bonus.all,high:G.bonus.high}};
+  const n=Object.keys(snapshot.bets).length+['low','all','high'].filter(t=>snapshot.bonus[t]>0).length;
+  if(n===0){addLog('Nothing on the felt to save.','info');return;}
+  try{localStorage.setItem(key,JSON.stringify(snapshot));addLog('Saved current layout ('+n+' bet'+(n===1?'':'s')+').','info');}catch(e){}
+}
+function clearSavedLayout(){
+  const key=focusLayoutKey();if(!key)return;
+  try{localStorage.removeItem(key);}catch(e){}
+  addLog('Saved layout cleared.','info');
+}
+function loadLayout(){
+  const key=focusLayoutKey();if(!key)return;
+  let snap;
+  try{snap=JSON.parse(localStorage.getItem(key));}catch(e){snap=null;}
+  if(!snap||!snap.bets){addLog('No saved layout yet -- save one from Focus Settings first.','info');return;}
+  if(G.phase!=='comeout'){addLog('Load Layout only works at Come Out, before a point is set.','info');return;}
+  let placed=0,reduced=0;
+  for(const k in snap.bets){
+    const amt=snap.bets[k];
+    if(!(amt>0))continue;
+    const cur=G.bets[k]||0;
+    const room=r2(Math.max(0,MAX_BET-cur));
+    const add=r2(Math.min(amt,room,maxBettable()));
+    if(add<=0)continue;
+    G.bets[k]=r2(cur+add);G.bankroll=r2(G.bankroll-add);
+    if(k==='anyCraps')addDualSplit('anyCraps','bar',add);
+    if(add<amt-0.001)reduced++;else placed++;
+  }
+  if(snap.bonus&&!G.bonus.locked&&G.bonus.open){
+    ['low','all','high'].forEach(t=>{
+      const amt=snap.bonus[t]||0;if(!(amt>0))return;
+      const add=r2(Math.min(amt,maxBettable()));
+      if(add<=0)return;
+      G.bonus[t]=r2(G.bonus[t]+add);G.bonus[t+'Max']=G.bonus[t];G.bankroll=r2(G.bankroll-add);
+      if(add<amt-0.001)reduced++;else placed++;
+    });
+  }
+  addLog(placed+' bet'+(placed===1?'':'s')+' loaded'+(reduced?' ('+reduced+' reduced/skipped -- bankroll or table max).':'.'),'info');
   updateUI();
 }
 function clearRemovable(){
