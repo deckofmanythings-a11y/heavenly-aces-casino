@@ -72,6 +72,7 @@
   let inited = false;
   let scene, camera, renderer, canvasEl, rafId, lastTime = 0;
   let wheelMesh, wheelCanvas, wheelCtx, wheelTexture, ballMesh, pointerMesh;
+  let fretDebugGroup = null; // see buildFretDebugGroup / RouletteWheel.debugFrets -- dev-only alignment aid
   let pocketsPhotoImg; // real-photo pocket ring, drawn (and rotated for relabeling) onto wheelCanvas -- see drawWheelTexture
   let labelOffset = 0; // which WHEEL_ORDER index is drawn at texture-slot 0 (the relabel knob)
 
@@ -610,6 +611,29 @@
     }
     world.addBody(fretBody);
 
+    // Dev-only alignment aid (see RouletteWheel.debugFrets in the public API) -- renders the
+    // REAL physics fret positions (identical i*SLOT_ANGLE angle + POCKET_R radius the CANNON
+    // shapes above use, just as visible THREE meshes) so we can visually check whether the
+    // printed photo's pocket boundaries actually line up with where the physics dividers really
+    // are, instead of guessing from how "sus" a ball's resting spot looks. Deliberately does NOT
+    // re-derive the angle from any of restingSlot()'s reflection/phase math -- it reuses the
+    // exact same `a = i*SLOT_ANGLE` value the fret body itself is built from, so any mismatch
+    // this reveals is a real photo/texture registration issue, not a re-derivation error.
+    // Hidden by default; toggle from the browser console with RouletteWheel.debugFrets(true).
+    fretDebugGroup = new THREE_.Group();
+    fretDebugGroup.visible = false;
+    for (let i = 0; i < N; i++) {
+      const a = i * SLOT_ANGLE;
+      const color = i % 5 === 0 ? 0xffff00 : (i % 2 ? 0x00ffff : 0xff00ff); // every 5th marker yellow, for easy counting
+      const geo = new THREE_.BoxGeometry(0.02, 0.2, POCKET_R * 0.3);
+      const mesh = new THREE_.Mesh(geo, new THREE_.MeshBasicMaterial({ color, depthTest: false }));
+      mesh.position.set(Math.sin(a) * POCKET_R, 0.15, Math.cos(a) * POCKET_R);
+      mesh.rotation.y = a;
+      mesh.renderOrder = 999;
+      fretDebugGroup.add(mesh);
+    }
+    wheelMesh.add(fretDebugGroup);
+
     ballBody = new CANNON_.Body({ mass: 0.02, material: matBall });
     ballBody.addShape(new CANNON_.Sphere(CFG.ballRadius));
     // Damping is the master pacing dial, and it is NONLINEAR -- lowering it does not simply
@@ -988,6 +1012,10 @@
     // open; hideWheel() also runs from the in-canvas close button.
     showWheel: () => openShowcase(),
     hideWheel: () => closeShowcase(),
+    // Dev-only: draws/hides the real physics fret positions on the wheel (see buildScene's
+    // fretDebugGroup) -- combine with showWheel() for a frozen top-down view of all 38 at once.
+    // Never wired to any player-facing button; console-only: RouletteWheel.debugFrets(true).
+    debugFrets: (on) => { if (fretDebugGroup) fretDebugGroup.visible = !!on; },
     WHEEL_ORDER,
     colorOf,
   };
