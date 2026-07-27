@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Roulette</title>
-<link rel="icon" type="image/png" href="favicon.png">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
@@ -71,16 +70,21 @@ input,textarea{-webkit-user-select:text;user-select:text}
    themselves are NOT baked into the art (only the color fills are), so buildTable() still
    renders each number as text, same as before -- just as a transparent overlay now instead of
    a colored box. */
+/* Cinzel -- same self-hosted casino-serif already used for Sic-Bo's baked-art panel (see
+   sicbo.html), reused here instead of a second licensed font so every player loads just the
+   one family regardless of which game they're in. */
+@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Regular.woff2?v=1') format('woff2');font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Bold.woff2?v=1') format('woff2');font-weight:700;font-style:normal;font-display:block}
 #table-area{flex:1;display:flex;align-items:center;justify-content:center;padding:4px;min-height:0;overflow:hidden}
-#rl-panel{position:relative;aspect-ratio:1919/594;max-width:100%;max-height:100%;width:100%;background-image:url('roulett_felt.png?v=1');background-size:100% 100%;background-repeat:no-repeat;container-type:size;margin:auto}
+#rl-panel{position:relative;aspect-ratio:1919/594;max-width:100%;max-height:100%;width:100%;background-image:url('roulett_felt.png?v=1');background-size:100% 100%;background-repeat:no-repeat;container-type:size;margin:auto;font-family:'Cinzel',Georgia,'Times New Roman',serif}
 #zero-col,#num-grid,#col21-strip,#dozens-row,#evens-row{display:contents}
-.bet-cell{position:absolute;background:transparent;border:none;border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:800;font-size:min(20px,2.6cqw);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.7);transition:background .1s;user-select:none}
+.bet-cell{position:absolute;background:transparent;border:none;border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:min(30px,4cqw);letter-spacing:.02em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 4px rgba(0,0,0,.75);transition:background .1s;user-select:none}
 .bet-cell:hover{background:rgba(255,215,0,.25)}
 .bet-cell.active{box-shadow:inset 0 0 0 2px #ffd700}
-.zero-cell{font-size:min(18px,2.6cqw)}
+.zero-cell{font-size:min(26px,3.6cqw)}
 .zero-top{left:0.104%;top:0.168%;width:8.234%;height:31.229%}
 .zero-bot{left:0.104%;top:31.397%;width:8.234%;height:29.63%}
-.cell-stk{position:absolute;bottom:1px;right:2px;font-size:min(11px,1.6cqw);color:#ffd700;font-weight:700;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.9)}
+.cell-stk{position:absolute;bottom:1px;right:2px;font-size:min(13px,1.8cqw);color:#ffd700;font-weight:700;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.9)}
 .mbtn-corner{display:none;position:absolute;top:1px;right:2px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.65);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:11px;line-height:12px;text-align:center;cursor:pointer;z-index:5;padding:0}
 .bet-cell:hover .mbtn-corner.vis{display:block}
 .mbtn-corner:hover{background:rgba(180,0,0,.7)}
@@ -92,12 +96,17 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .corner-cell{z-index:3}
 .split-cell{z-index:2}
 
-.out-cell{position:absolute;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:min(16px,2.2cqw);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.7);transition:background .1s}
+.out-cell{position:absolute;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:min(22px,3cqw);letter-spacing:.03em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 4px rgba(0,0,0,.75);transition:background .1s}
+.cell-text{display:flex;flex-direction:column;align-items:center;gap:1px}
 .out-cell:hover{background:rgba(255,215,0,.25)}
 .out-cell.active{box-shadow:inset 0 0 0 2px #ffd700}
 .out-cell.red-txt{color:#ff8080}
 .out-cell.black-txt{color:#ddd}
 .cell-label{display:inline-block}
+/* Payout ratio shown on the dozens/outside-bet cells (Deck: "putting the payouts on the
+   non-number cells") -- straight/split/corner cells skip this, either implied (straight is
+   always 35:1) or too small a hitbox to fit a second line legibly. */
+.cell-pay{display:inline-block;font-size:min(13px,1.8cqw);font-weight:400;color:rgba(255,255,255,.65);letter-spacing:.03em}
 
 /* ── PORTRAIT MODE -- the felt panel rotates 90deg CW to run tall instead of being squeezed
    into a thin horizontal strip across the middle of the screen; top-row (wheel/info) shrinks
@@ -123,7 +132,15 @@ input,textarea{-webkit-user-select:text;user-select:text}
     width:calc(min(100cqw,30.954cqh) * 3.23064);
     transform:rotate(90deg);
   }
-  .cell-label,.cell-stk,.mbtn-corner{transform:rotate(-90deg)}
+  /* .cell-text wraps label+pay (dozens/outside cells) as one flex column so they counter-
+     rotate as a single rigid unit and stay stacked correctly -- rotating .cell-label/.cell-pay
+     individually would each spin in place around its own center, turning the intended vertical
+     stack into an overlapping mess once the parent's rotation also flips the flex column's
+     visual axis. Straight/zero cells have no .cell-text wrapper (just a lone .cell-label
+     directly inside .bet-cell) so THAT gets its own direct rotation instead -- scoped to
+     `.bet-cell>` so it doesn't ALSO fire on the .cell-label nested inside .cell-text, which
+     would double-rotate it. */
+  .cell-text,.bet-cell>.cell-label,.cell-stk,.mbtn-corner{transform:rotate(-90deg)}
 }
 
 /* ── BOTTOM SECTION ── */
@@ -276,7 +293,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.18</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.19</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">
@@ -673,14 +690,14 @@ const RL_CORNER_T=1.355, RL_CORNER_T_H=4.377; // corner hitbox size (slightly la
 function setRect(d,left,top,width,height){
   d.style.left=left+'%';d.style.top=top+'%';d.style.width=width+'%';d.style.height=height+'%';
 }
-function outCell(key,label,colorCls,rect,title){
+function outCell(key,label,colorCls,rect,title,pay){
   const d=document.createElement('div');
   d.className='out-cell'+(colorCls?' '+colorCls:'');
   d.dataset.key=key;
   if(title)d.title=title;
   d.onclick=()=>placeBet(key);
   d.oncontextmenu=(e)=>{e.preventDefault();removeBet(key);};
-  d.innerHTML='<span class="cell-label">'+label+'</span><span class="cell-stk" id="stk-'+key+'"></span>';
+  d.innerHTML='<span class="cell-text"><span class="cell-label">'+label+'</span>'+(pay?'<span class="cell-pay">'+pay+'</span>':'')+'</span><span class="cell-stk" id="stk-'+key+'"></span>';
   setRect(d,rect.left,rect.top,rect.width,rect.height);
   return d;
 }
@@ -752,18 +769,18 @@ function buildTable(){
   }
   const dozens=document.getElementById('dozens-row');
   const dozW=(RL_OUT_X[1]-RL_OUT_X[0])/3;
-  dozens.appendChild(outCell('dozen1','1st 12',null,{left:RL_OUT_X[0],top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]}));
-  dozens.appendChild(outCell('dozen2','2nd 12',null,{left:RL_OUT_X[0]+dozW,top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]}));
-  dozens.appendChild(outCell('dozen3','3rd 12',null,{left:RL_OUT_X[0]+2*dozW,top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]}));
+  dozens.appendChild(outCell('dozen1','1st 12',null,{left:RL_OUT_X[0],top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]},null,'2:1'));
+  dozens.appendChild(outCell('dozen2','2nd 12',null,{left:RL_OUT_X[0]+dozW,top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]},null,'2:1'));
+  dozens.appendChild(outCell('dozen3','3rd 12',null,{left:RL_OUT_X[0]+2*dozW,top:RL_DOZEN_Y[0],width:dozW,height:RL_DOZEN_Y[1]-RL_DOZEN_Y[0]},null,'2:1'));
   const evens=document.getElementById('evens-row');
   const outW=(RL_OUT_X[1]-RL_OUT_X[0])/6,outH=RL_OUTSIDE_Y[1]-RL_OUTSIDE_Y[0];
   const outRect=i=>({left:RL_OUT_X[0]+i*outW,top:RL_OUTSIDE_Y[0],width:outW,height:outH});
-  evens.appendChild(outCell('low','1-18',null,outRect(0)));
-  evens.appendChild(outCell('even','EVEN',null,outRect(1)));
-  evens.appendChild(outCell('red','RED','red-txt',outRect(2)));
-  evens.appendChild(outCell('black','BLACK','black-txt',outRect(3)));
-  evens.appendChild(outCell('odd','ODD',null,outRect(4)));
-  evens.appendChild(outCell('high','19-36',null,outRect(5)));
+  evens.appendChild(outCell('low','1-18',null,outRect(0),null,'1:1'));
+  evens.appendChild(outCell('even','EVEN',null,outRect(1),null,'1:1'));
+  evens.appendChild(outCell('red','RED','red-txt',outRect(2),null,'1:1'));
+  evens.appendChild(outCell('black','BLACK','black-txt',outRect(3),null,'1:1'));
+  evens.appendChild(outCell('odd','ODD',null,outRect(4),null,'1:1'));
+  evens.appendChild(outCell('high','19-36',null,outRect(5),null,'1:1'));
   // "2:1" column bets sit in the thin vertical strip to the right of the number grid (real-table
   // convention), one cell per grid row -- row0 (top) = multiples of 3, row1 (mid) = 2,5,8...35,
   // row2 (bottom) = 1,4,7...34, matching the felt's own 3-way split of that strip.
