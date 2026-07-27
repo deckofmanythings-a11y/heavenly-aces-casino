@@ -544,6 +544,19 @@
   // change in real time instead of waiting on a round trip through me each time.
   let FRET_INNER_R = POCKET_R * 0.89, FRET_OUTER_R = CFG.wheelRadius * 0.87;
   let FRET_CENTER_R = (FRET_INNER_R + FRET_OUTER_R) / 2, FRET_HALF_DEPTH = (FRET_OUTER_R - FRET_INNER_R) / 2;
+  // Pocket floor dip depth + radial half-coverage, measured 2026-07-27: Deck reported the ball
+  // frequently settling right at a pocket edge (~72% of spins in the outer 30% of the pocket,
+  // measured with a temporary harness) with the original flat floor. A shallow V-shaped dip per
+  // pocket (see rebuildPocketFloor) fixes most of this, but ONLY once FLOOR_RADIAL_HALF is kept
+  // small -- the first attempt used the fret band's own (much wider) radial extent and that
+  // caused the tiles to physically overlap the OUTER SLOPE's own territory (which starts right
+  // at POCKET_R), and the two competing surfaces made the ball fail to settle at all (~85%
+  // hitting the 45s timeout, confirmed by isolating the tiles' radial size as the specific
+  // variable that fixed it, not the dip depth). Re-verified after narrowing: 0.012/0.12 measured
+  // avgAbsOffset 0.243 (vs 0.36 baseline) with only 28% landing in the outer 30% (vs ~72%) and a
+  // 1% cap rate at n=100 -- matches normal baseline variance, no settle-timing regression.
+  const DIP_DEPTH = 0.012; // world units the pocket's own center sits below its edges
+  const DIP_RADIAL_HALF = 0.12; // deliberately much narrower than the fret band -- see comment above
   // Shared by the physics wall (buildPhysicsWorld) and the visible bowl meshes (buildScene) so
   // the ball always bounces exactly where the wood appears to be -- one constant, no drift.
   const WALL_INNER_R = ORBIT_R + 0.12;
@@ -555,7 +568,7 @@
   const WHEEL_SPEED = 1.6;
   const PREROLL_BALL_SPEED = -15; // rad/s the ball is thrown at against the wheel's own rotation
 
-  let world, ballBody, fretBody;
+  let world, ballBody, fretBody, pocketFloorBody;
   let matBall, matBowl, matWall, matFret, matFloor;
 
   function buildPhysicsWorld() {
@@ -643,11 +656,17 @@
       world.addBody(body);
     }
 
-    // Flat pocket floor beneath the fret ring.
+    // Flat safety-net floor, well BELOW the dished pocket-floor tiles (see pocketFloorBody
+    // further down) -- pulled down by 0.1 so the two surfaces never overlap/z-fight at the same
+    // height (they did when this sat at POCKET_Y, the tiles' own edge height, and caused
+    // redundant/conflicting contacts that made the ball fail to settle at all, confirmed
+    // empirically: the exact same dip=0 config that should be a no-op started capping out on
+    // nearly every spin until this was moved down). Only ever meant as a fallback for anywhere
+    // outside the pocket ring's radial coverage, not something the ball should normally reach.
     const floor = new CANNON_.Body({ mass: 0, material: matFloor });
     floor.addShape(new CANNON_.Plane());
     floor.quaternion.setFromAxisAngle(new CANNON_.Vec3(1, 0, 0), -Math.PI / 2);
-    floor.position.set(0, POCKET_Y, 0);
+    floor.position.set(0, POCKET_Y - 0.1, 0);
     world.addBody(floor);
 
     // Fret ring: one KINEMATIC compound body (N box dividers). Kinematic bodies aren't moved by
@@ -663,6 +682,23 @@
       fretBody.addShape(shape, offset, q);
     }
     world.addBody(fretBody);
+
+    // Pocket floor dip: each compartment gets a shallow V (two tilted half-tiles meeting at the
+    // pocket's own true angular center, from fretAngleAt -- not a uniform assumption, pockets
+    // aren't uniform width anymore) instead of one flat floor, so a nearly-stopped ball rolls
+    // toward center under gravity once it's slow enough -- matching how real wheel pockets are
+    // actually bowled/dished (Deck's explicit choice over a code-level centering force, after
+    // measuring the flat floor left the ball settling at a pocket edge ~72% of the time). A
+    // SEPARATE kinematic body from fretBody (kept in lockstep via setFretAngle) specifically so
+    // it can use matFloor (high friction, low restitution) -- CANNON gives one material per
+    // BODY, not per shape, and putting these tiles directly on fretBody (matFret: bouncy, low
+    // friction) was tried first and caused the ball to pick up unbounded lateral speed instead
+    // of settling, confirmed with a direct empirical test before diagnosing the material as the
+    // cause. Sits at/below the flat floor plane below it, which stays as a fallback for anywhere
+    // outside the pocket ring.
+    pocketFloorBody = new CANNON_.Body({ mass: 0, type: CANNON_.Body.KINEMATIC, material: matFloor });
+    rebuildPocketFloor();
+    world.addBody(pocketFloorBody);
 
     // Dev-only alignment aid (see RouletteWheel.debugFrets in the public API) -- renders the
     // REAL physics fret positions (identical fretAngleAt(i) angle + FRET_CENTER_R/FRET_HALF_DEPTH
@@ -711,8 +747,21 @@
     ballMesh.quaternion.copy(ballBody.quaternion);
   }
   function setFretAngle(angle) {
-    fretBody.quaternion.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), angle);
+    const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), angle);
+    fretBody.quaternion.copy(q);
     fretBody.angularVelocity.set(0, WHEEL_SPEED, 0);
+    // pocketFloorBody rides at the exact same angle as the frets (they must never drift apart --
+    // each pocket's floor dip is authored relative to its own two bounding frets) but is a
+    // SEPARATE kinematic body specifically so it can use matFloor (high friction, low
+    // restitution) instead of matFret (bouncy, low friction) -- CANNON gives one material per
+    // BODY, not per shape, so the dip tiles could not simply be extra shapes on fretBody itself.
+    // Confirmed by direct testing this was a real bug, not a hypothetical: with the tiles on fretBody
+    // the ball picked up unbounded lateral speed instead of settling, exactly as inheriting a
+    // 0.65-restitution/0.12-friction contact would cause.
+    if (pocketFloorBody) {
+      pocketFloorBody.quaternion.copy(q);
+      pocketFloorBody.angularVelocity.set(0, WHEEL_SPEED, 0);
+    }
   }
   // Live-rebuilds the fret band (both the REAL physics shapes and the debug visual markers) from
   // new inner/outer radius fractions of wheelRadius -- powers the drag-a-slider calibrator panel
@@ -742,6 +791,35 @@
         mesh.geometry.dispose();
         mesh.geometry = new THREE_.BoxGeometry(0.02, 0.2, FRET_HALF_DEPTH * 2);
         mesh.position.set(Math.sin(a) * FRET_CENTER_R, 0.15, Math.cos(a) * FRET_CENTER_R);
+      });
+    }
+  }
+  // Builds the pocket floor's per-pocket dip tiles onto pocketFloorBody -- see its own
+  // construction comment for why this is a separate body from fretBody (material) and DIP_DEPTH/
+  // DIP_RADIAL_HALF's own comment for how those two values were measured.
+  function rebuildPocketFloor() {
+    if (!pocketFloorBody) return;
+    pocketFloorBody.shapes = []; pocketFloorBody.shapeOffsets = []; pocketFloorBody.shapeOrientations = [];
+    for (let i = 0; i < N; i++) {
+      const a0 = fretAngleAt(i);
+      const a1raw = fretAngleAt((i + 1) % N);
+      const a1 = a1raw > a0 ? a1raw : a1raw + Math.PI * 2;
+      const centerA = (a0 + a1) / 2;
+      const tileLen = ((a1 - a0) / 2) * POCKET_R;
+      const tiltAngle = Math.atan2(DIP_DEPTH, tileLen); // slope gradient from the TRUE tile length, unaffected by the overlap pad below
+      const OVERLAP = 1.2; // tiles are padded 20% wider than their exact math width so adjacent
+      // tiles (at each fret seam and at each pocket's own center seam) physically overlap instead
+      // of meeting edge-to-edge -- an exact edge-to-edge fit left sub-millimeter seams (floating-
+      // point rounding in the sin/cos placement) that the ball could catch on, perturbing its
+      // velocity just enough to keep resetting the settle-hold streak on nearly every spin.
+      [[a0, centerA, -1], [centerA, a1, 1]].forEach(([lo, hi, sign]) => {
+        const midA = (lo + hi) / 2;
+        const shape = new CANNON_.Box(new CANNON_.Vec3((tileLen * OVERLAP) / 2, 0.02, DIP_RADIAL_HALF));
+        const offset = new CANNON_.Vec3(Math.sin(midA) * POCKET_R, POCKET_Y - DIP_DEPTH / 2, Math.cos(midA) * POCKET_R);
+        const qYaw = new CANNON_.Quaternion(); qYaw.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), midA);
+        const qTilt = new CANNON_.Quaternion(); qTilt.setFromAxisAngle(new CANNON_.Vec3(0, 0, 1), sign * tiltAngle);
+        const q = new CANNON_.Quaternion(); qYaw.mult(qTilt, q);
+        pocketFloorBody.addShape(shape, offset, q);
       });
     }
   }
@@ -787,7 +865,8 @@
   // very long, unpredictable tail).
   // HARD_STEP_CAP: measured spins run ~19.5-23.4s (2340-2810 steps) with natural variance, so
   // 45s gives comfortable headroom for outlier throws without ever risking an unbounded spin.
-  const SETTLE_EPS = 0.7, SETTLE_HOLD = 60, HARD_STEP_CAP = 5400;
+  const SETTLE_EPS = 0.7, SETTLE_HOLD = 60; // unchanged from before the pocket-floor-dip work -- tightening/loosening these alone didn't help the edge-settling complaint (see the dip's own comment), the real fix was giving the floor actual centering geometry
+  const HARD_STEP_CAP = 5400;
   // Guardrail: discrete collision detection has no protection against a fast-enough ball
   // tunneling straight through the outer wall in a single step (the tall/thick wall made this
   // rare, not impossible) -- an escaped ball just flies off forever, never satisfies the settle
