@@ -7,6 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
+<script src="weekly-events.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -470,7 +471,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.3</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.4</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -565,6 +566,26 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
         <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
         <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
+
+        <!-- TRILUX: Trilux Thursday only (Nephilim+), no baked felt art -- shown/hidden
+             by updateUI() via WeeklyEvents.isDay(4, tier). Fixed $5, like The Light. -->
+        <div class="panel-spot" id="trilux-spot" onclick="toggleTrilux()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleTrilux()" title="Trilux — $5 side bet, Trilux Thursday only" style="display:none;position:absolute;left:0;bottom:-56px;width:100%;height:44px;border:2px solid #ffd700;border-radius:8px;background:rgba(255,215,0,.12);align-items:center;justify-content:center;font-weight:800;color:#ffd700">
+          <span>TRILUX <span class="panel-spot-stk" id="stk-trilux"></span></span>
+        </div>
+        <button id="trilux-info-btn" onclick="event.stopPropagation();openTriluxModal()" title="Trilux Paytable" style="display:none;position:absolute;left:calc(100% + 4px);bottom:-52px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid #ffd700;font-size:12px;cursor:pointer">i</button>
+      </div>
+
+      <!-- TRILUX PAYTABLE MODAL -->
+      <div class="modal-overlay hidden" id="modal-trilux">
+        <div class="modal-box">
+          <h3>Trilux — Trilux Thursday Side Bet</h3>
+          <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:8px">Your two cards + the dealer's up card, scored as a 3-card poker hand.</div>
+          <div class="progressive-tier-row"><span>Straight Flush</span><span class="prog-pay">$180</span></div>
+          <div class="progressive-tier-row"><span>Three of a Kind</span><span class="prog-pay">$170</span></div>
+          <div class="progressive-tier-row"><span>Straight</span><span class="prog-pay">$55</span></div>
+          <div class="progressive-tier-row"><span>Flush</span><span class="prog-pay">$30</span></div>
+          <button class="modal-btn cancel" onclick="closeTriluxModal()" style="margin-top:12px">Close</button>
+        </div>
       </div>
 
       <!-- INSURANCE PROMPT -- shown only when the dealer's up card is an Ace -->
@@ -686,7 +707,7 @@ function makeInitialG(){
     bankroll:0,freePlay:0,startingBankroll:0,chip:25,
     // Flat bet object, matching the chip-ui.md convention -- all four side bets plus
     // the two mutually-exclusive main bets share one dict, keyed by string identifier.
-    bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0},
+    bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0},
     // 'player'|'breakout'|null -- which of the two bet circles carries chips right
     // now (derived, not chosen directly). Null pre-deal until a spot is bet; the
     // server echoes back the confirmed mode in its 'deal' response for the round.
@@ -698,7 +719,7 @@ function makeInitialG(){
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
     history:[],
     cardEls:null,
-    locked:{progressive:false},
+    locked:{progressive:false,trilux:false},
     progressivePool:1000, // shown before the first deal/roll response arrives with a live value
     shoeTotal:312,shoeRemaining:0, // real server-tracked shoe state -- 0 remaining reads as "needs a cut" until the first action response arrives
     penetrationCards:0, // cards dealt before a reshuffle is forced -- server always reserves roughly the last fifth regardless of the chosen cut fraction
@@ -989,7 +1010,7 @@ function removeBet(key){
 function clearBets(){
   if(G.phase!=='betting')return;
   const ret=Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0);
-  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0};
+  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0};
   G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
@@ -1016,6 +1037,26 @@ function toggleProgressive(){
 // keep showing that stale default until the player actually played a hand. Refetch the
 // real, server-persisted total directly (progressive_jackpot has no RLS restricting
 // reads) any time the modal opens, rather than trusting whatever's currently in memory.
+// ── TRILUX (Trilux Thursday only) ──────────────────────────────────────────────
+// Flat $5, same shape as The Light. Only togglable when WeeklyEvents says it's live
+// for this player's tier -- server re-validates independently, this is UI gating only.
+const TRILUX_BET=5;
+function toggleTrilux(){
+  if(G.phase!=='betting')return;
+  if(!WeeklyEvents.isDay(4,currentPlayer?currentPlayer.tier:0)){addLog('Trilux is only available on Trilux Thursday.','info');return;}
+  if((G.bets.trilux||0)>0){
+    G.bankroll=r2(G.bankroll+G.bets.trilux);
+    G.bets.trilux=0;
+  }else{
+    if(G.bankroll+G.freePlay<TRILUX_BET){addLog('Not enough bankroll for Trilux ($5).','info');return;}
+    G.bets.trilux=TRILUX_BET;
+    G.bankroll=r2(G.bankroll-TRILUX_BET);
+  }
+  updateUI();
+}
+function openTriluxModal(){document.getElementById('modal-trilux').classList.remove('hidden');}
+function closeTriluxModal(){document.getElementById('modal-trilux').classList.add('hidden');}
+
 async function refreshProgressivePool(){
   const{data,error}=await sb.from('progressive_jackpot').select('pool_amount').eq('id',1).single();
   if(error||!data)return;
@@ -1337,10 +1378,11 @@ async function dealHand(){
   if(G.dealInFlight)return;
   G.dealInFlight=true;
   const progressive=(G.bets.progressive||0)>0;
+  const trilux=(G.bets.trilux||0)>0;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   const body={session_token:token,action:'deal',playerBet,breakoutBet,
-    superTie:G.bets.superTie||0,breakoutBonus:G.bets.breakoutBonus||0,sweet17:G.bets.sweet17||0,pairPlus:G.bets.pairPlus||0,progressive};
+    superTie:G.bets.superTie||0,breakoutBonus:G.bets.breakoutBonus||0,sweet17:G.bets.sweet17||0,pairPlus:G.bets.pairPlus||0,progressive,trilux};
   let data;
   try{
     const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify(body)});
@@ -1368,11 +1410,11 @@ async function dealHand(){
   G.activeHand=data.activeHand||0;
   G.splitCount=data.splitCount||0;
   G.surrenderEligible=!!data.surrenderEligible;
-  G.locked={progressive:data.progressive};
+  G.locked={progressive:data.progressive,trilux:data.trilux};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0};
+  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0};
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
   document.getElementById('dealer-hand-name').textContent='';
@@ -1559,7 +1601,7 @@ function finishRound(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.insurance=0;G.insuranceAvailable=false;
-  G.mode=null;G.locked={progressive:false};G.dealInFlight=false;
+  G.mode=null;G.locked={progressive:false,trilux:false};G.dealInFlight=false;
   G.activeHand=0;G.splitCount=0;G.surrenderEligible=false;
   document.getElementById('btn-deal').disabled=false;
   hideInsuranceBanner();
@@ -1640,6 +1682,16 @@ function updateUI(){
   document.getElementById('light-spot').classList.toggle('active',!locked&&(G.bets.progressive||0)>0);
   document.getElementById('light-off-img').style.display=(locked&&G.locked.progressive)?'none':'';
   document.getElementById('light-on-img').style.display=(locked&&G.locked.progressive)?'':'none';
+  // Trilux: only ever shown when today's event is live for this player's tier --
+  // hidden entirely (not just disabled) the other six days of the week.
+  const triluxLive=WeeklyEvents.isDay(4,currentPlayer?currentPlayer.tier:0);
+  const triluxSpot=document.getElementById('trilux-spot'),triluxInfo=document.getElementById('trilux-info-btn');
+  triluxSpot.style.display=triluxLive?'flex':'none';
+  triluxInfo.style.display=triluxLive?'block':'none';
+  if(triluxLive){
+    document.getElementById('stk-trilux').textContent=(!locked&&G.bets.trilux)?fmt(G.bets.trilux):'';
+    triluxSpot.classList.toggle('active',!locked&&(G.bets.trilux||0)>0);
+  }
   renderChipStacks();
 }
 
@@ -1720,6 +1772,7 @@ function renderChipStacks(){
   // (it reads the .chip-img inside this element; with no chip markup there was
   // nothing but text to animate away).
   applyChipStackVisual('stk-light',contractLocked);
+  if(WeeklyEvents.isDay(4,currentPlayer?currentPlayer.tier:0))applyChipStackVisual('stk-trilux',contractLocked);
 }
 function applyChipStackVisual(id,locked){
   const el=document.getElementById(id);

@@ -7,6 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
+<script src="weekly-events.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
 /* Matches the tier cards' own engraved-serif title font -- see dailies.html for the same
@@ -71,6 +72,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .modal-close-btn{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:7px;color:#fff;font-size:15px;padding:9px;cursor:pointer;margin-top:4px}
 .modal-close-btn:hover{background:rgba(255,255,255,.18)}
 
+#weekly-event-banner{max-width:720px;width:100%;margin:0 auto 14px;padding:10px 16px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,.16),rgba(255,215,0,.06));border:1px solid rgba(255,215,0,.4);cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;box-sizing:border-box}
+#weekly-event-banner.hidden{display:none}
+#weekly-event-banner #weekly-event-label{font-weight:800;color:#ffd700;font-size:15px}
+#weekly-event-banner #weekly-event-desc{font-size:13px;color:rgba(255,255,255,.8);display:none}
+#weekly-event-banner.expanded #weekly-event-desc{display:block}
 #lobby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;max-width:720px;width:100%;margin:0 auto}
 .lobby-tile{position:relative;background:#161616;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
 .lobby-tile:hover{border-color:rgba(255,215,0,.5);background:#1c1c1c}
@@ -149,6 +155,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <button class="modal-close-btn" onclick="closeOptionsModal()">Close</button>
     </div>
   </div>
+  <div id="weekly-event-banner" class="hidden" onclick="this.classList.toggle('expanded')">
+    <span id="weekly-event-label"></span>
+    <span id="weekly-event-desc"></span>
+  </div>
   <div id="lobby-grid">
     <div class="lobby-tile" onclick="dNav('focusmode.html?mode=crapless')">
       <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
@@ -204,7 +214,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.7</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.8</div>
 </div>
 
 <script>
@@ -291,7 +301,18 @@ function showLobby(player){
   document.documentElement.style.setProperty('--tier-name-color',tm.nameColor);
   document.documentElement.style.setProperty('--tier-name-shadow',tm.nameShadow);
   document.getElementById('lobby-bankroll').textContent='$'+(parseFloat(player.bankroll)||0).toFixed(2)+' bankroll';
+  renderWeeklyEventBanner(player);
   loadDailiesBadge();
+}
+// Weekly special-event promo -- see weekly-events.js for the day table. Purely
+// cosmetic/display; every payout it describes is decided server-side.
+function renderWeeklyEventBanner(player){
+  const banner=document.getElementById('weekly-event-banner');
+  const ev=(typeof WeeklyEvents!=='undefined')?WeeklyEvents.active(player.tier):null;
+  if(!ev){banner.classList.add('hidden');return;}
+  document.getElementById('weekly-event-label').textContent='🎉 '+ev.label+' — '+ev.game;
+  document.getElementById('weekly-event-desc').textContent=ev.desc;
+  banner.classList.remove('hidden');
 }
 // Read-only peek at today's Dailies via dailies-action ('state') just to badge the
 // lobby tile with how many Tasks/Quest are still open -- the same call self-heals a

@@ -7,6 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
+<script src="weekly-events.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <style>
 /* Matches the tier cards' own engraved-serif title font (HEAVENLY ACES / tier name) as
@@ -34,6 +35,11 @@
 html,body{height:100%;height:100dvh;overflow-y:auto;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
 #wrap{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+#weekly-event-banner{margin:0 0 16px;padding:10px 16px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,.16),rgba(255,215,0,.06));border:1px solid rgba(255,215,0,.4);cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;box-sizing:border-box}
+#weekly-event-banner.hidden{display:none}
+#weekly-event-banner #weekly-event-label{font-weight:800;color:#ffd700;font-size:15px}
+#weekly-event-banner #weekly-event-desc{font-size:13px;color:rgba(255,255,255,.8);display:none}
+#weekly-event-banner.expanded #weekly-event-desc{display:block}
 #top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 #back-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:6px;padding:8px 14px;font-size:14px;cursor:pointer}
 h1{font-size:22px;color:var(--tier-accent);font-weight:800}
@@ -84,6 +90,11 @@ h1{font-size:22px;color:var(--tier-accent);font-weight:800}
     <button id="back-btn" onclick="dNav('index.html')">&larr; Lobby</button>
     <h1>🗓️ Dailies</h1>
     <div id="fp-balance">Free Play<b id="fp-amt">$0.00</b></div>
+  </div>
+
+  <div id="weekly-event-banner" class="hidden" onclick="this.classList.toggle('expanded')">
+    <span id="weekly-event-label"></span>
+    <span id="weekly-event-desc"></span>
   </div>
 
   <div class="section-title">Tasks — $50 each</div>
@@ -165,6 +176,7 @@ const TASK_META={
   uth:{icon:'🃏',label:'Make one Hold\'em bet'},
   iluvsuits:{icon:'♠️',label:'Make one I ❤️ Suits bet'},
   breakout:{icon:'🂡',label:'Play one Breakout Blackjack hand'},
+  roulette:{icon:'🎡',label:'Make one Roulette bet'},
 };
 // Where each task's GO button sends the player -- craps has no single canonical page
 // (Standard/Crapless are both focusmode.html with a mode query param), so it lands on
@@ -176,6 +188,7 @@ const GAME_URL={
   uth:'uth.html',
   iluvsuits:'iluvsuits.html',
   breakout:'breakout.html',
+  roulette:'roulette.html',
 };
 // Mirrors supabase/functions/_shared/dailies.ts computeTier() exactly -- display only,
 // the server is authoritative for the actual tier value (players.tier).
@@ -224,6 +237,16 @@ function renderTier(tier,username){
   applyTierPalette(tier);
   document.getElementById('tier-card-name').textContent=username||'';
 }
+// Weekly special-event promo -- see weekly-events.js for the day table. Purely
+// cosmetic/display; every payout it describes is decided server-side.
+function renderWeeklyEventBanner(tier){
+  const banner=document.getElementById('weekly-event-banner');
+  const ev=(typeof WeeklyEvents!=='undefined')?WeeklyEvents.active(tier):null;
+  if(!ev){banner.classList.add('hidden');return;}
+  document.getElementById('weekly-event-label').textContent='🎉 '+ev.label+' — '+ev.game;
+  document.getElementById('weekly-event-desc').textContent=ev.desc;
+  banner.classList.remove('hidden');
+}
 
 const QUEST_META={
   craps:{game:'Craps',label:'Win a Hard Way bet',sub:'Any Hard 4, 6, 8 or 10 — pays as if you’d bet $100 on it.'},
@@ -239,6 +262,7 @@ function render(dailies,freePlayBalance,tier,username){
   document.getElementById('wrap').style.display='block';
   document.getElementById('fp-amt').textContent='$'+(parseFloat(freePlayBalance)||0).toFixed(2);
   renderTier(tier,username);
+  renderWeeklyEventBanner(tier);
 
   const list=document.getElementById('task-list');list.innerHTML='';
   Object.keys(TASK_META).forEach(g=>{
