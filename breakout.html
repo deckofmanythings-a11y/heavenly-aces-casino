@@ -471,7 +471,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.5</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -567,12 +567,13 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
         <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
 
-        <!-- TRILUX: Trilux Thursday only (Nephilim+), no baked felt art -- shown/hidden
-             by updateUI() via WeeklyEvents.isDay(4, tier). Fixed $5, like The Light. -->
-        <div class="panel-spot" id="trilux-spot" onclick="toggleTrilux()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleTrilux()" title="Trilux — $5 side bet, Trilux Thursday only" style="display:none;position:absolute;left:0;bottom:-56px;width:100%;height:44px;border:2px solid #ffd700;border-radius:8px;background:rgba(255,215,0,.12);align-items:center;justify-content:center;font-weight:800;color:#ffd700">
-          <span>TRILUX <span class="panel-spot-stk" id="stk-trilux"></span></span>
+        <!-- TRILUX: Trilux Thursday only (Nephilim+) -- shown/hidden by updateUI() via
+             WeeklyEvents.isDay(4, tier). Fixed $5, like The Light. TriLux_Web_Logo.png
+             (198x171) is the bet-spot art; stake label overlays the bottom of it. -->
+        <div class="panel-spot" id="trilux-spot" onclick="toggleTrilux()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleTrilux()" title="Trilux — $5 side bet, Trilux Thursday only" style="display:none;position:absolute;left:0;bottom:-90px;width:100%;height:78px;align-items:flex-end;justify-content:center;background:url('TriLux_Web_Logo.png') center/contain no-repeat">
+          <span class="panel-spot-stk" id="stk-trilux" style="font-weight:800;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.9);margin-bottom:2px"></span>
         </div>
-        <button id="trilux-info-btn" onclick="event.stopPropagation();openTriluxModal()" title="Trilux Paytable" style="display:none;position:absolute;left:calc(100% + 4px);bottom:-52px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid #ffd700;font-size:12px;cursor:pointer">i</button>
+        <button id="trilux-info-btn" onclick="event.stopPropagation();openTriluxModal()" title="Trilux Paytable" style="display:none;position:absolute;left:calc(100% + 4px);bottom:-56px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid #ffd700;font-size:12px;cursor:pointer">i</button>
       </div>
 
       <!-- TRILUX PAYTABLE MODAL -->
