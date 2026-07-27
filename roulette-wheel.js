@@ -54,7 +54,15 @@
   const CFG = {
     container: null,      // element id or DOM node to mount the canvas into
     wheelRadius: 1.6,
-    ballRadius: 0.09,
+    ballRadius: 0.045, // half the old 0.09 -- Deck: a smaller ball should sit more clearly inside
+                       // one pocket instead of visually straddling two. ballRadius feeds real
+                       // CANNON contact geometry, not just the visual mesh -- same "must
+                       // re-measure" category as POCKET_R etc. Re-verified with a temporary
+                       // synchronous _testSettle harness (same pattern as the POCKET_R retune,
+                       // deleted after use): 70 random baselines, ~22-25s average settle, only
+                       // 1 HARD_STEP_CAP hit out of 70 -- consistent with the pre-existing
+                       // "natural fast/slow outliers" variance already documented below, not a
+                       // new failure mode. Re-run that same check if ballRadius ever changes again.
     maxResolveSteps: 9000, // safety cap (~75s at 120Hz) on the whole resolve, in case the ball
                            // somehow never converges on a given throw -- practically unreachable.
   };

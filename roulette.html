@@ -107,6 +107,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
    non-number cells") -- straight/split/corner cells skip this, either implied (straight is
    always 35:1) or too small a hitbox to fit a second line legibly. */
 .cell-pay{display:inline-block;font-size:min(13px,1.8cqw);font-weight:400;color:rgba(255,255,255,.65);letter-spacing:.03em}
+/* Dolly -- the real croupier's marker, placed on the winning number after a spin resolves and
+   cleared when the next spin starts (see placeDolly()/clearDolly() in the script below). Sized
+   by width with auto height (the source photo is tall/narrow) and allowed to stand taller than
+   its own cell, same "let it overflow the cell" treatment split-bet chip stacks already get --
+   #rl-panel has no overflow:hidden of its own so this is never clipped. */
+.dolly-marker{position:absolute;display:none;width:min(34px,4.6cqw);height:auto;pointer-events:none;z-index:10;transform:translate(-50%,-72%);filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
 
 /* ── PORTRAIT MODE -- the felt panel rotates 90deg CW to run tall instead of being squeezed
    into a thin horizontal strip across the middle of the screen; top-row (wheel/info) shrinks
@@ -141,6 +147,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
      `.bet-cell>` so it doesn't ALSO fire on the .cell-label nested inside .cell-text, which
      would double-rotate it. */
   .cell-text,.bet-cell>.cell-label,.cell-stk,.mbtn-corner{transform:rotate(-90deg)}
+  .dolly-marker{transform:translate(-50%,-72%) rotate(-90deg)}
 }
 
 /* ── BOTTOM SECTION ── */
@@ -293,7 +300,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.19</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.20</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">
@@ -339,6 +346,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
       <div id="col21-strip"></div>
       <div id="dozens-row"></div>
       <div id="evens-row"></div>
+      <img id="dolly-marker" class="dolly-marker" src="dolly.png?v=1" alt="">
     </div>
   </div>
 
@@ -819,10 +827,35 @@ function renderRollHistory(){
   });
   hist.scrollLeft=0;
 }
+// ── DOLLY ─────────────────────────────────────────────────────────────────────
+// The real croupier's marker: dropped onto the winning number once a spin resolves, cleared
+// right before the next spin starts (real-table timing -- the dealer pulls it the moment betting
+// reopens, not before). 0/00's rect isn't in a JS-set inline style (they're static HTML using
+// the fixed .zero-top/.zero-bot CSS classes -- see roulette.html's #zero-col markup), so those
+// two are hardcoded here from the same measured felt geometry buildTable() uses everywhere else.
+const ZERO_RECT={'0':{left:0.104,top:0.168,width:8.234,height:31.229},'00':{left:0.104,top:31.397,width:8.234,height:29.63}};
+function placeDolly(pocket){
+  const dolly=document.getElementById('dolly-marker');
+  if(!dolly)return;
+  let r=ZERO_RECT[pocket];
+  if(!r){
+    const cell=document.querySelector('.bet-cell[data-key="straight-'+pocket+'"]');
+    if(!cell)return;
+    r={left:parseFloat(cell.style.left),top:parseFloat(cell.style.top),width:parseFloat(cell.style.width),height:parseFloat(cell.style.height)};
+  }
+  dolly.style.left=(r.left+r.width/2)+'%';
+  dolly.style.top=(r.top+r.height/2)+'%';
+  dolly.style.display='block';
+}
+function clearDolly(){
+  const dolly=document.getElementById('dolly-marker');
+  if(dolly)dolly.style.display='none';
+}
 async function spinWheel(){
   if(spinning||RouletteWheel.isSpinning())return;
   if(tBets()===0){addLog('Place at least one bet before spinning.','info');return;}
   spinning=true;
+  clearDolly(); // real-table timing: the dealer pulls the marker the moment betting reopens
   document.getElementById('spin-btn').disabled=true;
   G.lastBetDisplay=tBets();
   document.getElementById('wheel-result').style.opacity='0';
@@ -857,6 +890,7 @@ async function spinWheel(){
   resEl.textContent=pocket;
   resEl.className='win-'+color;
   resEl.style.opacity='1';
+  placeDolly(pocket);
   (data.log||[]).forEach(line=>{
     const cls=/wins?[!:]|WON|returned/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
     addLog(line,cls);
