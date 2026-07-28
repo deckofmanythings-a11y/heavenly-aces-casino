@@ -243,6 +243,15 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
 .chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));-webkit-user-drag:none}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
+/* .has-stack's own transform:translate(-50%,-50%) above (same specificity, later in source
+   order) was silently beating the portrait media query's .cell-stk{transform:rotate(-90deg)}
+   rule for any cell-stk that also has a placed bet -- found while verifying FP$ chip-stack
+   rendering in portrait mode: the stack centers correctly but never counter-rotates, so it
+   renders sideways. Re-asserted here (after .has-stack in source order) with both transforms
+   combined so centering and counter-rotation both survive. */
+@media (orientation:portrait){
+  .has-stack{transform:translate(-50%,-50%) rotate(-90deg)}
+}
 </style>
 </head>
 <body>
@@ -301,7 +310,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.25</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.26</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">
@@ -474,7 +483,7 @@ const RED_NUMS=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 function pocketColor(n){if(n===0||n==='0'||n===00||n==='00')return 'green';return RED_NUMS.has(+n)?'red':'black';}
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let G={bankroll:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
+let G={bankroll:0,freePlay:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
 let currentPlayer=null,_authMode='login';
 let spinning=false;
 
@@ -535,6 +544,7 @@ function startSession(player){
   document.getElementById('game-screen').style.display='flex';
   document.getElementById('top-bar-username').textContent=player.username;
   G.bankroll=parseFloat(player.bankroll)||0;
+  G.freePlay=parseFloat(player.free_play_balance)||0;
   G.startingBankroll=parseFloat(player.total_redeemed)||0;
   const gs=player.game_state||{};
   if(gs.roulette&&gs.roulette.lastBet){
@@ -547,7 +557,7 @@ function startSession(player){
 async function logout(){
   if(currentPlayer)await sb.from('players').update({session_token:null,session_expires:null}).eq('id',currentPlayer.id);
   localStorage.removeItem('craps_session');currentPlayer=null;
-  G={bankroll:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
+  G={bankroll:0,freePlay:0,startingBankroll:0,chip:25,bets:{},lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,rollHistory:[]};
   document.getElementById('game-screen').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('auth-username').value='';document.getElementById('auth-password').value='';
@@ -671,10 +681,12 @@ function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.
 const MIN_BET=1,MAX_BET=300;
 function placeBet(key){
   if(spinning)return;
-  if(!G.bankroll){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
+  // Free Play counts toward what a player can stage -- roll-roulette already validates
+  // against realBankroll+free_play.balance combined server-side.
+  if(!(G.bankroll+G.freePlay)){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets[key]||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const a=r2(Math.min(G.chip,G.bankroll,MAX_BET-cur));
+  const a=r2(Math.min(G.chip,G.bankroll+G.freePlay,MAX_BET-cur));
   G.bets[key]=r2(cur+a);
   G.bankroll=r2(G.bankroll-a);
   updateUI();
@@ -701,7 +713,7 @@ function repeatLastBet(){
   const snap=G.lastBetSnapshot;
   const cost=Object.values(snap).reduce((a,b)=>r2(a+(b||0)),0);
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
-  if(cost>G.bankroll){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
+  if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
   for(const k in snap){G.bets[k]=snap[k];G.bankroll=r2(G.bankroll-snap[k]);}
   updateUI();
@@ -960,6 +972,7 @@ async function spinWheel(){
   G.lastBetSnapshot={...G.bets};
   G.bets={};
   G.bankroll=data.newBankroll;
+  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   G.lastWin=data.returned||0;
   if(!G.rollHistory)G.rollHistory=[];
   G.rollHistory.unshift({pocket,color});
@@ -1000,23 +1013,31 @@ function updateUI(){
 // ── CHIP STACKS ON BET BOXES ──────────────────────────────────────────────────
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
-function chipStackHTML(amt){
+function chipLabel(amt,isFP){return (isFP?'FP$':'$')+(Number.isInteger(amt)?amt:amt.toFixed(2));}
+function chipStackHTML(amt,isFP){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
-  const label='$'+(Number.isInteger(amt)?amt:amt.toFixed(2));
+  const label=chipLabel(amt,isFP);
   const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
   h+='</span>';
   return h;
 }
+// Freeplay eligibility per spot is a client-side estimate, not the server's real accounting
+// (that only happens on resolve) -- each spot is checked in DOM order against a running
+// balance that depletes as earlier spots claim it, so the total labeled FP$ across the table
+// never overstates the player's actual FP balance.
 function renderChipStacks(){
+  let fpRemaining=(window.FreePlayBadge&&FreePlayBadge.getBalance())||0;
   document.querySelectorAll('.cell-stk').forEach(el=>{
     const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
     if(!m){el.classList.remove('has-stack');el.innerHTML='';return;}
     const amt=parseFloat(m[1].replace(/,/g,''));
     if(!(amt>0)){el.classList.remove('has-stack');return;}
-    el.innerHTML=chipStackHTML(amt);
+    const isFP=amt<=fpRemaining;
+    if(isFP)fpRemaining-=amt;
+    el.innerHTML=chipStackHTML(amt,isFP);
     el.classList.add('has-stack');
   });
 }
