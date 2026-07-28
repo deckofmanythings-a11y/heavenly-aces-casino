@@ -1218,7 +1218,6 @@ body.portrait-craps #felt-portrait{display:flex}
       <div class="modal-input-error" id="bullets-error" style="font-size:14px"></div>
       <div style="display:flex;gap:8px">
         <button class="modal-btn cancel" onclick="cancelBullets()">Cancel</button>
-        <button class="modal-btn" id="bullets-end-btn" onclick="endBullets()" style="display:none;border-color:rgba(240,120,120,.5);color:#f08080">End Bullets</button>
         <button class="modal-btn" onclick="confirmBullets()">Make Bullets</button>
       </div>
     </div>
@@ -1724,7 +1723,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.22</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.23</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2596,6 +2595,14 @@ function maxBettable(){return (G.bulletActive&&G.bulletHard)?Math.max(0,bulletRe
 // (ending, or replacing with a new configuration) triggered it. actionFn runs on acknowledge.
 let pendingBulletsAction=null;
 function showBulletsSummary(actionFn){
+  // Guards against a stray double-fire (rapid double-click/tap, or the End Bullets button
+  // getting hit again before this same dialog is dismissed) re-triggering the whole end-bullets
+  // flow a second time -- G.bulletSessionStart is reset to 0 the moment the FIRST dialog is
+  // acknowledged, so a leftover second call would compute profit as G.bankroll-0, i.e. the
+  // player's ENTIRE bankroll shown as "profit". Reported exactly once as "profit equal to my
+  // bankroll" -- never reproduced through a clean single-click sequence, so this is a defensive
+  // close of that gap rather than a confirmed root cause.
+  if(!document.getElementById('modal-bullets-summary').classList.contains('hidden'))return;
   const profit=r2(G.bankroll-G.bulletSessionStart);
   const amtEl=document.getElementById('bullets-summary-amount');
   const lblEl=document.getElementById('bullets-summary-label');
@@ -2632,22 +2639,18 @@ function onBulletsCountInput(){
   const count=bulletsCountVal();
   document.getElementById('bullets-total').value=per>0?r2(per*count):'';
 }
+// Only ever reachable while G.bulletActive is false -- the sc-stack button itself swaps to
+// "End Bullets" (calling endBullets() directly, no modal) the moment a session starts, per
+// renderBullets(). No reconfigure-while-active branch anymore: Deck reported seeing a stale
+// "End Bullets" option inside this dialog after a session had already ended, so the safest fix
+// is removing that path entirely rather than trying to chase whatever race let it show -- to
+// reconfigure now, End Bullets then Make Bullets fresh.
 function openBulletsModal(){
   document.getElementById('bullets-error').textContent='';
-  const endBtn=document.getElementById('bullets-end-btn');
   document.getElementById('bullets-count').value=1;
-  if(G.bulletActive){
-    document.getElementById('bullets-intro').textContent='You already have bullets going. Making new ones refunds all remaining bullets back into a single total first -- your Playable total won\'t change, just how it\'s split up.';
-    document.getElementById('bullets-total').value=G.bankroll>0?G.bankroll:'';
-    document.getElementById('bullets-count').value=G.bulletCount||1;
-    endBtn.style.display='';
-    document.getElementById('bullets-hard').checked=G.bulletHard;
-  }else{
-    document.getElementById('bullets-intro').textContent='Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn\'t change, only how much of it you\'re using right now.';
-    document.getElementById('bullets-total').value='';
-    endBtn.style.display='none';
-    document.getElementById('bullets-hard').checked=false;
-  }
+  document.getElementById('bullets-intro').textContent='Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn\'t change, only how much of it you\'re using right now.';
+  document.getElementById('bullets-total').value='';
+  document.getElementById('bullets-hard').checked=false;
   onBulletsTotalInput();
   document.getElementById('modal-bullets').classList.remove('hidden');
 }
@@ -2671,6 +2674,7 @@ function confirmBullets(){
   else applyNewBullets();
 }
 function endBullets(){
+  if(!G.bulletActive)return; // already ended -- see the comment on showBulletsSummary
   document.getElementById('modal-bullets').classList.add('hidden');
   showBulletsSummary(()=>{
     G.bulletActive=false;G.bulletSize=0;G.bulletCount=0;G.bulletIndex=0;G.bulletBaseline=0;G.bulletSessionStart=0;
