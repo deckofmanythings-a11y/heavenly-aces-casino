@@ -1019,9 +1019,18 @@
         _checkCollisionsForKnock();
         stepDebt -= STEP;
       }
-      platformMesh.position.y = resolveCtx.correcting
-        ? Math.sin(now / 1000 * 48) * 0.025 + Math.sin(now / 1000 * 19 + 0.7) * 0.015
-        : platformMesh.position.y * 0.85;
+      // Deck: a die hopping/twisting mid-settle with a perfectly still surface underneath it
+      // reads as "nothing was influencing it" -- looks like a physics glitch rather than a die
+      // still finding its rest. This used to only fake-vibrate during resolveCtx.correcting's
+      // active nudging bursts and sit dead still the rest of the time, even though dice keep
+      // moving on their own (rolling, tipping, re-settling) for the whole resolving phase, not
+      // just during a correction. Now vibrates continuously the entire time the dice aren't
+      // settled -- full amplitude while actively correcting, a smaller-but-still-present ambient
+      // shake otherwise -- so there's always a visible "cause" on screen for whatever a die does.
+      {
+        const amp = resolveCtx.correcting ? 1 : 0.35;
+        platformMesh.position.y = (Math.sin(now / 1000 * 48) * 0.025 + Math.sin(now / 1000 * 19 + 0.7) * 0.015) * amp;
+      }
 
       if (resolveCtx.done || resolveCtx.step >= CFG.maxResolveSteps * 2) {
         finishResolve(now);
