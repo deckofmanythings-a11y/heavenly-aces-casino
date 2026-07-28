@@ -1713,6 +1713,7 @@ body.portrait-craps #felt-portrait{display:flex}
       </div>
       <!-- Chips row (1 unit) -->
       <div id="bottom-bar">
+        <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
         <button class="bar-btn" id="undo-btn" onclick="clearLastBet()" title="Undo last bet action">Clear Last Bet</button>
         <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
         <div class="chip" data-val="2" onclick="selectChip(2)">$2</div>
@@ -1723,13 +1724,12 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.21</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.22</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
         <button class="bar-btn" id="double-btn" onclick="doubleBet()">Double</button>
         <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
-        <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
       </div>
     </div>
     <!-- ROLL spans both rows -->
