@@ -512,7 +512,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.9</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.10</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -712,6 +712,7 @@ function makeInitialG(){
     hand:null,       // {playerHole,community,dealerHole}
     locked:{ante:0,blind:0,trips:0,progressive:false},
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
+    lastPlayMult:null, // 4/3/2/1 for the raise just committed, null on a fold -- shown in the hand-history pip
     history:[],
     cardEls:null,
     progressivePool:1000, // shown before the first deal/roll response arrives with a live value
@@ -1125,6 +1126,7 @@ function doRaise(mult){
   const amt=r2(G.locked.ante*mult);
   if(amt<=0||amt>G.bankroll+G.freePlay||amt>PLAY_MAX_BET)return;
   G.playBet=amt;
+  G.lastPlayMult=mult;
   G.bankroll=r2(G.bankroll-amt);
   updateUI();
   commitDecision('play',amt,G.phase);
@@ -1335,6 +1337,7 @@ function doCheck(){
 // ── RAISE / FOLD (server-resolved) ────────────────────────────────────────────
 function doFold(){
   if(G.playBet>0){G.bankroll=r2(G.bankroll+G.playBet);G.playBet=0;} // refund staged-but-uncommitted Play chips
+  G.lastPlayMult=null;
   commitDecision('fold',0,G.phase);
 }
 async function commitDecision(decision,playBet,street){
@@ -1392,7 +1395,10 @@ function finishHand(data){
     G.lastWin=data.payout||0;
     G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
     if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-    const histLabel=data.folded?'Fold':categoryName(playerFinal);
+    // Prefix with the raise multiplier actually committed (4x/3x/2x/1x) so the
+    // history strip doubles as a quick "how often am I betting which street"
+    // record -- Fold has no multiplier since no Play bet was made.
+    const histLabel=data.folded?'Fold':(G.lastPlayMult?G.lastPlayMult+'x ':'')+categoryName(playerFinal);
     // Full hand descriptions (with kicker) for the history pip's hover tooltip -- shown even
     // on a fold, so "what did the dealer have" doesn't require digging into the log.
     let playerDesc=data.folded?'Folded':describeScoreFull(playerFinal);
