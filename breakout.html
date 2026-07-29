@@ -102,7 +102,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
    changes the row's footprint or shifts anything else in the column. */
 #player-row-slot{position:relative;width:100%}
 #player-module{position:relative;width:100%;aspect-ratio:995/630}
-#side-bets-module{position:absolute;left:0;top:0;width:38.5%;aspect-ratio:365/630}
+/* width:36.68% = 365/995 -- side_bets_trim.png (365px) and player_bet_full_trim.png
+   (995px) are crops of the SAME source canvas with pixel-identical badge geometry
+   (confirmed via direct pixel measurement), so side-bets-module's box must be
+   exactly that fraction of player-module's 100%-width box for badges to render at
+   matching real scale and position between the two -- an eyeballed 38.5% here
+   previously made badges visibly grow/shift on a Dealer Bet swap. */
+#side-bets-module{position:absolute;left:0;top:0;width:36.68%;aspect-ratio:365/630}
 #fortune-module{position:relative;width:100%;aspect-ratio:957/647;order:2}
 /* Mode selector -- a plain single-tap toggle, hidden entirely (display:none,
    toggled by renderActionButtons()) whenever a bet or hand is in progress -- only
@@ -523,7 +529,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.12</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.13</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1557,6 +1563,15 @@ async function dealHand(){
   }
   playSfx(SFX_CARD_SHUFFLE);
   addLog('New Hand — '+(data.mode==='breakout'?'Breakout Bet':'Player Bet')+' '+fmt(data.mode==='breakout'?G.bets.breakoutBet:G.bets.playerBet),'divider');
+  // TriLux/Fortune settle instantly at deal (see roll-breakout), independent of
+  // whether the main hand also resolves this response -- if it DOESN'T (phase
+  // stays 'playing', the player still has to act), finishRound() never runs this
+  // turn and its own data.log forward would never fire, silently dropping the
+  // TriLux/Fortune win/loss line. Forward it here, but only when NOT immediately
+  // resolved -- the resolved branch below calls finishRound(data), which forwards
+  // this same data.log itself (it already includes these lines server-side); doing
+  // it here too would double-log every line, not just TriLux/Fortune's.
+  if(!data.resolved)(data.log||[]).forEach(line=>addLog(line,/lost/i.test(line)?'lose':/pays/i.test(line)?'win':'info'));
   G.lastBetSnapshot={...G.bets};
   G.mode=data.mode;
   G.phase=data.phase;
@@ -1574,7 +1589,7 @@ async function dealHand(){
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0};
+  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0,trilux9:0,fortuneBonus:0};
   document.getElementById('dealer-row').classList.add('active');
   document.getElementById('player-row').classList.add('active');
   document.getElementById('dealer-hand-name').textContent='';
