@@ -71,8 +71,31 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#051209;padding:4px;container-type:size}
 #table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);container-type:size}
 
-#bets-module{position:absolute;right:1%;top:50%;transform:translateY(-50%);height:48%;aspect-ratio:1080/1410;z-index:2}
-#bets-module img.bets-module-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none}
+/* Split into 3 (Breakout mode) or 1 (Fortune mode) independently-cropped modules --
+   the 4 source PNGs turned out NOT to share one coordinate space (a direct overlay
+   test showed the dealer-only badges and shared side-bet badges visually colliding
+   when stacked at native position), so each is trimmed to its own content bbox and
+   laid out as its own box here, sized via aspect-ratio to match its trim exactly
+   (so %-based child positions below stay accurate without object-fit letterboxing
+   math). Dealer module on top (Breakout Bonus/Super Tie + Dealer Hand circle), side
+   bets (Pair Up/Sweet 17, shared by both Player and Dealer Bet) + Player Hand circle
+   in a row underneath. */
+#bets-module{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:24%;z-index:2}
+#breakout-modules{display:flex;flex-direction:column;width:100%;gap:4%}
+#bets-module img{display:block;width:100%;height:100%;pointer-events:none;user-select:none;transition:opacity .2s,filter .2s}
+#bets-module img.mode-dim{opacity:.3;filter:grayscale(70%)}
+#dealer-module{position:relative;width:100%;aspect-ratio:958/685}
+#side-player-row{display:flex;width:100%;gap:1.5%}
+#side-bets-module{position:relative;flex:0 0 38.5%;aspect-ratio:365/630}
+#player-module{position:relative;flex:1;aspect-ratio:566/567}
+#fortune-module{position:relative;width:100%;aspect-ratio:957/647}
+/* Mode selector -- a plain single-tap toggle sitting just above the module, hidden
+   entirely (display:none, toggled by renderActionButtons()) whenever a bet or hand
+   is in progress -- only tappable at a clean betting screen. */
+#mode-toggle-btn{position:absolute;left:0;right:0;bottom:calc(100% + 0.8%);width:100%;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,215,0,.55);border-radius:6px;padding:0.5cqh 0.6cqh;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.15cqh;z-index:5}
+#mode-toggle-label{font-size:1.55cqh;font-weight:800;color:#ffd700;letter-spacing:.03em}
+#mode-toggle-hint{font-size:1.1cqh;color:rgba(255,255,255,.6)}
+#mode-toggle-btn.hidden{display:none}
 
 /* Casino-felt printed rule text, drawn directly in the open felt (not baked into
    any art) -- an engraved-serif Google Font stands in for real printed felt type. */
@@ -106,26 +129,32 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .felt-spot.active{}
 .felt-spot.locked{cursor:default}
 .felt-spot.disabled{opacity:.35;cursor:not-allowed}
+.felt-spot.mode-dim{opacity:.3;filter:grayscale(70%)}
 /* Attempted-wrong-spot feedback (mutually-exclusive Player Bet / Breakout Bet): a
    quick red pulse + error sound (see flashSpotError() in the script) instead of the
    quieter dim/disable treatment used elsewhere, per Deck's explicit direction. */
 @keyframes felt-spot-error{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 0.6cqh rgba(255,40,40,.85)}}
 .felt-spot.flash-error{animation:felt-spot-error .5s ease-in-out}
+.paytable-info-btn.disabled{opacity:.35;pointer-events:none}
 
-/* Badge positions measured relative to #bets-module (the 1080x1410 art), not the
-   table panel -- these are now children of #bets-module in the markup. */
-#breakoutbonus-spot{left:11.111%;top:1.418%;width:30.463%;height:21.418%}
-#supertie-spot{left:7.5%;top:24.326%;width:26.852%;height:25.603%}
-#pairplus-spot{left:9.167%;top:52.34%;width:28.889%;height:21.631%}
-#sweet17-spot{left:4.352%;top:76.17%;width:33.056%;height:20.78%}
+/* Badge/circle spot positions, each measured relative to its OWN trimmed module
+   image (ffmpeg raw-RGBA + connected-region scan against the trimmed asset, same
+   technique as always -- see panel-art.md), not the table panel. */
+#breakoutbonus-spot{left:4.07%;top:0%;width:33.7%;height:44.1%}
+#supertie-spot{left:0%;top:47.2%;width:30.3%;height:52.7%}
+#pairplus-spot{left:14.2%;top:0%;width:85.5%;height:48.4%}
+#sweet17-spot{left:0%;top:53.3%;width:97.8%;height:46.5%}
 
 /* The two main-wager bet spots ARE the baked DEALER HAND (red) / PLAYER HAND (blue)
    ring circles themselves -- matches the Dealer Instruction Manual's own diagrams
    (fig. 6-8), which show chips placed directly on these two circles. Mutually
    exclusive: betting one while the other already carries chips flashes the other
    red instead of accepting the bet (see placePlayerBet/placeDealerBet). */
-#dealerbet-spot{left:43.889%;top:9.433%;width:52.222%;height:40.142%;border-radius:50%}
-#playerbet-spot{left:44.167%;top:53.191%;width:52.222%;height:40.142%;border-radius:50%}
+#dealerbet-spot{left:41%;top:16.5%;width:58.9%;height:82.8%;border-radius:50%}
+#playerbet-spot{left:0;top:0;width:100%;height:100%;border-radius:50%}
+#fortunebet-spot{left:0;top:0;width:100%;height:100%;border-radius:50%}
+#trilux9-spot{left:2%;top:2%;width:38%;height:42%}
+#fortunebonus-spot{left:2%;top:48%;width:38%;height:50%}
 
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
@@ -351,9 +380,12 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   .hand-group-label{font-size:1.9cqh}
   .crl-hand{font-size:1.7cqh;bottom:-2.4cqh}
 
-  /* Module now sized by width (70%, centered) instead of height -- badge/circle/
-     light percentages inside it are unchanged (module-relative). */
-  #bets-module{left:32.5%;right:auto;top:60%;transform:none;height:auto;width:35%}
+  /* Module repositioned/centered for the narrow screen -- badge/circle/light
+     percentages inside each sub-module are unchanged (module-relative). */
+  #bets-module{left:28%;right:auto;top:58%;transform:none;width:44%}
+  #mode-toggle-btn{bottom:calc(100% + 1.5%)}
+  #mode-toggle-label{font-size:1.9cqh}
+  #mode-toggle-hint{font-size:1.4cqh}
 
   .panel-spot-stk{font-size:1.2cqh}
   .paytable-info-btn{width:5.5%;height:3.8%;font-size:1.4cqh}
@@ -471,7 +503,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.8</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.9</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -524,38 +556,73 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <span class="crl-hand" id="player-hand-name"></span>
       </div>
 
-      <!-- breakout_blackjack_felt_bets.webp: just the two bet-hand circles + four
-           side-bet badges (1080x1410), placed as one module. Every interactive
-           element below is a %-of-THIS-IMAGE overlay (see the CSS comment on
-           #bets-module), so it's a child of this div, not #table-panel directly. -->
+      <!-- Breakout Blackjack (breakout mode): three independently-trimmed art pieces
+           layered top-to-bottom (see the #bets-module CSS comment for why they're
+           not one combined image). Fortune Blackjack (fortune mode) swaps all of
+           this for the single #fortune-module below -- see toggleGameMode(). -->
       <div id="bets-module">
-        <img class="bets-module-art" src="breakout_blackjack_felt_bets.webp" alt="">
+        <div id="breakout-modules">
+          <div id="dealer-module">
+            <img id="dealer-module-art" src="dealer_bet_trim.png" alt="">
+            <div class="felt-spot" id="dealerbet-spot" onclick="placeDealerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removeDealerBet()">
+              <span class="panel-spot-stk" id="stk-breakoutBet"></span>
+            </div>
+            <div class="felt-spot" id="breakoutbonus-spot" onclick="placeBet('breakoutBonus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('breakoutBonus')">
+              <span class="panel-spot-stk" id="stk-breakoutBonus"></span>
+            </div>
+            <button class="paytable-info-btn" id="breakoutbonus-info" onclick="event.stopPropagation();openPaytable('breakoutBonus')" title="Breakout Bonus Paytable">ⓘ</button>
+            <div class="felt-spot" id="supertie-spot" onclick="placeBet('superTie')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superTie')">
+              <span class="panel-spot-stk" id="stk-superTie"></span>
+            </div>
+            <button class="paytable-info-btn" id="supertie-info" onclick="event.stopPropagation();openPaytable('superTie')" title="Super Tie Paytable">ⓘ</button>
+          </div>
+          <div id="side-player-row">
+            <div id="side-bets-module">
+              <img id="side-bets-module-art" src="side_bets_trim.png" alt="">
+              <div class="felt-spot" id="pairplus-spot" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
+                <span class="panel-spot-stk" id="stk-pairPlus"></span>
+              </div>
+              <button class="paytable-info-btn" id="pairplus-info" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
+              <div class="felt-spot" id="sweet17-spot" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
+                <span class="panel-spot-stk" id="stk-sweet17"></span>
+              </div>
+              <button class="paytable-info-btn" id="sweet17-info" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
+            </div>
+            <div id="player-module">
+              <img id="player-module-art" src="player_bet_trim.png" alt="">
+              <div class="felt-spot" id="playerbet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
+                <span class="panel-spot-stk" id="stk-playerBet"></span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <!-- The two main-wager bet spots are the DEALER HAND / PLAYER HAND ring
-             circles themselves -- mutually exclusive (see placePlayerBet/placeDealerBet). -->
-        <div class="felt-spot" id="dealerbet-spot" onclick="placeDealerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removeDealerBet()">
-          <span class="panel-spot-stk" id="stk-breakoutBet"></span>
-        </div>
-        <div class="felt-spot" id="playerbet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
-          <span class="panel-spot-stk" id="stk-playerBet"></span>
+        <!-- Fortune Blackjack: standard blackjack, no dealer-bet option -- one
+             module (Player Hand circle + TriLux + Fortune badges). Hidden unless
+             G.gameMode==='fortune' (see setGameMode()). -->
+        <div id="fortune-module" style="display:none">
+          <img id="fortune-module-art" src="fortune_trim.png" alt="">
+          <div class="felt-spot" id="fortunebet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
+            <span class="panel-spot-stk" id="stk-fortuneMain"></span>
+          </div>
+          <div class="felt-spot" id="trilux9-spot" onclick="placeBet('trilux9')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trilux9')">
+            <span class="panel-spot-stk" id="stk-trilux9"></span>
+          </div>
+          <button class="paytable-info-btn" id="trilux9-info" onclick="event.stopPropagation();openPaytable('trilux9')" title="TriLux Paytable">ⓘ</button>
+          <div class="felt-spot" id="fortunebonus-spot" onclick="placeBet('fortuneBonus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fortuneBonus')">
+            <span class="panel-spot-stk" id="stk-fortuneBonus"></span>
+          </div>
+          <button class="paytable-info-btn" id="fortunebonus-info" onclick="event.stopPropagation();openPaytable('fortuneBonus')" title="Fortune Paytable">ⓘ</button>
         </div>
 
-        <div class="felt-spot" id="supertie-spot" onclick="placeBet('superTie')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superTie')">
-          <span class="panel-spot-stk" id="stk-superTie"></span>
-        </div>
-        <button class="paytable-info-btn" id="supertie-info" onclick="event.stopPropagation();openPaytable('superTie')" title="Super Tie Paytable">ⓘ</button>
-        <div class="felt-spot" id="breakoutbonus-spot" onclick="placeBet('breakoutBonus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('breakoutBonus')">
-          <span class="panel-spot-stk" id="stk-breakoutBonus"></span>
-        </div>
-        <button class="paytable-info-btn" id="breakoutbonus-info" onclick="event.stopPropagation();openPaytable('breakoutBonus')" title="Breakout Bonus Paytable">ⓘ</button>
-        <div class="felt-spot" id="sweet17-spot" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
-          <span class="panel-spot-stk" id="stk-sweet17"></span>
-        </div>
-        <button class="paytable-info-btn" id="sweet17-info" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
-        <div class="felt-spot" id="pairplus-spot" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
-          <span class="panel-spot-stk" id="stk-pairPlus"></span>
-        </div>
-        <button class="paytable-info-btn" id="pairplus-info" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
+        <!-- Mode selector: plain single-tap toggle, hidden entirely (not just
+             disabled) whenever a bet or hand is in progress -- only tappable at a
+             clean betting screen, per Deck's explicit "locked while mid-round only"
+             call (no confirm modal, no press-and-hold). -->
+        <button id="mode-toggle-btn" onclick="toggleGameMode()" title="Switch game mode">
+          <span id="mode-toggle-label">Playing: Breakout Blackjack</span>
+          <span id="mode-toggle-hint">tap to switch to Fortune Blackjack</span>
+        </button>
 
         <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
              has no baked-in bulb art, so lightOFF.webp sits idle over open felt and swaps
@@ -708,7 +775,12 @@ function makeInitialG(){
     bankroll:0,freePlay:0,startingBankroll:0,chip:25,
     // Flat bet object, matching the chip-ui.md convention -- all four side bets plus
     // the two mutually-exclusive main bets share one dict, keyed by string identifier.
-    bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0},
+    bets:{playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0,trilux9:0,fortuneBonus:0},
+    // 'breakout'|'fortune' -- which felt module/game the player has selected. Only
+    // switchable at a clean betting screen (see toggleGameMode()); sent to the
+    // server as part of every 'deal' request so it can gate which side bets and
+    // main-wager spots are legal for that round.
+    gameMode:'breakout',
     // 'player'|'breakout'|null -- which of the two bet circles carries chips right
     // now (derived, not chosen directly). Null pre-deal until a spot is bet; the
     // server echoes back the confirmed mode in its 'deal' response for the round.
@@ -1011,8 +1083,32 @@ function removeBet(key){
 function clearBets(){
   if(G.phase!=='betting')return;
   const ret=Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0);
-  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0};
+  G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0,trilux9:0,fortuneBonus:0};
   G.bankroll=r2(G.bankroll+ret);
+  updateUI();
+}
+
+// ── GAME MODE (Breakout Blackjack vs Fortune Blackjack) ──────────────────────
+// A plain single-tap toggle -- no confirm modal, no press-and-hold. The button
+// itself is hidden (not just disabled) any time G.phase!=='betting', so it's only
+// ever reachable at a clean betting screen -- see renderActionButtons(). Switching
+// clears any staged bets, since the two modes don't share the same bet-spot keys.
+function toggleGameMode(){
+  if(G.phase!=='betting')return;
+  setGameMode(G.gameMode==='breakout'?'fortune':'breakout');
+}
+function setGameMode(mode){
+  if(G.phase!=='betting')return;
+  if(G.gameMode!==mode){
+    const ret=Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0);
+    if(ret>0){G.bankroll=r2(G.bankroll+ret);G.bets={playerBet:0,breakoutBet:0,superTie:0,breakoutBonus:0,sweet17:0,pairPlus:0,progressive:0,trilux:0,trilux9:0,fortuneBonus:0};}
+  }
+  G.gameMode=mode;
+  const isFortune=mode==='fortune';
+  document.getElementById('breakout-modules').style.display=isFortune?'none':'';
+  document.getElementById('fortune-module').style.display=isFortune?'':'none';
+  document.getElementById('mode-toggle-label').textContent='Playing: '+(isFortune?'Fortune Blackjack':'Breakout Blackjack');
+  document.getElementById('mode-toggle-hint').textContent='tap to switch to '+(isFortune?'Breakout Blackjack':'Fortune Blackjack');
   updateUI();
 }
 
@@ -1085,6 +1181,15 @@ const PAYTABLE_CONTENT={
   pairPlus:{title:'Pair Up',rows:[
     ['Both hands paired','50 to 1'],['Either hand a suited pair','5 to 1'],['Either hand a pair','3 to 1'],
   ],note:'Off the opening two cards only, unaffected by a later split.'},
+  trilux9:{title:'TriLux',rows:[
+    ['Mini Royal (suited Q-K-A)','9 to 1'],['Straight Flush','9 to 1'],['Three of a Kind','9 to 1'],
+    ['Straight','9 to 1'],['Flush','9 to 1'],
+  ],note:'Your two cards + the dealer’s up card, scored as a 3-card poker hand. Flat 9 to 1 on any winning combo.'},
+  fortuneBonus:{title:'Fortune',rows:[
+    ['Suited 7-7-7','200 to 1'],['Suited 6-7-8','100 to 1'],['Unsuited 7-7-7','50 to 1'],
+    ['Unsuited 6-7-8','20 to 1'],['Suited 21','10 to 1'],['Unsuited 21','3 to 1'],
+    ['Any 20','2 to 1'],['Any 19','2 to 1'],
+  ],note:'Your two cards + the dealer’s up card. Checked in this order, most specific first.'},
 };
 function openPaytable(key){
   const p=PAYTABLE_CONTENT[key];if(!p)return;
@@ -1309,6 +1414,7 @@ function revealDealerHand(fullDealerHand){
 
 // ── ACTION BUTTONS ────────────────────────────────────────────────────────────
 function renderActionButtons(){
+  document.getElementById('mode-toggle-btn').classList.toggle('hidden',G.phase!=='betting');
   const dealVisible=G.phase==='betting';
   const playing=G.phase==='playing'&&G.mode==='player';
   document.getElementById('btn-deal').style.display=dealVisible?'':'none';
@@ -1382,8 +1488,9 @@ async function dealHand(){
   const trilux=(G.bets.trilux||0)>0;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
-  const body={session_token:token,action:'deal',playerBet,breakoutBet,
-    superTie:G.bets.superTie||0,breakoutBonus:G.bets.breakoutBonus||0,sweet17:G.bets.sweet17||0,pairPlus:G.bets.pairPlus||0,progressive,trilux};
+  const body={session_token:token,action:'deal',game:G.gameMode,playerBet,breakoutBet,
+    superTie:G.bets.superTie||0,breakoutBonus:G.bets.breakoutBonus||0,sweet17:G.bets.sweet17||0,pairPlus:G.bets.pairPlus||0,progressive,trilux,
+    trilux9:G.bets.trilux9||0,fortuneBonus:G.bets.fortuneBonus||0};
   let data;
   try{
     const res=await fetch(FUNCTIONS_URL+'/roll-breakout',{method:'POST',headers:FN_HEADERS,body:JSON.stringify(body)});
@@ -1661,6 +1768,30 @@ function updateUI(){
   dealerSpot.classList.toggle('active',dealerAmt>0);
   dealerSpot.classList.toggle('locked',locked);
 
+  // Fortune Blackjack module -- reuses the same playerBet field as its main wager
+  // (see placePlayerBet/removePlayerBet, wired directly on #fortunebet-spot).
+  const fortuneSpot=document.getElementById('fortunebet-spot');
+  document.getElementById('stk-fortuneMain').textContent=playerAmt?fmt(playerAmt):'';
+  fortuneSpot.classList.toggle('active',playerAmt>0);
+  fortuneSpot.classList.toggle('locked',locked);
+  ['trilux9','fortuneBonus'].forEach(key=>{
+    const amt=snap[key]||0;
+    document.getElementById('stk-'+key).textContent=amt?fmt(amt):'';
+    const spotEl=document.getElementById(key.toLowerCase()+'-spot');
+    if(spotEl){spotEl.classList.toggle('active',amt>0);spotEl.classList.toggle('locked',locked);}
+  });
+  // Modal dimming (pre-deal only): staging one main-wager circle visually grays out
+  // the OTHER circle -- Player Bet dims the Dealer circle AND its two dealer-only
+  // side bets (Super Tie, Breakout Bonus); Dealer Bet dims only the Player circle,
+  // since all four side bets stay live on a Dealer Bet. Clicking a dimmed spot still
+  // fires the existing flash-red rejection (placePlayerBet/placeDealerBet already
+  // handle that) -- this is purely the visual half.
+  const dimDealerSide=!locked&&playerAmt>0, dimPlayerSide=!locked&&dealerAmt>0;
+  document.getElementById('dealer-module-art').classList.toggle('mode-dim',dimDealerSide);
+  document.getElementById('player-module-art').classList.toggle('mode-dim',dimPlayerSide);
+  dealerSpot.classList.toggle('mode-dim',dimDealerSide);
+  playerSpot.classList.toggle('mode-dim',dimPlayerSide);
+
   SIDE_BET_KEYS.forEach(key=>{
     const amt=snap[key]||0;
     document.getElementById('stk-'+key).textContent=amt?fmt(amt):'';
@@ -1670,9 +1801,12 @@ function updateUI(){
       spotEl.classList.toggle('locked',locked);
       // Super Tie/Breakout Bonus are Breakout-Bet-only -- read as unavailable until
       // the Dealer Bet circle actually carries chips (matches the server's
-      // mode-gated rejection).
+      // mode-gated rejection), and also dim when a Player Bet is staged instead.
       if(BREAKOUT_ONLY_KEYS.includes(key)){
         spotEl.classList.toggle('disabled',!locked&&(G.bets.breakoutBet||0)<=0);
+        spotEl.classList.toggle('mode-dim',dimDealerSide);
+        const infoEl=document.getElementById(key.toLowerCase()+'-info');
+        if(infoEl)infoEl.classList.toggle('disabled',dimDealerSide);
       }
     }
   });
