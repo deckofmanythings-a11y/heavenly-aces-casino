@@ -53,18 +53,19 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* ── TABLE AREA / FELT (plain CSS, no baked art -- see breakout.html for precedent) ── */
 #table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px;container-type:size}
-#table-panel{position:relative;aspect-ratio:3200/1500;width:min(100cqw,213.3cqh);height:min(100cqh,46.87cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);border:1px solid rgba(255,215,0,.15);border-radius:1.5cqh;container-type:size;display:flex;flex-direction:column}
+#table-panel{position:relative;aspect-ratio:3200/2000;width:min(100cqw,160cqh);height:min(100cqh,62.5cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);border:1px solid rgba(255,215,0,.15);border-radius:1.5cqh;container-type:size;display:flex;flex-direction:column}
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
-.card-region{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:0.6cqh 1cqh}
+.card-region{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:0.3cqh 1cqh;min-height:0}
 .card-region + .card-region{border-top:1px solid rgba(255,215,0,.12)}
-.felt-label{font-family:'Cinzel',serif;font-weight:800;color:#ffe066;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);font-size:2.4cqh;margin-bottom:0.4cqh}
-.card-row{display:flex;flex-direction:row;align-items:flex-start;justify-content:center;gap:0.7cqh;flex-wrap:nowrap}
-.pc-slot-wrap{display:flex;flex-direction:column;align-items:center;gap:0.3cqh}
-.pc-slot-wrap .pc-card{--pc-w:8.6cqh}
-.pc-slot-tag{font-size:1.25cqh;font-weight:800;letter-spacing:.06em;text-transform:uppercase;min-height:1.5cqh;color:rgba(255,255,255,.35)}
-.pc-slot-wrap.low-tag .pc-slot-tag{color:#ff8a80}
-.pc-slot-wrap.high-tag .pc-slot-tag{color:#7ee87e}
+.felt-label{font-family:'Cinzel',serif;font-weight:800;color:#ffe066;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);font-size:2.1cqh;margin-bottom:0.25cqh}
+.split-block{display:flex;flex-direction:column;align-items:center;gap:0.15cqh}
+.row-label{font-size:1.2cqh;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);line-height:1.4}
+.split-block .row-label.low-label{color:#ff8a80}
+.split-block .row-label.high-label{color:#7ee87e}
+.card-row{display:flex;flex-direction:row;align-items:flex-start;justify-content:center;gap:0.5cqh;flex-wrap:nowrap}
+.pc-slot-wrap{display:flex;flex-direction:column;align-items:center}
+.pc-slot-wrap .pc-card{--pc-w:13cqh}
 .pc-slot-wrap.low-tag .pc-card .pc-face{box-shadow:0 0 0 2px rgba(255,138,128,.65),0 2px 6px rgba(0,0,0,.45)}
 .pc-slot-wrap.high-tag .pc-card .pc-face{box-shadow:0 0 0 2px rgba(126,232,126,.55),0 2px 6px rgba(0,0,0,.45)}
 .pc-slot-wrap.selectable{cursor:pointer}
@@ -72,8 +73,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .pc-slot-wrap.selectable:hover .pc-card{transform:translateY(-0.4cqh)}
 .pc-slot-wrap.selected .pc-card .pc-face{box-shadow:0 0 0 3px #ffd700,0 2px 8px rgba(0,0,0,.5)}
 .pc-slot-wrap.selected .pc-card{transform:translateY(-0.8cqh)}
-.hand-line{font-size:1.9cqh;color:#ffd700;font-weight:700;min-height:2.3cqh;margin-top:0.4cqh;text-align:center}
-.select-hint{font-size:1.55cqh;min-height:1.9cqh;text-align:center;color:rgba(255,255,255,.6);margin-top:0.2cqh}
+.hand-line{font-size:1.8cqh;color:#ffd700;font-weight:700;min-height:2.2cqh;margin-top:0.25cqh;text-align:center}
+.select-hint{font-size:1.5cqh;min-height:1.8cqh;text-align:center;color:rgba(255,255,255,.6);margin-top:0.15cqh}
 .select-hint.ok{color:#7ee87e}
 .select-hint.bad{color:#ff8a80}
 
@@ -197,7 +198,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 @media (orientation:portrait){
   #left-col-header{width:20vw;min-width:110px}
   #info-panel{width:34vw}
-  .pc-slot-wrap .pc-card{--pc-w:6.2cqh}
+  .pc-slot-wrap .pc-card{--pc-w:8.4cqh}
   #bet-spots-row{gap:5vw}
   .bet-spot{width:min(50px,13vw);height:min(50px,13vw)}
   #action-row{width:100%}
@@ -280,7 +281,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.2</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.4</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -312,12 +313,23 @@ input,textarea{-webkit-user-select:text;user-select:text}
     <div id="table-panel">
       <div class="card-region" id="dealer-region">
         <span class="felt-label">Dealer's Hand — Face Up, House Way</span>
-        <div class="card-row" id="dealer-row"></div>
+        <div class="split-block">
+          <div class="row-label low-label">Low</div>
+          <div class="card-row" id="dealer-low-row"></div>
+          <div class="row-label high-label">High</div>
+          <div class="card-row" id="dealer-high-row"></div>
+        </div>
         <div class="hand-line" id="dealer-hand-line"></div>
       </div>
       <div class="card-region" id="player-region">
         <span class="felt-label">Your Hand</span>
-        <div class="card-row" id="player-row"></div>
+        <div class="card-row" id="player-select-row"></div>
+        <div class="split-block" id="player-split-block" style="display:none">
+          <div class="row-label low-label">Low</div>
+          <div class="card-row" id="player-low-row"></div>
+          <div class="row-label high-label">High</div>
+          <div class="card-row" id="player-high-row"></div>
+        </div>
         <div class="hand-line" id="player-hand-line"></div>
         <div class="select-hint" id="select-hint"></div>
       </div>
@@ -373,10 +385,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
     </div>
     <div id="action-row">
       <button class="action-btn" id="btn-deal" onclick="dealHand()">DEAL</button>
-      <button class="action-btn" id="btn-set-own" onclick="enterSelecting()" style="display:none">SET MY OWN HAND</button>
-      <button class="action-btn secondary" id="btn-set-house" onclick="resolvePaiGow({setMode:'house'})" style="display:none">HOUSE WAY</button>
-      <button class="action-btn" id="btn-confirm-hand" onclick="confirmOwnHand()" style="display:none" disabled>CONFIRM</button>
-      <button class="action-btn secondary" id="btn-cancel-select" onclick="exitSelecting()" style="display:none">CANCEL</button>
+      <button class="action-btn" id="btn-confirm-hand" onclick="confirmOwnHand()" style="display:none" disabled>Choose 2 Cards for Low Hand</button>
+      <button class="action-btn secondary" id="btn-set-house" onclick="resolvePaiGow({setMode:'house'})" style="display:none">Set House Way</button>
     </div>
   </div>
 
@@ -631,12 +641,11 @@ function startSession(player){
     // than strand the already-committed Ante/Fortune/Light.
     G.locked={ante:gs.paigow.ante,fortune:gs.paigow.fortune,light:gs.paigow.light};
     G.hand={playerCards:gs.paigow.playerCards,dealerCards:gs.paigow.dealerCards,dealerLow:null,dealerHigh:null};
-    G.phase='arranging';
-    document.getElementById('dealer-row').classList.add('active');
-    document.getElementById('player-row').classList.add('active');
+    G.phase='selecting';G.selectedLow=[];
     const dealerSplit=setHouseWayClient(gs.paigow.dealerCards);
     G.hand.dealerLow=dealerSplit.low;G.hand.dealerHigh=dealerSplit.high;
     renderDealtCardsStatic();
+    activateSelectionMode();
   }
   renderActionButtons();updateStatusZone();updateUI();
 }
@@ -797,37 +806,63 @@ function openPaytable(key){
 function closePaytable(){document.getElementById('modal-paytable').classList.add('hidden');}
 
 // ── CARD SLOTS ────────────────────────────────────────────────────────────────
+// Each side's 7 slot-wraps are built once and reused for the whole session (see
+// architecture.md's "reuse by reparenting" convention) -- rather than duplicating
+// markup for a flat selection row vs. a settled two-row Low/High display, the SAME
+// 7 wrap elements just get moved into whichever row container matches the current
+// picture: the player's flat #player-select-row while picking, or the split
+// #*-low-row/#*-high-row pair once a split is known (immediately for the dealer,
+// only once resolved for the player).
 function makeSlotWrap(){
   const wrap=document.createElement('div');wrap.className='pc-slot-wrap';
   const card=Cards.makeSlot();wrap.appendChild(card);
-  const tag=document.createElement('span');tag.className='pc-slot-tag';wrap.appendChild(tag);
-  return{wrap,card,tag};
+  return{wrap,card};
 }
 function buildCardSlots(){
   if(G.cardEls)return;
-  const dealerRow=document.getElementById('dealer-row');
-  const playerRow=document.getElementById('player-row');
+  const playerSelectRow=document.getElementById('player-select-row');
   const dealer=[];const player=[];
-  for(let i=0;i<7;i++){const s=makeSlotWrap();dealerRow.appendChild(s.wrap);dealer.push(s);}
+  for(let i=0;i<7;i++)dealer.push(makeSlotWrap()); // detached -- parented on the first deal
   for(let i=0;i<7;i++){
     const s=makeSlotWrap();
     ((idx)=>{s.wrap.onclick=()=>onPlayerCardClick(idx);})(i);
-    playerRow.appendChild(s.wrap);player.push(s);
+    playerSelectRow.appendChild(s.wrap);player.push(s);
   }
   G.cardEls={dealer,player};
 }
-function tagRow(slots,cards7,lowCards){
+// Reparents each of the 7 slots into the low or high row (by actual card identity,
+// not position) and tags it for the border-color styling -- this is what visually
+// puts the Low hand's cards above the High hand's on the felt.
+// Moving an element to a new parent while its cards.js "deal-in" keyframe animation
+// still has its class/inline animation-delay attached can make the browser treat the
+// move as a fresh style application and restart that animation from its 0% keyframe
+// -- confirmed live (a reparented card was stuck rendering at deal-in's faded/shrunk
+// starting frame instead of full size). By the time anything calls this, the deal-in
+// animation is always long finished in real time (the dealer's split happens right
+// as it starts, well before dealIn's own delay/duration elapse, and the player's
+// happens only after the whole selecting phase) -- so it's always safe to strip it
+// here rather than risk it restarting mid-move.
+function splitIntoRows(slots,cards7,lowCards,lowRowEl,highRowEl){
   const lowKeys=new Set((lowCards||[]).map(cardKey));
   slots.forEach((slot,i)=>{
     const c=cards7[i];
     const isLow=lowKeys.has(cardKey(c));
     slot.wrap.classList.toggle('low-tag',isLow);
     slot.wrap.classList.toggle('high-tag',!isLow);
-    slot.tag.textContent=isLow?'LOW':'HIGH';
+    slot.card.classList.remove('deal-in');
+    slot.card.style.animationDelay='';
+    (isLow?lowRowEl:highRowEl).appendChild(slot.wrap);
+  });
+}
+function resetPlayerRowFlat(){
+  const row=document.getElementById('player-select-row');
+  G.cardEls.player.forEach(slot=>{
+    slot.wrap.classList.remove('low-tag','high-tag','selected','selectable');
+    row.appendChild(slot.wrap);
   });
 }
 function clearTags(slots){
-  slots.forEach(slot=>{slot.wrap.classList.remove('low-tag','high-tag','selected','selectable');slot.tag.textContent='';});
+  slots.forEach(slot=>{slot.wrap.classList.remove('low-tag','high-tag','selected','selectable');});
 }
 
 // ── HOUSE WAY (client mirror, used only to display the dealer's split immediately on
@@ -931,16 +966,20 @@ async function dealHand(){
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   G.bets={ante:0,fortune:0};
-  G.phase='arranging';
-  document.getElementById('dealer-row').classList.add('active');
-  document.getElementById('player-row').classList.add('active');
+  G.selectedLow=[];
+  G.phase='selecting';
   document.getElementById('repeat-btn').disabled=false;
+  ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until the deal settles
   renderDealtCardsAnimated();
-  updateStatusZone();renderActionButtons();updateUI();
+  updateUI();
 }
 const DEAL_STAGGER_MS=90;
 function renderDealtCardsAnimated(){
   clearTags(G.cardEls.dealer);clearTags(G.cardEls.player);
+  // The dealer's split is already known (always the house way), so its slots deal
+  // directly into their final Low/High rows -- no flat "undecided" row needed for it.
+  splitIntoRows(G.cardEls.dealer,G.hand.dealerCards,G.hand.dealerLow,document.getElementById('dealer-low-row'),document.getElementById('dealer-high-row'));
+  resetPlayerRowFlat();
   G.cardEls.dealer.forEach((slot,i)=>{
     Cards.reset(slot.card);Cards.setFront(slot.card,G.hand.dealerCards[i]);Cards.dealIn(slot.card,i*DEAL_STAGGER_MS);
     setTimeout(()=>{Cards.flipUp(slot.card);playSfx(SFX_CARD_SLIDE,true);},i*DEAL_STAGGER_MS+420);
@@ -951,31 +990,30 @@ function renderDealtCardsAnimated(){
   });
   const settleMs=7*DEAL_STAGGER_MS+900;
   setTimeout(()=>{
-    tagRow(G.cardEls.dealer,G.hand.dealerCards,G.hand.dealerLow);
     document.getElementById('dealer-hand-line').textContent='High: '+handName(evaluate5(G.hand.dealerHigh))+'  •  Low: '+handNameLow(evaluateLow(G.hand.dealerLow));
+    activateSelectionMode();
   },settleMs);
 }
 function renderDealtCardsStatic(){
   clearTags(G.cardEls.dealer);clearTags(G.cardEls.player);
+  splitIntoRows(G.cardEls.dealer,G.hand.dealerCards,G.hand.dealerLow,document.getElementById('dealer-low-row'),document.getElementById('dealer-high-row'));
+  resetPlayerRowFlat();
   G.cardEls.dealer.forEach((slot,i)=>{Cards.reset(slot.card);Cards.setFront(slot.card,G.hand.dealerCards[i]);Cards.flipUp(slot.card);});
   G.cardEls.player.forEach((slot,i)=>{Cards.reset(slot.card);Cards.setFront(slot.card,G.hand.playerCards[i]);Cards.flipUp(slot.card);});
-  tagRow(G.cardEls.dealer,G.hand.dealerCards,G.hand.dealerLow);
   document.getElementById('dealer-hand-line').textContent='High: '+handName(evaluate5(G.hand.dealerHigh))+'  •  Low: '+handNameLow(evaluateLow(G.hand.dealerLow));
 }
 
 // ── SET YOUR OWN HAND (client-side legality preview only; server re-validates) ───
-function enterSelecting(){
-  if(G.phase!=='arranging')return;
-  G.phase='selecting';G.selectedLow=[];
+// The player starts every hand already in picking mode -- there's no separate
+// "choose how to set it" screen. Set House Way always short-circuits straight to
+// resolve regardless of anything picked so far; otherwise the single dynamic button
+// reads "Choose 2 Cards for Low Hand" until exactly 2 legal picks are made, then
+// becomes "Confirm".
+function activateSelectionMode(){
   G.cardEls.player.forEach(slot=>slot.wrap.classList.add('selectable'));
+  document.getElementById('player-select-row').style.display='';
+  document.getElementById('player-split-block').style.display='none';
   renderActionButtons();updateStatusZone();renderSelection();
-}
-function exitSelecting(){
-  if(G.phase!=='selecting')return;
-  G.phase='arranging';G.selectedLow=[];
-  G.cardEls.player.forEach(slot=>{slot.wrap.classList.remove('selectable','selected');});
-  document.getElementById('select-hint').textContent='';
-  renderActionButtons();updateStatusZone();
 }
 function onPlayerCardClick(i){
   if(G.phase!=='selecting')return;
@@ -996,9 +1034,10 @@ function renderSelection(){
   const btnConfirm=document.getElementById('btn-confirm-hand');
   if(G.selectedLow.length<2){
     const n=2-G.selectedLow.length;
+    btnConfirm.textContent='Choose 2 Cards for Low Hand';
+    btnConfirm.disabled=true;
     hint.textContent='Pick '+n+' more card'+(n===1?'':'s')+' for your Low hand.';
     hint.className='select-hint';
-    btnConfirm.disabled=true;
   }else{
     const lowScore=evaluateLow(G.selectedLow);
     const highCards=G.hand.playerCards.filter(c=>!lowKeys.has(cardKey(c)));
@@ -1008,6 +1047,7 @@ function renderSelection(){
       ?('Low: '+handNameLow(lowScore)+'  •  High: '+handName(highScore)+'. Legal — Confirm to lock it in.')
       :('Illegal — your Low hand ('+handNameLow(lowScore)+') beats your High hand ('+handName(highScore)+'). Pick a different Low pair.');
     hint.className='select-hint '+(legal?'ok':'bad');
+    btnConfirm.textContent='Confirm';
     btnConfirm.disabled=!legal;
   }
 }
@@ -1018,7 +1058,7 @@ function confirmOwnHand(){
 
 // ── RESOLVE ───────────────────────────────────────────────────────────────────
 async function resolvePaiGow(extra){
-  ['btn-set-own','btn-set-house','btn-confirm-hand','btn-cancel-select'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=true;});
+  ['btn-set-house','btn-confirm-hand'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=true;});
   const token=localStorage.getItem('craps_session');
   const body=Object.assign({session_token:token,action:'resolve'},extra);
   let data;
@@ -1027,7 +1067,8 @@ async function resolvePaiGow(extra){
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   if(!data.ok){
-    ['btn-set-own','btn-set-house'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=false;});
+    document.getElementById('btn-set-house').disabled=false;
+    if(G.selectedLow.length===2)document.getElementById('btn-confirm-hand').disabled=false;
     addLog(data.message||'Action failed.','lose');return;
   }
   finishHand(data);
@@ -1035,8 +1076,12 @@ async function resolvePaiGow(extra){
 let postRoundTimer=null;
 function finishHand(data){
   G.cardEls.player.forEach(slot=>slot.wrap.classList.remove('selectable','selected'));
-  tagRow(G.cardEls.player,G.hand.playerCards,data.playerLow);
-  tagRow(G.cardEls.dealer,G.hand.dealerCards,data.dealerLow);
+  // Settled: the Low hand's 2 cards move above the High hand's 5, on both sides of
+  // the felt (the dealer's was already shown this way from deal time).
+  splitIntoRows(G.cardEls.player,G.hand.playerCards,data.playerLow,document.getElementById('player-low-row'),document.getElementById('player-high-row'));
+  document.getElementById('player-select-row').style.display='none';
+  document.getElementById('player-split-block').style.display='';
+  splitIntoRows(G.cardEls.dealer,G.hand.dealerCards,data.dealerLow,document.getElementById('dealer-low-row'),document.getElementById('dealer-high-row'));
   document.getElementById('player-hand-line').textContent='High: '+data.playerHighScore.name+'  •  Low: '+(data.playerLowScore.cat===1?data.playerLowScore.name:'No Pair');
   document.getElementById('dealer-hand-line').textContent='High: '+data.dealerHighScore.name+'  •  Low: '+(data.dealerLowScore.cat===1?data.dealerLowScore.name:'No Pair');
   document.getElementById('select-hint').textContent='';
@@ -1062,7 +1107,9 @@ function finishHand(data){
   postRoundTimer=setTimeout(()=>{
     postRoundTimer=null;
     const totalWagered=G.lastBetDisplay||1;
-    if(data.payout>0){
+    if(data.result==='push'&&data.payout>0){
+      WinnerModal.showPush(data.payout,{onClose:resetToBetScreen});
+    }else if(data.payout>0){
       const bigWin=(data.payout/totalWagered)>=7;
       WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
     }else{
@@ -1073,29 +1120,32 @@ function finishHand(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.locked={ante:0,fortune:0,light:false};G.selectedLow=[];
-  G.cardEls.dealer.forEach(slot=>{Cards.reset(slot.card);slot.wrap.classList.add('empty');});
-  G.cardEls.player.forEach(slot=>{Cards.reset(slot.card);slot.wrap.classList.add('empty');});
+  G.cardEls.dealer.forEach(slot=>Cards.reset(slot.card));
+  G.cardEls.player.forEach(slot=>Cards.reset(slot.card));
   clearTags(G.cardEls.dealer);clearTags(G.cardEls.player);
-  document.getElementById('dealer-row').classList.remove('active');
-  document.getElementById('player-row').classList.remove('active');
+  resetPlayerRowFlat();
+  document.getElementById('player-split-block').style.display='none';
+  document.getElementById('player-select-row').style.display='';
   document.getElementById('dealer-hand-line').textContent='';
   document.getElementById('player-hand-line').textContent='';
   renderActionButtons();updateStatusZone();updateUI();
 }
 
 // ── ACTION BUTTONS / STATUS ────────────────────────────────────────────────────
-const ACTION_BTN_IDS=['btn-deal','btn-set-own','btn-set-house','btn-confirm-hand','btn-cancel-select'];
-const PHASE_BUTTONS={betting:['btn-deal'],arranging:['btn-set-own','btn-set-house'],selecting:['btn-confirm-hand','btn-cancel-select'],done:[]};
+const ACTION_BTN_IDS=['btn-deal','btn-confirm-hand','btn-set-house'];
+const PHASE_BUTTONS={betting:['btn-deal'],selecting:['btn-confirm-hand','btn-set-house'],done:[]};
 function renderActionButtons(){
   const show=new Set(PHASE_BUTTONS[G.phase]||[]);
   ACTION_BTN_IDS.forEach(id=>{const b=document.getElementById(id);b.style.display=show.has(id)?'':'none';b.disabled=false;});
-  if(G.phase==='selecting')document.getElementById('btn-confirm-hand').disabled=G.selectedLow.length!==2;
+  if(G.phase==='selecting'){
+    document.getElementById('btn-confirm-hand').disabled=true;
+    document.getElementById('btn-confirm-hand').textContent='Choose 2 Cards for Low Hand';
+  }
 }
 function updateStatusZone(){
   const map={
     betting:['Place Your Ante','Fortune and The Light are optional side bets on your own 7-card hand.'],
-    arranging:['Set Your Hand','Split your 7 cards into a 5-card High hand and a 2-card Low hand — or let the house set it for you.'],
-    selecting:['Pick Your Low Hand','Click 2 of your own cards to hold as the Low hand. The rest become your High hand.'],
+    selecting:['Pick Your Low Hand','Click 2 of your own cards to hold as the Low hand, or Set House Way to let the dealer do it for you.'],
     done:['Showdown','']
   };
   const m=map[G.phase]||['',''];
@@ -1191,7 +1241,7 @@ function closeCashoutModal(){document.getElementById('modal-cashout').classList.
 renderActionButtons();updateStatusZone();
 tryRestoreSession();
 </script>
-<script src="winner-modal.js?v=0.4.86"></script>
+<script src="winner-modal.js?v=0.4.87"></script>
 <script src="dailies-popup.js?v=4"></script>
 </body>
 </html>

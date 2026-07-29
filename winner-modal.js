@@ -22,7 +22,7 @@
 (function (global) {
   'use strict';
 
-  let overlayEl, amtEl, raysEl, coinsEl, bigtagEl;
+  let overlayEl, amtEl, raysEl, coinsEl, bigtagEl, titleEl;
   let winnerTimer = null, _winnerAmount = 0, _winnerAnimating = false, _onClose = null;
 
   // ---------- DOM ----------
@@ -80,6 +80,14 @@
       '#wm-modal-winner.big .wm-winner-amount{font-size:160px}',
       '.wm-winner-bigtag{display:none;position:relative;z-index:2;font-size:24px;font-weight:900;letter-spacing:.15em;color:#ffe680;text-shadow:0 2px 6px rgba(0,0,0,.7);margin-bottom:2px}',
       '#wm-modal-winner.big .wm-winner-bigtag{display:block}',
+      // ---------- PUSH state: calmer sibling of the win celebration (no coin shower, no
+      // god rays, silver/platinum text instead of gold) -- see showPush() below.
+      '#wm-modal-winner.push .wm-winner-rays{display:none}',
+      '#wm-modal-winner.push .wm-winner-amount{',
+      '  background:linear-gradient(180deg,#f4f6f8 0%,#d8dee3 20%,#8b959c 48%,#eef1f3 55%,#aab2b8 75%,#5a6268 100%);',
+      '  -webkit-background-clip:text;background-clip:text;color:transparent;',
+      '  -webkit-text-stroke:1.5px #3a4045;',
+      '  filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) drop-shadow(0 0 18px rgba(200,210,220,.6))}',
       '.wm-coin3d-wrap{position:absolute;top:0;left:0;pointer-events:none;transform-style:preserve-3d;}',
       '.wm-coin3d-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;}',
       '.wm-coin3d-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;overflow:hidden;box-shadow:inset 0 0 4px rgba(0,0,0,.45);}',
@@ -111,6 +119,7 @@
     raysEl = overlayEl.querySelector('.wm-winner-rays');
     coinsEl = overlayEl.querySelector('.wm-winner-coins');
     bigtagEl = overlayEl.querySelector('.wm-winner-bigtag');
+    titleEl = overlayEl.querySelector('.wm-winner-title');
   }
 
   // ---------- coins ----------
@@ -226,7 +235,9 @@
       if (winnerTimer) clearTimeout(winnerTimer);
       _winnerAmount = amount; _winnerAnimating = true; _onClose = options.onClose || null;
       overlayEl.classList.toggle('big', !!options.big);
+      overlayEl.classList.remove('push');
       overlayEl.classList.remove('hidden');
+      titleEl.textContent = options.title || '🎉 Congratulations, you win 🎉';
       amtEl.textContent = '$0.00';
       sizeWinnerRays(amount, fmt);
       spawnCoinWaterfall(options.big ? 56 : 34);
@@ -242,10 +253,36 @@
       }
       requestAnimationFrame(tick);
     },
+    // A push: bets returned, nothing actually won. Calmer sibling of show() -- no coin
+    // waterfall, no god rays, silver/platinum text instead of gold, shorter hold. Still
+    // ticks the amount up (it's the stake being returned, a real number worth seeing).
+    showPush(amount, options) {
+      if (!overlayEl) buildOverlay();
+      if (!(amount > 0)) return;
+      options = options || {};
+      const fmt = options.fmt || defaultFmt;
+      if (winnerTimer) clearTimeout(winnerTimer);
+      _winnerAmount = amount; _winnerAnimating = true; _onClose = options.onClose || null;
+      overlayEl.classList.remove('big');
+      overlayEl.classList.add('push');
+      overlayEl.classList.remove('hidden');
+      titleEl.textContent = options.title || 'Push! Bets returned!';
+      amtEl.textContent = '$0.00';
+      const start = performance.now();
+      function tick(now) {
+        if (!_winnerAnimating) return;
+        const t = Math.min((now - start) / 1200, 1);
+        const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        amtEl.textContent = fmt(Math.round(e * amount * 100) / 100);
+        if (t < 1) requestAnimationFrame(tick);
+        else { _winnerAnimating = false; amtEl.textContent = fmt(amount); winnerTimer = setTimeout(() => WinnerModal.close(), 2000); }
+      }
+      requestAnimationFrame(tick);
+    },
     close() {
       if (!overlayEl) return;
       overlayEl.classList.add('hidden');
-      overlayEl.classList.remove('big');
+      overlayEl.classList.remove('big', 'push');
       if (winnerTimer) { clearTimeout(winnerTimer); winnerTimer = null; }
       const cb = _onClose; _onClose = null;
       if (cb) cb();
@@ -258,7 +295,7 @@
     forceClose() {
       if (!overlayEl) return;
       overlayEl.classList.add('hidden');
-      overlayEl.classList.remove('big');
+      overlayEl.classList.remove('big', 'push');
       if (winnerTimer) { clearTimeout(winnerTimer); winnerTimer = null; }
       _winnerAnimating = false;
       _onClose = null;
