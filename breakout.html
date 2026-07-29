@@ -523,7 +523,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.11</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.12</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -618,7 +618,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
               </div>
               <button class="paytable-info-btn info-sweet17" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
             </div>
-            <div id="side-bets-module" style="display:none">
+            <div id="side-bets-module" style="visibility:hidden">
               <img id="side-bets-module-art" class="module-art" src="side_bets_trim.png" alt="">
               <div class="felt-spot spot-pairPlus" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
                 <span class="panel-spot-stk stk-pairPlus"></span>
@@ -1952,6 +1952,11 @@ function renderChipStacks(){
   SIDE_BET_KEYS.forEach(key=>{
     stkEls(key).forEach(el=>applyChipStackVisualEl(el,key,contractLocked));
   });
+  // Fortune Blackjack's three spots -- reuses stk-playerBet's amount (see
+  // updateUI()) for its own display element, plus its two side bets.
+  applyChipStackVisual('stk-fortuneMain',contractLocked);
+  applyChipStackVisual('stk-trilux9',contractLocked);
+  applyChipStackVisual('stk-fortuneBonus',contractLocked);
   // The Light was only ever showing its $5 as plain text -- routing it through the
   // same chip-stack renderer as every other spot gives it a real $5 chip image, which
   // is also what the existing spawnChipGhost() sweep-on-deal call actually sweeps
