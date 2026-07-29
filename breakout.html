@@ -538,7 +538,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.15</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.16</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -854,7 +854,7 @@ function makeInitialG(){
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
     history:[],
     cardEls:null,
-    locked:{progressive:false,trilux:false},
+    locked:{progressive:false,trilux:false,trilux9:false,fortuneBonus:false},
     progressivePool:1000, // shown before the first deal/roll response arrives with a live value
     shoeTotal:312,shoeRemaining:0, // real server-tracked shoe state -- 0 remaining reads as "needs a cut" until the first action response arrives
     penetrationCards:0, // cards dealt before a reshuffle is forced -- server always reserves roughly the last fifth regardless of the chosen cut fraction
@@ -1596,7 +1596,11 @@ async function dealHand(){
   G.activeHand=data.activeHand||0;
   G.splitCount=data.splitCount||0;
   G.surrenderEligible=!!data.surrenderEligible;
-  G.locked={progressive:data.progressive,trilux:data.trilux};
+  // trilux9/fortuneBonus always settle at deal time (see roll-breakout) --
+  // unconditionally locked from the instant a hand is dealt, regardless of
+  // win/lose, so updateUI() blanks their display without touching the snapshot
+  // Repeat needs.
+  G.locked={progressive:data.progressive,trilux:data.trilux,trilux9:true,fortuneBonus:true};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
@@ -1616,13 +1620,13 @@ async function dealHand(){
   // TriLux/Fortune are already settled by the time this response lands (see
   // roll-breakout) -- updateUI() just rendered their staked chip at full amount,
   // now sweep it away instead of leaving it sitting there for the rest of the
-  // round looking unresolved. Zero the snapshot right after so later updateUI()
-  // calls (every hit/stand re-renders chip stacks off G.lastBetSnapshot) don't
-  // redraw the stake spawnChipGhost just swept. Skipped when the round ALSO
-  // resolved this response -- finishRound(data) does all of this itself already.
+  // round looking unresolved. G.locked.trilux9/fortuneBonus (set above) makes
+  // later updateUI() calls render blank without needing to touch the snapshot --
+  // an earlier version zeroed the snapshot itself here, which also erased what
+  // Repeat needed to restage the bet next round on a loss. Skipped when the round
+  // ALSO resolved this response -- finishRound(data) does all of this itself.
   if(!data.resolved){
     spawnBreakoutGhosts(data.log||[]);
-    G.lastBetSnapshot.trilux9=0;G.lastBetSnapshot.fortuneBonus=0;
     if(data.fortuneSidePayout>0)WinnerModal.show(data.fortuneSidePayout,{onClose:()=>{}});
   }
   const dealMs=dealCardsAnimated();
@@ -1812,7 +1816,7 @@ function finishRound(data){
 }
 function resetToBetScreen(){
   G.phase='betting';G.hand=null;G.insurance=0;G.insuranceAvailable=false;
-  G.mode=null;G.locked={progressive:false,trilux:false};G.dealInFlight=false;
+  G.mode=null;G.locked={progressive:false,trilux:false,trilux9:false,fortuneBonus:false};G.dealInFlight=false;
   G.activeHand=0;G.splitCount=0;G.surrenderEligible=false;
   document.getElementById('btn-deal').disabled=false;
   hideInsuranceBanner();
@@ -1878,7 +1882,11 @@ function updateUI(){
   fortuneSpot.classList.toggle('active',playerAmt>0);
   fortuneSpot.classList.toggle('locked',locked);
   ['trilux9','fortuneBonus'].forEach(key=>{
-    const amt=snap[key]||0;
+    // Once settled+swept (G.locked[key]), render blank regardless of the snapshot
+    // -- the snapshot itself must keep the real wagered amount so Repeat can still
+    // restage it next round (a real bug: zeroing the snapshot to blank the display
+    // also erased what Repeat had to work with).
+    const amt=G.locked[key]?0:(snap[key]||0);
     document.getElementById('stk-'+key).textContent=amt?fmt(amt):'';
     const spotEl=document.getElementById(key.toLowerCase()+'-spot');
     if(spotEl){spotEl.classList.toggle('active',amt>0);spotEl.classList.toggle('locked',locked);}
