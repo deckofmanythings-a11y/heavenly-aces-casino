@@ -152,6 +152,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
         <button class="opt-mute-btn" id="opt-mute-btn" onclick="toggleOptionsMute()">🔊</button>
         <input type="range" id="opt-volume" min="0" max="100" step="1" oninput="onOptionsVolumeInput(this.value)">
       </div>
+      <div class="opt-row">
+        <div>
+          <div class="opt-label">Daily Reminder</div>
+          <div class="opt-sub">Discord DM if you haven't finished today's Dailies</div>
+        </div>
+        <input type="checkbox" id="opt-daily-reminder" onchange="onDailyReminderToggle(this.checked)">
+      </div>
       <button class="modal-close-btn" onclick="closeOptionsModal()">Close</button>
     </div>
   </div>
@@ -208,13 +215,19 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-label">BLACKJACK</div>
       <div class="lt-sub">Breakout Variant</div>
     </div>
+    <div class="lobby-tile" onclick="dNav('paigow.html')">
+      <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
+      <div class="lt-icon">🀄</div>
+      <div class="lt-label">PAI GOW</div>
+      <div class="lt-sub">Face Up, Set Your Own Way</div>
+    </div>
     <div class="lobby-tile wide" id="dailies-tile" onclick="dNav('dailies.html')">
       <div class="lt-icon">🗓️</div>
       <div class="lt-label">DAILIES <span id="dailies-badge" style="display:none"></span></div>
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.8</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.9</div>
 </div>
 
 <script>
@@ -366,6 +379,17 @@ function refreshOptionsUI(){
   btn.textContent=muted?'🔇':'🔊';
   btn.classList.toggle('active',muted);
   btn.title=muted?'Unmute':'Mute';
+  const reminderCb=document.getElementById('opt-daily-reminder');
+  reminderCb.checked=!!currentPlayer?.daily_reminder_opt_in;
+  reminderCb.disabled=!currentPlayer?.discord_id;
+  reminderCb.title=currentPlayer?.discord_id?'':'Link your Discord account to enable this';
+}
+function onDailyReminderToggle(checked){
+  if(!currentPlayer)return;
+  sb.from('players').update({daily_reminder_opt_in:checked}).eq('id',currentPlayer.id).then(({error})=>{
+    if(error){document.getElementById('opt-daily-reminder').checked=!checked;return;}
+    currentPlayer.daily_reminder_opt_in=checked;
+  });
 }
 function openOptionsModal(){
   refreshOptionsUI();
