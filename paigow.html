@@ -51,18 +51,30 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #status-phase{font-size:min(28px,4.2vw);font-weight:800;letter-spacing:.05em;color:#ffd700;text-transform:uppercase}
 #status-sub{font-size:min(16px,2.8vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
 
-/* ── TABLE AREA / FELT (plain CSS, no baked art -- see breakout.html for precedent) ── */
-#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px;container-type:size}
+/* ── TABLE AREA / FELT (plain CSS, no baked art -- see breakout.html for precedent) ──
+   Ante/Fortune/Light moved out of a horizontal strip below the felt (reclaimed that
+   whole row of vertical space for bigger cards) into a vertical sidebar to the felt's
+   right instead -- #table-panel-wrap is its own container-query box holding just the
+   REMAINING width after the flex-row sidebar, so the panel's own min(100cqw,160cqh)
+   aspect-fit math (unchanged) never has to account for the sidebar itself. */
+#table-area{flex:1;display:flex;flex-direction:row;align-items:stretch;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px;gap:0.8vw}
+#table-panel-wrap{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;container-type:size}
 #table-panel{position:relative;aspect-ratio:3200/2000;width:min(100cqw,160cqh);height:min(100cqh,62.5cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);border:1px solid rgba(255,215,0,.15);border-radius:1.5cqh;container-type:size;display:flex;flex-direction:column}
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
 .card-region{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:0.3cqh 1cqh;min-height:0}
 .card-region + .card-region{border-top:1px solid rgba(255,215,0,.12)}
-.felt-label{font-family:'Cinzel',serif;font-weight:800;color:#ffe066;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);font-size:2.1cqh;margin-bottom:0.25cqh}
-.split-block{display:flex;flex-direction:column;align-items:center;gap:0.15cqh}
-.row-label{font-size:1.2cqh;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);line-height:1.4}
-.split-block .row-label.low-label{color:#ff8a80}
-.split-block .row-label.high-label{color:#7ee87e}
+.felt-label{font-family:'Cinzel',serif;font-weight:800;color:#ffe066;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);font-size:2.1cqh;margin-bottom:0.3cqh}
+.split-block{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:0.4cqh;width:100%}
+/* Each row pairs a verbose hand-strength label (to the LEFT) with that row's cards --
+   e.g. "Pair of Kings" beside the High row, "Jack High" beside the Low row. The whole
+   [label+cards] unit is centered as one block within the felt (not the cards alone),
+   so adding the label doesn't visually shove the cards off-center. */
+.split-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1cqh}
+.split-row .card-row{justify-content:flex-start}
+.row-label{width:15cqh;flex-shrink:0;text-align:right;font-size:1.5cqh;font-weight:800;line-height:1.25;letter-spacing:.01em}
+.row-label.low-label{color:#ff8a80}
+.row-label.high-label{color:#7ee87e}
 .card-row{display:flex;flex-direction:row;align-items:flex-start;justify-content:center;gap:0.5cqh;flex-wrap:nowrap}
 .pc-slot-wrap{display:flex;flex-direction:column;align-items:center}
 .pc-slot-wrap .pc-card{--pc-w:13cqh}
@@ -73,15 +85,15 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .pc-slot-wrap.selectable:hover .pc-card{transform:translateY(-0.4cqh)}
 .pc-slot-wrap.selected .pc-card .pc-face{box-shadow:0 0 0 3px #ffd700,0 2px 8px rgba(0,0,0,.5)}
 .pc-slot-wrap.selected .pc-card{transform:translateY(-0.8cqh)}
-.hand-line{font-size:1.8cqh;color:#ffd700;font-weight:700;min-height:2.2cqh;margin-top:0.25cqh;text-align:center}
 .select-hint{font-size:1.5cqh;min-height:1.8cqh;text-align:center;color:rgba(255,255,255,.6);margin-top:0.15cqh}
 .select-hint.ok{color:#7ee87e}
 .select-hint.bad{color:#ff8a80}
 
-/* ── BET SPOTS ROW (plain CSS circles, no baked art) ── */
-#bet-spots-row{display:flex;flex-shrink:0;align-items:center;justify-content:center;gap:3vw;padding:4px 6px;background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.08)}
+/* ── BET SIDEBAR (plain CSS circles, no baked art) -- stacked vertically to the right
+   of the felt, Light on top, Ante on bottom, per Deck's explicit order. ── */
+#bet-sidebar{display:flex;flex-direction:column;flex-shrink:0;align-items:center;justify-content:center;gap:2.2vh;padding:4px 2px}
 .bet-spot-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
-.bet-spot{width:min(58px,11vw);height:min(58px,11vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s}
+.bet-spot{width:min(64px,9vw);height:min(64px,9vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s}
 .bet-spot:hover{background:rgba(255,215,0,.14)}
 .bet-spot.active{border-color:#ffd700;background:rgba(255,215,0,.22)}
 .bet-spot.locked{cursor:default}
@@ -199,8 +211,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
   #left-col-header{width:20vw;min-width:110px}
   #info-panel{width:34vw}
   .pc-slot-wrap .pc-card{--pc-w:8.4cqh}
-  #bet-spots-row{gap:5vw}
-  .bet-spot{width:min(50px,13vw);height:min(50px,13vw)}
+  .row-label{width:11cqh;font-size:1.3cqh}
+  #bet-sidebar{gap:1.4vh}
+  .bet-spot{width:min(46px,11vw);height:min(46px,11vw)}
   #action-row{width:100%}
 }
 </style>
@@ -281,7 +294,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.4</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.5</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -310,53 +323,61 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
   <!-- TABLE AREA -->
   <div id="table-area">
-    <div id="table-panel">
-      <div class="card-region" id="dealer-region">
-        <span class="felt-label">Dealer's Hand — Face Up, House Way</span>
-        <div class="split-block">
-          <div class="row-label low-label">Low</div>
-          <div class="card-row" id="dealer-low-row"></div>
-          <div class="row-label high-label">High</div>
-          <div class="card-row" id="dealer-high-row"></div>
+    <div id="table-panel-wrap">
+      <div id="table-panel">
+        <div class="card-region" id="dealer-region">
+          <span class="felt-label">Dealer's Hand — Face Up, House Way</span>
+          <div class="split-block">
+            <div class="split-row">
+              <div class="row-label low-label" id="dealer-low-label"></div>
+              <div class="card-row" id="dealer-low-row"></div>
+            </div>
+            <div class="split-row">
+              <div class="row-label high-label" id="dealer-high-label"></div>
+              <div class="card-row" id="dealer-high-row"></div>
+            </div>
+          </div>
         </div>
-        <div class="hand-line" id="dealer-hand-line"></div>
-      </div>
-      <div class="card-region" id="player-region">
-        <span class="felt-label">Your Hand</span>
-        <div class="card-row" id="player-select-row"></div>
-        <div class="split-block" id="player-split-block" style="display:none">
-          <div class="row-label low-label">Low</div>
-          <div class="card-row" id="player-low-row"></div>
-          <div class="row-label high-label">High</div>
-          <div class="card-row" id="player-high-row"></div>
+        <div class="card-region" id="player-region">
+          <span class="felt-label">Your Hand</span>
+          <div class="card-row" id="player-select-row"></div>
+          <div class="split-block" id="player-split-block" style="display:none">
+            <div class="split-row">
+              <div class="row-label low-label" id="player-low-label"></div>
+              <div class="card-row" id="player-low-row"></div>
+            </div>
+            <div class="split-row">
+              <div class="row-label high-label" id="player-high-label"></div>
+              <div class="card-row" id="player-high-row"></div>
+            </div>
+          </div>
+          <div class="select-hint" id="select-hint"></div>
         </div>
-        <div class="hand-line" id="player-hand-line"></div>
-        <div class="select-hint" id="select-hint"></div>
       </div>
     </div>
-  </div>
 
-  <!-- BET SPOTS -->
-  <div id="bet-spots-row">
-    <div class="bet-spot-wrap">
-      <div class="bet-spot-name">Ante</div>
-      <div class="bet-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
-        <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('ante')" title="Ante Rules">i</button>
-        <span class="bs-amt" id="stk-ante"></span>
+    <!-- BET SIDEBAR -- Light on top, Ante on bottom, per Deck's explicit order -->
+    <div id="bet-sidebar">
+      <div class="bet-spot-wrap">
+        <div class="bet-spot-name">The Light</div>
+        <div class="bet-spot light" id="light-spot" onclick="toggleLight()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleLight()">
+          <button class="paytable-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
+          <span style="font-size:20px" id="light-bulb">💡</span>
+        </div>
       </div>
-    </div>
-    <div class="bet-spot-wrap">
-      <div class="bet-spot-name">Fortune</div>
-      <div class="bet-spot" id="fortune-spot" onclick="placeBet('fortune')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fortune')">
-        <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('fortune')" title="Fortune Paytable">i</button>
-        <span class="bs-amt" id="stk-fortune"></span>
+      <div class="bet-spot-wrap">
+        <div class="bet-spot-name">Fortune</div>
+        <div class="bet-spot" id="fortune-spot" onclick="placeBet('fortune')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fortune')">
+          <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('fortune')" title="Fortune Paytable">i</button>
+          <span class="bs-amt" id="stk-fortune"></span>
+        </div>
       </div>
-    </div>
-    <div class="bet-spot-wrap">
-      <div class="bet-spot-name">The Light</div>
-      <div class="bet-spot light" id="light-spot" onclick="toggleLight()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleLight()">
-        <button class="paytable-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
-        <span style="font-size:20px" id="light-bulb">💡</span>
+      <div class="bet-spot-wrap">
+        <div class="bet-spot-name">Ante</div>
+        <div class="bet-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
+          <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('ante')" title="Ante Rules">i</button>
+          <span class="bs-amt" id="stk-ante"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -579,9 +600,24 @@ function best7(cards7){
   return best;
 }
 function isRoyal(score){return score.cat===8&&score.kick[0]===14;}
-const CAT_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
-function handName(score){return isRoyal(score)?'Royal Flush':CAT_NAMES[score.cat];}
-function handNameLow(score){return score.cat===1?('Pair of '+RANK_PLURAL[score.kick[0]]):(RANK_NAME[score.kick[0]]+' High');}
+// Verbose namer for both the 5-card High score and the 2-card Low score (same {cat,kick}
+// shape -- Low only ever lands in the cat 0/1 branches) -- "Pair of Kings", "Jack High",
+// "Two Pair, Kings and 5s", "Full House, Aces over Kings", etc. Used everywhere a hand
+// strength is shown to the player now (Deck asked to "be verbose" throughout).
+function describeScore(score){
+  const k=score.kick;
+  switch(score.cat){
+    case 8: return isRoyal(score)?'Royal Flush':'Straight Flush, '+RANK_NAME[k[0]]+' High';
+    case 7: return 'Four of a Kind, '+RANK_PLURAL[k[0]];
+    case 6: return 'Full House, '+RANK_PLURAL[k[0]]+' over '+RANK_PLURAL[k[1]];
+    case 5: return 'Flush, '+RANK_NAME[k[0]]+' High';
+    case 4: return 'Straight, '+RANK_NAME[k[0]]+' High';
+    case 3: return 'Three of a Kind, '+RANK_PLURAL[k[0]];
+    case 2: return 'Two Pair, '+RANK_PLURAL[k[0]]+' and '+RANK_PLURAL[k[1]];
+    case 1: return 'Pair of '+RANK_PLURAL[k[0]];
+    default: return RANK_NAME[k[0]]+' High';
+  }
+}
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function showTab(tab){_authMode=tab;document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('auth-btn').textContent=tab==='login'?'Log In':'Create Account';document.getElementById('auth-error').style.display='none';}
@@ -990,7 +1026,8 @@ function renderDealtCardsAnimated(){
   });
   const settleMs=7*DEAL_STAGGER_MS+900;
   setTimeout(()=>{
-    document.getElementById('dealer-hand-line').textContent='High: '+handName(evaluate5(G.hand.dealerHigh))+'  •  Low: '+handNameLow(evaluateLow(G.hand.dealerLow));
+    document.getElementById('dealer-low-label').textContent=describeScore(evaluateLow(G.hand.dealerLow));
+    document.getElementById('dealer-high-label').textContent=describeScore(evaluate5(G.hand.dealerHigh));
     activateSelectionMode();
   },settleMs);
 }
@@ -1000,7 +1037,8 @@ function renderDealtCardsStatic(){
   resetPlayerRowFlat();
   G.cardEls.dealer.forEach((slot,i)=>{Cards.reset(slot.card);Cards.setFront(slot.card,G.hand.dealerCards[i]);Cards.flipUp(slot.card);});
   G.cardEls.player.forEach((slot,i)=>{Cards.reset(slot.card);Cards.setFront(slot.card,G.hand.playerCards[i]);Cards.flipUp(slot.card);});
-  document.getElementById('dealer-hand-line').textContent='High: '+handName(evaluate5(G.hand.dealerHigh))+'  •  Low: '+handNameLow(evaluateLow(G.hand.dealerLow));
+  document.getElementById('dealer-low-label').textContent=describeScore(evaluateLow(G.hand.dealerLow));
+  document.getElementById('dealer-high-label').textContent=describeScore(evaluate5(G.hand.dealerHigh));
 }
 
 // ── SET YOUR OWN HAND (client-side legality preview only; server re-validates) ───
@@ -1044,8 +1082,8 @@ function renderSelection(){
     const highScore=evaluate5(highCards);
     const legal=compareScore(highScore,lowScore)>=0;
     hint.textContent=legal
-      ?('Low: '+handNameLow(lowScore)+'  •  High: '+handName(highScore)+'. Legal — Confirm to lock it in.')
-      :('Illegal — your Low hand ('+handNameLow(lowScore)+') beats your High hand ('+handName(highScore)+'). Pick a different Low pair.');
+      ?('Low: '+describeScore(lowScore)+'  •  High: '+describeScore(highScore)+'. Legal — Confirm to lock it in.')
+      :('Illegal — your Low hand ('+describeScore(lowScore)+') beats your High hand ('+describeScore(highScore)+'). Pick a different Low pair.');
     hint.className='select-hint '+(legal?'ok':'bad');
     btnConfirm.textContent='Confirm';
     btnConfirm.disabled=!legal;
@@ -1082,8 +1120,16 @@ function finishHand(data){
   document.getElementById('player-select-row').style.display='none';
   document.getElementById('player-split-block').style.display='';
   splitIntoRows(G.cardEls.dealer,G.hand.dealerCards,data.dealerLow,document.getElementById('dealer-low-row'),document.getElementById('dealer-high-row'));
-  document.getElementById('player-hand-line').textContent='High: '+data.playerHighScore.name+'  •  Low: '+(data.playerLowScore.cat===1?data.playerLowScore.name:'No Pair');
-  document.getElementById('dealer-hand-line').textContent='High: '+data.dealerHighScore.name+'  •  Low: '+(data.dealerLowScore.cat===1?data.dealerLowScore.name:'No Pair');
+  // Recomputed client-side from the actual cards (rather than the server's terser
+  // .name fields) so the verbose describeScore() wording is used everywhere.
+  const playerLowDesc=describeScore(evaluateLow(data.playerLow));
+  const playerHighDesc=describeScore(evaluate5(data.playerHigh));
+  const dealerLowDesc=describeScore(evaluateLow(data.dealerLow));
+  const dealerHighDesc=describeScore(evaluate5(data.dealerHigh));
+  document.getElementById('player-low-label').textContent=playerLowDesc;
+  document.getElementById('player-high-label').textContent=playerHighDesc;
+  document.getElementById('dealer-low-label').textContent=dealerLowDesc;
+  document.getElementById('dealer-high-label').textContent=dealerHighDesc;
   document.getElementById('select-hint').textContent='';
   (data.log||[]).forEach(line=>{
     const cls=/win|pays/i.test(line)?'win':/lost|lose/i.test(line)?'lose':'info';
@@ -1095,11 +1141,11 @@ function finishHand(data){
   G.lastBetDisplay=r2(G.locked.ante+G.locked.fortune+(G.locked.light?LIGHT_BET:0));
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   const histLabel=data.result==='win'?'WIN':data.result==='push'?'PUSH':'LOSE';
-  let playerDesc='High: '+data.playerHighScore.name+', Low: '+(data.playerLowScore.cat===1?data.playerLowScore.name:'No Pair');
+  let playerDesc='High: '+playerHighDesc+', Low: '+playerLowDesc;
   if(data.houseSet)playerDesc+=' (house-set)';
   if(G.locked.fortune>0)playerDesc+=data.fortunePayout>0?' — Fortune hit!':' — Fortune: no win';
   if(G.locked.light)playerDesc+=data.progressiveTier?' — THE LIGHT: '+data.progressiveTier.toUpperCase()+'!':' — THE LIGHT: no prize';
-  const dealerDesc='High: '+data.dealerHighScore.name+', Low: '+(data.dealerLowScore.cat===1?data.dealerLowScore.name:'No Pair');
+  const dealerDesc='High: '+dealerHighDesc+', Low: '+dealerLowDesc;
   G.history.unshift({result:data.result,payout:data.payout,label:histLabel,playerDesc,dealerDesc});
   if(G.history.length>20)G.history.length=20;
   G.phase='done';
@@ -1126,8 +1172,10 @@ function resetToBetScreen(){
   resetPlayerRowFlat();
   document.getElementById('player-split-block').style.display='none';
   document.getElementById('player-select-row').style.display='';
-  document.getElementById('dealer-hand-line').textContent='';
-  document.getElementById('player-hand-line').textContent='';
+  document.getElementById('dealer-low-label').textContent='';
+  document.getElementById('dealer-high-label').textContent='';
+  document.getElementById('player-low-label').textContent='';
+  document.getElementById('player-high-label').textContent='';
   renderActionButtons();updateStatusZone();updateUI();
 }
 
