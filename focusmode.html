@@ -955,15 +955,33 @@ body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,body.felt-mode #felt-
 body.felt-mode #felt-stage #lucky-roller .lr-header,body.felt-mode #felt-stage #lucky-roller .lr-note,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{display:none!important}
 body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:0}
-body.felt-mode #felt-stage #lucky-roller .lr-nums{display:flex;height:100%;width:100%;gap:2%;flex-wrap:nowrap;align-items:stretch;padding:0}
-body.felt-mode #felt-stage #lucky-roller .lr-num{position:relative;flex:1;width:auto;height:auto;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0;pointer-events:none}
+/* Equal-fifths flex distribution doesn't match the actual printed digits -- "8 9 10 11 12" isn't
+   evenly spaced like "2 3 4 5 6" (three of its five slots are 2-digit), so each glow sat next to
+   its number instead of on it. Positions below are each digit's real pixel center, scanned off
+   LuckyRollerTitle.png's alpha channel (y=100-151 band) and converted to %-of-#bnums-low/high
+   (whose own width is calibrated to exactly the oval's pixel span, per the LR_LAYOUT comment) --
+   same method as the rest of this file's felt calibration, not eyeballed. */
+body.felt-mode #felt-stage #lucky-roller .lr-nums{position:relative;height:100%;width:100%;padding:0}
+body.felt-mode #felt-stage #lucky-roller .lr-num{position:absolute;top:6%;height:88%;width:15%;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0;pointer-events:none;transform:translateX(-50%)}
+body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(1){left:14.6%}
+body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(2){left:32.4%}
+body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(3){left:49.6%}
+body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(4){left:67.6%}
+body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(5){left:85.4%}
+body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(1){left:31.0%}
+body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(2){left:45.0%}
+body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(3){left:52.6%;width:22%}
+body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(4){left:67.4%;width:22%}
+body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(5){left:82.2%;width:22%}
 body.felt-mode #felt-stage #lucky-roller .lr-nums{pointer-events:none}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
 /* Felt art bakes the numbers themselves into the box image (base .lr-num above is
    color:transparent;font-size:0 -- no text to recolor), so a hit can't be shown by changing
-   text color like the non-felt fallback does. Outline only, no fill/glow -- a ring around the
-   number instead of a shaded/glowing box behind it. */
-body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:transparent;box-shadow:none;border:2px solid #3cff8c}
+   text color like the non-felt fallback does. Deck wants the glow back (removed last time by
+   mistake while chasing an unrelated shading complaint) -- a soft glow behind/around the digit,
+   not a filled box, so it doesn't read as "shading" the way the old rgba fill + heavy box-shadow
+   combo did. */
+body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:transparent;box-shadow:0 0 8px 3px rgba(60,255,140,.85),0 0 16px 6px rgba(60,255,140,.4)}
 
 /* ===== CLEAN UI: no hover or placed-bet shading anywhere on the felt =====
    Deck wants no visual highlighting of legal betting areas, on hover or once a bet is placed.
@@ -1727,7 +1745,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.28</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.29</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
