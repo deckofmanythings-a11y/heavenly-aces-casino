@@ -118,7 +118,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #mode-toggle-btn{width:100%;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,215,0,.55);border-radius:6px;padding:0.5cqh 0.6cqh;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.15cqh;z-index:5;order:1}
 #mode-toggle-label{font-size:1.55cqh;font-weight:800;color:#ffd700;letter-spacing:.03em}
 #mode-toggle-hint{font-size:1.1cqh;color:rgba(255,255,255,.6)}
-#mode-toggle-btn.hidden{display:none}
+/* visibility, not display -- a flex sibling collapsing its space would shift the
+   Light/module column up/down whenever the toggle appears or disappears mid-round,
+   which Deck flagged as the bet areas visibly moving on the felt. */
+#mode-toggle-btn.hidden{visibility:hidden;pointer-events:none}
 /* THE LIGHT row -- a real flex item sized off its own square aspect ratio
    (lightOFF/ON.webp are 275x275), not a %-of-parent absolute box (that broke once
    #bets-module stopped having a definite height of its own). */
@@ -188,9 +191,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
    red instead of accepting the bet (see placePlayerBet/placeDealerBet). */
 #dealerbet-spot{left:41%;top:16.5%;width:58.9%;height:82.8%;border-radius:50%}
 #playerbet-spot{left:43.12%;top:1.9%;width:56.9%;height:90%;border-radius:50%}
-#fortunebet-spot{left:0;top:0;width:100%;height:100%;border-radius:50%}
-#trilux9-spot{left:2%;top:2%;width:38%;height:42%}
-#fortunebonus-spot{left:2%;top:48%;width:38%;height:50%}
+/* Precisely measured against fortune_trim.png's own bbox (ffmpeg raw-RGBA +
+   opacity scan, same technique as every other spot) -- the earlier values were
+   rough guesses (left2%/top2%/38%/42% etc), which is why the chips looked
+   randomly placed instead of centered on each badge/circle. */
+#fortunebet-spot{left:40.86%;top:12.36%;width:59.14%;height:87.64%;border-radius:50%}
+#trilux9-spot{left:0.84%;top:0%;width:31.14%;height:42.97%}
+#fortunebonus-spot{left:0%;top:60.74%;width:32.92%;height:39.26%}
 
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
@@ -210,6 +217,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .paytable-info-btn{position:absolute;width:6%;height:4.5%;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1.5px solid rgba(255,215,0,.6);font-size:1.7cqh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0;font-weight:800}
 #breakoutbonus-info{left:38%;top:3%}
 #supertie-info{left:31%;top:26%}
+#trilux9-info{left:32%;top:2%}
+#fortunebonus-info{left:33%;top:63%}
 
 /* ── INSURANCE PROMPT -- shown only when phase:'insurance' (dealer shows an Ace) ── */
 #insurance-banner{position:absolute;left:50%;top:4%;transform:translateX(-50%);z-index:20;background:rgba(10,10,10,.92);border:1.5px solid #ffd700;border-radius:8px;padding:1.2cqh 1.6cqh;text-align:center;display:none}
@@ -529,7 +538,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.13</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.14</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1566,12 +1575,14 @@ async function dealHand(){
   // TriLux/Fortune settle instantly at deal (see roll-breakout), independent of
   // whether the main hand also resolves this response -- if it DOESN'T (phase
   // stays 'playing', the player still has to act), finishRound() never runs this
-  // turn and its own data.log forward would never fire, silently dropping the
-  // TriLux/Fortune win/loss line. Forward it here, but only when NOT immediately
-  // resolved -- the resolved branch below calls finishRound(data), which forwards
-  // this same data.log itself (it already includes these lines server-side); doing
-  // it here too would double-log every line, not just TriLux/Fortune's.
-  if(!data.resolved)(data.log||[]).forEach(line=>addLog(line,/lost/i.test(line)?'lose':/pays/i.test(line)?'win':'info'));
+  // turn and its own data.log forward/ghost-sweep/WinnerModal would never fire.
+  // All three are guarded to the not-resolved case here -- the resolved branch
+  // below calls finishRound(data), which already does all three off this same
+  // data.log/data.payout (payout has fortuneSidePayout merged in when resolved);
+  // doing it here too would double it, not just for TriLux/Fortune.
+  if(!data.resolved){
+    (data.log||[]).forEach(line=>addLog(line,/lost/i.test(line)?'lose':/pays/i.test(line)?'win':'info'));
+  }
   G.lastBetSnapshot={...G.bets};
   G.mode=data.mode;
   G.phase=data.phase;
@@ -1601,6 +1612,18 @@ async function dealHand(){
   if(data.progressive){
     const img=document.getElementById('light-on-img');
     img.classList.remove('lit-in');void img.offsetWidth;img.classList.add('lit-in');
+  }
+  // TriLux/Fortune are already settled by the time this response lands (see
+  // roll-breakout) -- updateUI() just rendered their staked chip at full amount,
+  // now sweep it away instead of leaving it sitting there for the rest of the
+  // round looking unresolved. Zero the snapshot right after so later updateUI()
+  // calls (every hit/stand re-renders chip stacks off G.lastBetSnapshot) don't
+  // redraw the stake spawnChipGhost just swept. Skipped when the round ALSO
+  // resolved this response -- finishRound(data) does all of this itself already.
+  if(!data.resolved){
+    spawnBreakoutGhosts(data.log||[]);
+    G.lastBetSnapshot.trilux9=0;G.lastBetSnapshot.fortuneBonus=0;
+    if(data.fortuneSidePayout>0)WinnerModal.show(data.fortuneSidePayout,{onClose:()=>{}});
   }
   const dealMs=dealCardsAnimated();
   setTimeout(()=>{
@@ -1766,7 +1789,12 @@ function finishRound(data){
   updateUI();checkBroke();
   spawnBreakoutGhosts(data.log||[]);
   const totalWagered=G.lastBetDisplay||1;
-  if(data.payout>0){
+  // A push returns the stake (data.payout>0, equal to what was wagered) but
+  // nothing was actually WON -- calmer showPush() instead of the celebratory
+  // show(), matching the convention already applied to every other game.
+  if(mainResult==='push'){
+    WinnerModal.showPush(data.payout,{onClose:resetToBetScreen});
+  }else if(data.payout>0){
     const bigWin=(data.payout/totalWagered)>=7;
     WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
   }else{
@@ -2036,24 +2064,29 @@ function spawnChipGhost(el,opts){
   },900);
   setTimeout(()=>{ghost.remove();},1450);
 }
-// Bet-name -> stake-element-id table, matched against roll-breakout's exact log-line
+// Bet-name -> stake-element table, matched against roll-breakout's exact log-line
 // prefixes ("Player Bet:", "Breakout Bet:", "Pair Up:", "Super Tie:", "Breakout
-// Bonus:", "Sweet 17:"). Win/loss read off the same win|pays / lost keywords addLog()
-// already uses for line coloring, so this stays in sync with the server's wording.
+// Bonus:", "Sweet 17:", "TriLux:", "Fortune:"). Win/loss read off the same
+// win|pays / lost keywords addLog() already uses for line coloring, so this stays
+// in sync with the server's wording. Pair Up/Sweet 17 use a selector (not a plain
+// id) since they're two physical elements now (see stkEls()) -- only one is ever
+// visible, but sweeping both is harmless.
 function breakoutGhostChecks(){
   return [
-    [/^Player Bet:/,'stk-playerBet'],[/^Breakout Bet:/,'stk-breakoutBet'],
-    [/^Super Tie:/,'stk-superTie'],[/^Breakout Bonus:/,'stk-breakoutBonus'],
-    [/^Sweet 17:/,'stk-sweet17'],[/^Pair Up:/,'stk-pairPlus'],
+    [/^Player Bet:/,'#stk-playerBet'],[/^Breakout Bet:/,'#stk-breakoutBet'],
+    [/^Super Tie:/,'#stk-superTie'],[/^Breakout Bonus:/,'#stk-breakoutBonus'],
+    [/^Sweet 17:/,'.stk-sweet17'],[/^Pair Up:/,'.stk-pairPlus'],
+    [/^TriLux:/,'#stk-trilux9'],[/^Fortune:/,'#stk-fortuneBonus'],
   ];
 }
 function spawnBreakoutGhosts(rawLog){
-  breakoutGhostChecks().forEach(([re,id])=>{
+  breakoutGhostChecks().forEach(([re,sel])=>{
     const line=rawLog.find(l=>re.test(l));
     if(!line)return;
-    const el=document.getElementById(id);
-    if(/lost/i.test(line))spawnChipGhost(el);
-    else if(/win|pays|push/i.test(line))spawnChipGhost(el,{direction:'down',noDim:true});
+    document.querySelectorAll(sel).forEach(el=>{
+      if(/lost/i.test(line))spawnChipGhost(el);
+      else if(/win|pays|push/i.test(line))spawnChipGhost(el,{direction:'down',noDim:true});
+    });
   });
 }
 
