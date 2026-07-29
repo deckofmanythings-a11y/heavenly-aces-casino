@@ -1745,7 +1745,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.31</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.32</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3689,7 +3689,7 @@ function chipPointerDown(e,denom,source){
       if(Math.abs(ev.clientX-startX)<DRAG_THRESHOLD&&Math.abs(ev.clientY-startY)<DRAG_THRESHOLD)return;
       chipDragMoved=true;
       const ghost=document.createElement('img');
-      ghost.src='chip-blank-'+pending.denom+'.png';
+      ghost.src='chip-blank-'+pending.denom+'.webp';
       ghost.className='chip-drag-ghost';
       document.body.appendChild(ghost);
       chipDrag={denom:pending.denom,source:pending.source,ghost};
@@ -3900,7 +3900,7 @@ function chipLabel(amt,isFP){return (isFP?'FP$':'$')+(Number.isInteger(amt)?amt:
 function chipStackHTML(amt,off,locked,isFP){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
-  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
+  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.webp" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
   const label=chipLabel(amt,isFP);
   const fs=label.length<=3?0.34:(label.length===4?0.30:(label.length===5?0.25:0.21));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';

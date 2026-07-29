@@ -796,7 +796,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.7</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.8</div>
       <div style="width:100%">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -2898,7 +2898,7 @@ function renderBetCirclePair(prefix,amt){
       // so its own first entry IS the highest-value chip that fits the bet.
       const d=chipBreakdownDest(amt)[0]||1;
       const img=document.createElement('img');
-      img.src='chip-blank-'+d+'.png';
+      img.src='chip-blank-'+d+'.webp';
       img.draggable=false;
       chipsEl.appendChild(img);
     }
