@@ -176,7 +176,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .num-box.is-point{border:2px solid #fff;box-shadow:0 0 5px rgba(255,255,255,.4)}
 .nb-buy{background:rgba(0,80,180,.2);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-buy:hover{background:rgba(0,80,180,.45)}
-.nb-buy.active{background:rgba(0,120,255,.4)}
+.nb-buy.active{background:transparent}
 .nb-mid{background:rgba(255,255,255,.07);border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:40px;font-weight:700;flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
 .nb-place{background:rgba(0,0,0,.15);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-place:hover{background:rgba(255,255,255,.1)}
@@ -240,7 +240,7 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 #pass-bar{display:flex;align-items:stretch;flex:2;min-height:0;border-radius:4px;overflow:hidden;border:0.5px solid rgba(100,160,255,.3)}
 #pass-odds-cell{background:rgba(0,50,140,.4);border-right:1px solid rgba(100,160,255,.3);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
 #pass-odds-cell:hover{background:rgba(0,80,220,.4)}
-#pass-odds-cell.active{background:rgba(0,100,255,.4)}
+#pass-odds-cell.active{background:transparent}
 .odds-lbl{font-size:14px;color:rgba(255,255,255,.5);display:block}
 .odds-stk{font-size:17px;color:#ffd700;display:block;min-height:11px}
 .odds-pay{font-size:14px;color:rgba(255,255,255,.4);display:block}
@@ -278,13 +278,13 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-bar{display:none;flex:2;min-height:0;border-radius:4px;background:rgba(80,0,0,.3);border:0.5px solid rgba(255,80,80,.35);flex-direction:column;overflow:hidden}
 #dp-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .12s}
 #dp-main:hover{background:rgba(255,80,80,.1)}
-#dp-main.active-bar{background:rgba(180,0,0,.25)}
+#dp-main.active-bar{background:transparent}
 .dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;color:rgba(255,130,130,.9)}
 .dp-stk{font-size:13px;color:#ffd700;min-height:10px}
 .dp-note{font-size:9px;color:rgba(255,255,255,.3)}
 #dp-odds-cell{background:rgba(60,0,0,.4);border-top:0.5px solid rgba(255,80,80,.2);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none}
 #dp-odds-cell:hover{background:rgba(100,0,0,.5)}
-#dp-odds-cell.active{background:rgba(120,0,0,.5)}
+#dp-odds-cell.active{background:transparent}
 .dp-odds-lbl{font-size:9px;color:rgba(255,130,130,.5);display:block}
 .dp-odds-stk{font-size:11px;color:#ffd700;display:block;min-height:9px}
 .dp-odds-pay{font-size:8px;color:rgba(255,130,130,.4);display:block}
@@ -302,10 +302,10 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .nb-buy-wrap{display:flex;flex:1;border-bottom:0.5px solid rgba(255,255,255,.1)}
 .nb-buy-left{flex:1;background:rgba(0,80,180,.2);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s;border-right:0.5px solid rgba(255,255,255,.08)}
 .nb-buy-left:hover{background:rgba(0,80,180,.45)}
-.nb-buy-left.active{background:rgba(0,120,255,.4)}
+.nb-buy-left.active{background:transparent}
 .nb-lay{flex:1;background:rgba(120,0,0,.18);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-lay:hover{background:rgba(160,0,0,.35)}
-.nb-lay.active{background:rgba(180,0,0,.45)}
+.nb-lay.active{background:transparent}
 .nb-lay .nb-lbl{color:rgba(255,130,130,.55)}
 .nb-lay .nb-stk{color:#ff9999}
 .nb-lay .nb-pay{color:rgba(255,130,130,.35)}
@@ -1723,7 +1723,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.24</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.25</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>

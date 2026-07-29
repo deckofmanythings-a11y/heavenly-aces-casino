@@ -80,7 +80,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #zero-col,#num-grid,#col21-strip,#dozens-row,#evens-row{display:contents}
 .bet-cell{position:absolute;background:transparent;border:none;border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:min(30px,4cqw);letter-spacing:.02em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 4px rgba(0,0,0,.75);transition:background .1s;user-select:none}
 .bet-cell:hover{background:rgba(255,215,0,.25)}
-.bet-cell.active{box-shadow:inset 0 0 0 2px #ffd700}
+.bet-cell.active{box-shadow:none}
 .zero-cell{font-size:min(26px,3.6cqw)}
 .zero-top{left:0.104%;top:0.168%;width:8.234%;height:31.229%}
 .zero-bot{left:0.104%;top:31.397%;width:8.234%;height:29.63%}
@@ -99,7 +99,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .out-cell{position:absolute;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:min(22px,3cqw);letter-spacing:.03em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 4px rgba(0,0,0,.75);transition:background .1s}
 .cell-text{display:flex;flex-direction:column;align-items:center;gap:1px}
 .out-cell:hover{background:rgba(255,215,0,.25)}
-.out-cell.active{box-shadow:inset 0 0 0 2px #ffd700}
+.out-cell.active{box-shadow:none}
 .out-cell.red-txt{color:#ff8080}
 .out-cell.black-txt{color:#ddd}
 .cell-label{display:inline-block}
@@ -310,7 +310,7 @@ body{--chip:34px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.26</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.27</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">

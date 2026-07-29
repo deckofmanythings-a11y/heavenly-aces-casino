@@ -140,10 +140,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bs-btn{border-radius:4px;border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:background .1s;flex:1;padding:4px 6px;text-align:center;overflow:hidden}
 #btn-small{background:rgba(0,80,180,.25);border-color:rgba(100,160,255,.4)}
 #btn-small:hover{background:rgba(0,80,180,.4)}
-#btn-small.active{background:rgba(0,100,220,.45);border-color:#6af}
+#btn-small.active{background:transparent}
 #btn-big{background:rgba(180,0,0,.25);border-color:rgba(255,100,100,.4)}
 #btn-big:hover{background:rgba(180,0,0,.4)}
-#btn-big.active{background:rgba(220,0,0,.45);border-color:#f66}
+#btn-big.active{background:transparent}
 .bs-label{font-size:min(42px,6.6cqw);font-weight:700;letter-spacing:.06em}
 .bs-sub{font-size:min(24px,4.5cqw);color:rgba(255,255,255,.9)}
 .bs-stk{font-size:min(39px,6.0cqw);color:#ffd700;position:absolute;bottom:3px;right:6px}
@@ -176,14 +176,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .combo-hdr{color:rgba(75,185,115,.7);background:rgba(0,50,32,.2)}
 #any-triple-btn{flex:1;background:rgba(150,0,150,.22);border:0.5px solid rgba(200,80,200,.35);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;overflow:hidden}
 #any-triple-btn:hover{background:rgba(160,0,160,.38)}
-#any-triple-btn.active{background:rgba(180,0,180,.45);border-color:#d060d0}
+#any-triple-btn.active{background:transparent}
 .at-lbl{font-size:min(27px,4.2cqw);font-weight:700;color:rgba(255,200,255,.9);line-height:1}
 .at-pay{font-size:min(21px,3.5cqw);color:rgba(220,140,220,.5);line-height:1}
 .at-stk{font-size:min(24px,4cqw);color:#ffd700;position:absolute;bottom:2px;right:4px}
 /* #specific-triples-grid removed */
 .trip-cell{background:rgba(90,0,90,.22);border:0.5px solid rgba(170,55,170,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s;overflow:hidden}
 .trip-cell:hover{background:rgba(110,0,110,.38)}
-.trip-cell.active{background:rgba(140,0,140,.45);border-color:#c050c0}
+.trip-cell.active{background:transparent}
 .trip-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
 .trip-dice img{display:inline-block}
 .trip-pay{font-size:min(18px,3cqw);color:rgba(210,150,210,.45);line-height:1}
@@ -193,7 +193,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* #doubles-grid removed */
 .dbl-cell{background:rgba(0,65,95,.28);border:0.5px solid rgba(75,165,195,.3);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s;overflow:hidden}
 .dbl-cell:hover{background:rgba(0,80,120,.42)}
-.dbl-cell.active{background:rgba(0,100,150,.5);border-color:#50b4d4}
+.dbl-cell.active{background:transparent}
 .dbl-dice{display:flex;flex-direction:row;align-items:center;gap:2px;line-height:1}
 .dbl-dice img{display:inline-block}
 .dbl-pay{font-size:min(18px,3cqw);color:rgba(120,200,220,.45);line-height:1}
@@ -201,7 +201,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #combos-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:2px;flex:1;min-height:0}
 .dom-cell{background:rgba(0,50,32,.35);border:0.5px solid rgba(65,165,105,.25);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:1px;padding:2px;position:relative;transition:background .1s;overflow:hidden}
 .dom-cell:hover{background:rgba(0,70,45,.5)}
-.dom-cell.active{background:rgba(0,90,58,.55);border-color:#40b870}
+.dom-cell.active{background:transparent}
 .dom-dice{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1}
 .dom-dice img{display:inline-block}
 .dom-pay{font-size:min(18px,3cqw);color:rgba(75,185,115,.4);line-height:1}
@@ -227,7 +227,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* any-num-row legacy removed */
 .any-cell{background:rgba(45,40,0,.4);border:0.5px solid rgba(210,190,55,.28);border-radius:3px;display:flex;flex-direction:row;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s;gap:3px;padding:1px 2px;overflow:hidden}
 .any-cell:hover{background:rgba(60,55,0,.55)}
-.any-cell.active{background:rgba(80,70,0,.6);border-color:#d4c040}
+.any-cell.active{background:transparent}
 .any-die img{display:inline-block}
 .any-pay{font-size:min(12px,2.2cqw);color:rgba(210,190,55,.5);line-height:1}
 .any-stk{font-size:min(12px,2.2cqw);color:#ffd700;position:absolute;bottom:1px;right:2px;line-height:1}
@@ -671,7 +671,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.2</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.2.3</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
