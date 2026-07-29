@@ -123,14 +123,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #log-btn-paigow{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
 .chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
-.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
-.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
-.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
-.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
-.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
-.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
-.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
-.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:13px}
+.chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.webp')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.webp')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:13px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -294,7 +294,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.5</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.6</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -439,7 +439,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 </div><!-- end game-screen -->
 
-<script src="cards.js?v=0.4.144"></script>
+<script src="cards.js?v=0.4.145"></script>
 <script>
 function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 function dNav(url){

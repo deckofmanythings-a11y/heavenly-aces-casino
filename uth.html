@@ -59,7 +59,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* ── TABLE AREA / FELT PANEL ── */
 /* Plain CSS felt (no baked full-table art), same architecture as breakout.html --
-   uth_felt_bets.png is a small trimmed module (Trips diamond, the logo, and the
+   uth_felt_bets.webp is a small trimmed module (Trips diamond, the logo, and the
    Ante/Blind/Play circles, 561x651) placed as one unit in #bets-module, positioned
    with its own %-of-that-image-only coordinates (measured via canvas flood-fill
    connected-region bounding boxes, not eyeballed). Everything else -- the felt
@@ -97,7 +97,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows.
    Positions and card scale (--pc-w:19.2cqh, uniform across all three rows) are
-   reproduced exactly from uth_CARD_POSITIONS.png, the designer-supplied placement
+   reproduced exactly from uth_CARD_POSITIONS.webp, the designer-supplied placement
    reference (measured via crops, not the flood-fill/connected-region approach used
    for the bets-module circles). "Dealer's Hand"/"Player's Hand" are now their own
    plain-CSS #felt-label spans (see above) rather than baked art, so the dynamic
@@ -156,8 +156,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #blind-info{left:78.5%;top:40%;width:8%;height:6.5%}
 #play-info{left:1%;top:71.2%;width:8%;height:6.5%}
 /* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
-   baked-in bulb art, so lightOFF.png sits idle over open felt and swaps for
-   lightON.png once the round's dealt with the light on -- see updateUI(). Positioned
+   baked-in bulb art, so lightOFF.webp sits idle over open felt and swaps for
+   lightON.webp once the round's dealt with the light on -- see updateUI(). Positioned
    in the open felt just above #bets-module (module children are position:absolute,
    this just extends upward via a negative top), not inside the module itself --
    there's no free space left inside its own canvas for it. */
@@ -166,7 +166,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 #light-info-btn{position:absolute;left:1%;top:-28.8%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 /* Sweep-to-lit: the $5 chip at #light-spot vanishes (handled by stk-light going blank in
-   updateUI() once locked) and lightON.png fades/pops in over the felt's own baked-in OFF
+   updateUI() once locked) and lightON.webp fades/pops in over the felt's own baked-in OFF
    art -- triggered once, right when a deal with the light on succeeds (see dealHand()). */
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
@@ -197,14 +197,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
-.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
-.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
-.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
-.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
-.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
-.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
-.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
-.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:13px}
+.chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.webp')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.webp')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:13px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -319,10 +319,10 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
 
 /* ══════════════ PORTRAIT MODE ══════════════
-   uth_port_bg.png is a full-screen background (unlike landscape's uth_bg.png, which is
+   uth_port_bg.webp is a full-screen background (unlike landscape's uth_bg.webp, which is
    only the felt panel) -- the top ~6% and bottom ~21% are UI bands baked into the art
    itself (gold borders), with felt/cards/bet-circles in the middle. Every region below
-   was measured off uth_port_card_and_ui_areas.png (a reference copy of the same art with
+   was measured off uth_port_card_and_ui_areas.webp (a reference copy of the same art with
    colored boxes marking each zone) via pixel scanning of the raw PNG, not eyeballed --
    see panel-art.md's measurement technique. Secondary info-panel actions (Redeem/Cash
    Out/Dailies/Log Out) and the mode-toggle grid have no room in the 6% header band and
@@ -353,7 +353,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #status-sub{display:none}
 
   #table-area{position:absolute;inset:0;padding:0;z-index:1}
-  /* Blank felt, same as landscape -- no baked full-screen art (uth_port_bg.png is
+  /* Blank felt, same as landscape -- no baked full-screen art (uth_port_bg.webp is
      retired). Inherits the base rule's plain radial-gradient background unchanged. */
   #table-panel{aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
 
@@ -400,7 +400,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
      break the region's own placement within #table-panel. */
   .crl-hand{position:absolute;left:0;right:0;bottom:-1px;text-align:center;min-height:0;font-size:1.3cqh}
 
-  /* #bets-module reuses the exact same uth_felt_bets.png + module-relative spot
+  /* #bets-module reuses the exact same uth_felt_bets.webp + module-relative spot
      coordinates as landscape (see the base, non-media-query rules) -- only the
      module's own size/position within #table-panel changes here. Trips/Ante/Blind/
      Play/Light's own left/top/width/height are NOT re-declared: they're already
@@ -512,7 +512,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.12</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.13</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -564,12 +564,12 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
       <span class="felt-label" id="players-hand-label">Player's Hand</span>
       <span class="felt-label" id="ante-qualify-label">Ante pushes if dealer has less than a pair</span>
 
-      <!-- uth_felt_bets.png: just the Trips diamond, the logo, and the Ante/Blind/Play
+      <!-- uth_felt_bets.webp: just the Trips diamond, the logo, and the Ante/Blind/Play
            circles (561x651), placed as one module -- every interactive/informational
            element below is a %-of-THIS-IMAGE overlay, so it's a child of this div,
            not #table-panel directly (see the CSS comment on #bets-module). -->
       <div id="bets-module">
-        <img class="bets-module-art" src="uth_felt_bets.png" alt="">
+        <img class="bets-module-art" src="uth_felt_bets.webp" alt="">
 
         <div class="panel-spot" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
           <span class="panel-spot-stk" id="stk-trips"></span>
@@ -589,13 +589,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
         <button class="paytable-info-btn" id="play-info" onclick="event.stopPropagation();openPaytable('play')" title="Play Rules">i</button>
 
         <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
-             has no baked-in bulb art, so lightOFF.png sits idle over open felt and swaps
-             for lightON.png once the round's dealt with the light on -- see updateUI(). -->
+             has no baked-in bulb art, so lightOFF.webp sits idle over open felt and swaps
+             for lightON.webp once the round's dealt with the light on -- see updateUI(). -->
         <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
           <span class="panel-spot-stk" id="stk-light"></span>
         </div>
-        <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
-        <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
+        <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;pointer-events:none;z-index:4">
+        <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
         <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
       </div>
 
@@ -663,7 +663,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 
 </div><!-- end game-screen -->
 
-<script src="cards.js?v=0.4.144"></script>
+<script src="cards.js?v=0.4.145"></script>
 <script>
 function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 function dNav(url){
@@ -1048,8 +1048,8 @@ async function openProgressiveModal(){
   document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
 }
 function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
-// Paytables previously baked into uth_bg.png -- now shown via ⓘ buttons next to each
-// bet spot on uth_felt_bets.png, same pattern as breakout.html's PAYTABLE_CONTENT/
+// Paytables previously baked into uth_bg.webp -- now shown via ⓘ buttons next to each
+// bet spot on uth_felt_bets.webp, same pattern as breakout.html's PAYTABLE_CONTENT/
 // openPaytable(). Numbers match tripsMultiplier()/blindMultiplier() in roll-uth's
 // index.ts exactly (Trips: Royal 50, SF 40, Quads 30, FH 8, Flush 6, Straight 5,
 // Trips 3, else lose. Blind: Royal 500, SF 50, Quads 10, FH 3, Flush 3:2,
@@ -1506,7 +1506,7 @@ function updateUI(){
   document.getElementById('trips-spot').classList.toggle('active',tripsAmt>0);
   document.getElementById('play-spot').classList.toggle('active',G.playBet>0);
   // The Light: a staged $5 stake shows like any other spot pre-deal, then the chip
-  // sweeps away and lightON.png takes over once dealt (G.locked.progressive) --
+  // sweeps away and lightON.webp takes over once dealt (G.locked.progressive) --
   // there's no locked-chip-stack display for this one, just the bulb art itself.
   document.getElementById('stk-light').textContent=(!locked&&G.bets.progressive)?fmt(G.bets.progressive):'';
   document.getElementById('light-spot').classList.toggle('active',!locked&&(G.bets.progressive||0)>0);
@@ -1599,7 +1599,7 @@ function renderChipStacks(){
   applyChipStackVisual('stk-play',G.phase==='showdown');
   // The Light: real chip stack while staged (pre-deal), same as Ante/Trips -- its own
   // updateUI() block already blanks the text once locked, so there's nothing left to render
-  // by the time dealHand() sweeps the chip away and lightON.png takes over.
+  // by the time dealHand() sweeps the chip away and lightON.webp takes over.
   applyChipStackVisual('stk-light',false);
 }
 function applyChipStackVisual(id,locked,silent){

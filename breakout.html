@@ -59,7 +59,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
 
 /* ── TABLE AREA / FELT ── */
-/* Plain CSS felt (no baked full-table art) -- breakout_blackjack_felt_bets.png is a
+/* Plain CSS felt (no baked full-table art) -- breakout_blackjack_felt_bets.webp is a
    small trimmed module (just the two bet-hand circles + four side-bet badges,
    1080x1410, portrait-shaped) placed as one unit in #bets-module, positioned with
    its own %-of-that-image-only coordinates (measured the same ffmpeg raw-RGBA +
@@ -217,14 +217,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #log-btn-bo{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
 .chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
-.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
-.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
-.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
-.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
-.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
-.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
-.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
-.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:13px}
+.chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.webp')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.webp')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:13px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -471,7 +471,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.7</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.8</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -524,12 +524,12 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <span class="crl-hand" id="player-hand-name"></span>
       </div>
 
-      <!-- breakout_blackjack_felt_bets.png: just the two bet-hand circles + four
+      <!-- breakout_blackjack_felt_bets.webp: just the two bet-hand circles + four
            side-bet badges (1080x1410), placed as one module. Every interactive
            element below is a %-of-THIS-IMAGE overlay (see the CSS comment on
            #bets-module), so it's a child of this div, not #table-panel directly. -->
       <div id="bets-module">
-        <img class="bets-module-art" src="breakout_blackjack_felt_bets.png" alt="">
+        <img class="bets-module-art" src="breakout_blackjack_felt_bets.webp" alt="">
 
         <!-- The two main-wager bet spots are the DEALER HAND / PLAYER HAND ring
              circles themselves -- mutually exclusive (see placePlayerBet/placeDealerBet). -->
@@ -558,19 +558,19 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <button class="paytable-info-btn" id="pairplus-info" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
 
         <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
-             has no baked-in bulb art, so lightOFF.png sits idle over open felt and swaps
-             for lightON.png once the round's dealt with the light on -- see updateUI(). -->
+             has no baked-in bulb art, so lightOFF.webp sits idle over open felt and swaps
+             for lightON.webp once the round's dealt with the light on -- see updateUI(). -->
         <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
           <span class="panel-spot-stk" id="stk-light"></span>
         </div>
-        <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
-        <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
+        <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;pointer-events:none;z-index:4">
+        <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
         <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
 
         <!-- TRILUX: Trilux Thursday only (Nephilim+) -- shown/hidden by updateUI() via
-             WeeklyEvents.isDay(4, tier). Fixed $5, like The Light. TriLux_Web_Logo.png
+             WeeklyEvents.isDay(4, tier). Fixed $5, like The Light. TriLux_Web_Logo.webp
              (198x171) is the bet-spot art; stake label overlays the bottom of it. -->
-        <div class="panel-spot" id="trilux-spot" onclick="toggleTrilux()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleTrilux()" title="Trilux — $5 side bet, Trilux Thursday only" style="display:none;position:absolute;left:0;bottom:-90px;width:100%;height:78px;align-items:flex-end;justify-content:center;background:url('TriLux_Web_Logo.png') center/contain no-repeat">
+        <div class="panel-spot" id="trilux-spot" onclick="toggleTrilux()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleTrilux()" title="Trilux — $5 side bet, Trilux Thursday only" style="display:none;position:absolute;left:0;bottom:-90px;width:100%;height:78px;align-items:flex-end;justify-content:center;background:url('TriLux_Web_Logo.webp') center/contain no-repeat">
           <span class="panel-spot-stk" id="stk-trilux" style="font-weight:800;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.9);margin-bottom:2px"></span>
         </div>
         <button id="trilux-info-btn" onclick="event.stopPropagation();openTriluxModal()" title="Trilux Paytable" style="display:none;position:absolute;left:calc(100% + 4px);bottom:-56px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid #ffd700;font-size:12px;cursor:pointer">i</button>
@@ -662,7 +662,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
 
 </div><!-- end game-screen -->
 
-<script src="cards.js?v=0.4.144"></script>
+<script src="cards.js?v=0.4.145"></script>
 <script>
 function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 function dNav(url){
@@ -1116,7 +1116,7 @@ function renderTrayStack(id,frac){
   for(let i=0;i<n;i++){
     const img=document.createElement('img');
     img.className='tray-card';
-    img.src='cards/card-back.png?v=0.4.120';
+    img.src='cards/card-back.webp?v=0.4.122';
     img.draggable=false;
     img.style.bottom=(i*3)+'%';
     img.style.zIndex=String(i);
@@ -1677,7 +1677,7 @@ function updateUI(){
     }
   });
   // The Light: a staged $5 stake shows like any other spot pre-deal, then the chip
-  // sweeps away and lightON.png takes over once dealt (G.locked.progressive) --
+  // sweeps away and lightON.webp takes over once dealt (G.locked.progressive) --
   // there's no locked-chip-stack display for this one, just the bulb art itself.
   document.getElementById('stk-light').textContent=(!locked&&G.bets.progressive)?fmt(G.bets.progressive):'';
   document.getElementById('light-spot').classList.toggle('active',!locked&&(G.bets.progressive||0)>0);

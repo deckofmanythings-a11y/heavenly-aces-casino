@@ -58,7 +58,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
 
 /* ── TABLE AREA / FELT PANEL ── */
-/* Baked-art panel: iLuvSuits_Felt.png has the Ante/Play/Flush Rush/Super Flush Rush
+/* Baked-art panel: iLuvSuits_Felt.webp has the Ante/Play/Flush Rush/Super Flush Rush
    circles, both paytables, and the dealer-qualify line printed directly into the art.
    Every interactive/informational element below is a %-positioned overlay measured
    directly off the art's own 3200x1800 pixels (see panel-art skill reference) --
@@ -71,7 +71,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    the full container width regardless of aspect ratio, so on a viewport wider than
    16:9 the derived height gets clamped by max-height while width stays put -- the box
    ends up wider than 16:9 and background-size:100% 100% stretches the art to match. */
-#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('iLuvSuits_Felt.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
+#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('iLuvSuits_Felt.webp');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
 
 /* Card rows -- hidden (but space-reserving) until a hand is dealt. Cards are
    absolutely positioned within their row (not flex) so the "sweat" reveal can
@@ -102,7 +102,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #superflushrush-spot{left:63.81%;top:39.69%;width:5.28%;height:9.39%;--chip:6.5cqh}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 /* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
-   baked-in bulb art (unlike UTH's), so both lightOFF.png (idle) and lightON.png (lit,
+   baked-in bulb art (unlike UTH's), so both lightOFF.webp (idle) and lightON.webp (lit,
    post-deal) are placed as floating overlays -- positioned in the open gap between the
    Super Flush Rush circle and the I Luv Suits logo (per Deck's direction), sized to
    match the other circle spots. */
@@ -149,14 +149,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #log-btn-uth{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
 .chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
-.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
-.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
-.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
-.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
-.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
-.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
-.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
-.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:13px}
+.chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.webp')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.webp')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:13px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -266,13 +266,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
 
 /* ══════════════ PORTRAIT MODE ══════════════
-   Same approach as uth.html's portrait mode: iLuvSuits_port.png is a full-screen
+   Same approach as uth.html's portrait mode: iLuvSuits_port.webp is a full-screen
    background (top ~6% and bottom ~21% reserved as UI bands), with felt/cards/bet-circles
    in the middle. Bet-spot positions were measured directly off the art via pixel
    clustering (not eyeballed); dealer/player card-region positions are placed in the open
    felt per Deck's direction (dealer above the baked "DEALER QUALIFIES..." text, player in
    the open gap between that text and the bet-circle cluster) since this art has no
-   labeled reference boxes the way uth_port_card_and_ui_areas.png did. See the
+   labeled reference boxes the way uth_port_card_and_ui_areas.webp did. See the
    IS_PORTRAIT-branched fan-geometry constants in the script for why --pc-w here must
    stay in sync with CARD_W_CQH in JS -- this game's 7-card fan positions are computed
    once in JS from that constant, unlike uth.html's pure-CSS margin trick. */
@@ -296,7 +296,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #status-sub{display:none}
 
   #table-area{position:absolute;inset:0;padding:0;z-index:1}
-  #table-panel{background-image:url('iLuvSuits_port.png');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
+  #table-panel{background-image:url('iLuvSuits_port.webp');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
 
   /* Shifted down from the original measured position -- the header's own 44px push (to
      clear Discord's chrome overlay) ate into the top of this zone, and the baked
@@ -401,7 +401,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.8</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.9</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -457,13 +457,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
       </div>
 
       <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
-           has no baked-in bulb art, so lightOFF.png sits idle over open felt and swaps
-           for lightON.png once the round's dealt with the light on -- see updateUI(). -->
+           has no baked-in bulb art, so lightOFF.webp sits idle over open felt and swaps
+           for lightON.webp once the round's dealt with the light on -- see updateUI(). -->
       <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
         <span class="panel-spot-stk" id="stk-light"></span>
       </div>
-      <img id="light-off-img" src="lightOFF.png" alt="" style="position:absolute;pointer-events:none;z-index:4">
-      <img id="light-on-img" src="lightON.png" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
+      <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;pointer-events:none;z-index:4">
+      <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
       <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
 
     </div>
@@ -529,7 +529,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 
 </div><!-- end game-screen -->
 
-<script src="cards.js?v=0.4.144"></script>
+<script src="cards.js?v=0.4.145"></script>
 <script>
 function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com')||new URLSearchParams(location.search).has('frame_id');}
 function dNav(url){
@@ -1569,7 +1569,7 @@ function updateUI(){
   document.getElementById('superflushrush-spot').classList.toggle('active',sfrAmt>0);
   document.getElementById('play-spot').classList.toggle('active',G.playBet>0);
   // The Light: a staged $5 stake shows like any other spot pre-deal, then the chip
-  // sweeps away and lightON.png takes over once dealt (G.locked.progressive) --
+  // sweeps away and lightON.webp takes over once dealt (G.locked.progressive) --
   // there's no locked-chip-stack display for this one, just the bulb art itself.
   document.getElementById('stk-light').textContent=(!locked&&G.bets.progressive)?fmt(G.bets.progressive):'';
   document.getElementById('light-spot').classList.toggle('active',!locked&&(G.bets.progressive||0)>0);

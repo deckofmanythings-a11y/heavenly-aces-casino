@@ -31,7 +31,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* ── GAME SCREEN ── */
 #game-screen{display:none;height:100vh;height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a0a18}
 
-/* ── FIRING SCREEN -- baked background art (DestroyerPanel_bg.png, 1672x940), firing phase
+/* ── FIRING SCREEN -- baked background art (DestroyerPanel_bg.webp, 1672x940), firing phase
    only. Placement keeps the old #top-row/#main-area/#history-strip/#fire-center look; those
    four are hidden while this is shown, and vice versa (see showFiringScreen/hideFiringScreen).
    All child regions below are positioned as percentages measured directly off the background
@@ -43,7 +43,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    browsers/players and no external request at load time. font-display:block, not swap, so
    no fallback-font flash before it's ready. */
 @font-face{font-family:'VT323';src:url('fonts/VT323-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:block}
-#firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg_new.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
+#firing-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg_new.webp');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
 /* CRT green-phosphor text for everything sitting on the new panel's screen cutouts -- font,
    color and glow all come from here so individual regions below don't need to repeat it.
    letter-spacing widened slightly (VT323 sits tighter than the old system-ui default). */
@@ -182,8 +182,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
    via inline style (set in buildFiringGrid), then enlarged via transform:scale so it grows
    from its own center without disturbing that positioning. */
 .fp-cell-marker{position:absolute;transform:translate(-50%,-70%) scale(1.5);pointer-events:none;display:none}
-.fp-cell-marker.hit{display:block;background:url('hit.png') center/contain no-repeat;z-index:4}
-.fp-cell-marker.miss{display:block;background:url('miss.png') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.75)}
+.fp-cell-marker.hit{display:block;background:url('hit.webp') center/contain no-repeat;z-index:4}
+.fp-cell-marker.miss{display:block;background:url('miss.webp') center/contain no-repeat;opacity:.85;z-index:1;transform:translate(-50%,-50%) scale(.75)}
 /* Sibling of .fp-cell now (not a child), same reason as .fp-cell-marker above -- a child's
    z-index is trapped inside its parent .fp-cell's own stacking level, so it painted under
    the ship layer (z-index:2) regardless of its own z-index:4. */
@@ -231,13 +231,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .fp-missile-calib-preview{opacity:.9}
 
 /* ── PLACEMENT SCREEN (same baked-art-panel treatment as the firing screen, companion
-   background DestroyerPanel_bg_setup_new.png -- same CRT-monitor panel art as the firing
-   screen's DestroyerPanel_bg_new.png, just with "BEGIN GAME" baked into the knob instead of
+   background DestroyerPanel_bg_setup_new.webp -- same CRT-monitor panel art as the firing
+   screen's DestroyerPanel_bg_new.webp, just with "BEGIN GAME" baked into the knob instead of
    blank -- same 1672x940 canvas, same screen-cutout layout, confirmed by eye against the
    firing panel's art). */
 #placement-screen{display:none;flex:1;min-height:0;align-items:center;justify-content:center}
 #placement-screen.active{display:flex}
-#placement-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg_setup_new.png');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
+#placement-panel{position:relative;aspect-ratio:1672/940;max-width:100%;max-height:100%;width:100%;background-image:url('DestroyerPanel_bg_setup_new.webp');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh}
 /* Same green-phosphor CRT treatment as the firing panel (#firing-panel rules above) --
    font, color, glow and scanlines all mirrored 1:1 since it's the same monitor art. */
 #placement-panel .fp-region,#placement-panel .fp-region button{font-family:'VT323',monospace;letter-spacing:.04em;color:#eafff0;text-shadow:0 0 2px #dfffe8,0 0 6px rgba(180,255,200,.55)}
@@ -341,11 +341,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* translate is outermost in this chain (applied after rotate/scaleY), so it operates in
    real screen-space, not the tilted local space -- -65% instead of -50% raises the marker
    ~15% of its own height toward the top of the screen. */
-.grid-cell.hit::after{content:'';position:absolute;top:50%;left:50%;width:130%;height:130%;background:url('hit.png') center/contain no-repeat;transform:translate(-50%,-50%) rotate(-45deg) scaleY(2) translateY(-22px);z-index:3;pointer-events:none}
+.grid-cell.hit::after{content:'';position:absolute;top:50%;left:50%;width:130%;height:130%;background:url('hit.webp') center/contain no-repeat;transform:translate(-50%,-50%) rotate(-45deg) scaleY(2) translateY(-22px);z-index:3;pointer-events:none}
 /* Unlike hit, miss stays BELOW .ship-img-wrap's z-index:2 -- z-index:1 (not just omitting
    it) since .grid-cell has no stacking context of its own, so this competes directly
    against the ship layer in the same shared context. */
-.grid-cell.miss::after{content:'';display:block;width:65%;height:65%;background:url('miss.png') center/contain no-repeat;opacity:.85;transform:rotate(-45deg) scaleY(2);position:relative;z-index:1}
+.grid-cell.miss::after{content:'';display:block;width:65%;height:65%;background:url('miss.webp') center/contain no-repeat;opacity:.85;transform:rotate(-45deg) scaleY(2);position:relative;z-index:1}
 
 /* ── RIGHT PANEL (ship status + controls) ── */
 #right-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);overflow-y:auto}
@@ -420,14 +420,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .chip{width:64px;height:64px;border-radius:50%;font-size:20px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#111;transition:transform .1s;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #4a9eff;border-radius:50%}
-.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
-.chip[data-val="2"]{background-image:url('chip-blank-2.png')}
-.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
-.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
-.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
-.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
-.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
-.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:26px}
+.chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
+.chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.webp')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.webp')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:26px}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.22);border-radius:3px;color:#fff;font-size:44px;padding:3px 24px;cursor:pointer;flex-shrink:0;height:96px}
 #hud-pnl-bottom{font-size:52px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 3px}
 
@@ -652,7 +652,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
     </div>
   </div>
 
-  <!-- PLACEMENT SCREEN -- same baked-art-panel treatment, DestroyerPanelSetup_bg.png.
+  <!-- PLACEMENT SCREEN -- same baked-art-panel treatment, DestroyerPanelSetup_bg.webp.
        Randomize Ship Positions / Begin Game text is baked into the art; the two regions
        below are transparent hitboxes over those buttons, not rebuilt UI. Grid geometry
        reuses fpCellCorners/fpPct (same 1672x940 companion canvas as the firing panel). -->
@@ -684,7 +684,7 @@ Tap BEGIIN GAME to start the game.</div>
            firing panel's calibrated #fp-extra-wins coordinates, the same cutout. -->
       <button class="fp-region" id="pp-randomize-btn" onclick="reRandomize()"
               style="left:4.187%;top:17.447%;width:7.955%;height:19.468%">RANDOMIZE<br>SHIP POSITIONS</button>
-      <!-- Sits on the knob now baked as "BEGIN GAME" art in DestroyerPanel_bg_setup_new.png. -->
+      <!-- Sits on the knob now baked as "BEGIN GAME" art in DestroyerPanel_bg_setup_new.webp. -->
       <button class="fp-region pp-invisible-btn" id="pp-begin-btn" onclick="startBattle()"
               style="left:88.278%;top:82.34%;width:7.656%;height:13.723%">Begin</button>
       <!-- Moved to C (Deck) -- the big bottom-left screen, plenty of width for a chip row.
@@ -796,7 +796,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.6</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.7</div>
       <div style="width:100%">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -967,14 +967,14 @@ const fmtS=n=>'$'+Math.abs(n).toFixed(0);
 // Base art spans letters (one number-row); Alt is the artist-mirrored version that
 // spans numbers (one letter-column) -- no CSS rotation needed for the axis swap.
 const SHIP_IMG = {
-  destroyer: 'DestroyerThreeQuarter.png',
-  battleship: 'BattleshipThreeQuarter.png',
-  carrier: 'CarrierThreeQuarter.png'
+  destroyer: 'DestroyerThreeQuarter.webp',
+  battleship: 'BattleshipThreeQuarter.webp',
+  carrier: 'CarrierThreeQuarter.webp'
 };
 const SHIP_IMG_ALT = {
-  destroyer: 'DestroyerThreeQuarterAlt.png',
-  battleship: 'BattleshipThreeQuarterAlt.png',
-  carrier: 'CarrierThreeQuarterAlt.png'
+  destroyer: 'DestroyerThreeQuarterAlt.webp',
+  battleship: 'BattleshipThreeQuarterAlt.webp',
+  carrier: 'CarrierThreeQuarterAlt.webp'
 };
 // Ship index -> image key (SHIP_LENGTHS = [2,3,3,4])
 const SHIP_IMG_KEY = ['destroyer','battleship','battleship','carrier'];
@@ -1041,8 +1041,8 @@ const DIAMOND_SY = 0.5;
 // history, and result text in one place with no call-site changes needed. DieA-F.png/
 // DieRed1-6.png confirmed unreferenced anywhere else in the project before moving them to
 // OLD_assets/.
-const DIE_LETTER_IMG = {A:'RedDNS_A.png',B:'RedDNS_B.png',C:'RedDNS_C.png',D:'RedDNS_D.png',E:'RedDNS_E.png',F:'RedDNS_F.png'};
-const DIE_NUMBER_IMG = {1:'WhiteDNS_1.png',2:'WhiteDNS_2.png',3:'WhiteDNS_3.png',4:'WhiteDNS_4.png',5:'WhiteDNS_5.png',6:'WhiteDNS_6.png'};
+const DIE_LETTER_IMG = {A:'RedDNS_A.webp',B:'RedDNS_B.webp',C:'RedDNS_C.webp',D:'RedDNS_D.webp',E:'RedDNS_E.webp',F:'RedDNS_F.webp'};
+const DIE_NUMBER_IMG = {1:'WhiteDNS_1.webp',2:'WhiteDNS_2.webp',3:'WhiteDNS_3.webp',4:'WhiteDNS_4.webp',5:'WhiteDNS_5.webp',6:'WhiteDNS_6.webp'};
 // ClocheDice.roll() only accepts 1-6 integers, so the letter die's faces are driven by
 // this 1-6 mapping under the hood -- DIE_LETTER_IMG_NUM_3D below supplies the matching face
 // art via ClocheDice's faceImagesPerDie so the physics die still shows letters.
@@ -1050,8 +1050,8 @@ const LETTER_TO_NUM = {A:1,B:2,C:3,D:4,E:5,F:6};
 const NUM_TO_LETTER = {1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
 // Same RedDNS_X/WhiteDNS_X art as above, just keyed 1-6 instead of by letter string --
 // needed wherever a 1-6-keyed map is required (ClocheDice's faceImagesPerDie).
-const DIE_LETTER_IMG_NUM_3D = {1:'RedDNS_A.png',2:'RedDNS_B.png',3:'RedDNS_C.png',4:'RedDNS_D.png',5:'RedDNS_E.png',6:'RedDNS_F.png'};
-const DIE_NUMBER_IMG_3D = {1:'WhiteDNS_1.png',2:'WhiteDNS_2.png',3:'WhiteDNS_3.png',4:'WhiteDNS_4.png',5:'WhiteDNS_5.png',6:'WhiteDNS_6.png'};
+const DIE_LETTER_IMG_NUM_3D = {1:'RedDNS_A.webp',2:'RedDNS_B.webp',3:'RedDNS_C.webp',4:'RedDNS_D.webp',5:'RedDNS_E.webp',6:'RedDNS_F.webp'};
+const DIE_NUMBER_IMG_3D = {1:'WhiteDNS_1.webp',2:'WhiteDNS_2.webp',3:'WhiteDNS_3.webp',4:'WhiteDNS_4.webp',5:'WhiteDNS_5.webp',6:'WhiteDNS_6.webp'};
 
 // ── 3D DICE (small inline "settled result" pair in the top HUD, mirrors Craps' initDice) ──
 let destTHREE=null,destRenderer=null,destScene=null,destCamera=null,destDieLetter=null,destDieNumber=null;
@@ -1085,7 +1085,7 @@ function initDestDice(){
   destRenderer=new destTHREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   destRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   // Transparent clear color -- the dice-result window now sits on top of the baked panel
-  // art (DestroyerPanel_bg.png) instead of the old solid #0a0a12 page background, so an
+  // art (DestroyerPanel_bg.webp) instead of the old solid #0a0a12 page background, so an
   // opaque backdrop would show as a visible black box.
   // updateStyle=false -- three.js's setSize() otherwise overwrites the canvas's inline CSS
   // width/height with fixed px values matching the drawing-buffer resolution, clobbering the
@@ -1114,7 +1114,7 @@ function landDestDice(letter,number){
 }
 
 // ── MISSILE FLAVOR IMAGES ────────────────────────────────────────────────────
-const MISSILE_IMG = {initial:'InitialMissile.png',extra:'ExtraMissile.png'};
+const MISSILE_IMG = {initial:'InitialMissile.webp',extra:'ExtraMissile.webp'};
 // Ship sprites for the missile-flight animation (Deck) -- each image is already oriented for
 // its named diagonal, matching the firing grid's two axes exactly: the grid is a rotated
 // parallelogram where moving along the letter axis (FP_GRID_U, fixed number) runs top-left to
@@ -1123,8 +1123,8 @@ const MISSILE_IMG = {initial:'InitialMissile.png',extra:'ExtraMissile.png'};
 // sprite, and a "column" strike (fixed letter) flies the topright_to_botleft sprite in the
 // opposite (number descending) direction. See playMissileFlight() for the geometry.
 const MISSILE_FLIGHT_IMG={
-  row:{initial:'initialstrike_topleft_to_botright.png',extra:'buymissile_topleft_to_botright.png'},
-  col:{initial:'initialstrike_topright_to_botleft.png',extra:'buymissile_topright_to_botleft.png'}
+  row:{initial:'initialstrike_topleft_to_botright.webp',extra:'buymissile_topleft_to_botright.webp'},
+  col:{initial:'initialstrike_topright_to_botleft.webp',extra:'buymissile_topright_to_botleft.webp'}
 };
 // Fine-tune rotation (degrees) applied on TOP of each sprite's native artwork orientation --
 // the art is already roughly angled for its named diagonal, but not exactly the grid's real
@@ -1589,7 +1589,7 @@ let _dragShipIdx=null;
 let _dragOffset=null; // offset within the ship where the drag started
 
 function renderPlacementGrid(){
-  // Flat parallelogram grid baked into DestroyerPanelSetup_bg.png -- same fpCellCorners/fpPct
+  // Flat parallelogram grid baked into DestroyerPanelSetup_bg.webp -- same fpCellCorners/fpPct
   // geometry as the firing panel's #fp-grid-cells (companion 1672x940 art, same letter/number
   // marker positions), rebuilt every call the same way the old rotated-diamond version was.
   const container=document.getElementById('pp-grid-cells');
@@ -2342,7 +2342,7 @@ function computeCurrentWinnings(){
 }
 
 // ── FIRING SCREEN (baked-art board) ───────────────────────────────────────────
-// Background art is DestroyerPanel_bg.png, measured at 1672x940. Every region's position
+// Background art is DestroyerPanel_bg.webp, measured at 1672x940. Every region's position
 // (in the HTML above, as left/top/width/height %) and the grid geometry below were measured
 // directly off Deck's labeled reference images (DestroyerPanel_with_Markers.png for the UI
 // regions, DestroyerPanel_grid.png for the 36-cell rhombus) via pixel-diffing against the

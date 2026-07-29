@@ -607,9 +607,9 @@
 
     const R = CFG.clocheRadius, H = CFG.clocheHeight;
 
-    // Real wood-grain / felt photo textures (cloche_wood.png, cloche_felt.png) rather than
+    // Real wood-grain / felt photo textures (cloche_wood.webp, cloche_felt.webp) rather than
     // flat colors -- tiled with RepeatWrapping since both source images are seamless.
-    const woodTex = new THREE.TextureLoader().load('cloche_wood.png');
+    const woodTex = new THREE.TextureLoader().load('cloche_wood.webp');
     woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
     woodTex.repeat.set(3, 1);
     woodTex.anisotropy = 4;
@@ -628,7 +628,7 @@
     floor.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
     world.addBody(floor);
 
-    const feltTex = new THREE.TextureLoader().load('cloche_felt.png');
+    const feltTex = new THREE.TextureLoader().load('cloche_felt.webp');
     feltTex.wrapS = feltTex.wrapT = THREE.RepeatWrapping;
     feltTex.repeat.set(2, 2);
     feltTex.anisotropy = 4;

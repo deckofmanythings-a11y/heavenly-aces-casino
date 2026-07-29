@@ -15,16 +15,16 @@ const SUIT_COLOR={S:'#161616',C:'#161616',H:'#c41230',D:'#c41230'};
 // Bump alongside cards.js?v= in every host page whenever the card art itself changes --
 // the images keep the same filenames, so without a cache-busting query string GitHub Pages
 // would keep serving the old cached PNGs for a while after a deploy.
-const CARD_ASSET_V='0.4.121';
+const CARD_ASSET_V='0.4.122';
 // Joker (Face Up Pai Gow Poker): {r:0,s:'JK'} -- a rank/suit-less sentinel, since the
 // Joker art has no rank or suit variants of its own (there's exactly one image, unlike
 // every real card's 13x4).
 function isJokerCard(card){return card.s==='JK';}
 function cardImgSrc(card){
-  if(isJokerCard(card))return 'cards/card-joker.png?v='+CARD_ASSET_V;
-  return 'cards/card-'+RANK_CODE[card.r]+card.s+'.png?v='+CARD_ASSET_V;
+  if(isJokerCard(card))return 'cards/card-joker.webp?v='+CARD_ASSET_V;
+  return 'cards/card-'+RANK_CODE[card.r]+card.s+'.webp?v='+CARD_ASSET_V;
 }
-function backImgSrc(){return 'cards/card-back.png?v='+CARD_ASSET_V;}
+function backImgSrc(){return 'cards/card-back.webp?v='+CARD_ASSET_V;}
 
 function rankLabel(r){return RANK_LABEL[r];}
 function suitSymbol(s){return SUIT_SYMBOL[s];}

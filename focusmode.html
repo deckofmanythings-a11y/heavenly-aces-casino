@@ -338,14 +338,14 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 /* ── BOTTOM BAR ── */
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
 .chip{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
-.chip[data-val="1"]{background-image:url('chip-blank-1.png')}
-.chip[data-val="2"]{background-image:url('chip-blank-2.png');}
-.chip[data-val="3"]{background-image:url('chip-blank-3.png')}
-.chip[data-val="5"]{background-image:url('chip-blank-5.png')}
-.chip[data-val="10"]{background-image:url('chip-blank-10.png')}
-.chip[data-val="25"]{background-image:url('chip-blank-25.png')}
-.chip[data-val="50"]{background-image:url('chip-blank-50.png')}
-.chip[data-val="100"]{background-image:url('chip-blank-100.png');font-size:10px}
+.chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
+.chip[data-val="2"]{background-image:url('chip-blank-2.webp');}
+.chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
+.chip[data-val="5"]{background-image:url('chip-blank-5.webp')}
+.chip[data-val="10"]{background-image:url('chip-blank-10.webp')}
+.chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
+.chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
+.chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:10px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -527,7 +527,7 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 #tutorial-debug-panel.hidden{display:none}
 #tutorial-debug-panel select,#tutorial-debug-panel input{width:100%;margin-bottom:6px;box-sizing:border-box}
 #tutorial-debug-panel button{width:100%;margin-bottom:6px;padding:5px;border-radius:5px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
-/* New art overlay layer -- positioned as % of the 3200x1800 BlankFelt.png canvas, same
+/* New art overlay layer -- positioned as % of the 3200x1800 BlankFelt.webp canvas, same
    convention as the baked-art panels in destroyer.html. Pure visual layout pass for now
    (pointer-events:none) so Deck can check scale/position before this gets wired to real
    click handlers. */
@@ -930,27 +930,27 @@ body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:calc(va
    the felt's own bottom edge instead of overlaid on top of the art. */
 body.felt-mode #bottom-section{position:absolute;height:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;overflow:hidden}
 /* Lucky Roller art -- Deck's new cut element set: title/ovals and the three bet boxes are now
-   separate images (LuckyRollerTitle.png + Low/RollEmAll/HighRollsBox.png) instead of one
+   separate images (LuckyRollerTitle.webp + Low/RollEmAll/HighRollsBox.webp) instead of one
    baked-together background, positioned via LR_LAYOUT (see enterFeltMode()). */
 #lr-title-art{display:none}
 body.felt-mode #felt-stage #lucky-roller{background:transparent;border:none;padding:0}
 body.felt-mode #felt-stage #lucky-roller>*:not(.felt-lr){display:none!important}
 body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
-body.felt-mode #felt-stage #lr-title-art.felt-lr{display:block;z-index:1;background:url('LuckyRollerTitle.png') center/100% 100% no-repeat;pointer-events:none}
+body.felt-mode #felt-stage #lr-title-art.felt-lr{display:block;z-index:1;background:url('LuckyRollerTitle.webp') center/100% 100% no-repeat;pointer-events:none}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
    the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again. */
 body.felt-mode #felt-stage #lucky-roller .lr-bonus-wrap.felt-lr{z-index:2}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:transparent;border:none;width:100%;height:100%;border-radius:10px}
-body.felt-mode #felt-stage #lucky-roller #bbonus-low{background:url('LowRollsBox.png') center/100% 100% no-repeat}
-body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar{background:url('RollEmAllBox.png') center/100% 100% no-repeat}
-body.felt-mode #felt-stage #lucky-roller #bbonus-high{background:url('HighRollsBox.png') center/100% 100% no-repeat}
+body.felt-mode #felt-stage #lucky-roller #bbonus-low{background:url('LowRollsBox.webp') center/100% 100% no-repeat}
+body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar{background:url('RollEmAllBox.webp') center/100% 100% no-repeat}
+body.felt-mode #felt-stage #lucky-roller #bbonus-high{background:url('HighRollsBox.webp') center/100% 100% no-repeat}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{background:rgba(255,255,255,.10)}
 /* Hover-state override above forces background:transparent on :hover elsewhere in this file
    (the "no hover highlighting" block) -- re-assert each box's own image so it doesn't vanish
    on hover; higher specificity (id+:hover) wins over that rule's class+:hover selector. */
-body.felt-mode #felt-stage #lucky-roller #bbonus-low:hover{background:url('LowRollsBox.png') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar:hover{background:url('RollEmAllBox.png') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-high:hover{background:url('HighRollsBox.png') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-low:hover{background:url('LowRollsBox.webp') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar:hover{background:url('RollEmAllBox.webp') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-high:hover{background:url('HighRollsBox.webp') center/100% 100% no-repeat!important}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{}
 body.felt-mode #felt-stage #lucky-roller .lr-header,body.felt-mode #felt-stage #lucky-roller .lr-note,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{display:none!important}
@@ -958,7 +958,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;
 /* Equal-fifths flex distribution doesn't match the actual printed digits -- "8 9 10 11 12" isn't
    evenly spaced like "2 3 4 5 6" (three of its five slots are 2-digit), so each glow sat next to
    its number instead of on it. Positions below are each digit's real pixel center, scanned off
-   LuckyRollerTitle.png's alpha channel (y=100-151 band) and converted to %-of-#bnums-low/high
+   LuckyRollerTitle.webp's alpha channel (y=100-151 band) and converted to %-of-#bnums-low/high
    (whose own width is calibrated to exactly the oval's pixel span, per the LR_LAYOUT comment) --
    same method as the rest of this file's felt calibration, not eyeballed. */
 body.felt-mode #felt-stage #lucky-roller .lr-nums{position:relative;height:100%;width:100%;padding:0}
@@ -1016,9 +1016,9 @@ body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{
    which was wiping out each box's own new background image entirely (Deck: "half the box
    disappears when I bet it"). Re-assert each box's own image with matching !important +
    higher id specificity so it survives .has-bet same as it already does on :hover. */
-body.felt-mode #felt-stage #lucky-roller #bbonus-low.has-bet{background:url('LowRollsBox.png') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar.has-bet{background:url('RollEmAllBox.png') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-high.has-bet{background:url('HighRollsBox.png') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-low.has-bet{background:url('LowRollsBox.webp') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar.has-bet{background:url('RollEmAllBox.webp') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-high.has-bet{background:url('HighRollsBox.webp') center/100% 100% no-repeat!important}
 body.felt-mode #felt-stage .odds-pay{display:none}
 /* Crapless-only reinforcement: Horn cell highlighting was still showing despite two earlier
    neutralization passes that should already cover it by source order. Could not find the exact
@@ -1078,21 +1078,21 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
 /* ══════════════ PORTRAIT CRAPS (Standard only) ══════════════
    Uses Deck's actual craps-felt-portrait-*.png mockups as the felt background (same
-   art-image + overlay approach as Landscape's FELT_IMG/BlankFelt.png), not a from-scratch
+   art-image + overlay approach as Landscape's FELT_IMG/BlankFelt.webp), not a from-scratch
    CSS redraw. Only genuinely new/dynamic UI (chip amounts, hit highlights, the mode
    dropdown list, and the Bet Status list that didn't exist in the mockups) is overlaid. */
 #felt-portrait{display:none;flex-direction:column;padding:0;background:#0b4d33;color:#f3e9d2;font-family:inherit;box-sizing:border-box;width:100%}
 body.portrait-craps #play-area>*:not(#felt-portrait){display:none!important}
 body.portrait-craps #felt-portrait{display:flex}
 #pf-art{position:relative;width:100%;aspect-ratio:375/812;background-size:100% 100%;background-repeat:no-repeat;background-position:top center;overflow:hidden}
-#pf-art.mode-passline{background-image:url('craps-felt-portrait-passline.png')}
-#pf-art.mode-luckyroller{background-image:url('craps-felt-portrait-luckyroller.png')}
-#pf-art.mode-horn{background-image:url('craps-felt-portrait-horn-mode.png')}
-#pf-art.mode-hardways{background-image:url('craps-felt-portrait-hardways-mode.png')}
-#pf-art.mode-hopbets{background-image:url('craps-felt-portrait-hopbets-mode.png')}
-#pf-art.mode-place{background-image:url('craps-felt-portrait-palce-mode.png')}
-#pf-art.mode-buy{background-image:url('craps-felt-portrait-buy-mode.png')}
-#pf-art.mode-lay{background-image:url('craps-felt-portrait-lay-mode.png')}
+#pf-art.mode-passline{background-image:url('craps-felt-portrait-passline.webp')}
+#pf-art.mode-luckyroller{background-image:url('craps-felt-portrait-luckyroller.webp')}
+#pf-art.mode-horn{background-image:url('craps-felt-portrait-horn-mode.webp')}
+#pf-art.mode-hardways{background-image:url('craps-felt-portrait-hardways-mode.webp')}
+#pf-art.mode-hopbets{background-image:url('craps-felt-portrait-hopbets-mode.webp')}
+#pf-art.mode-place{background-image:url('craps-felt-portrait-palce-mode.webp')}
+#pf-art.mode-buy{background-image:url('craps-felt-portrait-buy-mode.webp')}
+#pf-art.mode-lay{background-image:url('craps-felt-portrait-lay-mode.webp')}
 .pf-tap{position:absolute;cursor:pointer}
 .pf-hit{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .15s;background:rgba(60,255,140,.55);box-shadow:0 0 8px 2px rgba(60,255,140,.9)}
 .pf-hit.on{opacity:1}
@@ -1397,7 +1397,7 @@ body.portrait-craps #felt-portrait{display:flex}
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px;position:relative;z-index:9998">
         <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <div id="fibo-wrap" onclick="toggleFiboHint(event)">
-          <img src="fibo.png" id="fibo-icon" alt="Fibonacci press guide">
+          <img src="fibo.webp" id="fibo-icon" alt="Fibonacci press guide">
           <div id="fibo-hint">
             <div>6/8 (9-18-36-42-90...)</div>
             <div>5/9 (15-25-35-75-150...)</div>
@@ -1519,7 +1519,7 @@ body.portrait-craps #felt-portrait{display:flex}
   <div id="swoop-layer"></div>
   <div id="play-area">
     <div id="felt-stage">
-      <img id="felt-img" src="BlankFelt.png" alt="" draggable="false">
+      <img id="felt-img" src="BlankFelt.webp" alt="" draggable="false">
       <div id="fm-art-layer"></div>
     </div>
 
@@ -1713,8 +1713,8 @@ body.portrait-craps #felt-portrait{display:flex}
              just outside via a negative-offset absolute position, not a separate
              FELT_LAYOUT entry of its own. -->
         <div id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet, active for the whole shooter's turn">
-          <img id="light-off-img" class="fm-art-img" src="lightOFF.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
-          <img id="light-on-img" class="fm-art-img" src="lightON.png" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+          <img id="light-off-img" class="fm-art-img" src="lightOFF.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+          <img id="light-on-img" class="fm-art-img" src="lightON.webp" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
           <span id="stk-light"></span>
           <span id="light-streak-badge"></span>
           <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
@@ -1745,7 +1745,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.30</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.31</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1875,14 +1875,14 @@ let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
 // ===================== FELT IMAGE MODE (crapless) =====================
 const FELT_IMG={
-  // Both games play on the same blank felt now -- BlankFelt.png has no baked-in art at all
+  // Both games play on the same blank felt now -- BlankFelt.webp has no baked-in art at all
   // (Hardways/Hop/number-line/Field/Come/Pass/etc. are all separate overlays in #fm-art-layer),
   // so all four combinations use the same base image. Crapless used to point at the old fully-
   // baked Crapless-Felt-with-Horn.gif/-HopBets.gif -- left over from before crapless had its
   // own #fm-art-layer content, that old art's own baked-in labels were showing up doubled
   // underneath the new overlays once crapless became reachable in Focus Mode.
-  crapless:{hw:'BlankFelt.png',hop:'BlankFelt.png'},
-  standard:{hw:'BlankFelt.png',hop:'BlankFelt.png'}
+  crapless:{hw:'BlankFelt.webp',hop:'BlankFelt.webp'},
+  standard:{hw:'BlankFelt.webp',hop:'BlankFelt.webp'}
 };
 // [selector, leftPct, topPct, widthPct, heightPct, tab or null]
 // '@name' = the .bwrap around #bet-name (or the bet element itself if unwrapped)
@@ -1902,8 +1902,8 @@ const FELT_LAYOUT=[
   // a static 3-row button grid instead of a 1-row collapsed dropdown, so the box needs more
   // vertical room for the same content that used to fit collapsed).
   ['#left-col-header', 0.40, 0.70,12.60,15.50,null],
-  // Recalibrated for Deck's new cut Lucky Roller art (LuckyRollerTitle.png + Low/RollEmAll/
-  // HighRollsBox.png), same master template/canvas as the old art -- box is the union bounding
+  // Recalibrated for Deck's new cut Lucky Roller art (LuckyRollerTitle.webp + Low/RollEmAll/
+  // HighRollsBox.webp), same master template/canvas as the old art -- box is the union bounding
   // box of the title art + the three bet boxes, measured directly off the crop tool's exported
   // stage coordinates (x:1220,y:15,w:775,h:350 on the 3200x1800 canvas).
   ['#lucky-roller',   38.125, 0.833,24.219,19.444,null],
@@ -1990,7 +1990,7 @@ const FELT_LAYOUT=[
 // exported stage coordinates (all on the same 3200x1800 canvas as #lucky-roller's own box
 // above), not eyeballed. low/all/high are the three bet box images now (own background each,
 // see the #bbonus-low/#bbonus-all-bar/#bbonus-high CSS); '#lr-title-art' is the new title+oval
-// art layer (LuckyRollerTitle.png), added as its own element since title and boxes are now
+// art layer (LuckyRollerTitle.webp), added as its own element since title and boxes are now
 // separate images instead of one baked-together background.
 // Order matters here, not just for readability -- enterFeltMode() appends each entry's element
 // to #lucky-roller in array order, and later-appended siblings stack ON TOP in the same
@@ -2005,7 +2005,7 @@ const LR_LAYOUT=[
   // than measured (flagged at the time as low-risk/cosmetic-only) -- turned out to overlap
   // #dice-zone by several px, which sizeDiceZone()'s gap-detection reads as "no margin left" and
   // aggressively shrinks the dice to compensate (Deck: "the dice between Lucky and Roller are
-  // tiny"). Re-measured directly off LuckyRollerTitle.png's alpha channel (row/column profile
+  // tiny"). Re-measured directly off LuckyRollerTitle.webp's alpha channel (row/column profile
   // scan, same method used elsewhere in this file) -- oval capsules sit at abs px (within the
   // 752x215 title crop) x:4-254/y:94-158 (left, "2 3 4 5 6") and x:490-740/y:95-158 (right, "8 9
   // 10 11 12"), converted to %-of-#lucky-roller-container using the title's own stage position
@@ -2111,8 +2111,8 @@ const STANDARD_LAYOUT=[
   // go further without shrinking the header's own content too) -- hop22/33/44/55 (the 'hop'
   // tab's twin cells, same physical slot) moved by the same amount so tab-switching doesn't
   // jump.
-  // Hard Ways cells shifted down 2.222% (40px) to track HardWays.png's own 40px shift
-  // (see FM_ART). Hop22/33/44/55 shifted UP 2.222% (40px) to track HopHardWays.png's
+  // Hard Ways cells shifted down 2.222% (40px) to track HardWays.webp's own 40px shift
+  // (see FM_ART). Hop22/33/44/55 shifted UP 2.222% (40px) to track HopHardWays.webp's
   // bottom-anchored reposition instead -- the two images move in opposite directions
   // (Hard Ways down, HopHardWays up) since aligning their BOTTOMS is what makes the
   // gold boxes line up given HopHardWays is the taller asset.
@@ -2750,7 +2750,7 @@ function renderBullets(){
   for(let i=0;i<G.bulletCount;i++){
     const isCurrent=i===G.bulletIndex,isSpent=i<G.bulletIndex,isNext=i===G.bulletIndex+1;
     const style=isSpent?'opacity:.28;filter:grayscale(1)':isCurrent?'opacity:1;filter:drop-shadow(0 0 4px #ffd700)':'opacity:.55';
-    html+='<img class="bullet-icon" src="bullet.png" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="width:18px;height:auto;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
+    html+='<img class="bullet-icon" src="bullet.webp" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="width:18px;height:auto;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
   }
   row.innerHTML=html;
 }
@@ -4261,7 +4261,7 @@ function flashPuckGreen(){
 }
 // ── 3D PUCK (Standard only -- Crapless uses the .line-off border indicator instead) ──────
 // One puck element that slides+flips between anchors instead of two static images
-// (Puck_On.png / Puck_Off.png) toggling visibility in place. The old img elements are kept
+// (Puck_On.webp / Puck_Off.webp) toggling visibility in place. The old img elements are kept
 // as invisible '.puck-anchor' markers purely so their live layout position (which already
 // accounts for felt-mode vs list-mode) can be read via getBoundingClientRect and used as
 // this puck's travel target.
@@ -4273,9 +4273,9 @@ function initPuck3D(){
   puck3dEl.style.setProperty('--puck-half-t',(PUCK_THICK/2)+'px');
   puck3dInner=document.createElement('div');puck3dInner.id='puck3d-inner';
   const front=document.createElement('div');front.className='puck3d-face puck3d-front';
-  const frontImg=document.createElement('div');frontImg.className='puck3d-face-img';frontImg.style.backgroundImage="url('Puck_Off.png')";front.appendChild(frontImg);
+  const frontImg=document.createElement('div');frontImg.className='puck3d-face-img';frontImg.style.backgroundImage="url('Puck_Off.webp')";front.appendChild(frontImg);
   const back=document.createElement('div');back.className='puck3d-face puck3d-back';
-  const backImg=document.createElement('div');backImg.className='puck3d-face-img';backImg.style.backgroundImage="url('Puck_On.png')";back.appendChild(backImg);
+  const backImg=document.createElement('div');backImg.className='puck3d-face-img';backImg.style.backgroundImage="url('Puck_On.webp')";back.appendChild(backImg);
   puck3dInner.appendChild(front);puck3dInner.appendChild(back);
   // Rim: a ring of thin strips standing on end, each rotated a bit further around Y and
   // pushed out to PUCK_RADIUS, so together they approximate the cylindrical edge connecting
@@ -4974,7 +4974,7 @@ function updateUI(){
   document.getElementById('repeat-btn').disabled=!G.canRepeat;
   // THE LIGHT: staged (pre-roll) shows a $5 stake like any other spot; once the arming
   // roll succeeds the stake sweeps away (no locked-chip display, matching UTH) and
-  // lightON.png takes over from lightOFF.png for the rest of the shooter's turn, with a
+  // lightON.webp takes over from lightOFF.webp for the rest of the shooter's turn, with a
   // small streak badge tracking progress toward the next tier.
   {
     const lsEl=document.getElementById('light-spot');
@@ -5277,7 +5277,7 @@ const FOCUS_PROPS_IDS=['bet-horn','bet-aces','bet-ace2','bet-midnight','bet-yo',
 const FOCUS_ONEROLL_IDS={seven:['bet-any7'],anycraps:['bet-anyCraps','bet-anyCraps-circle']};
 
 // ── FOCUS MODE ART LAYER ─────────────────────────────────────────────────────
-// Visual-layout pass: positions every new painted asset on top of BlankFelt.png at Deck's
+// Visual-layout pass: positions every new painted asset on top of BlankFelt.webp at Deck's
 // measured coordinates (all in px against the 3200x1800 canvas, converted to % below --
 // same convention as the baked-art panels in destroyer.html). Pure overlay for now
 // (pointer-events:none) so positions/scale can be checked and tweaked before this gets
@@ -5294,7 +5294,7 @@ const FM_LEFT_X={4:1206,5:1487,6:1768,8:2049,9:2330,10:2611};   // DC only now (
 // New art set (Deck, mid-session): the whole number line (4/5/6/8/9/10) is one image now, not
 // one per number, and Buy/Place/Lay are EACH a full-width image sized/positioned identically
 // to it, meant to be stacked directly on top when their toggle is on (one, two, or all three
-// at once). Position measured directly off Craps_Felt_Modular_Hardways_and_Props.png (gold-
+// at once). Position measured directly off Craps_Felt_Modular_Hardways_and_Props.webp (gold-
 // border pixel scan, same method used throughout this project) -- left edge of the "4" box to
 // the right edge of "10", top/bottom of that row. All 4 images are exactly 1710x460, so one
 // x/y/w/h serves all of them.
@@ -5323,20 +5323,20 @@ const FM_ART=[
   // of the Pass Line and the edge of the felt") -- now that #bottom-section lives below
   // the felt instead of overlaid on it, there's room to push this whole zero-gap chain
   // down. Still zero-gapped in the same come->field->dp->pass order.
-  {id:'come',       img:'ComeLine.png',       group:'come',      x:1813, y:898, w:1368,h:208, mode:'standard'},
-  {id:'field',      img:'Field_PaysTriple.png',group:'field',x:1813,y:1106,w:1368,h:277, mode:'standard'},
-  {id:'dp',         img:'DontPassLine.png',   group:'dontpass',  x:1813,y:1383,w:1368,h:169, mode:'standard'},
-  {id:'pass',       img:'PassLine.png',       group:'pass',      x:1813,y:1552,w:1368,h:208, mode:'standard'},
-  // Crapless-only refresh (Deck's new cut felt-element set, PassLineV2.png) -- native aspect
+  {id:'come',       img:'ComeLine.webp',       group:'come',      x:1813, y:898, w:1368,h:208, mode:'standard'},
+  {id:'field',      img:'Field_PaysTriple.webp',group:'field',x:1813,y:1106,w:1368,h:277, mode:'standard'},
+  {id:'dp',         img:'DontPassLine.webp',   group:'dontpass',  x:1813,y:1383,w:1368,h:169, mode:'standard'},
+  {id:'pass',       img:'PassLine.webp',       group:'pass',      x:1813,y:1552,w:1368,h:208, mode:'standard'},
+  // Crapless-only refresh (Deck's new cut felt-element set, PassLineV2.webp) -- native aspect
   // preserved at the shared 1368 column width (1376x227 native -> 226 tall) to avoid the
   // stretching bug flagged elsewhere in this file; y recomputed below alongside come-crapless/
   // field-crapless so the three still zero-gap stack with pass-crapless's bottom anchored to
   // the old bottom edge (1552+208=1760, same as #bottom-section alignment).
-  {id:'pass-crapless', img:'PassLineV2.png',   group:'pass',      x:1813,y:1534,w:1368,h:226, mode:'crapless'},
+  {id:'pass-crapless', img:'PassLineV2.webp',   group:'pass',      x:1813,y:1534,w:1368,h:226, mode:'crapless'},
   // Adjacent to the number line's right edge with no gap (Deck: "should be adjacent to the
   // number line with no space in-between") -- x = NUMLINE_ART.x+NUMLINE_ART.w (2908), y matches
   // the number line's own (now y:405) top.
-  {id:'dcwait',     img:'DCWaitingBox.png',   group:'dontcome',  x:2908, y:405, w:286, h:460, mode:'standard'},
+  {id:'dcwait',     img:'DCWaitingBox.webp',   group:'dontcome',  x:2908, y:405, w:286, h:460, mode:'standard'},
   // Crapless has no Don't Pass / Don't Come at all (Deck: "Remove the Don't Come box. Remove
   // the Don't Pass Line."), so Field and Come shift down to close the gap: Field sits where
   // Don't Pass used to be (bottom flush against Pass Line's top, 1275+277=1552), and Come
@@ -5346,15 +5346,15 @@ const FM_ART=[
   // Deck's new cut felt-element set (ComeLineV2/FieldPaysDoubleV2/PassLineV2) -- each kept at
   // native aspect ratio at the shared 1368 column width to avoid stretching, still zero-gap
   // stacked with pass-crapless's bottom anchored to the old 1760 bottom edge.
-  {id:'come-crapless',  img:'ComeLineV2.png',        group:'come',  x:1813,y:1058,w:1368,h:197, mode:'crapless'},
-  {id:'field-crapless', img:'FieldPaysDoubleV2.png', group:'field', x:1813,y:1255,w:1368,h:279, mode:'crapless'},
+  {id:'come-crapless',  img:'ComeLineV2.webp',        group:'come',  x:1813,y:1058,w:1368,h:197, mode:'crapless'},
+  {id:'field-crapless', img:'FieldPaysDoubleV2.webp', group:'field', x:1813,y:1255,w:1368,h:279, mode:'crapless'},
   // Hardways/SEVEN/Prop Bets/Any Craps ('hw' tab only -- HopHardWays/HopBets on the 'hop' tab
   // are a separate physical slot with no headroom to spare, so they're untouched here):
   // - propbets/bigred/anycraps x centered under Hardways (Hardways center = 8+1125/2 = 570.5;
   //   913-wide propbets/bigred/anycraps -> x=114 puts their shared center on the same 570.5,
   //   Deck: "prop bets needs to be centered under Hard Ways better").
-  // - bigred (SEVEN) and anycraps zero-gapped against PropBets.png's own actual pill content,
-  //   not just against the image's outer box -- row-scanned PropBets.png's alpha channel and
+  // - bigred (SEVEN) and anycraps zero-gapped against PropBets.webp's own actual pill content,
+  //   not just against the image's outer box -- row-scanned PropBets.webp's alpha channel and
   //   found its "ONE ROLL BETS" header spans local rows 0-74, then blank until the Aces/Horn/
   //   Midnight/Yo pill cluster starts at local row 304 and runs to the image's bottom edge
   //   (row 698, no internal margin below it). So pill-top = propbets.y+304, pill-bottom =
@@ -5381,9 +5381,9 @@ const FM_ART=[
   // Deck's new cut felt-element set -- native sizes are within a few px of the old measured
   // boxes (same master template/canvas as the old art), used as-is rather than stretched to
   // the old exact w/h.
-  {id:'hardways',   img:'HardWaysV2.png',       group:'hardways', x:8,   y:324, w:1133,h:395, tab:'hw'},
-  {id:'hopbets',    img:'HopBetsV2.png',        group:'hopbets',  x:132, y:861, w:988, h:718, tab:'hop'},
-  {id:'hophardways',img:'HoppingHardWaysV2.png',group:'hopbets',  x:8,   y:251, w:1133,h:468, tab:'hop'},
+  {id:'hardways',   img:'HardWaysV2.webp',       group:'hardways', x:8,   y:324, w:1133,h:395, tab:'hw'},
+  {id:'hopbets',    img:'HopBetsV2.webp',        group:'hopbets',  x:132, y:861, w:988, h:718, tab:'hop'},
+  {id:'hophardways',img:'HoppingHardWaysV2.webp',group:'hopbets',  x:8,   y:251, w:1133,h:468, tab:'hop'},
   // Any Seven pushed down until its bottom is adjacent (zero-gap) to the TOP of the
   // whole Aces/Ace2/Horn/Midnight/Yo pill cluster (Deck: "that whole area is called
   // the Horn Bet") -- @aces is the highest element in that cluster at its new position
@@ -5391,7 +5391,7 @@ const FM_ART=[
   // down 167px together (Deck: "40px space between the bottom of the Any Craps and the
   // edge of the felt"), preserving their existing internal gaps.
   // Deck's new cut felt-element set combines Seven/Horn Bet/Any Craps into ONE image
-  // (OneRollBetsV2.png) instead of three separate files -- replaces bigred/propbets/anycraps
+  // (OneRollBetsV2.webp) instead of three separate files -- replaces bigred/propbets/anycraps
   // together at their old combined union box (x:114,w:913, y:844-1760), native aspect
   // preserved at w=913 (921x919 native -> 910 tall), bottom-anchored to the old 1760 edge
   // (#bottom-section alignment) same as before.
@@ -5403,8 +5403,8 @@ const FM_ART=[
   // tab-gating; the real tradeoff (Seven/Any Craps no longer independently hideable from Horn/
   // Props via Focus Settings, since it's one fused image now instead of 3 separate files) still
   // stands -- flag to Deck if that granularity loss matters.
-  {id:'onerollbets',img:'OneRollBetsV2.png',  group:'props', x:114, y:850, w:913, h:910, tab:'hw'},
-  {id:'ce',         img:'CE.png',             group:'props', x:1115,y:946, w:220, h:595},
+  {id:'onerollbets',img:'OneRollBetsV2.webp',  group:'props', x:114, y:850, w:913, h:910, tab:'hw'},
+  {id:'ce',         img:'CE.webp',             group:'props', x:1115,y:946, w:220, h:595},
   // Crapless number line: rebuilt from 30 individual per-number tiles (10 numbers x 3 Buy/
   // Place line modes) instead of one combined image per mode, so each number's bet-area seam
   // lines up exactly with its own art tile instead of an evenly-divided guess across one wide
@@ -5418,43 +5418,43 @@ const FM_ART=[
   // (renamed from "No Buy/Place Bets"): Place is still a real, clickable bet on every number
   // here despite the blank art (Deck: "Keep the completely blank/number only number boxes, but
   // a player can still make a Place bet on any box"), only Buy is actually disabled.
-  {id:'cl-a-2', img:'Box2_BP.png', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-3', img:'Box3_BP.png', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-4', img:'Box4_BP.png', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-5', img:'Box5_BP.png', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-6', img:'Box6_BP.png', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-8', img:'Box8_BP.png', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-9', img:'Box9_BP.png', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-10', img:'Box10_BP.png', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-11', img:'Box11_BP.png', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-12', img:'Box12_BP.png', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-b-2', img:'Box2_B.png', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-3', img:'Box3_B.png', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-4', img:'Box4_B.png', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-5', img:'Box5_B.png', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-6', img:'Box6_P.png', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-8', img:'Box8_P.png', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-9', img:'Box9_B.png', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-10', img:'Box10_B.png', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-11', img:'Box11_B.png', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-12', img:'Box12_B.png', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-c-2', img:'Box2_.png', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-3', img:'Box3_.png', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-4', img:'Box4_.png', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-5', img:'Box5_.png', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-6', img:'Box6_.png', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-8', img:'Box8_.png', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-9', img:'Box9_.png', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-10', img:'Box10_.png', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-11', img:'Box11_.png', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-12', img:'Box12_.png', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-a-2', img:'Box2_BP.webp', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-3', img:'Box3_BP.webp', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-4', img:'Box4_BP.webp', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-5', img:'Box5_BP.webp', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-6', img:'Box6_BP.webp', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-8', img:'Box8_BP.webp', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-9', img:'Box9_BP.webp', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-10', img:'Box10_BP.webp', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-11', img:'Box11_BP.webp', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-a-12', img:'Box12_BP.webp', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
+  {id:'cl-b-2', img:'Box2_B.webp', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-3', img:'Box3_B.webp', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-4', img:'Box4_B.webp', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-5', img:'Box5_B.webp', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-6', img:'Box6_P.webp', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-8', img:'Box8_P.webp', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-9', img:'Box9_B.webp', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-10', img:'Box10_B.webp', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-11', img:'Box11_B.webp', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-b-12', img:'Box12_B.webp', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
+  {id:'cl-c-2', img:'Box2_.webp', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-3', img:'Box3_.webp', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-4', img:'Box4_.webp', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-5', img:'Box5_.webp', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-6', img:'Box6_.webp', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-8', img:'Box8_.webp', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-9', img:'Box9_.webp', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-10', img:'Box10_.webp', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-11', img:'Box11_.webp', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
+  {id:'cl-c-12', img:'Box12_.webp', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
   // Standard number line: Number Line/Buy/Place/Lay stack -- moved into FM_ART (was 4 separate
   // addRegion() calls at the bottom of buildFocusFeltArt()) so mode-filtering applies to them
   // uniformly along with everything else.
-  {id:'numberline', img:'Number_Line.png', group:null,   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
-  {id:'buyall',      img:'BuyBox.png',     group:'buy',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
-  {id:'placeall',    img:'PlaceBox.png',   group:'place', x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
-  {id:'layall',      img:'LayBox.png',     group:'lay',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'}
+  {id:'numberline', img:'Number_Line.webp', group:null,   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
+  {id:'buyall',      img:'BuyBox.webp',     group:'buy',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
+  {id:'placeall',    img:'PlaceBox.webp',   group:'place', x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
+  {id:'layall',      img:'LayBox.webp',     group:'lay',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'}
 ];
 function fmPct(px,total){return px/total*100;}
 function buildFocusFeltArt(){
@@ -5477,7 +5477,7 @@ function buildFocusFeltArt(){
     el.appendChild(im);
     layer.appendChild(el);
   }
-  // Per-number DC "landed/travel-to" marker (DCNumberBox.png) removed entirely per Deck: "no
+  // Per-number DC "landed/travel-to" marker (DCNumberBox.webp) removed entirely per Deck: "no
   // longer needed." The real per-number landed-DC indicator is #dc-slot-N (a live chip-stack
   // element driven by actual bet state, built in buildStrip()/updateUI()) -- that's untouched,
   // this was only ever a decorative art overlay on top of it.
@@ -6950,7 +6950,7 @@ applyFocusVisibility();
 
 // ══════════════ PORTRAIT CRAPS (Standard only) ══════════════
 // Uses Deck's actual craps-felt-portrait-*.png mockups as the felt background image
-// (background-image swapped per mode, exactly like Landscape's FELT_IMG/BlankFelt.png
+// (background-image swapped per mode, exactly like Landscape's FELT_IMG/BlankFelt.webp
 // approach) -- this module only overlays the pieces that genuinely can't be baked into a
 // static mockup: tap targets, live chip amounts, hit highlights, the mode dropdown list,
 // and the Bet Status list (which didn't exist in the mockups). Row bands below are
