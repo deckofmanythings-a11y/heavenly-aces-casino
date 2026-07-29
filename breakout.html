@@ -80,25 +80,43 @@ input,textarea{-webkit-user-select:text;user-select:text}
    math). Dealer module on top (Breakout Bonus/Super Tie + Dealer Hand circle), side
    bets (Pair Up/Sweet 17, shared by both Player and Dealer Bet) + Player Hand circle
    in a row underneath. */
-#bets-module{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:24%;z-index:2}
-#breakout-modules{display:flex;flex-direction:column;width:100%;gap:4%}
-#bets-module img{display:block;width:100%;height:100%;pointer-events:none;user-select:none}
+/* #bets-module is itself the flex column now (light row, mode toggle, game
+   modules, in an order set by setGameMode()) -- everything in it is a real
+   sized flex item, nothing relies on %-of-an-auto-height-parent anymore (that
+   was the bug behind the oversized Light bulb). */
+#bets-module{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:24%;display:flex;flex-direction:column;align-items:center;gap:3%;z-index:2}
+#breakout-modules{display:flex;flex-direction:column;width:100%;gap:4%;order:2}
+/* .module-art only -- NOT a bare "#bets-module img" selector, which would also
+   match the small chip-stack <img> tags injected into bet spots (an earlier version
+   of this rule did exactly that: forced width/height:100% and pointer-events:none
+   onto chip art too, squishing it invisible and killing right-click-to-remove). */
+.module-art{display:block;width:100%;height:100%;pointer-events:none;user-select:none}
 #dealer-module{position:relative;width:100%;aspect-ratio:958/685}
 /* Bottom slot alternates between two mutually-exclusive images (never both at
    once -- see the HTML comment above #bets-module for why): player_bet_full
    (circle+Pair Up+Sweet 17, the default/Player-Bet state) or side_bets (just
    Pair Up+Sweet 17, no circle, swapped in when a Dealer Bet is staged). */
+/* player-module stays in normal flow (its box defines #player-row-slot's
+   reserved height even while visibility:hidden); side-bets-module overlays the
+   same top-left corner via position:absolute so swapping between them never
+   changes the row's footprint or shifts anything else in the column. */
 #player-row-slot{position:relative;width:100%}
 #player-module{position:relative;width:100%;aspect-ratio:995/630}
-#side-bets-module{position:relative;width:38.5%;aspect-ratio:365/630}
-#fortune-module{position:relative;width:100%;aspect-ratio:957/647}
-/* Mode selector -- a plain single-tap toggle sitting just above the module, hidden
-   entirely (display:none, toggled by renderActionButtons()) whenever a bet or hand
-   is in progress -- only tappable at a clean betting screen. */
-#mode-toggle-btn{position:absolute;left:0;right:0;bottom:calc(100% + 0.8%);width:100%;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,215,0,.55);border-radius:6px;padding:0.5cqh 0.6cqh;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.15cqh;z-index:5}
+#side-bets-module{position:absolute;left:0;top:0;width:38.5%;aspect-ratio:365/630}
+#fortune-module{position:relative;width:100%;aspect-ratio:957/647;order:2}
+/* Mode selector -- a plain single-tap toggle, hidden entirely (display:none,
+   toggled by renderActionButtons()) whenever a bet or hand is in progress -- only
+   tappable at a clean betting screen. A normal flex item now, not absolutely
+   positioned -- its order (and #light-row's) is set live by setGameMode() so The
+   Light sits north of it in Breakout, south of it in Fortune, per Deck's ask. */
+#mode-toggle-btn{width:100%;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,215,0,.55);border-radius:6px;padding:0.5cqh 0.6cqh;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.15cqh;z-index:5;order:1}
 #mode-toggle-label{font-size:1.55cqh;font-weight:800;color:#ffd700;letter-spacing:.03em}
 #mode-toggle-hint{font-size:1.1cqh;color:rgba(255,255,255,.6)}
 #mode-toggle-btn.hidden{display:none}
+/* THE LIGHT row -- a real flex item sized off its own square aspect ratio
+   (lightOFF/ON.webp are 275x275), not a %-of-parent absolute box (that broke once
+   #bets-module stopped having a definite height of its own). */
+#light-row{position:relative;width:40%;aspect-ratio:1/1;order:0}
 
 /* Casino-felt printed rule text, drawn directly in the open felt (not baked into
    any art) -- an engraved-serif Google Font stands in for real printed felt type. */
@@ -170,20 +188,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
-/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. The new bets
-   module has the Breakout Bonus badge starting almost at its own top edge (no room
-   above it inside the module), so The Light sits just above the module's top edge
-   instead, still landing in the open felt (not baked art). Positioned relative to
-   #bets-module via a negative top -- module children are positioned absolute, this
-   just extends the box upward into the empty felt directly above it. */
+/* THE LIGHT's spot/image/info-button all fill or sit at the edge of #light-row
+   (their own definite-size flex item now), not %-of-#bets-module. */
 .panel-spot{position:absolute;border-radius:50%;cursor:pointer}
 .panel-spot.active{}
-#light-spot,#light-off-img,#light-on-img{left:33%;top:-9%;width:22%;height:9%}
-/* object-fit:contain -- without it the browser stretches each image independently
-   to fill this box (which doesn't match either PNG's real aspect ratio), squishing
-   the bulb art instead of scaling it proportionally. */
-#light-off-img,#light-on-img{object-fit:contain}
-#light-info-btn{position:absolute;left:53.5%;top:-8%;width:5%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+#light-spot,#light-off-img,#light-on-img{position:absolute;inset:0;width:100%;height:100%}
+#light-info-btn{position:absolute;right:-12%;top:-8%;width:22%;height:22%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.4cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 .progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
@@ -513,7 +523,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.10</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.11</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -580,7 +590,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
       <div id="bets-module">
         <div id="breakout-modules">
           <div id="dealer-module">
-            <img id="dealer-module-art" src="dealer_bet_trim.png" alt="">
+            <img id="dealer-module-art" class="module-art" src="dealer_bet_trim.png" alt="">
             <div class="felt-spot" id="dealerbet-spot" onclick="placeDealerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removeDealerBet()">
               <span class="panel-spot-stk" id="stk-breakoutBet"></span>
             </div>
@@ -595,7 +605,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
           </div>
           <div id="player-row-slot">
             <div id="player-module">
-              <img id="player-module-art" src="player_bet_full_trim.png" alt="">
+              <img id="player-module-art" class="module-art" src="player_bet_full_trim.png" alt="">
               <div class="felt-spot" id="playerbet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
                 <span class="panel-spot-stk" id="stk-playerBet"></span>
               </div>
@@ -609,7 +619,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
               <button class="paytable-info-btn info-sweet17" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
             </div>
             <div id="side-bets-module" style="display:none">
-              <img id="side-bets-module-art" src="side_bets_trim.png" alt="">
+              <img id="side-bets-module-art" class="module-art" src="side_bets_trim.png" alt="">
               <div class="felt-spot spot-pairPlus" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
                 <span class="panel-spot-stk stk-pairPlus"></span>
               </div>
@@ -626,7 +636,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
              module (Player Hand circle + TriLux + Fortune badges). Hidden unless
              G.gameMode==='fortune' (see setGameMode()). -->
         <div id="fortune-module" style="display:none">
-          <img id="fortune-module-art" src="fortune_trim.png" alt="">
+          <img id="fortune-module-art" class="module-art" src="fortune_trim.png" alt="">
           <div class="felt-spot" id="fortunebet-spot" onclick="placePlayerBet()" oncontextmenu="event.preventDefault();event.stopPropagation();removePlayerBet()">
             <span class="panel-spot-stk" id="stk-fortuneMain"></span>
           </div>
@@ -643,21 +653,26 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <!-- Mode selector: plain single-tap toggle, hidden entirely (not just
              disabled) whenever a bet or hand is in progress -- only tappable at a
              clean betting screen, per Deck's explicit "locked while mid-round only"
-             call (no confirm modal, no press-and-hold). -->
+             call (no confirm modal, no press-and-hold). Flex order (with #light-row
+             below) is set by setGameMode() -- north of the switch in Breakout,
+             south of it in Fortune, per Deck's ask. -->
         <button id="mode-toggle-btn" onclick="toggleGameMode()" title="Switch game mode">
           <span id="mode-toggle-label">Playing: Breakout Blackjack</span>
           <span id="mode-toggle-hint">tap to switch to Fortune Blackjack</span>
         </button>
 
-        <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
-             has no baked-in bulb art, so lightOFF.webp sits idle over open felt and swaps
-             for lightON.webp once the round's dealt with the light on -- see updateUI(). -->
-        <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
-          <span class="panel-spot-stk" id="stk-light"></span>
+        <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. A real
+             flex item now (not %-of-#bets-module absolute positioning, which broke
+             once #bets-module stopped having a definite height -- see panel-art.md)
+             sized off its own square aspect ratio (lightOFF/ON.webp are 275x275). -->
+        <div id="light-row">
+          <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
+            <span class="panel-spot-stk" id="stk-light"></span>
+          </div>
+          <img id="light-off-img" class="module-art" src="lightOFF.webp" alt="" style="pointer-events:none">
+          <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+          <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
         </div>
-        <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;pointer-events:none;z-index:4">
-        <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
-        <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
 
         <!-- TRILUX: Trilux Thursday only (Nephilim+) -- shown/hidden by updateUI() via
              WeeklyEvents.isDay(4, tier). Fixed $5, like The Light. TriLux_Web_Logo.webp
@@ -1139,6 +1154,11 @@ function setGameMode(mode){
   const isFortune=mode==='fortune';
   document.getElementById('breakout-modules').style.display=isFortune?'none':'';
   document.getElementById('fortune-module').style.display=isFortune?'':'none';
+  // The Light sits north of the mode switch in Breakout, south of it in Fortune,
+  // per Deck's explicit ask -- both are real flex items in #bets-module now, so
+  // this is just a flex-order swap, not a reposition.
+  document.getElementById('light-row').style.order=isFortune?'1':'0';
+  document.getElementById('mode-toggle-btn').style.order=isFortune?'0':'1';
   document.getElementById('mode-toggle-label').textContent='Playing: '+(isFortune?'Fortune Blackjack':'Breakout Blackjack');
   document.getElementById('mode-toggle-hint').textContent='tap to switch to '+(isFortune?'Breakout Blackjack':'Fortune Blackjack');
   updateUI();
@@ -1817,9 +1837,13 @@ function updateUI(){
   // -> remove dealer_bet entirely. Dealer Bet placed -> remove player_bet_full,
   // swap in side_bets (Pair Up+Sweet 17, no circle) in its place. Never more than
   // one bottom-slot image showing at once (that's what avoids the badge collision).
-  document.getElementById('dealer-module').style.display=(playerAmt>0)?'none':'';
-  document.getElementById('player-module').style.display=(dealerAmt>0)?'none':'';
-  document.getElementById('side-bets-module').style.display=(dealerAmt>0)?'':'none';
+  // visibility (not display) -- the dealer module "erasing" when a Player Bet is
+  // placed should read as its own art disappearing in place, not as the player
+  // circle sliding up to fill the gap (Deck's explicit call). Same treatment for
+  // the player/side-bets swap so nothing in this column ever visually relocates.
+  document.getElementById('dealer-module').style.visibility=(playerAmt>0)?'hidden':'visible';
+  document.getElementById('player-module').style.visibility=(dealerAmt>0)?'hidden':'visible';
+  document.getElementById('side-bets-module').style.visibility=(dealerAmt>0)?'visible':'hidden';
 
   SIDE_BET_KEYS.forEach(key=>{
     const amt=snap[key]||0;
@@ -1907,7 +1931,7 @@ function chipLabel(amt,isFP){return (isFP?'FP$':'$')+(Number.isInteger(amt)?amt:
 function chipStackHTML(amt,locked,isFP){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
-  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.png" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
+  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.webp" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
   const label=chipLabel(amt,isFP);
   const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
