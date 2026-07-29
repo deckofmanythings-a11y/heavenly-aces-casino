@@ -538,7 +538,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.14</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.15</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1769,7 +1769,6 @@ function finishRound(data){
   });
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
-  G.lastWin=data.payout||0;
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   const mainBetAmt=G.mode==='player'?G.hand.hands.reduce((s,h)=>s+(h.bet||0),0):(G.lastBetSnapshot.breakoutBet||0);
   const sideTotal=(G.lastBetSnapshot.superTie||0)+(G.lastBetSnapshot.breakoutBonus||0)+(G.lastBetSnapshot.sweet17||0)+(G.lastBetSnapshot.pairPlus||0);
@@ -1789,14 +1788,23 @@ function finishRound(data){
   updateUI();checkBroke();
   spawnBreakoutGhosts(data.log||[]);
   const totalWagered=G.lastBetDisplay||1;
-  // A push returns the stake (data.payout>0, equal to what was wagered) but
-  // nothing was actually WON -- calmer showPush() instead of the celebratory
-  // show(), matching the convention already applied to every other game.
-  if(mainResult==='push'){
+  // data.payout is the MAIN round's payout only -- TriLux/Fortune settle at deal
+  // time (see roll-breakout) and their payout lands in newBankroll separately, so
+  // when the round ALSO resolves in this same response (e.g. a natural
+  // blackjack), a TriLux/Fortune win would otherwise vanish here: dealHand()'s own
+  // modal is skipped for a resolved round (it defers to this function), and this
+  // function only ever knew about data.payout. Fold fortuneSidePayout in.
+  const totalPayout=r2((data.payout||0)+(data.fortuneSidePayout||0));
+  G.lastWin=totalPayout;
+  if(mainResult==='push'&&!(data.fortuneSidePayout>0)){
+    // A push returns the stake (data.payout>0, equal to what was wagered) but
+    // nothing was actually WON -- calmer showPush() instead of the celebratory
+    // show(), matching the convention already applied to every other game. Only
+    // when there's no separate TriLux/Fortune win riding along with the push.
     WinnerModal.showPush(data.payout,{onClose:resetToBetScreen});
-  }else if(data.payout>0){
-    const bigWin=(data.payout/totalWagered)>=7;
-    WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
+  }else if(totalPayout>0){
+    const bigWin=(totalPayout/totalWagered)>=7;
+    WinnerModal.show(totalPayout,{big:bigWin,onClose:resetToBetScreen});
   }else{
     setTimeout(resetToBetScreen,3500);
   }
