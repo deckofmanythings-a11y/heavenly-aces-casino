@@ -53,13 +53,23 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* ── TABLE AREA / FELT (plain CSS, no baked art -- see breakout.html for precedent) ──
    Ante/Fortune/Light moved out of a horizontal strip below the felt (reclaimed that
-   whole row of vertical space for bigger cards) into a vertical sidebar to the felt's
-   right instead -- #table-panel-wrap is its own container-query box holding just the
-   REMAINING width after the flex-row sidebar, so the panel's own min(100cqw,160cqh)
-   aspect-fit math (unchanged) never has to account for the sidebar itself. */
-#table-area{flex:1;display:flex;flex-direction:row;align-items:stretch;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px;gap:0.8vw}
-#table-panel-wrap{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;container-type:size}
-#table-panel{position:relative;aspect-ratio:3200/2000;width:min(100cqw,160cqh);height:min(100cqh,62.5cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);border:1px solid rgba(255,215,0,.15);border-radius:1.5cqh;container-type:size;display:flex;flex-direction:column}
+   whole row of vertical space for bigger cards) into a vertical sidebar right next to
+   the felt. #table-felt-wrap (NOT #table-area itself) is the container-query box --
+   container-type:size on an element that is ITSELF sized only by flex-grow (no
+   explicit width/height) collapses to ~0 in some browsers, confirmed live (putting
+   container-type:size directly on #table-area, which is a flex:1 child of
+   #game-screen with nothing else establishing its size, collapsed it to 8x8px). One
+   extra plain flex:1 wrapper level (this exact pattern already used successfully
+   elsewhere in this file) avoids that: #table-area sizes normally via flex-grow from
+   its non-container parent, then #table-felt-wrap -- a flex:1 child of THAT plain
+   box -- is free to also be the size-contained query container for #table-panel's
+   width formula (which reserves a fixed chunk for the sidebar sitting beside it, so
+   the two size and center together as one visual unit instead of the panel floating
+   in oversized leftover space with the sidebar pinned to the screen's outer edge --
+   the bug in the first version of this). */
+#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px}
+#table-felt-wrap{flex:1;min-width:0;height:100%;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;container-type:size}
+#table-panel{position:relative;aspect-ratio:3200/2000;width:min(calc(100cqw - 92px),160cqh);height:min(100cqh,calc((100cqw - 92px)/1.6));flex-shrink:0;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);border:1px solid rgba(255,215,0,.15);border-radius:1.5cqh;container-type:size;display:flex;flex-direction:column}
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
 .card-region{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:0.3cqh 1cqh;min-height:0}
@@ -89,21 +99,39 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .select-hint.ok{color:#7ee87e}
 .select-hint.bad{color:#ff8a80}
 
-/* ── BET SIDEBAR (plain CSS circles, no baked art) -- stacked vertically to the right
-   of the felt, Light on top, Ante on bottom, per Deck's explicit order. ── */
+/* ── BET SIDEBAR (plain CSS circles, no baked art) -- stacked vertically right next
+   to the felt (SIDEBAR_RESERVE above keeps it close, not pinned to the screen edge),
+   Light on top, Ante on bottom, per Deck's explicit order. ── */
 #bet-sidebar{display:flex;flex-direction:column;flex-shrink:0;align-items:center;justify-content:center;gap:2.2vh;padding:4px 2px}
 .bet-spot-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
-.bet-spot{width:min(64px,9vw);height:min(64px,9vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s}
+.bet-spot{width:min(64px,9vw);height:min(64px,9vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s;--chip:30px;--edge:calc(var(--chip)*0.16)}
 .bet-spot:hover{background:rgba(255,215,0,.14)}
 .bet-spot.active{border-color:#ffd700;background:rgba(255,215,0,.22)}
 .bet-spot.locked{cursor:default}
-.bet-spot .bs-label{font-size:9px;font-weight:800;letter-spacing:.04em;color:rgba(255,215,0,.75);text-transform:uppercase}
-.bet-spot .bs-amt{font-size:12px;font-weight:800;color:#ffd700}
 .bet-spot .bs-lock{position:absolute;bottom:-3px;right:-3px;background:#b02020;color:#fff;font-size:9px;border-radius:999px;padding:1px 4px;border:1px solid rgba(255,255,255,.6)}
 .bet-spot.light{border-color:rgba(255,255,255,.25)}
 .bet-spot.light.active{border-color:#ffd700;background:rgba(255,215,0,.28);box-shadow:0 0 10px rgba(255,215,0,.5)}
 .bet-spot-name{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em}
 .paytable-info-btn{width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid rgba(255,215,0,.6);font-size:11px;font-family:Georgia,'Times New Roman',serif;font-style:italic;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-weight:800;position:absolute;top:-4px;right:-4px}
+
+/* ── BET-SPOT CHIP STACKS -- ported wholesale from uth.html/craps ── */
+.has-stack{position:absolute;left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block}
+.chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
+.chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
+.chip-stack .chip-amt{user-select:none;-webkit-user-select:none}
+.chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
+.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.3);line-height:1;padding:1px 3px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
+
+/* ── WIN/LOSS CHIP-GHOST SWEEP -- ported wholesale from uth.html/craps/sicbo.
+   z-index MUST beat WinnerModal's own overlay (z-index:200) so a ghost doesn't render
+   underneath the win celebration for its whole lifetime. ── */
+.chip-ghost{position:fixed;z-index:10000;pointer-events:none;filter:none;opacity:1;transition:filter .35s ease-out}
+.chip-ghost.dim{filter:grayscale(1) brightness(.55)}
+.chip-ghost.sweep{transform:translateY(-130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
+.chip-ghost.sweep-down{transform:translateY(130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
+.chip-ghost.win-start{transform:translateY(-130vh)}
+.chip-ghost.win-in{transform:translateY(0);transition:transform .48s cubic-bezier(.22,.9,.32,1)}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2.6 / 16);height:calc(100dvh * 2.6 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -294,7 +322,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.6</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.7</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -323,36 +351,35 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
   <!-- TABLE AREA -->
   <div id="table-area">
-    <div id="table-panel-wrap">
-      <div id="table-panel">
-        <div class="card-region" id="dealer-region">
-          <span class="felt-label">Dealer's Hand — Face Up, House Way</span>
-          <div class="split-block">
-            <div class="split-row">
-              <div class="row-label low-label" id="dealer-low-label"></div>
-              <div class="card-row" id="dealer-low-row"></div>
-            </div>
-            <div class="split-row">
-              <div class="row-label high-label" id="dealer-high-label"></div>
-              <div class="card-row" id="dealer-high-row"></div>
-            </div>
+   <div id="table-felt-wrap">
+    <div id="table-panel">
+      <div class="card-region" id="dealer-region">
+        <span class="felt-label">Dealer's Hand — Face Up, House Way</span>
+        <div class="split-block">
+          <div class="split-row">
+            <div class="row-label low-label" id="dealer-low-label"></div>
+            <div class="card-row" id="dealer-low-row"></div>
+          </div>
+          <div class="split-row">
+            <div class="row-label high-label" id="dealer-high-label"></div>
+            <div class="card-row" id="dealer-high-row"></div>
           </div>
         </div>
-        <div class="card-region" id="player-region">
-          <span class="felt-label">Your Hand</span>
-          <div class="card-row" id="player-select-row"></div>
-          <div class="split-block" id="player-split-block" style="display:none">
-            <div class="split-row">
-              <div class="row-label low-label" id="player-low-label"></div>
-              <div class="card-row" id="player-low-row"></div>
-            </div>
-            <div class="split-row">
-              <div class="row-label high-label" id="player-high-label"></div>
-              <div class="card-row" id="player-high-row"></div>
-            </div>
+      </div>
+      <div class="card-region" id="player-region">
+        <span class="felt-label">Your Hand</span>
+        <div class="card-row" id="player-select-row"></div>
+        <div class="split-block" id="player-split-block" style="display:none">
+          <div class="split-row">
+            <div class="row-label low-label" id="player-low-label"></div>
+            <div class="card-row" id="player-low-row"></div>
           </div>
-          <div class="select-hint" id="select-hint"></div>
+          <div class="split-row">
+            <div class="row-label high-label" id="player-high-label"></div>
+            <div class="card-row" id="player-high-row"></div>
+          </div>
         </div>
+        <div class="select-hint" id="select-hint"></div>
       </div>
     </div>
 
@@ -369,17 +396,18 @@ input,textarea{-webkit-user-select:text;user-select:text}
         <div class="bet-spot-name">Fortune</div>
         <div class="bet-spot" id="fortune-spot" onclick="placeBet('fortune')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fortune')">
           <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('fortune')" title="Fortune Paytable">i</button>
-          <span class="bs-amt" id="stk-fortune"></span>
+          <span id="stk-fortune"></span>
         </div>
       </div>
       <div class="bet-spot-wrap">
         <div class="bet-spot-name">Ante</div>
         <div class="bet-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
           <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('ante')" title="Ante Rules">i</button>
-          <span class="bs-amt" id="stk-ante"></span>
+          <span id="stk-ante"></span>
         </div>
       </div>
     </div>
+   </div>
   </div>
 
   <!-- BOTTOM SECTION -->
@@ -1152,6 +1180,7 @@ function finishHand(data){
   renderActionButtons();updateStatusZone();updateUI();checkBroke();
   postRoundTimer=setTimeout(()=>{
     postRoundTimer=null;
+    spawnPaiGowGhosts(data.log||[]);
     const totalWagered=G.lastBetDisplay||1;
     if(data.result==='push'&&data.payout>0){
       WinnerModal.showPush(data.payout,{onClose:resetToBetScreen});
@@ -1231,8 +1260,8 @@ function updateUI(){
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
   const fortuneAmt=locked?G.locked.fortune:(G.bets.fortune||0);
   const lightActive=locked?G.locked.light:G.lightOn;
-  document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
-  document.getElementById('stk-fortune').textContent=fortuneAmt?fmt(fortuneAmt):'';
+  applyChipStackVisual('stk-ante',anteAmt,locked);
+  applyChipStackVisual('stk-fortune',fortuneAmt,locked);
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('ante-spot').classList.toggle('locked',locked);
   document.getElementById('fortune-spot').classList.toggle('active',fortuneAmt>0);
@@ -1241,10 +1270,169 @@ function updateUI(){
   document.getElementById('light-spot').classList.toggle('locked',locked);
 }
 
+// ── CHIP STACKS ON BET SPOTS -- ported wholesale from uth.html/craps ─────────
+const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
+function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
+function chipLabel(amt){return '$'+(Number.isInteger(amt)?amt:amt.toFixed(2));}
+function chipStackHTML(amt,locked){
+  const chips=chipBreakdown(amt),n=chips.length;
+  let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
+  chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.webp" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
+  const label=chipLabel(amt);
+  const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
+  h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
+  if(locked)h+='<span class="chip-lock" style="bottom:0">🔒</span>';
+  h+='</span>';
+  return h;
+}
+const _chipSoundState=new Map();
+function maybeTriggerChipSound(key,amt){
+  const newAmt=amt>0?r2(amt):0;
+  const prevAmt=_chipSoundState.get(key)||0;
+  if(newAmt!==prevAmt){
+    const newCount=newAmt>0?chipBreakdown(newAmt).length:0;
+    if(newCount>0)playChipSound(newCount);
+    _chipSoundState.set(key,newAmt);
+  }
+}
+function applyChipStackVisual(id,amt,locked){
+  const el=document.getElementById(id);
+  maybeTriggerChipSound(id,amt);
+  if(!(amt>0)){el.innerHTML='';el.classList.remove('has-stack');return;}
+  el.innerHTML=chipStackHTML(amt,locked);
+  el.classList.add('has-stack');
+}
+document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
+
+// ── WIN/LOSS CHIP-GHOST SWEEP -- ported wholesale from uth.html/craps/sicbo ──
+// Measures the real rendered chip-amt height rather than trusting --chip's own
+// declared unit string (a ghost living outside its spot's own CSS context would
+// otherwise resolve the same "Ncqh"-style value to a different pixel size).
+function chipPxFor(el){
+  const amt=el?el.querySelector('.chip-amt'):null;
+  const h=amt?amt.getBoundingClientRect().height:0;
+  if(h>0)return h+'px';
+  return '30px';
+}
+function spawnChipGhost(el,opts){
+  opts=opts||{};
+  if(!el)return;
+  const rect=el.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const amtSpan=el.querySelector('.chip-amt');
+  const label=amtSpan?amtSpan.textContent:'';
+  const chipImgs=el.querySelectorAll('.chip-img');
+  const topChip=chipImgs.length?chipImgs[chipImgs.length-1]:null;
+  const chipSrc=topChip?topChip.getAttribute('src'):null;
+  if(!label&&!chipSrc)return;
+  const ghost=document.createElement('div');
+  ghost.className='chip-ghost';
+  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
+  ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
+  ghost.style.setProperty('--chip',chipPxFor(el));
+  if(chipSrc){
+    const img=document.createElement('img');
+    img.src=chipSrc;img.draggable=false;
+    img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:auto;z-index:1';
+    ghost.appendChild(img);
+  }
+  if(label){
+    const amtFs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
+    const span=document.createElement('span');
+    span.textContent=label;
+    span.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*'+amtFs+');color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap;pointer-events:none';
+    ghost.appendChild(span);
+  }
+  document.body.appendChild(ghost);
+  const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
+  if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
+  setTimeout(()=>{
+    el.innerHTML='';
+    el.classList.remove('has-stack');
+    ghost.classList.add(sweepClass);
+  },900);
+  setTimeout(()=>{ghost.remove();},1450);
+}
+const WIN_DROP_MS=480,WIN_HOLD_MS=420,WIN_SWEEP_MS=550;
+function spawnWinPair(elId,amt){
+  const stakeEl=document.getElementById(elId);
+  if(!stakeEl||!(amt>0))return;
+  const rect=stakeEl.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const liveChipVar=chipPxFor(stakeEl);
+  const gap=1;
+  let targetLeft=rect.left-rect.width-gap;
+  if(targetLeft<4)targetLeft=rect.right+gap;
+
+  const winGhost=document.createElement('div');
+  winGhost.className='chip-ghost win-start';
+  winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
+  winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
+  winGhost.style.setProperty('--chip',liveChipVar);
+  winGhost.innerHTML=chipStackHTML(amt,false);
+  document.body.appendChild(winGhost);
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{winGhost.classList.remove('win-start');winGhost.classList.add('win-in');});});
+
+  const wagerGhost=document.createElement('div');
+  wagerGhost.className='chip-ghost';
+  wagerGhost.style.left=rect.left+'px';wagerGhost.style.top=rect.top+'px';
+  wagerGhost.style.width=rect.width+'px';wagerGhost.style.height=rect.height+'px';
+  wagerGhost.style.setProperty('--chip',liveChipVar);
+  wagerGhost.innerHTML=stakeEl.innerHTML;
+  document.body.appendChild(wagerGhost);
+
+  setTimeout(()=>{
+    stakeEl.innerHTML='';
+    stakeEl.classList.remove('has-stack');
+    winGhost.classList.remove('win-in');
+    winGhost.classList.add('sweep-down');
+    wagerGhost.classList.add('sweep-down');
+  },WIN_DROP_MS+WIN_HOLD_MS);
+  setTimeout(()=>{
+    winGhost.remove();
+    wagerGhost.remove();
+  },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+100);
+}
+// Bet-name -> stake-element-id table, matched against roll-paigow's exact log-line
+// prefixes (Ante:/Fortune:), same win|pays / lost / push keyword convention addLog()
+// already uses for line coloring.
+function paiGowGhostChecks(){return [[/^Ante:/,'ante'],[/^Fortune:/,'fortune']];}
+function spawnPaiGowGhosts(rawLog){
+  paiGowGhostChecks().forEach(([re,key])=>{
+    const line=rawLog.find(l=>re.test(l));
+    if(!line)return;
+    const el=document.getElementById('stk-'+key);
+    if(/lost/i.test(line)){spawnChipGhost(el);return;}
+    if(/push/i.test(line)){spawnChipGhost(el,{direction:'down',noDim:true});return;}
+    if(/win|pays/i.test(line)){
+      const m=line.match(/\+([\d.]+)/);
+      if(m)spawnWinPair('stk-'+key,parseFloat(m[1]));
+    }
+  });
+}
+
 // ── AUDIO (shared SFX files, same convention as uth.html/breakout.html) ──────
 const SFX_CARD_SHUFFLE=['card-shuffle.ogg'];
 const SFX_CARD_SLIDE=['card-slide-1.ogg','card-slide-2.ogg','card-slide-3.ogg','card-slide-4.ogg','card-slide-5.ogg','card-slide-6.ogg','card-slide-7.ogg','card-slide-8.ogg'];
+const SFX_CHIP={
+  1:['1_chip.ogg'],
+  2:['2chips.ogg'],
+  3:['couple_chips_1.ogg','couple_chips_2.ogg','couple_chips_3.ogg','couple_chips_4.ogg'],
+  4:['few_chips_1.ogg','few_chips_2.ogg','few_chips_3.ogg','few_chips_4.ogg'],
+  5:['bunch_chips_1.ogg','bunch_chips_2.ogg','bunch_chips_3.ogg']
+};
+const SFX_CHIP_MANY='lots_of_chips.ogg';
 const _sfxCache={};
+function playChipSound(count){
+  if(!(count>0))return;
+  const bucket=count>=6?[SFX_CHIP_MANY]:SFX_CHIP[count];
+  if(!bucket)return;
+  const file=bucket[Math.floor(Math.random()*bucket.length)];
+  if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
+  const chipInst=_sfxCache[file].cloneNode();
+  chipInst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
+  chipInst.play().catch(()=>{});
+}
 function playSfx(bucket,pitchJitter){
   if(!bucket||!bucket.length)return;
   const file=bucket[Math.floor(Math.random()*bucket.length)];
