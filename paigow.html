@@ -280,7 +280,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.2</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -842,7 +842,7 @@ function withoutCards(cards7,toRemove){
   const keys=toRemove.map(cardKey);const used=new Array(keys.length).fill(false);
   return cards7.filter(c=>{const k=cardKey(c);const idx=keys.findIndex((kk,i)=>kk===k&&!used[i]);if(idx===-1)return true;used[idx]=true;return false;});
 }
-function topKickersClient(cards,n){return cards.slice().sort((a,b)=>(isJokerCard(b)?14:b.r)-(isJokerCard(a)?14:a.r)).slice(0,n);}
+function sortDescClient(cards){return cards.slice().sort((a,b)=>(isJokerCard(b)?14:b.r)-(isJokerCard(a)?14:a.r));}
 function combinations2Client(cards7){
   const res=[];const n=cards7.length;
   for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const low=[cards7[i],cards7[j]];const high=cards7.filter((_,k)=>k!==i&&k!==j);res.push({low,high});}
@@ -853,30 +853,57 @@ function maximizeHighClient(cards7){
   for(const split of combinations2Client(cards7)){const score=evaluate5(split.high);if(!bestScore||compareScore(score,bestScore)>0){bestScore=score;best=split;}}
   return best;
 }
+// Give the LOW hand the best available leftover cards once High's category is decided
+// (a made hand's kickers barely matter; a strong Low hand meaningfully raises its own
+// win chance) -- see roll-paigow's setHouseWay for the fully-commented version and why
+// an earlier "maximize High's kickers" version of this was backwards.
 function setHouseWayClient(cards7){
   const groups=rankGroupsClient(cards7);
   const quads=groups.find(g=>g.cards.length===4);
-  const pairs=groups.filter(g=>g.cards.length===2);
+  const trips=groups.find(g=>g.cards.length===3);
+  const pairs=groups.filter(g=>g.cards.length===2).sort((a,b)=>b.rank-a.rank);
   let result=null;
-  if(quads&&quads.rank>=7){
-    const low=quads.cards.slice(0,2);
-    const rest=withoutCards(cards7,low);
-    const highExtra=topKickersClient(withoutCards(rest,quads.cards.slice(2)),3);
-    result={low,high:[...quads.cards.slice(2),...highExtra]};
+  if(quads){
+    if(quads.rank>=7){
+      const low=quads.cards.slice(0,2);
+      const high=withoutCards(cards7,low);
+      result={low,high};
+    }else{
+      const nonQuad=sortDescClient(withoutCards(cards7,quads.cards));
+      result={low:nonQuad.slice(0,2),high:[...quads.cards,nonQuad[2]]};
+    }
+  }else if(trips){
+    const pairAmongRest=groups.find(g=>g.cards.length===2);
+    if(pairAmongRest){
+      const high=[...trips.cards,...pairAmongRest.cards];
+      result={low:withoutCards(cards7,high),high};
+    }else{
+      const nonTrip=sortDescClient(withoutCards(cards7,trips.cards));
+      result={low:nonTrip.slice(0,2),high:[...trips.cards,...nonTrip.slice(2,4)]};
+    }
   }else if(pairs.length>=2){
-    const sortedPairs=pairs.slice().sort((a,b)=>b.rank-a.rank);
-    const[p0,p1]=sortedPairs;
+    const[p0,p1]=pairs;
     if(p0.rank>=7){
-      // Higher pair stays on High (with kickers); lower pair goes to Low -- the reverse
-      // is illegal for a plain 2-pairs-plus-3-kickers holding (see roll-paigow's
-      // setHouseWay comment for the full reasoning).
       const low=p1.cards;
-      const rest=withoutCards(cards7,low);
-      const highExtra=topKickersClient(withoutCards(rest,p0.cards),3);
-      result={low,high:[...p0.cards,...highExtra]};
+      const high=withoutCards(cards7,low);
+      result={low,high};
+    }else{
+      const nonPair=sortDescClient(withoutCards(cards7,[...p0.cards,...p1.cards]));
+      result={low:nonPair.slice(0,2),high:[...p0.cards,...p1.cards,nonPair[2]]};
+    }
+  }else if(pairs.length===1){
+    const nonPair=sortDescClient(withoutCards(cards7,pairs[0].cards));
+    result={low:nonPair.slice(0,2),high:[...pairs[0].cards,...nonPair.slice(2,5)]};
+  }
+  if(!result){
+    const best=maximizeHighClient(cards7);
+    if(evaluate5(best.high).cat>=4){
+      result=best;
+    }else{
+      const sorted=sortDescClient(cards7);
+      result={low:[sorted[1],sorted[2]],high:[sorted[0],sorted[3],sorted[4],sorted[5],sorted[6]]};
     }
   }
-  if(!result)result=maximizeHighClient(cards7);
   if(compareScore(evaluate5(result.high),evaluateLow(result.low))<0)result=maximizeHighClient(cards7);
   return result;
 }
