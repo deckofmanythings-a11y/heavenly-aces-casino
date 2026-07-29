@@ -58,7 +58,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .lr-body{padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;justify-content:center}
 .lr-nums{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
 .lr-num{position:relative;width:32px;height:32px;border-radius:3px;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:rgba(255,255,255,.4);border:0.5px solid rgba(255,255,255,.15)}
-.lr-num.hit{background:rgba(100,255,120,.3);color:#7ee87e;border-color:#7ee87e}
+.lr-num.hit{background:transparent;color:#7ee87e;border-color:#7ee87e}
 .lr-stake{font-size:38px;font-weight:600;color:#ffd700;min-height:12px}
 .lr-note{font-size:15px;color:rgba(255,255,255,.4)}
 .mbtn-bonus{display:none;position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:19px;line-height:12px;text-align:center;cursor:pointer;z-index:5;padding:0}
@@ -959,7 +959,11 @@ body.felt-mode #felt-stage #lucky-roller .lr-nums{display:flex;height:100%;width
 body.felt-mode #felt-stage #lucky-roller .lr-num{position:relative;flex:1;width:auto;height:auto;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0;pointer-events:none}
 body.felt-mode #felt-stage #lucky-roller .lr-nums{pointer-events:none}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
-body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:rgba(60,255,140,.30);box-shadow:0 0 10px rgba(60,255,140,.9),inset 0 0 6px rgba(60,255,140,.5);color:transparent}
+/* Felt art bakes the numbers themselves into the box image (base .lr-num above is
+   color:transparent;font-size:0 -- no text to recolor), so a hit can't be shown by changing
+   text color like the non-felt fallback does. Outline only, no fill/glow -- a ring around the
+   number instead of a shaded/glowing box behind it. */
+body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:transparent;box-shadow:none;border:2px solid #3cff8c}
 
 /* ===== CLEAN UI: no hover or placed-bet shading anywhere on the felt =====
    Deck wants no visual highlighting of legal betting areas, on hover or once a bet is placed.
@@ -1723,7 +1727,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.25</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.26</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
