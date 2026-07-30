@@ -1133,21 +1133,29 @@ function doRaise(mult){
 }
 
 // ── CARD SLOTS ────────────────────────────────────────────────────────────────
+// Guards against being built twice -- module-level, not on G, since startSession() always
+// resets G (including G.cardEls) to a fresh object right before calling this, which used to
+// make a `G.cardEls` guard here a no-op: logging out and back in without a full page reload
+// re-ran this and appended a second set of slot elements into the same row containers,
+// leaving the original set behind as an orphaned but still-attached (never GC'd) DOM subtree.
+let _cardSlots=null;
 function buildCardSlots(){
-  if(G.cardEls)return;
-  const dealerRow=document.getElementById('dealer-row');
-  const communityRow=document.getElementById('community-row');
-  const playerRow=document.getElementById('player-row');
-  const burnRow=document.getElementById('burn-row');
-  const dealer=[Cards.makeSlot(),Cards.makeSlot()];
-  const community=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
-  const player=[Cards.makeSlot(),Cards.makeSlot()];
-  const burn=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
-  dealer.forEach(el=>dealerRow.appendChild(el));
-  community.forEach(el=>communityRow.appendChild(el));
-  player.forEach(el=>playerRow.appendChild(el));
-  burn.forEach(el=>burnRow.appendChild(el));
-  G.cardEls={dealer,community,player,burn};
+  if(!_cardSlots){
+    const dealerRow=document.getElementById('dealer-row');
+    const communityRow=document.getElementById('community-row');
+    const playerRow=document.getElementById('player-row');
+    const burnRow=document.getElementById('burn-row');
+    const dealer=[Cards.makeSlot(),Cards.makeSlot()];
+    const community=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
+    const player=[Cards.makeSlot(),Cards.makeSlot()];
+    const burn=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
+    dealer.forEach(el=>dealerRow.appendChild(el));
+    community.forEach(el=>communityRow.appendChild(el));
+    player.forEach(el=>playerRow.appendChild(el));
+    burn.forEach(el=>burnRow.appendChild(el));
+    _cardSlots={dealer,community,player,burn};
+  }
+  G.cardEls=_cardSlots;
 }
 // A slot with nothing dealt into it yet (not on the table at all, physically) --
 // 'empty' hides both faces (see cards.js) while still reserving its layout space,
