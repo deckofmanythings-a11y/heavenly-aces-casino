@@ -227,7 +227,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.12</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.13</div>
 </div>
 
 <script>
@@ -503,7 +503,7 @@ async function runDiscordEntry(){
   try{
     const {DiscordSDK}=window.DiscordSDKLib;
     const discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
-    await withTimeout(discordSdk.ready(),8000,'Discord SDK ready()');
+    await withTimeout(discordSdk.ready(),20000,'Discord SDK ready()');
     // prompt:'none' only succeeds if this exact client already has a cached consent
     // grant -- e.g. the player authorized on mobile before, but this is their first
     // time on the desktop client, which tracks consent separately. That throws here
