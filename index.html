@@ -227,7 +227,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.14</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.15</div>
 </div>
 
 <script>
@@ -530,38 +530,41 @@ async function runDiscordEntry(){
     localStorage.setItem('craps_session',data.player.session_token);
     showLobby(data.player);
   }catch(e){
-    console.error('Discord entry failed, falling back to normal login:',e);
+    console.error('Discord entry failed:',e);
     await tryRestoreSession();
-    if(!currentPlayer){
-      const warnEl=document.getElementById('auth-discord-warn');
-      warnEl.style.display='block';
-      // Temporary: show the actual error inline, since Discord desktop doesn't give
-      // players DevTools access to see the console.error above. Remove this <div>
-      // once the PC-login investigation is resolved.
-      const msg=(e&&(e.message||e.toString()))||'Unknown error';
-      let debugEl=document.getElementById('auth-discord-debug');
-      if(!debugEl){
-        debugEl=document.createElement('div');
-        debugEl.id='auth-discord-debug';
-        debugEl.style.cssText='font-size:11px;color:rgba(255,255,255,.5);margin:-8px 0 14px;word-break:break-word;font-family:monospace';
-        warnEl.insertAdjacentElement('afterend',debugEl);
-      }
-      debugEl.textContent='Debug: '+msg;
-      document.getElementById('auth-form-wrap').style.display='block';
-    }
+    // No fallback to the normal login form inside Discord -- matches how other
+    // Discord Activities (Wordle included) behave during a platform-wide outage:
+    // fail silently in place rather than offering an escape hatch that implies a
+    // separate, unlinked account. The only legitimate way to reach the login form
+    // from inside Discord is logging out of an already-restored session. Leave the
+    // "Connecting..." status up and show the real error under it -- Discord desktop
+    // gives players no DevTools access, so this is the only way they can see why.
+    if(!currentPlayer)showDiscordConnectError(e);
   }finally{
-    statusEl.classList.remove('show');
+    if(currentPlayer)statusEl.classList.remove('show');
   }
+}
+function showDiscordConnectError(e){
+  const msg=(e&&(e.message||e.toString()))||'Unknown error';
+  let debugEl=document.getElementById('auth-discord-debug');
+  if(!debugEl){
+    debugEl=document.createElement('div');
+    debugEl.id='auth-discord-debug';
+    debugEl.style.cssText='font-size:11px;color:rgba(255,255,255,.5);margin-top:8px;word-break:break-word;font-family:monospace';
+    document.getElementById('auth-status').insertAdjacentElement('afterend',debugEl);
+  }
+  debugEl.textContent='Debug: '+msg;
 }
 async function bootDiscordDM(){
   await tryRestoreSession();
   // Do NOT fall through to runDiscordEntry() here -- ready() is confirmed to hang
   // reliably (not flakily) on pc- (DM) launches, so attempting it would just burn
-  // the full timeout every time there's no already-saved session to restore. Go
-  // straight to the normal login form instead of wasting 20+ seconds on a doomed call.
+  // the full timeout every time there's no already-saved session to restore. And
+  // per runDiscordEntry()'s catch above, no login-form fallback inside Discord --
+  // leave the "Connecting..." status up with a debug note instead.
   if(!currentPlayer){
-    document.getElementById('auth-discord-warn').style.display='block';
-    document.getElementById('auth-form-wrap').style.display='block';
+    document.getElementById('auth-status').classList.add('show');
+    showDiscordConnectError(new Error("Skipped -- ready() hangs reliably on DM launches"));
   }
 }
 if(isDiscordActivity()){
