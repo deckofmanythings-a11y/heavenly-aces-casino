@@ -796,7 +796,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.8</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.9</div>
       <div style="width:100%">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -3173,8 +3173,20 @@ async function redeemVoucher(code){
 const HIT_SOUND=new Audio('hit.ogg');
 const MISS_SOUND=new Audio('miss.ogg');
 HIT_SOUND.preload='auto';MISS_SOUND.preload='auto';
-function playHitSound(){ const a=HIT_SOUND.cloneNode(); a.volume=0.5*(window.AudioSettings?AudioSettings.effectiveVolume():1); a.play().catch(()=>{}); }
-function playMissSound(){ const a=MISS_SOUND.cloneNode(); a.volume=window.AudioSettings?AudioSettings.effectiveVolume():1; a.play().catch(()=>{}); }
+// Every shot clones HIT_SOUND/MISS_SOUND and plays it, with nothing ever explicitly
+// releasing the clone afterward. On iOS, decoded-audio sessions are a scarce OS-level
+// resource -- explicitly clearing .src once a clone is done tells the OS to release the
+// decoder promptly instead of waiting on GC, which has no visibility into (and no
+// pressure to reclaim) a native media resource. Confirmed as the real cause of a
+// reported progressive slowdown in uth.html that DOM/JS-heap inspection couldn't see.
+function releaseAudioClone(inst){
+  const release=()=>{inst.src='';inst.removeEventListener('ended',release);inst.removeEventListener('pause',release);inst.removeEventListener('error',release);};
+  inst.addEventListener('ended',release);
+  inst.addEventListener('pause',release); // catches play() failing/being interrupted without ever reaching 'ended'
+  inst.addEventListener('error',release);
+}
+function playHitSound(){ const a=HIT_SOUND.cloneNode(); a.volume=0.5*(window.AudioSettings?AudioSettings.effectiveVolume():1); releaseAudioClone(a); a.play().catch(()=>{}); }
+function playMissSound(){ const a=MISS_SOUND.cloneNode(); a.volume=window.AudioSettings?AudioSettings.effectiveVolume():1; releaseAudioClone(a); a.play().catch(()=>{}); }
 // Cloche dice overlay: shared module, configured for destroyer (letter die A-F + number
 // die 1-6, driven through ClocheDice's 1-6 physics via faceImagesPerDie).
 ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM_3D,DIE_NUMBER_IMG_3D],soundTheme:'action'});

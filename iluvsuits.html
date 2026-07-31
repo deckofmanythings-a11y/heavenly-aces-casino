@@ -401,7 +401,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.10</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.11</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1595,6 +1595,18 @@ const SFX_CARD_SHUFFLE=['card-shuffle.ogg'];
 const SFX_CARD_SLIDE=['card-slide-1.ogg','card-slide-2.ogg','card-slide-3.ogg','card-slide-4.ogg','card-slide-5.ogg','card-slide-6.ogg','card-slide-7.ogg','card-slide-8.ogg'];
 const SFX_CARD_FAN=['card-fan-1.ogg','card-fan-2.ogg'];
 const _sfxCache={};
+// Every sound effect clones a cached Audio element and plays it, with nothing ever
+// explicitly releasing the clone afterward. On iOS, decoded-audio sessions are a scarce
+// OS-level resource -- explicitly clearing .src once a clone is done tells the OS to
+// release the decoder promptly instead of waiting on GC, which has no visibility into
+// (and no pressure to reclaim) a native media resource. Confirmed as the real cause of a
+// reported progressive slowdown in uth.html that DOM/JS-heap inspection couldn't see.
+function releaseAudioClone(inst){
+  const release=()=>{inst.src='';inst.removeEventListener('ended',release);inst.removeEventListener('pause',release);inst.removeEventListener('error',release);};
+  inst.addEventListener('ended',release);
+  inst.addEventListener('pause',release); // catches play() failing/being interrupted without ever reaching 'ended'
+  inst.addEventListener('error',release);
+}
 function playChipSound(count){
   if(!(count>0))return;
   const bucket=count>=6?[SFX_CHIP_MANY]:SFX_CHIP[count];
@@ -1603,6 +1615,7 @@ function playChipSound(count){
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
   const chipInst=_sfxCache[file].cloneNode();
   chipInst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
+  releaseAudioClone(chipInst);
   chipInst.play().catch(()=>{});
 }
 function playSfx(bucket,pitchJitter){
@@ -1615,6 +1628,7 @@ function playSfx(bucket,pitchJitter){
   // reads as repetitive fast -- a slight random pitch shift per instance breaks that
   // up without needing more source variants (same trick craps uses for coin clinks).
   if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
+  releaseAudioClone(inst);
   inst.play().catch(()=>{});
 }
 const _chipSoundState=new Map();

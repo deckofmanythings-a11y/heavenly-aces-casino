@@ -1745,7 +1745,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.32</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.33</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3818,6 +3818,18 @@ const SFX_CHIP={
 };
 const SFX_CHIP_MANY='lots_of_chips.ogg';
 const _sfxCache={};
+// Every sound effect clones a cached Audio element and plays it, with nothing ever
+// explicitly releasing the clone afterward. On iOS, decoded-audio sessions are a scarce
+// OS-level resource -- explicitly clearing .src once a clone is done tells the OS to
+// release the decoder promptly instead of waiting on GC, which has no visibility into
+// (and no pressure to reclaim) a native media resource. Confirmed as the real cause of a
+// reported progressive slowdown in uth.html that DOM/JS-heap inspection couldn't see.
+function releaseAudioClone(inst){
+  const release=()=>{inst.src='';inst.removeEventListener('ended',release);inst.removeEventListener('pause',release);inst.removeEventListener('error',release);};
+  inst.addEventListener('ended',release);
+  inst.addEventListener('pause',release); // catches play() failing/being interrupted without ever reaching 'ended'
+  inst.addEventListener('error',release);
+}
 function playChipSound(count){
   if(soundMuted)return;
   if(!(count>0))return;
@@ -3827,6 +3839,7 @@ function playChipSound(count){
   if(!_sfxCache[file])_sfxCache[file]=new Audio(file);
   const chipInst=_sfxCache[file].cloneNode();
   chipInst.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
+  releaseAudioClone(chipInst);
   chipInst.play().catch(()=>{});
 }
 // Puck landing -- from Kenney's Casino Audio pack (CC0/public domain,
@@ -3846,6 +3859,7 @@ function playSfx(bucket,pitchJitter){
   // gun rather than a shower -- a slight random pitch shift per instance is enough to break
   // that up without needing more source variants.
   if(pitchJitter)inst.playbackRate=0.9+Math.random()*0.25;
+  releaseAudioClone(inst);
   inst.play().catch(()=>{});
 }
 // Was voice-clips-only (dealer calls like seven-out.ogg); Deck asked for the speaker button
