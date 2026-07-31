@@ -512,7 +512,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.17</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.18</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1836,7 +1836,13 @@ let _handsPlayed=0,_winsCount=0;
 (function(){
   const el=document.createElement('div');
   el.id='debug-overlay';
-  el.style.cssText='position:fixed;top:2px;left:2px;z-index:99999;background:rgba(0,0,0,.75);color:#0f0;font:10px/1.4 monospace;padding:4px 6px;border-radius:4px;pointer-events:none;white-space:pre;max-width:60vw';
+  // bottom-anchored, not top -- Discord's native title bar/Leave button is drawn OVER the
+  // webview's own top region (outside our page's control, so no amount of z-index helps),
+  // which is exactly why the game's own #top-row already pushes itself down to clear it.
+  // This overlay missed that the first time around and had its top ~3 lines hidden underneath
+  // Discord's chrome, leaving only the last line ("heap:n/a") visible below it. Anchoring to
+  // the bottom instead sidesteps needing to match that offset at all.
+  el.style.cssText='position:fixed;bottom:23dvh;left:2px;z-index:99999;background:rgba(0,0,0,.75);color:#0f0;font:10px/1.4 monospace;padding:4px 6px;border-radius:4px;pointer-events:none;white-space:pre;max-width:60vw';
   document.body.appendChild(el);
   function tick(){
     const anims=document.getAnimations?document.getAnimations().length:'n/a';
