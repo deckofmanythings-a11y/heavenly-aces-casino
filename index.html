@@ -34,6 +34,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .auth-error{background:rgba(180,0,0,.25);border:1px solid rgba(255,80,80,.3);border-radius:6px;padding:8px 10px;font-size:21px;color:#ff9a9a;margin-bottom:12px;display:none}
 .auth-status{text-align:center;font-size:16px;color:rgba(255,255,255,.45);margin-bottom:14px;display:none}
 .auth-status.show{display:block}
+.auth-motd{background:rgba(180,120,0,.2);border:1px solid rgba(255,180,60,.4);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.4;color:#ffcf8a;margin-top:12px;text-align:left;display:none}
+.auth-motd.show{display:block}
 .auth-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,215,0,.25);border-top-color:#ffd700;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 #auth-form-wrap{display:none}
@@ -107,7 +109,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <div class="auth-box">
     <h1>😇 Heavenly Aces Casino</h1>
     <p>Hosted by Deck</p>
-    <div class="auth-status" id="auth-status"><span class="auth-spinner"></span>Connecting to Discord&hellip;</div>
+    <div class="auth-status" id="auth-status">
+      <span class="auth-spinner"></span>Connecting to Discord&hellip;
+      <!-- Message of the Day -- shown only while this connecting screen is up. Edit
+           MOTD_TEXT below (or set to '' to hide it entirely) when there's nothing to
+           announce; this markup/CSS is meant to stay, only the text/visibility changes. -->
+      <div id="auth-motd" class="auth-motd"></div>
+    </div>
     <div id="auth-form-wrap">
       <div class="auth-discord-warn" id="auth-discord-warn" style="display:none">Couldn't sign you in with Discord. Logging in below uses a separate account &mdash; balance isn't shared or transferable between it and your Discord account.</div>
       <div class="auth-tabs">
@@ -227,7 +235,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.15</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.16</div>
 </div>
 
 <script>
@@ -242,8 +250,15 @@ function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com
 // website visit skips straight to the form with no Discord-specific messaging. This runs as
 // part of the same synchronous parse/execute pass as the rest of the page, before the
 // browser gets a chance to paint the initial (CSS-default) state.
+// Message of the Day for the Connecting-to-Discord screen. Set to '' to hide it.
+const MOTD_TEXT='Discord connectivity issues. Missing dailies today will not count against your streak bonuses.';
 if(isDiscordActivity()){
   document.getElementById('auth-status').classList.add('show');
+  if(MOTD_TEXT){
+    const motdEl=document.getElementById('auth-motd');
+    motdEl.textContent=MOTD_TEXT;
+    motdEl.classList.add('show');
+  }
 }else{
   document.getElementById('auth-form-wrap').style.display='block';
 }
