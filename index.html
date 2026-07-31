@@ -227,7 +227,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.11</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.12</div>
 </div>
 
 <script>
@@ -533,7 +533,20 @@ async function runDiscordEntry(){
     console.error('Discord entry failed, falling back to normal login:',e);
     await tryRestoreSession();
     if(!currentPlayer){
-      document.getElementById('auth-discord-warn').style.display='block';
+      const warnEl=document.getElementById('auth-discord-warn');
+      warnEl.style.display='block';
+      // Temporary: show the actual error inline, since Discord desktop doesn't give
+      // players DevTools access to see the console.error above. Remove this <div>
+      // once the PC-login investigation is resolved.
+      const msg=(e&&(e.message||e.toString()))||'Unknown error';
+      let debugEl=document.getElementById('auth-discord-debug');
+      if(!debugEl){
+        debugEl=document.createElement('div');
+        debugEl.id='auth-discord-debug';
+        debugEl.style.cssText='font-size:11px;color:rgba(255,255,255,.5);margin:-8px 0 14px;word-break:break-word;font-family:monospace';
+        warnEl.insertAdjacentElement('afterend',debugEl);
+      }
+      debugEl.textContent='Debug: '+msg;
       document.getElementById('auth-form-wrap').style.display='block';
     }
   }finally{
