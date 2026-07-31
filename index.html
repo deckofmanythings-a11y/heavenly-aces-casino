@@ -227,7 +227,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.10</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.11</div>
 </div>
 
 <script>
@@ -504,9 +504,22 @@ async function runDiscordEntry(){
     const {DiscordSDK}=window.DiscordSDKLib;
     const discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
     await withTimeout(discordSdk.ready(),8000,'Discord SDK ready()');
-    const{code}=await discordSdk.commands.authorize({
-      client_id:DISCORD_CLIENT_ID,response_type:'code',state:'',prompt:'none',scope:['identify']
-    });
+    // prompt:'none' only succeeds if this exact client already has a cached consent
+    // grant -- e.g. the player authorized on mobile before, but this is their first
+    // time on the desktop client, which tracks consent separately. That throws here
+    // with no visible error (falls straight to the catch below), so retry once with
+    // an explicit consent prompt before giving up -- this is the one-time "Authorize"
+    // dialog Discord shows, not a bug, just unavoidable on a new client the first time.
+    let code;
+    try{
+      ({code}=await discordSdk.commands.authorize({
+        client_id:DISCORD_CLIENT_ID,response_type:'code',state:'',prompt:'none',scope:['identify']
+      }));
+    }catch(e){
+      ({code}=await discordSdk.commands.authorize({
+        client_id:DISCORD_CLIENT_ID,response_type:'code',state:'',prompt:'consent',scope:['identify']
+      }));
+    }
     const res=await fetch(FUNCTIONS_URL+'/discord-auth',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
