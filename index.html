@@ -227,7 +227,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.13</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.14</div>
 </div>
 
 <script>
@@ -555,7 +555,14 @@ async function runDiscordEntry(){
 }
 async function bootDiscordDM(){
   await tryRestoreSession();
-  if(!currentPlayer){await runDiscordEntry();}
+  // Do NOT fall through to runDiscordEntry() here -- ready() is confirmed to hang
+  // reliably (not flakily) on pc- (DM) launches, so attempting it would just burn
+  // the full timeout every time there's no already-saved session to restore. Go
+  // straight to the normal login form instead of wasting 20+ seconds on a doomed call.
+  if(!currentPlayer){
+    document.getElementById('auth-discord-warn').style.display='block';
+    document.getElementById('auth-form-wrap').style.display='block';
+  }
 }
 if(isDiscordActivity()){
   if(isDiscordDM()){bootDiscordDM();}else{runDiscordEntry();}
