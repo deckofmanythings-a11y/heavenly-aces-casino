@@ -512,7 +512,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.16</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.17</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -1297,6 +1297,7 @@ async function dealHand(){
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
   if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
+  _handsPlayed++;
   playSfx(SFX_CARD_SHUFFLE);
   G.locked={ante:data.ante,blind:data.blind,trips:data.trips,progressive:data.progressive};
   G.lastBetSnapshot={ante:data.ante,trips:data.trips,progressive:!!data.progressive};
@@ -1418,6 +1419,7 @@ function finishHand(data){
     G.bankroll=data.newBankroll;
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     G.lastWin=data.payout||0;
+    if(data.payout>0)_winsCount++;
     G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.playBet||0));
     if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
     // Prefix with the raise multiplier actually committed (4x/3x/2x/1x) so the
@@ -1824,6 +1826,26 @@ async function cashOut(){
   updateUI();
 }
 function closeCashoutModal(){document.getElementById('modal-cashout').classList.add('hidden');}
+
+// ── TEMP MEMORY-LEAK DIAGNOSTIC OVERLAY ──────────────────────────────────────
+// Not a permanent feature -- a small always-on readout so real numbers from an actual
+// device (nodes/animations/hands/wins over time) can be read back without needing Mac +
+// Safari Web Inspector. Remove once the leak is found. _handsPlayed/_winsCount are bumped
+// from dealHand()/finishHand() below.
+let _handsPlayed=0,_winsCount=0;
+(function(){
+  const el=document.createElement('div');
+  el.id='debug-overlay';
+  el.style.cssText='position:fixed;top:2px;left:2px;z-index:99999;background:rgba(0,0,0,.75);color:#0f0;font:10px/1.4 monospace;padding:4px 6px;border-radius:4px;pointer-events:none;white-space:pre;max-width:60vw';
+  document.body.appendChild(el);
+  function tick(){
+    const anims=document.getAnimations?document.getAnimations().length:'n/a';
+    const heap=performance.memory?(Math.round(performance.memory.usedJSHeapSize/1024)+'KB'):'n/a';
+    el.textContent='hands:'+_handsPlayed+' wins:'+_winsCount+'\nnodes:'+document.querySelectorAll('*').length+' anims:'+anims+'\npc-card:'+document.querySelectorAll('.pc-card').length+' ghost:'+document.querySelectorAll('.chip-ghost').length+' coin:'+document.querySelectorAll('.wm-coin3d-wrap').length+'\nheap:'+heap;
+    setTimeout(tick,1000);
+  }
+  tick();
+})();
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 renderActionButtons();
