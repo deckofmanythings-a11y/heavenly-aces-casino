@@ -172,7 +172,18 @@
       const p1x = dx * burst * 0.45, p1y = dy * burst * 0.45;
       const p2x = dx * burst, p2y = dy * burst + gravityFall * 0.4;
       const p3x = dx * burst * 1.1, p3y = dy * burst + gravityFall;
-      wrap.animate([
+      // Both Animation objects are kept (rather than left to the return-value-discarded default)
+      // and explicitly .cancel()'d alongside wrap.remove() below -- fill:'forwards' keeps a
+      // finished animation "current" on the document's timeline indefinitely, and on WebKit/
+      // Safari that keeps the Animation (and the coin element it targets) alive even after the
+      // element is detached from the DOM, since detaching the target isn't what releases it --
+      // only cancel() (or the animation never having fill:forwards) does. With a coin waterfall
+      // spawning up to 56 coins x2 animations on every single win, every hand played on iOS was
+      // leaking dozens of these permanently -- this is what actually accumulated into the
+      // reported slowdown (confirmed to reproduce in real mobile Safari, not just Discord's
+      // WebView, and NOT reproducible in Chromium, which releases finished fill:forwards
+      // animations on element removal without needing an explicit cancel()).
+      const anim1=wrap.animate([
         { transform: 'translate(0px,0px)', opacity: 0 },
         { transform: 'translate(' + p1x.toFixed(1) + 'px,' + p1y.toFixed(1) + 'px)', opacity: 1, offset: 0.12 },
         { transform: 'translate(' + p2x.toFixed(1) + 'px,' + p2y.toFixed(1) + 'px)', opacity: 1, offset: 0.7 },
@@ -180,11 +191,11 @@
       ], { duration: dur, delay, easing: 'cubic-bezier(.25,.46,.45,.94)', fill: 'forwards' });
       const spinX = (Math.random() < 0.5 ? -1 : 1) * (720 + Math.random() * 720);
       const spinY = (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 720);
-      inner.animate([
+      const anim2=inner.animate([
         { transform: 'rotateX(90deg)' },
         { transform: 'rotateY(' + spinY + 'deg) rotateX(' + spinX + 'deg) rotateX(90deg)' }
       ], { duration: dur, delay, easing: 'linear', fill: 'forwards' });
-      setTimeout(() => wrap.remove(), delay + dur + 150);
+      setTimeout(() => { anim1.cancel(); anim2.cancel(); wrap.remove(); }, delay + dur + 150);
     }
     // Reuses the exact same bell-chime instrument as the dice tumble (cloche-dice.js), just an
     // "excited" version of it: faster note cadence and louder, rather than a separate coin-clink
