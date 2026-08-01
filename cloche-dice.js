@@ -600,6 +600,13 @@
   }
 
   // ---------- geometry ----------
+  // A single shared radius for both edges and corners -- independent edge/corner radii were
+  // tried (smaller edge radius, larger corner radius, even with a smooth blend between them)
+  // and consistently rendered as a sharp spike poking out of each corner rather than a smooth
+  // dome, because a rounded box is only seam-free when the corner sphere's radius matches the
+  // edge arcs it connects to; anything larger necessarily bulges past them. One radius keeps
+  // it artifact-free -- corners still read as more dramatically rounded than edges on their
+  // own, since they curve in three directions at once vs. an edge's simple 2D arc.
   function roundedBoxGeometry(size, radius, seg) {
     const geo = new THREE.BoxGeometry(size, size, size, seg, seg, seg);
     const posA = geo.attributes.position;
@@ -801,7 +808,7 @@
     for (const d of dice) { scene.remove(d.mesh); world.remove(d.body); }
     dice = [];
     const s = CFG.dieSize;
-    const edgeR = s * 0.30;
+    const edgeR = s * 0.24;
 
     for (let i = 0; i < n; i++) {
       const imgMap = (CFG.faceImagesPerDie && CFG.faceImagesPerDie[i]) || CFG.faceImages;
