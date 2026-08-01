@@ -61,9 +61,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .lr-num.hit{background:transparent;color:#7ee87e;border-color:#7ee87e}
 .lr-stake{font-size:38px;font-weight:600;color:#ffd700;min-height:12px}
 .lr-note{font-size:15px;color:rgba(255,255,255,.4)}
-.mbtn-bonus{display:none;position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:19px;line-height:12px;text-align:center;cursor:pointer;z-index:5;padding:0}
-.mbtn-bonus:hover{background:rgba(180,0,0,.7)}
-.lr-bonus-wrap:hover .mbtn-bonus.vis{display:block}
+/* Removed site-wide (Sic-Bo/Roulette/Craps): right-click and drag-off already remove
+   a bet, these corner buttons were redundant. display:none!important on each rather
+   than deleting every creation/hover-reveal site (several, scattered across bonus
+   boxes, hop-bet circles, and buy/place tiles). */
+.mbtn-bonus{display:none!important}
 /* Dice zone inside lucky roller */
 #dice-zone{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
 #dice-canvas-wrap{position:relative;flex-shrink:0}
@@ -150,9 +152,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .prop-circle:hover{background:rgba(255,255,255,.15)}
 .prop-circle.active{}
 .circle-wrap{position:relative;display:flex;flex-direction:column;align-items:center}
-.circle-wrap:hover .mbtn-circle.vis{display:block}
 .circle-stk{font-size:14px;color:#ffd700;min-height:9px;text-align:center}
-.mbtn-circle{display:none;position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:rgba(120,0,0,.8);border:0.5px solid rgba(255,80,80,.4);color:#fff;font-size:15px;line-height:11px;text-align:center;cursor:pointer;z-index:4;padding:0}
+.mbtn-circle{display:none!important}
 .sc-stack{display:flex;flex-direction:column;gap:3px;flex:1}
 .sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:#fff;font-size:15px;padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
 .sc-btn:hover{background:rgba(255,255,255,.2)}
@@ -187,12 +188,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .off-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;background:rgba(0,0,0,.5)}
 .off-ov span{font-size:15px;font-weight:700;color:rgba(255,200,0,.95)}
 .num-box-wrap{position:relative}
-.num-box-wrap:hover .mbtn-buy.vis{display:block}
-.num-box-wrap:hover .mbtn-place.vis{display:block}
 .num-box-wrap:hover .come-rm{display:flex}
-.mbtn-buy{display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,30,150,.8);border:0.5px solid rgba(100,150,255,.5);color:#fff;font-size:15px;line-height:9px;text-align:center;cursor:pointer;z-index:4;padding:0}
-.mbtn-place{display:none;position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:15px;line-height:9px;text-align:center;cursor:pointer;z-index:4;padding:0}
-.mbtn-buy:hover,.mbtn-place:hover{background:rgba(180,0,0,.7)}
+.mbtn-buy,.mbtn-place{display:none!important}
 .come-on-box{background:rgba(0,140,65,.32);border:0.5px solid rgba(0,220,100,.45);border-radius:2px;padding:1px 2px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;justify-content:center;position:relative;margin-top:1px}
 .come-flat-amt{font-size:14px;font-weight:700;color:#7eff9a}
 .come-odds-btn{font-size:11px;background:rgba(0,90,40,.6);border:0.5px solid rgba(0,200,100,.4);border-radius:2px;color:#7eff9a;padding:1px 2px;cursor:pointer}
@@ -1764,7 +1761,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.44</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.45</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
