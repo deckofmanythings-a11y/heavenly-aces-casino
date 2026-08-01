@@ -269,6 +269,12 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
 .progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
+
+/* Easy Craps: Low Field / High Field -- narrower single-roll Field subsets, own row below the
+   regular Field bar, only shown in lineMode C (see switchLineMode()). */
+#lowhigh-field-bar{flex:1;min-height:0}
+.lowhigh-half{flex:1;background:var(--box-fill);border:var(--box-border);border-radius:var(--box-radius)}
+.lowhigh-name{font-size:18px}
 .progressive-tier-row .prog-pay{color:#ffd700;font-weight:700}
 
 /* THE LIGHT: shared cross-game progressive. Position comes from FELT_LAYOUT (like every
@@ -1707,6 +1713,28 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
             </div>
             
           </div>
+          <!-- Easy Craps (lineMode C): Low Field (2-3-4) / High Field (10-11-12), narrower
+               single-roll subsets of the regular Field bet, per the Interblock reference spec.
+               Hidden unless lineMode==='lineC' -- see switchLineMode()/applyLineModeGating().
+               PRACTICE MODE ONLY for now (see placeBet()'s guard): no server-side payout logic
+               exists yet for these two keys, so a real bet placed here would deduct real
+               bankroll with nothing able to resolve it correctly. Flagged as a follow-up task. -->
+          <div id="lowhigh-field-bar" style="display:none;gap:4px">
+            <div class="zone-bar lowhigh-half" id="lowfield-bar" onclick="placeBet('lowfield')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('lowfield')">
+              <div style="text-align:center">
+                <div class="zone-name lowhigh-name">LOW FIELD</div>
+                <div style="font-size:13px;color:rgba(255,255,255,.55)">2 · 3 · 4</div>
+                <div class="zone-stk" id="stk-lowfield"></div>
+              </div>
+            </div>
+            <div class="zone-bar lowhigh-half" id="highfield-bar" onclick="placeBet('highfield')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('highfield')">
+              <div style="text-align:center">
+                <div class="zone-name lowhigh-name">HIGH FIELD</div>
+                <div style="font-size:13px;color:rgba(255,255,255,.55)">10 · 11 · 12</div>
+                <div class="zone-stk" id="stk-highfield"></div>
+              </div>
+            </div>
+          </div>
           <div id="dont-pass-stub" style="display:none">
             <div class="dp-stub-name">DON'T PASS</div>
             <div class="dp-stub-note">Crapless only</div>
@@ -1781,7 +1809,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.9</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.10</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1918,7 +1946,7 @@ const HARD_NUMS=new Set([4,6,8,10]);
 const LOW_NUMS=[2,3,4,5,6],HIGH_NUMS=[8,9,10,11,12],ALL_BONUS=[2,3,4,5,6,8,9,10,11,12];
 const CONTRACT=new Set(['pass','passodds']);
 
-function getRepeatable(){return new Set(['pass','dp','field','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
+function getRepeatable(){return new Set(['pass','dp','field','lowfield','highfield','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
 let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
 // ===================== FELT IMAGE MODE (crapless) =====================
@@ -4309,6 +4337,14 @@ function switchLineMode(m){
       addLog((type==='buy'?'Buy':'Place')+' '+n+' refunded -- not offered in this line mode.','info');
     });
   });
+  // Low Field/High Field (Easy Craps, lineC only) -- same refund-on-switch-away treatment.
+  if(m!=='lineC'){
+    ['lowfield','highfield'].forEach(key=>{
+      const amt=G.bets[key]||0;if(amt<=0)return;
+      G.bankroll=r2(G.bankroll+amt);delete G.bets[key];
+      addLog((key==='lowfield'?'Low Field':'High Field')+' refunded -- Easy Craps only.','info');
+    });
+  }
   if(typeof buildFocusFeltArt==='function')buildFocusFeltArt();
   if(typeof applyFocusVisibility==='function')applyFocusVisibility(); // also runs applyLineModeGating()
   updateUI();
@@ -4318,6 +4354,11 @@ function switchLineMode(m){
 // cells the current line mode doesn't offer. Always called from the tail of
 // applyFocusVisibility() so the two systems compose as an AND, never fight each other.
 function applyLineModeGating(){
+  // Low Field/High Field: real, clickable, Easy-Craps-only bets (lineC), independent of the
+  // activeGame!=='crapless' early-return below since that guards the per-number Buy/Place
+  // gating this function otherwise exists for, not this row.
+  const lhf=document.getElementById('lowhigh-field-bar');
+  if(lhf)lhf.style.display=(activeGame==='crapless'&&lineMode==='lineC')?'flex':'none';
   if(activeGame!=='crapless')return;
   MODE_CONFIG.crapless.allNums.forEach(n=>{
     if(!lineModeAllows('buy',n)){const el=document.getElementById('nb-buy-'+n);if(el)el.style.display='none';}
@@ -4489,6 +4530,11 @@ function placeBet(key,loc){
   if(key==='come'){if(G.phase==='comeout'){addLog('Come: after point only.','info');return;}}
   if(key==='dp'){if(activeGame!=='standard'){addLog('Don\'t Pass: standard mode only.','info');return;}if(G.phase==='point'){addLog('Don\'t Pass: come-out only.','info');return;}}
   if(key==='dc'){if(activeGame!=='standard'){addLog('Don\'t Come: standard mode only.','info');return;}if(G.phase==='comeout'){addLog('Don\'t Come: after point only.','info');return;}}
+  // Low Field/High Field (Easy Craps) have client-side + practice-mode payout logic only --
+  // no matching server-side Edge Function yet, so a real-money bet here would deduct bankroll
+  // with nothing able to resolve it correctly. Blocked outside Practice Mode until that ships
+  // (flagged as a separate follow-up task, not part of this CSS-only re-skin refactor).
+  if((key==='lowfield'||key==='highfield')&&!G.practiceMode){addLog('Low/High Field: Practice Mode only for now (server payout support not built yet).','info');return;}
   if(activeGame==='crapless'&&(key.startsWith('buy')||key.startsWith('place'))){
     const type=key.startsWith('buy')?'buy':'place';
     const n=parseInt(key.slice(type.length),10);
@@ -5144,6 +5190,8 @@ function updateUI(){
   ['hard4','hard6','hard8','hard10','any7','horn','cande','eleven',...Object.keys(HOP_MAP)].forEach(k=>{const el=document.getElementById('bet-'+k),st=document.getElementById('stk-'+k),mb=document.getElementById('m-'+k);if(!el||!st)return;const a=G.bets[k]||0;st.textContent=a?fmt(a):'';el.classList.toggle('active',a>0);if(mb)mb.classList.toggle('vis',a>0);});
   // Field
   {const a=G.bets['field']||0;const st=document.getElementById('stk-field');if(st)st.textContent=a?fmt(a):'';const fb=document.getElementById('field-bar');if(fb)fb.classList.toggle('active-bar',a>0);const mb=document.getElementById('m-field');if(mb)mb.classList.toggle('vis',a>0);}
+  // Easy Craps: Low Field / High Field
+  ['lowfield','highfield'].forEach(k=>{const a=G.bets[k]||0;const st=document.getElementById('stk-'+k);if(st)st.textContent=a?fmt(a):'';const bar=document.getElementById(k+'-bar');if(bar)bar.classList.toggle('active-bar',a>0);});
   // Prop bars (outline style)
   ['anyCraps','aces','ace2','midnight','yo'].forEach(k=>{const el=document.getElementById('bet-'+k),st=document.getElementById('stk-'+k),mb=document.getElementById('m-'+k);if(!el||!st)return;
     // Any Craps bar and the C circle share one underlying bet (G.bets.anyCraps) but each spot
@@ -5956,6 +6004,13 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       pP('field',rx,'Field'+((sum===2||sum===12)?' (2x)':''));
     }else lose('field','Field');
   }
+  // Easy Craps: Low Field (2-3-4) / High Field (10-11-12) -- practice-mode-only for now (see
+  // placeBet()'s guard, no server-side payout logic exists yet). Flat 1:1, no double-on-2/12
+  // the way the regular Field pays -- the reference spec doesn't call out a special multiplier
+  // for these narrower subsets, so this is a reasonable default rather than a confirmed number;
+  // flag to Deck if a different payout is wanted once server support is built.
+  if(s.bets['lowfield'])[2,3,4].includes(sum)?pP('lowfield',1,'Low Field'):lose('lowfield','Low Field');
+  if(s.bets['highfield'])[10,11,12].includes(sum)?pP('highfield',1,'High Field'):lose('highfield','High Field');
   if(s.bets['any7'])sum===7?pP('any7',4,'Seven'):lose('any7','Seven');
   if(s.bets['midnight'])sum===12?pP('midnight',30,'Midnight'):lose('midnight','Midnight');
   if(s.bets['aces'])sum===2?pP('aces',30,'Aces'):lose('aces','Aces');
