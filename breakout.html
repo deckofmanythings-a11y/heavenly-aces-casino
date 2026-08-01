@@ -173,8 +173,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
    #player-module, one inside #side-bets-module) since they're the same bet but
    render at different coordinates depending on which bottom-slot image is showing
    -- updateUI() updates both by class, only one is ever visible at a time. */
-#breakoutbonus-spot{left:4.07%;top:0%;width:33.7%;height:44.1%;--chip:11.4cqh}
-#supertie-spot{left:0%;top:47.2%;width:30.3%;height:52.7%}
+#breakoutbonus-spot{left:4.07%;top:0%;width:33.7%;height:44.1%}
+#supertie-spot{left:0%;top:47.2%;width:30.3%;height:52.7%;--chip:72px}
 #player-module .spot-pairPlus{left:5.23%;top:0%;width:31.36%;height:48.41%}
 #player-module .spot-sweet17{left:0%;top:53.33%;width:35.88%;height:46.51%}
 #player-module .info-pairPlus{left:31%;top:2%}
@@ -196,8 +196,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
    rough guesses (left2%/top2%/38%/42% etc), which is why the chips looked
    randomly placed instead of centered on each badge/circle. */
 #fortunebet-spot{left:40.86%;top:12.36%;width:59.14%;height:87.64%;border-radius:50%}
-#trilux9-spot{left:0.84%;top:0%;width:31.14%;height:42.97%}
-#fortunebonus-spot{left:0%;top:60.74%;width:32.92%;height:39.26%;--chip:9.6cqh}
+#trilux9-spot{left:0.84%;top:0%;width:31.14%;height:42.97%;--chip:72px}
+/* Bulb badge, not a felt circle -- the site-wide .has-stack default (top:38%, tuned for
+   circles whose baked label sits below center) left the chip sitting noticeably above
+   this badge's actual visual center. */
+#light-spot .has-stack{top:50%}
+#fortunebonus-spot{left:0%;top:60.74%;width:32.92%;height:39.26%}
 
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
@@ -538,7 +542,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.18</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.19</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>

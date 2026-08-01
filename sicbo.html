@@ -147,9 +147,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bs-label{font-size:min(42px,6.6cqw);font-weight:700;letter-spacing:.06em}
 .bs-sub{font-size:min(24px,4.5cqw);color:rgba(255,255,255,.9)}
 .bs-stk{font-size:min(39px,6.0cqw);color:#ffd700;position:absolute;bottom:3px;right:6px}
-.mbtn-corner{display:none;position:absolute;top:2px;right:3px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:17px;line-height:13px;text-align:center;cursor:pointer;z-index:5;padding:0}
-.bs-btn:hover .mbtn-corner.vis{display:block}
-.mbtn-corner:hover{background:rgba(180,0,0,.7)}
+/* Removed site-wide per Deck's direction: right-click and drag-off already remove a bet,
+   this corner button was redundant. display:none!important rather than deleting every
+   creation site (there are several, scattered across doubles/triples/place/any cells) --
+   the buttons still get created and wired up in JS, they just never render. */
+.mbtn-corner{display:none!important}
 
 /* Totals strip */
 .totals-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;flex-shrink:0;height:calc(100dvh * 1.6 / 16)} /* legacy, unused */
@@ -397,18 +399,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
    sic-bo's bet boxes vary wildly in size (the totals row is tiny, big/small is huge) --
    craps only ever had one uniformly-scaled felt so it needed just one global value. */
 body{--chip:88px;--edge:calc(var(--chip)*0.16)}
-/* Chip sizes below were re-tuned against real measured rendered box sizes (not eyeballed) --
-   every category was landing far above the site-wide 80-90%-of-spot-size target (some as much
-   as ~300%), because a single roughly-square value was being used for boxes that are actually
-   short wide bars (bs-btn/any-triple-btn) or small dense grid cells (tot/trip/dbl/dom/any).
-   trip-cell/dbl-cell/dom-cell/any-triple-btn previously had NO override at all and silently
-   inherited body's 88px, which is why they matter here too even though they weren't in the
-   original 4-value list. */
-.bs-btn,#any-triple-btn{--chip:38px}
-.tot-cell{--chip:30px}
-.trip-cell{--chip:39px}
-.dbl-cell,.dom-cell{--chip:37px}
-.any-cell{--chip:31px}
+/* One flat chip size across every category on this felt (bs-btn/any-triple-btn/tot/trip/
+   dbl/dom/any), per Deck's direction: keep chips consistently sized with one another
+   rather than tuning each box's chip to its own cell's ratio. 37px landed in-range on
+   every category's own cell size when it was measured per-category (30-39px band). */
+.bs-btn,#any-triple-btn,.tot-cell,.trip-cell,.dbl-cell,.dom-cell,.any-cell{--chip:37px}
 /* Overrides whichever corner-anchored position the base -stk class set (bottom/right) --
    .has-stack is added alongside the original class and, being later in source order at equal
    specificity, wins per-property for position/left/top/transform/bottom/right. */
@@ -680,7 +675,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.2</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.3</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
