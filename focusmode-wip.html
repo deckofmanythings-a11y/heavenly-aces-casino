@@ -281,18 +281,21 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 
-#come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;background:rgba(0,80,180,.15);border:0.5px solid rgba(100,160,255,.3)}
-#field-bar{flex:2;min-height:0;background:rgba(60,40,0,.3);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;border:0.5px solid rgba(255,200,0,.2)}
-.field-info{font-size:15px;color:rgba(255,255,255,.45);margin-top:1px}
-#pass-bar{display:flex;align-items:stretch;flex:2;min-height:0;border-radius:4px;overflow:hidden;border:0.5px solid rgba(100,160,255,.3)}
-#pass-odds-cell{background:rgba(0,50,140,.4);border-right:1px solid rgba(100,160,255,.3);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
-#pass-odds-cell:hover{background:rgba(0,80,220,.4)}
+/* Phase 5b (CSS-only re-skin): Come/Field/Pass Line/Don't Pass bands. Swapped the app's blue/
+   yellow/red accent palette for the shared design tokens -- these bands are functionally just
+   bigger .zone-bar-style cells, same treatment as everything else on the felt now. */
+#come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);background:var(--box-fill);border:var(--box-border)}
+#field-bar{flex:2;min-height:0;background:var(--box-fill);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);border:var(--box-border)}
+.field-info{font-size:15px;color:rgba(255,255,255,.5);margin-top:1px}
+#pass-bar{display:flex;align-items:stretch;flex:2;min-height:0;border-radius:var(--box-radius);overflow:hidden;border:var(--box-border)}
+#pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
+#pass-odds-cell:hover{background:rgba(255,255,255,.12)}
 #pass-odds-cell.active{background:transparent}
 .odds-lbl{font-size:14px;color:rgba(255,255,255,.5);display:block}
-.odds-stk{font-size:17px;color:#ffd700;display:block;min-height:11px}
+.odds-stk{font-size:17px;color:var(--color-gold);display:block;min-height:11px}
 .odds-pay{font-size:14px;color:rgba(255,255,255,.4);display:block}
-#pass-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;background:rgba(0,80,180,.2)}
-#pass-main:hover{background:rgba(0,80,180,.35)}
+#pass-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;background:var(--box-fill)}
+#pass-main:hover{background:rgba(255,255,255,.1)}
 #pass-main.active-bar{}
 
 /* ── GAME MODE TOGGLE ── */
@@ -322,15 +325,15 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 .dp-stub-name{font-size:16px;font-weight:900;letter-spacing:.08em;color:rgba(255,100,100,.7)}
 .dp-stub-note{font-size:11px;color:rgba(255,255,255,.3)}
 /* Don't Pass real bar */
-#dp-bar{display:none;flex:2;min-height:0;border-radius:4px;background:rgba(80,0,0,.3);border:0.5px solid rgba(255,80,80,.35);flex-direction:column;overflow:hidden}
+#dp-bar{display:none;flex:2;min-height:0;border-radius:var(--box-radius);background:var(--box-fill);border:var(--box-border);flex-direction:column;overflow:hidden}
 #dp-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .12s}
-#dp-main:hover{background:rgba(255,80,80,.1)}
+#dp-main:hover{background:rgba(255,255,255,.1)}
 #dp-main.active-bar{background:transparent}
-.dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;color:rgba(255,130,130,.9)}
-.dp-stk{font-size:13px;color:#ffd700;min-height:10px}
-.dp-note{font-size:9px;color:rgba(255,255,255,.3)}
-#dp-odds-cell{background:rgba(60,0,0,.4);border-top:0.5px solid rgba(255,80,80,.2);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none}
-#dp-odds-cell:hover{background:rgba(100,0,0,.5)}
+.dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;color:var(--color-loss)}
+.dp-stk{font-size:13px;color:var(--color-gold);min-height:10px}
+.dp-note{font-size:9px;color:rgba(255,255,255,.35)}
+#dp-odds-cell{background:var(--box-fill-flat);border-top:0.5px solid rgba(255,255,255,.15);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none}
+#dp-odds-cell:hover{background:rgba(255,255,255,.12)}
 #dp-odds-cell.active{background:transparent}
 .dp-odds-lbl{font-size:9px;color:rgba(255,130,130,.5);display:block}
 .dp-odds-stk{font-size:11px;color:#ffd700;display:block;min-height:9px}
@@ -713,14 +716,11 @@ body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
 body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img):not(.bullet-icon):not(#fibo-icon){display:none!important}
 #roll-history img{display:inline!important}
 body.felt-mode #felt-stage #roll-history img:not(#felt-img){display:inline!important}
-/* Phase 4/5: .num-box/.nb-buy/.nb-mid/.nb-place/.nb-buy-left/.nb-lay (Phase 4) and now
-   .bb/.horn-cell/.prop-circle/.prop-bar (Hard Ways/Hop Bets/C&E/Seven/Any Craps, Phase 5)
-   carved OUT of this list -- they render their own CSS-token fill/border now instead of
-   FM_ART's HardWaysV2/HopBetsV2/HoppingHardWaysV2/OneRollBetsV2/CE images, all removed.
-   .zone-bar/#pass-bar/#pass-main (Pass/Come/Field) still depend on their own FM_ART and stay
-   transparent here until that sub-step of Phase 5. */
-body.felt-mode #felt-stage .zone-bar,
-body.felt-mode #felt-stage #pass-bar,body.felt-mode #felt-stage #pass-main{background:transparent;border-color:transparent;box-shadow:none}
+/* Phase 4/5: .num-box/.nb-buy/.nb-mid/.nb-place/.nb-buy-left/.nb-lay (Phase 4), .bb/.horn-cell/
+   .prop-circle/.prop-bar (Hard Ways/Hop Bets/C&E/Seven/Any Craps), and now .zone-bar/#pass-bar/
+   #pass-main (Come/Field/Pass Line) all carved OUT of this list -- they render their own
+   CSS-token fill/border now instead of FM_ART images (all removed). #dp-bar/#dp-main are
+   handled by their own .game-standard-scoped rules further down (see Phase 5b comment there). */
 body.felt-mode #felt-stage .bwrap>.bb,body.felt-mode #felt-stage .bwrap>.prop-bar{width:100%;height:100%}
 body.felt-mode #felt-stage .bb:hover,body.felt-mode #felt-stage .nb-buy:hover,body.felt-mode #felt-stage .nb-place:hover,
 body.felt-mode #felt-stage .horn-cell:hover,body.felt-mode #felt-stage .prop-circle:hover,body.felt-mode #felt-stage .zone-bar:hover,
@@ -733,19 +733,17 @@ body.felt-mode #felt-stage .prop-bar.active{}
 /* hide labels/odds/dice the art already draws -- Phase 4/5: .nb-lbl/.nb-pay (Place/Buy strip),
    .prop-bar-name/.prop-bar-odds (Seven/Any Craps), .hc-pay/.horn-center-name (Horn/Hardways),
    and .prop-circle's text (C/C&E/E) all removed from this list now that their own FM_ART is
-   gone and they render real CSS instead -- see the matching visibility fixes below. Pass/Come/
-   Field (.zone-name, .field-info) still have their own art and stay hidden here for now. */
+   gone and they render real CSS instead -- see the matching visibility fixes below. Phase 5b:
+   .zone-name/.field-info (Come/Field/Pass/Don't Pass's own labels) unhidden too now that their
+   FM_ART is gone. */
 body.felt-mode #felt-stage .pay,
-body.felt-mode #felt-stage .zone-name,body.felt-mode #felt-stage .field-info,
 body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:none!important}
 /* .nb-mid>span{visibility:hidden} used to blanket-hide every numeral, including the Phase 4
-   Place/Buy digits -- that was a real bug (shipped invisible numerals). Scoped down to only the
-   #dc-wait-bar text spans it actually still needs to hide (that box's own FM_ART, DCWaitingBox.
-   webp, is Phase 5 Pass/Come scope, not done yet); the Phase 4 numeral spans get an explicit
-   higher-specificity visibility:visible so they're never caught by this again regardless of
-   what else reuses .nb-mid in the future. */
-body.felt-mode #felt-stage #dc-wait-bar .nb-mid>span{visibility:hidden}
-body.felt-mode #felt-stage .nb-mid .nb-num-word,body.felt-mode #felt-stage .nb-mid .nb-num-digit{visibility:visible}
+   Place/Buy digits -- that was a real bug (shipped invisible numerals), fixed in Phase 4/5b:
+   #dc-wait-bar's own DCWaitingBox.webp is removed now too, so nothing needs this hidden
+   anymore. Kept as an explicit higher-specificity visibility:visible (rather than deleting the
+   rule outright) so any future reuse of .nb-mid can't silently reintroduce invisible text. */
+body.felt-mode #felt-stage .nb-mid>span{visibility:visible}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
 body.felt-mode.game-crapless #felt-stage .circle-wrap .has-stack{bottom:22%}
@@ -770,8 +768,6 @@ body.felt-mode #felt-stage .circle-stack .circle-wrap:nth-child(3){transform:tra
 body.felt-mode #felt-stage .sc-stack{gap:6%;justify-content:center}
 body.felt-mode #felt-stage #pass-bar{display:flex}
 body.felt-mode #felt-stage #pass-odds-cell{flex:0 0 17.4%;position:relative}
-body.felt-mode.game-crapless #felt-stage #pass-odds-cell{background:transparent;border-color:transparent}
-body.felt-mode.game-standard #felt-stage #pass-odds-cell{background:transparent;border-color:transparent}
 body.felt-mode #felt-stage #pass-main{flex:1}
 /* ===== STANDARD CRAPS FELT (separate image + layout from crapless) ===== */
 /* Crapless-only proportions, scoped so they don't leak onto the standard felt */
@@ -853,16 +849,18 @@ body.felt-mode.game-standard #felt-stage .nb-lay,
 body.felt-mode.game-standard #felt-stage .nb-place{flex:1}
 body.felt-mode.game-standard #felt-stage #dc-wait-bar{width:100%;height:100%}
 body.felt-mode.game-standard #felt-stage #dc-wait-bar .nb-mid{background:transparent}
-/* dc-wait-bar's dark-red background is set inline at creation time, which beats any
-   non-!important stylesheet rule regardless of specificity -- needs !important here. */
-body.felt-mode.game-standard #felt-stage #dc-wait-bar{background:transparent!important;border-color:transparent!important}
-/* Don't Pass Bar mirrors the Pass Line's own transparent skin */
-body.felt-mode.game-standard #felt-stage #dp-bar{display:flex;flex-direction:row;background:transparent;border-color:transparent}
-body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;background:transparent;border-color:transparent;position:relative}
-body.felt-mode.game-standard #felt-stage #dp-main{flex:1;background:transparent;border-color:transparent;position:relative}
+/* Phase 5b: dc-wait-bar's dark-red background/border is set inline at element-creation time
+   (buildStrip()), which already beats the plain (non-!important) .num-box class rule on its
+   own -- the !important transparent-forcing override this used to need is gone along with
+   .num-box's own felt-mode suppression (Phase 4). */
+/* Phase 5b (CSS-only re-skin): Don't Pass Bar used to mirror the Pass Line's transparent skin
+   (DontPassLine.webp underneath); now renders its own CSS-token fill/border/text like every
+   other band, so .dp-name (the "DON'T PASS BAR" label the art used to draw) is real again. */
+body.felt-mode.game-standard #felt-stage #dp-bar{display:flex;flex-direction:row}
+body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;position:relative}
+body.felt-mode.game-standard #felt-stage #dp-main{flex:1;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main:hover,
 body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{background:rgba(255,255,255,.10)}
-body.felt-mode.game-standard #felt-stage .dp-name{display:none}
 body.felt-mode.game-standard #felt-stage #dp-bar12{display:none!important}
 /* ===== CHIP STACK BET INDICATORS =====
    One flat chip size for the whole felt, sized to fit the tightest box on it (the
@@ -1783,7 +1781,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.8</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.9</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5384,71 +5382,12 @@ const NUMLINE_ART={x:1198,y:405,w:1710,h:460};
 // felt tab active to show, or e.g. HopBets would permanently cover Proposition Bets since
 // they occupy the exact same screen area. null = not tab-gated.
 const FM_ART=[
-  // Come/Field/Don't Pass/Pass Line stacked with zero gap between them (Deck: "should all be
-  // perfectly stacked with no space between them"). w/h were still the OLD pre-refresh asset
-  // sizes (1358x160/216/128/160) even though the regenerated art measures 1368x208/277/169/208
-  // -- same "stretched" bug as Prop Bets/Seven/Any Craps a few sessions back, just never caught
-  // here since these four are on the opposite side of the felt (Deck: "you're doing that
-  // stretch thing with Come, Field, Dont Pass, and Pass Line's arts"). Corrected to each
-  // asset's real size and re-anchored from the bottom -- Pass Line's bottom edge now sits flush
-  // against #bottom-section's top (1560.6px) same as Any Craps on the other side, and
-  // Come/Field/Don't Pass chain upward from there with zero gap, same as before.
-  // Shifted down 199px as a group (Deck: "so there is just 40px space between the bottom
-  // of the Pass Line and the edge of the felt") -- now that #bottom-section lives below
-  // the felt instead of overlaid on it, there's room to push this whole zero-gap chain
-  // down. Still zero-gapped in the same come->field->dp->pass order.
-  {id:'come',       img:'ComeLine.webp',       group:'come',      x:1813, y:898, w:1368,h:208, mode:'standard'},
-  {id:'field',      img:'Field_PaysTriple.webp',group:'field',x:1813,y:1106,w:1368,h:277, mode:'standard'},
-  {id:'dp',         img:'DontPassLine.webp',   group:'dontpass',  x:1813,y:1383,w:1368,h:169, mode:'standard'},
-  {id:'pass',       img:'PassLine.webp',       group:'pass',      x:1813,y:1552,w:1368,h:208, mode:'standard'},
-  // Crapless-only refresh (Deck's new cut felt-element set, PassLineV2.webp) -- native aspect
-  // preserved at the shared 1368 column width (1376x227 native -> 226 tall) to avoid the
-  // stretching bug flagged elsewhere in this file; y recomputed below alongside come-crapless/
-  // field-crapless so the three still zero-gap stack with pass-crapless's bottom anchored to
-  // the old bottom edge (1552+208=1760, same as #bottom-section alignment).
-  {id:'pass-crapless', img:'PassLineV2.webp',   group:'pass',      x:1813,y:1534,w:1368,h:226, mode:'crapless'},
-  // Adjacent to the number line's right edge with no gap (Deck: "should be adjacent to the
-  // number line with no space in-between") -- x = NUMLINE_ART.x+NUMLINE_ART.w (2908), y matches
-  // the number line's own (now y:405) top.
-  {id:'dcwait',     img:'DCWaitingBox.webp',   group:'dontcome',  x:2908, y:405, w:286, h:460, mode:'standard'},
-  // Crapless has no Don't Pass / Don't Come at all (Deck: "Remove the Don't Come box. Remove
-  // the Don't Pass Line."), so Field and Come shift down to close the gap: Field sits where
-  // Don't Pass used to be (bottom flush against Pass Line's top, 1275+277=1552), and Come
-  // rests directly on top of Field's new position (1067+208=1275). Same x/w as Pass Line --
-  // the crapless stack stays centered under the same column. Field's art also swaps to the
-  // "pays double" version since crapless pays 2x on both 2 and 12 (no triple-pay 12 here).
-  // Deck's new cut felt-element set (ComeLineV2/FieldPaysDoubleV2/PassLineV2) -- each kept at
-  // native aspect ratio at the shared 1368 column width to avoid stretching, still zero-gap
-  // stacked with pass-crapless's bottom anchored to the old 1760 bottom edge.
-  {id:'come-crapless',  img:'ComeLineV2.webp',        group:'come',  x:1813,y:1058,w:1368,h:197, mode:'crapless'},
-  {id:'field-crapless', img:'FieldPaysDoubleV2.webp', group:'field', x:1813,y:1255,w:1368,h:279, mode:'crapless'},
-  // Hardways/SEVEN/Prop Bets/Any Craps ('hw' tab only -- HopHardWays/HopBets on the 'hop' tab
-  // are a separate physical slot with no headroom to spare, so they're untouched here):
-  // - propbets/bigred/anycraps x centered under Hardways (Hardways center = 8+1125/2 = 570.5;
-  //   913-wide propbets/bigred/anycraps -> x=114 puts their shared center on the same 570.5,
-  //   Deck: "prop bets needs to be centered under Hard Ways better").
-  // - bigred (SEVEN) and anycraps zero-gapped against PropBets.webp's own actual pill content,
-  //   not just against the image's outer box -- row-scanned PropBets.webp's alpha channel and
-  //   found its "ONE ROLL BETS" header spans local rows 0-74, then blank until the Aces/Horn/
-  //   Midnight/Yo pill cluster starts at local row 304 and runs to the image's bottom edge
-  //   (row 698, no internal margin below it). So pill-top = propbets.y+304, pill-bottom =
-  //   propbets.y+698: bigred.y = pill-top-bigred.h, anycraps.y = pill-bottom, both touching
-  //   with zero space (Deck: "no gap between Any Seven and the Horn Bet ... no gap between Any
-  //   Craps and the horn bet").
-  // Deck: "Any Craps is dipping into the shaded UI element [#bottom-section]. Move everything
-  // up so it runs flush against it." Turns out there isn't enough total vertical room to both
-  // (a) get Any Craps fully flush against #bottom-section AND (b) leave the #tab-hw/#tab-hop
-  // buttons room to sit above Hard Ways without touching the header -- the math: Hard Ways
-  // (393px) + zero-gap Prop Bets (698px) + Any Craps (218px) = 1309px of content that has to
-  // fit between the header's actual content bottom (~234px) and #bottom-section's top
-  // (1560.6px), a 1326px span, which is JUST enough on its own but leaves nothing for the tab
-  // buttons above Hard Ways. Compromise: hardways-to-propbets gap tightened to zero (was 20px)
-  // and the whole cluster moved up as far as it can while still leaving the tab buttons a
-  // small gap under the header -- this closes most of the overlap (was ~96px, now ~32px) but
-  // isn't fully flush. Closing the rest needs the header's own content (game-mode-toggle +
-  // Focus Settings row) compressed further, which wasn't part of this pass -- flag if that's
-  // wanted next.
-  // Phase 5 (CSS-only re-skin): Hard Ways/HopHardWays/HopBets (HardWaysV2/HoppingHardWaysV2/
+  // Phase 5b (CSS-only re-skin): Come/Field/Don't Pass/Pass Line (ComeLine/Field_PaysTriple/
+  // DontPassLine/PassLine.webp, standard; ComeLineV2/FieldPaysDoubleV2/PassLineV2.webp,
+  // crapless -- crapless has no Don't Pass/Don't Come at all) and the Don't Come waiting box
+  // (DCWaitingBox.webp) removed -- #come-bar/#field-bar/#pass-bar/#dp-bar/#dc-wait-bar now
+  // render real CSS-token fill/border/text instead.
+  // Phase 5a (CSS-only re-skin): Hard Ways/HopHardWays/HopBets (HardWaysV2/HoppingHardWaysV2/
   // HopBetsV2.webp), and Seven/Horn Bet/Any Craps/C&E (OneRollBetsV2.webp/CE.webp) removed --
   // .bb/.horn-cell/.prop-circle/.prop-bar now render real CSS-token fill/border/text instead.
   // Phase 4 (CSS-only re-skin): the 30 per-number crapless Box*.webp tiles and the standard
