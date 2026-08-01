@@ -93,6 +93,64 @@
     new CANNON.Vec3(0, 0, 1), new CANNON.Vec3(0, 0, -1)
   ];
 
+  // Deck: the 2 and 3 faces' pips should always point toward wherever the 6 face currently is
+  // -- a fixed property of a real physical die, true no matter how the die is oriented, not just
+  // "when 6 happens to be up". relabelDie() below reassigns which VALUE sits on which geometry
+  // face every roll (whichever face physics landed up gets the target value, the rest follow
+  // fixed opposite-faces-sum-to-7 pairing), so "the face holding 2" and "the face holding 6" are
+  // BOTH different geometry faces from roll to roll -- there's no single fixed rotation that
+  // works for value 2's texture in general, it has to be recomputed against whichever two
+  // faces actually ended up holding 2/3 and 6 this time.
+  //
+  // FACE_UP/FACE_RIGHT are BoxGeometry's actual default UV axes per face (material order
+  // matches FACE_NORMALS: [+x,-x,+y,-y,+z,-z]) -- read directly off a real BoxGeometry's
+  // position/uv attributes rather than assumed, since adjacent box faces do NOT all share the
+  // same UV "up" by default (a well-known BoxGeometry quirk that makes eyeballing this wrong).
+  const FACE_UP = [
+    [0, 1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1], [0, 1, 0], [0, 1, 0]
+  ];
+  const FACE_RIGHT = [
+    [0, 0, -1], [0, 0, 1], [1, 0, 0], [1, 0, 0], [1, 0, 0], [-1, 0, 0]
+  ];
+  // Where a value's "point" pip (the canvas (.28,.28) corner of the 2/3 diagonal patterns --
+  // see faceTexture()) actually lands in world space for a given face + 0-or-90-degree texture
+  // rotation, vs. the midpoint of that face's shared edge with the face holding 6. The 2/3 pip
+  // diagonal is 180-degree-symmetric (rotating it 180 degrees redraws the exact same pixels), so
+  // there are only ever two visually distinct choices, not four -- whichever of 0/90 lands the
+  // point pip closer to that shared edge is correct.
+  function pipRotationTowardFace(faceIdx, targetFaceIdx) {
+    const N = FACE_NORMALS.map(v => [v.x, v.y, v.z]);
+    const up = FACE_UP[faceIdx], right = FACE_RIGHT[faceIdx];
+    const edgeMid = [
+      (N[faceIdx][0] + N[targetFaceIdx][0]) * 0.5,
+      (N[faceIdx][1] + N[targetFaceIdx][1]) * 0.5,
+      (N[faceIdx][2] + N[targetFaceIdx][2]) * 0.5
+    ];
+    function pipPos(rot90) {
+      let u = (.28 - .5) * 2, v = -(.28 - .5) * 2;
+      if (rot90) { const nu = v, nv = -u; u = nu; v = nv; }
+      return [
+        N[faceIdx][0] * 0.5 + right[0] * u * 0.4 + up[0] * v * 0.4,
+        N[faceIdx][1] * 0.5 + right[1] * u * 0.4 + up[1] * v * 0.4,
+        N[faceIdx][2] * 0.5 + right[2] * u * 0.4 + up[2] * v * 0.4
+      ];
+    }
+    function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+    return dist(pipPos(false), edgeMid) <= dist(pipPos(true), edgeMid) ? 0 : Math.PI / 2;
+  }
+  // Rotation (radians, 0 or PI/2) to apply to each face's texture this relabel -- only 2 and 3
+  // have a meaningful "point" (1/4/5/6's patterns are rotationally symmetric), so every other
+  // face gets 0. Returns a full 6-length array indexed by geometry face, matching `values`.
+  function pipRotationsForValues(values) {
+    const rot = [0, 0, 0, 0, 0, 0];
+    const i6 = values.indexOf(6);
+    if (i6 < 0) return rot;
+    const i2 = values.indexOf(2), i3 = values.indexOf(3);
+    if (i2 >= 0) rot[i2] = pipRotationTowardFace(i2, i6);
+    if (i3 >= 0) rot[i3] = pipRotationTowardFace(i3, i6);
+    return rot;
+  }
+
   // ---------- module state ----------
   let inited = false;
   let overlayEl, stageEl, labelEl;
@@ -443,17 +501,27 @@
   // different art (e.g. destroyer's letter die vs number die), so keying on value
   // alone would let one die's texture leak onto the other.
   const TEX_CACHE = {};
-  function faceTexture(value, imgMapOverride) {
+  function faceTexture(value, imgMapOverride, rotation) {
+    rotation = rotation || 0;
     const imgMap = imgMapOverride || CFG.faceImages;
     if (imgMap && imgMap[value]) {
       const url = imgMap[value];
-      if (TEX_CACHE[url]) return TEX_CACHE[url];
-      const tex = new THREE.TextureLoader().load(url);
-      tex.anisotropy = 4;
-      TEX_CACHE[url] = tex;
-      return tex;
+      const baseKey = url;
+      if (!TEX_CACHE[baseKey]) {
+        const base = new THREE.TextureLoader().load(url);
+        base.anisotropy = 4;
+        TEX_CACHE[baseKey] = base;
+      }
+      if (!rotation) return TEX_CACHE[baseKey];
+      const rotKey = url + ':' + rotation;
+      if (TEX_CACHE[rotKey]) return TEX_CACHE[rotKey];
+      const rotTex = TEX_CACHE[baseKey].clone();
+      rotTex.center.set(0.5, 0.5);
+      rotTex.rotation = rotation;
+      TEX_CACHE[rotKey] = rotTex;
+      return rotTex;
     }
-    const cacheKey = 'proc:' + value;
+    const cacheKey = 'proc:' + value + ':' + rotation;
     if (TEX_CACHE[cacheKey]) return TEX_CACHE[cacheKey];
     const S = 256, c = document.createElement('canvas');
     c.width = c.height = S;
@@ -463,6 +531,7 @@
     bg.addColorStop(1, '#d9d2bd');
     g.fillStyle = bg;
     g.fillRect(0, 0, S, S);
+    if (rotation) { g.translate(S / 2, S / 2); g.rotate(rotation); g.translate(-S / 2, -S / 2); }
     const pos = {
       1: [[.5, .5]],
       2: [[.28, .28], [.72, .72]],
@@ -692,13 +761,14 @@
     for (let i = 0; i < n; i++) {
       const imgMap = (CFG.faceImagesPerDie && CFG.faceImagesPerDie[i]) || CFG.faceImages;
       const faceValues = DEFAULT_FACE_VALUES.slice();
+      const initRot = pipRotationsForValues(faceValues);
       // alphaTest (not a plain color tint -- that multiplies the whole texture including
       // the visible icon, which would blacken it out entirely) discards fully-transparent
       // pixels in the face art instead of rendering their raw, un-premultiplied RGB as
       // opaque white. Those discarded corner pixels then show whatever's behind the die
       // (the dark backdrop), instead of a stray white bleed on the curved/beveled edges.
-      const mats = faceValues.map(v => new THREE.MeshStandardMaterial({
-        map: faceTexture(v, imgMap), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
+      const mats = faceValues.map((v, i) => new THREE.MeshStandardMaterial({
+        map: faceTexture(v, imgMap, initRot[i]), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
       }));
       // seg bumped 4 -> 10: the flat-face region only spans size-2*radius out of the full
       // face, so at seg=4 very few of a face's own grid lines actually land in the truly-flat
@@ -764,8 +834,9 @@
       values[pairIdx[k][1]] = 7 - lows[k];
     }
     d.faceValues = values;
+    const rot = pipRotationsForValues(values);
     for (let i = 0; i < 6; i++) {
-      d.mesh.material[i].map = faceTexture(values[i], d.imgMap);
+      d.mesh.material[i].map = faceTexture(values[i], d.imgMap, rot[i]);
       d.mesh.material[i].needsUpdate = true;
     }
   }
