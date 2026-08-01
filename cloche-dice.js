@@ -114,17 +114,23 @@
   ];
   // Where a value's "point" pip (the canvas (.28,.28) corner of the 2/3 diagonal patterns --
   // see faceTexture()) actually lands in world space for a given face + 0-or-90-degree texture
-  // rotation, vs. the midpoint of that face's shared edge with the face holding 6. The 2/3 pip
-  // diagonal is 180-degree-symmetric (rotating it 180 degrees redraws the exact same pixels), so
-  // there are only ever two visually distinct choices, not four -- whichever of 0/90 lands the
-  // point pip closer to that shared edge is correct.
-  function pipRotationTowardFace(faceIdx, targetFaceIdx) {
+  // rotation, vs. the CUBE VERTEX shared by this face, the face holding 6, and the face holding
+  // the other of {2,3}. On a real die 2, 3 and 6 all meet at one corner (confirmed against real
+  // casino dice: 6 up, 3 front-left, 2 front-right -- all three mutually adjacent), so that's
+  // the actual target, not merely "somewhere on the edge shared with 6". Using just the shared-
+  // edge midpoint is ambiguous: that edge's two endpoints are the {2,3,6} corner (correct) and
+  // the {2,6,other} corner (wrong, e.g. lands next to 4 instead of 3) -- both are equally "close
+  // to the edge", so the edge-only test picks the wrong one on roughly half of all relabels. The
+  // 2/3 pip diagonal is 180-degree-symmetric (rotating it 180 degrees redraws the exact same
+  // pixels), so there are only ever two visually distinct choices, not four -- whichever of 0/90
+  // lands the point pip closer to that vertex is correct.
+  function pipRotationTowardFace(faceIdx, otherFaceIdx, sixFaceIdx) {
     const N = FACE_NORMALS.map(v => [v.x, v.y, v.z]);
     const up = FACE_UP[faceIdx], right = FACE_RIGHT[faceIdx];
-    const edgeMid = [
-      (N[faceIdx][0] + N[targetFaceIdx][0]) * 0.5,
-      (N[faceIdx][1] + N[targetFaceIdx][1]) * 0.5,
-      (N[faceIdx][2] + N[targetFaceIdx][2]) * 0.5
+    const vertex = [
+      (N[faceIdx][0] + N[otherFaceIdx][0] + N[sixFaceIdx][0]) * 0.5,
+      (N[faceIdx][1] + N[otherFaceIdx][1] + N[sixFaceIdx][1]) * 0.5,
+      (N[faceIdx][2] + N[otherFaceIdx][2] + N[sixFaceIdx][2]) * 0.5
     ];
     function pipPos(rot90) {
       let u = (.28 - .5) * 2, v = -(.28 - .5) * 2;
@@ -136,7 +142,7 @@
       ];
     }
     function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
-    return dist(pipPos(false), edgeMid) <= dist(pipPos(true), edgeMid) ? 0 : Math.PI / 2;
+    return dist(pipPos(false), vertex) <= dist(pipPos(true), vertex) ? 0 : Math.PI / 2;
   }
   // Rotation (radians, 0 or PI/2) to apply to each face's texture this relabel -- only 2 and 3
   // have a meaningful "point" (1/4/5/6's patterns are rotationally symmetric), so every other
@@ -146,8 +152,10 @@
     const i6 = values.indexOf(6);
     if (i6 < 0) return rot;
     const i2 = values.indexOf(2), i3 = values.indexOf(3);
-    if (i2 >= 0) rot[i2] = pipRotationTowardFace(i2, i6);
-    if (i3 >= 0) rot[i3] = pipRotationTowardFace(i3, i6);
+    if (i2 >= 0 && i3 >= 0) {
+      rot[i2] = pipRotationTowardFace(i2, i3, i6);
+      rot[i3] = pipRotationTowardFace(i3, i2, i6);
+    }
     return rot;
   }
 
