@@ -215,18 +215,26 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #num-zone{flex:5;display:flex;flex-direction:column;min-height:0}
 #puck-row-h{display:grid;grid-template-columns:repeat(var(--num-cols,10),1fr);gap:2px;padding:1px 3px 0;height:12px;flex-shrink:0}
 #num-strip-h{display:grid;grid-template-columns:repeat(var(--num-cols,10),1fr);gap:2px;padding:0 3px 2px;flex:1;min-height:0}
-.num-box{border:0.5px solid rgba(255,255,255,.2);border-radius:3px;overflow:hidden;background:rgba(0,0,0,.2);display:flex;flex-direction:column;height:100%}
+/* Phase 4 (CSS-only re-skin): Place/Buy number strip. This box already had the right
+   structure (BUY strip / big numeral / PLACE-n-FOR-m strip, top-to-bottom) -- it just used
+   the app's blue/black accent palette instead of the reference casino felt's green-on-green
+   treatment. Swapped fills/border to the design tokens; numeral font-family comes from
+   .nb-mid (the numeral span itself only sets inline font-size/weight, so font-family still
+   inherits down from here) and .nb-num-word/.nb-num-digit (set in buildStrip()) pick the
+   script vs heavy face. */
+.num-box{border:var(--box-border);border-radius:var(--box-radius);overflow:hidden;background:var(--box-fill-flat);display:flex;flex-direction:column;height:100%}
 .num-box.is-point{border:2px solid #fff;box-shadow:0 0 5px rgba(255,255,255,.4)}
-.nb-buy{background:rgba(0,80,180,.2);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
-.nb-buy:hover{background:rgba(0,80,180,.45)}
+.nb-buy{background:rgba(255,255,255,.07);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-buy:hover{background:rgba(255,255,255,.15)}
 .nb-buy.active{background:transparent}
-.nb-mid{background:rgba(255,255,255,.07);border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:40px;font-weight:700;flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
-.nb-place{background:rgba(0,0,0,.15);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-mid{background:transparent;border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:40px;font-weight:700;font-family:var(--font-heavy);color:var(--color-text);flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.nb-num-word{font-family:var(--font-script);font-style:italic}
+.nb-place{background:rgba(0,0,0,.2);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-place:hover{background:rgba(255,255,255,.1)}
 .nb-place.active{}
-.nb-lbl{font-size:11px;color:rgba(255,255,255,.4);display:block}
-.nb-stk{font-size:15px;color:#ffd700;display:block;min-height:9px}
-.nb-pay{font-size:11px;color:rgba(255,255,255,.35);display:block}
+.nb-lbl{font-size:11px;color:rgba(255,255,255,.5);display:block;letter-spacing:.04em}
+.nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:9px}
+.nb-pay{font-size:11px;color:rgba(255,255,255,.4);display:block}
 .off-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;background:rgba(0,0,0,.5)}
 .off-ov span{font-size:15px;font-weight:700;color:rgba(255,200,0,.95)}
 .num-box-wrap{position:relative}
@@ -339,13 +347,13 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .dc-rm{font-size:9px;background:rgba(120,0,0,.6);border:none;color:#ff9999;cursor:pointer;padding:0 2px;border-radius:1px;line-height:1.3}
 /* Lay cell in number box (right half of buy) */
 .nb-buy-wrap{display:flex;flex:1;border-bottom:0.5px solid rgba(255,255,255,.1)}
-.nb-buy-left{flex:1;background:rgba(0,80,180,.2);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s;border-right:0.5px solid rgba(255,255,255,.08)}
-.nb-buy-left:hover{background:rgba(0,80,180,.45)}
+.nb-buy-left{flex:1;background:rgba(255,255,255,.07);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s;border-right:0.5px solid rgba(255,255,255,.08)}
+.nb-buy-left:hover{background:rgba(255,255,255,.15)}
 .nb-buy-left.active{background:transparent}
-.nb-lay{flex:1;background:rgba(120,0,0,.18);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
-.nb-lay:hover{background:rgba(160,0,0,.35)}
+.nb-lay{flex:1;background:rgba(255,255,255,.07);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-lay:hover{background:rgba(255,255,255,.15)}
 .nb-lay.active{background:transparent}
-.nb-lay .nb-lbl{color:rgba(255,130,130,.55)}
+.nb-lay .nb-lbl{color:var(--color-loss)}
 .nb-lay .nb-stk{color:#ff9999}
 .nb-lay .nb-pay{color:rgba(255,130,130,.35)}
 /* DC box uses .num-box styles, these are cleaned up */
@@ -705,10 +713,13 @@ body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
 body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img):not(.bullet-icon):not(#fibo-icon){display:none!important}
 #roll-history img{display:inline!important}
 body.felt-mode #felt-stage #roll-history img:not(#felt-img){display:inline!important}
-body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .nb-buy,
-body.felt-mode #felt-stage .nb-mid,body.felt-mode #felt-stage .nb-place,body.felt-mode #felt-stage .zone-bar,
+/* Phase 4: .num-box/.nb-buy/.nb-mid/.nb-place/.nb-buy-left/.nb-lay carved OUT of this list --
+   they now render their own CSS-token fill/border (see the plain .num-box/.nb-buy/etc rules)
+   instead of relying on FM_ART's Number_Line/BuyBox/PlaceBox/LayBox/Box2-12 images, which are
+   removed. The rest (.bb, Hard Ways/prop/pass-line/zone-bar) still depend on their own FM_ART
+   images and stay transparent here until Phase 5 converts them too. */
+body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .zone-bar,
 body.felt-mode #felt-stage .horn-cell,body.felt-mode #felt-stage .prop-circle,
-body.felt-mode #felt-stage .nb-buy-left,body.felt-mode #felt-stage .nb-lay,
 body.felt-mode #felt-stage #pass-bar,body.felt-mode #felt-stage #pass-main{background:transparent;border-color:transparent;box-shadow:none}
 body.felt-mode #felt-stage .prop-bar{background:transparent!important;border:none!important;justify-content:center}
 body.felt-mode #felt-stage .bwrap>.bb,body.felt-mode #felt-stage .bwrap>.prop-bar{width:100%;height:100%}
@@ -820,11 +831,10 @@ body.felt-mode.game-standard #num-zone{display:flex;flex-direction:column;paddin
 body.felt-mode.game-standard #puck-row-h{position:absolute;left:0;width:100%;bottom:100%;height:auto;padding:0;gap:2px;pointer-events:none}
 body.felt-mode.game-standard #num-strip-h{flex:1;padding:0;gap:2px}
 body.felt-mode.game-standard #felt-stage .num-box{position:relative}
-/* .num-box's default 0.5px white border/dark background (see the plain .num-box rule) was
-   drawn for the old per-number Box4-10 art; now that the whole number line is one continuous
-   image underneath, that leftover border shows up as an unwanted frame around every number
-   cell (Deck: "The frames for the DC boxes need to be removed"). */
-body.felt-mode.game-standard #felt-stage .num-box{background:transparent!important;border-color:transparent!important}
+/* Phase 4: the old per-number Box4-10 art (and later, the single continuous Number_Line
+   image) is gone -- .num-box's real CSS border/fill (--box-border/--box-fill-flat) is now the
+   only frame each number cell has, so the !important suppression that used to hide it
+   whenever felt art was underneath no longer applies. */
 body.felt-mode.game-standard #felt-stage .nb-buy-wrap{position:absolute;left:0;width:100%;top:0%;height:21.59%;display:flex}
 body.felt-mode.game-standard #felt-stage .nb-mid{position:absolute;left:0;width:100%;top:21.59%;height:56.09%}
 body.felt-mode.game-standard #felt-stage .nb-place-wrap{position:absolute;left:0;width:100%;top:77.68%;height:22.32%;display:flex}
@@ -1765,7 +1775,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.6</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.7</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3587,7 +3597,9 @@ function buildStrip(){
       box.appendChild(bd);
     }
     const md=document.createElement('div');md.className='nb-mid';md.id='nb-mid-'+n;
-    const nl=document.createElement('span');nl.style.cssText='font-size:40px;font-weight:700';nl.textContent=def.label;
+    // Spelled-out labels (Six/Nine, to avoid upside-down 6/9 confusion) get the script font
+    // token; plain digits get the heavy one -- see .nb-num-word/.nb-num-digit CSS.
+    const nl=document.createElement('span');nl.className=/^\d+$/.test(def.label)?'nb-num-digit':'nb-num-word';nl.style.cssText='font-size:40px;font-weight:700';nl.textContent=def.label;
     const cs=document.createElement('div');cs.id='come-slot-'+n;cs.style.cssText='width:100%;margin-top:1px';
     const dcs=document.createElement('div');dcs.id='dc-slot-'+n;dcs.className='dc-chip-box';
     md.appendChild(nl);md.appendChild(cs);md.appendChild(dcs);
@@ -5459,56 +5471,11 @@ const FM_ART=[
   // stands -- flag to Deck if that granularity loss matters.
   {id:'onerollbets',img:'OneRollBetsV2.webp',  group:'props', x:114, y:850, w:913, h:910, tab:'hw'},
   {id:'ce',         img:'CE.webp',             group:'props', x:1115,y:946, w:220, h:595},
-  // Crapless number line: rebuilt from 30 individual per-number tiles (10 numbers x 3 Buy/
-  // Place line modes) instead of one combined image per mode, so each number's bet-area seam
-  // lines up exactly with its own art tile instead of an evenly-divided guess across one wide
-  // image (Deck: "rebuild the number row so the bet areas line up better"). All 30 source
-  // files are natively 202x460 and meant to sit flush with zero gap between them -- same total
-  // 1960x447 footprint as the old combined image (#num-zone's calibrated crapless hit-region
-  // box), just split into 10 equal 196-wide slices (1960/10) instead of one piece, x stepping
-  // 196px per number in board order (2,3,4,5,6,8,9,10,11,12). Mode A is BP (Buy+Place both
-  // shown) on every number; Mode B is P-only on 6/8 (Place, matching Limited Buy/Place's own
-  // restriction) and B-only everywhere else; Mode C is the plain unlabeled box -- "Easy Craps"
-  // (renamed from "No Buy/Place Bets"): Place is still a real, clickable bet on every number
-  // here despite the blank art (Deck: "Keep the completely blank/number only number boxes, but
-  // a player can still make a Place bet on any box"), only Buy is actually disabled.
-  {id:'cl-a-2', img:'Box2_BP.webp', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-3', img:'Box3_BP.webp', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-4', img:'Box4_BP.webp', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-5', img:'Box5_BP.webp', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-6', img:'Box6_BP.webp', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-8', img:'Box8_BP.webp', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-9', img:'Box9_BP.webp', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-10', img:'Box10_BP.webp', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-11', img:'Box11_BP.webp', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-a-12', img:'Box12_BP.webp', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineA'},
-  {id:'cl-b-2', img:'Box2_B.webp', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-3', img:'Box3_B.webp', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-4', img:'Box4_B.webp', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-5', img:'Box5_B.webp', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-6', img:'Box6_P.webp', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-8', img:'Box8_P.webp', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-9', img:'Box9_B.webp', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-10', img:'Box10_B.webp', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-11', img:'Box11_B.webp', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-b-12', img:'Box12_B.webp', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineB'},
-  {id:'cl-c-2', img:'Box2_.webp', group:null, x:1200,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-3', img:'Box3_.webp', group:null, x:1396,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-4', img:'Box4_.webp', group:null, x:1592,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-5', img:'Box5_.webp', group:null, x:1788,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-6', img:'Box6_.webp', group:null, x:1984,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-8', img:'Box8_.webp', group:null, x:2180,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-9', img:'Box9_.webp', group:null, x:2376,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-10', img:'Box10_.webp', group:null, x:2572,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-11', img:'Box11_.webp', group:null, x:2768,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  {id:'cl-c-12', img:'Box12_.webp', group:null, x:2964,y:424,w:196,h:447, mode:'crapless',lineMode:'lineC'},
-  // Standard number line: Number Line/Buy/Place/Lay stack -- moved into FM_ART (was 4 separate
-  // addRegion() calls at the bottom of buildFocusFeltArt()) so mode-filtering applies to them
-  // uniformly along with everything else.
-  {id:'numberline', img:'Number_Line.webp', group:null,   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
-  {id:'buyall',      img:'BuyBox.webp',     group:'buy',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
-  {id:'placeall',    img:'PlaceBox.webp',   group:'place', x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'},
-  {id:'layall',      img:'LayBox.webp',     group:'lay',   x:NUMLINE_ART.x,y:NUMLINE_ART.y,w:NUMLINE_ART.w,h:NUMLINE_ART.h, mode:'standard'}
+  // Phase 4 (CSS-only re-skin): the 30 per-number crapless Box*.webp tiles and the standard
+  // Number_Line/Buy/Place/Lay stack are gone -- .num-box/.nb-buy/.nb-mid/.nb-place now render
+  // real CSS (design tokens), and lineMode's actual bet-enable/disable behavior was always
+  // driven by applyLineModeGating()'s real DOM display:none, not these images (they were purely
+  // decorative reinforcement of gating that still works identically without them).
 ];
 function fmPct(px,total){return px/total*100;}
 function buildFocusFeltArt(){
@@ -7006,7 +6973,7 @@ applyFocusVisibility();
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
 <script src="cloche-dice.js?v=0.7.0"></script>
-<script src="winner-modal.js?v=0.4.94"></script>
+<script src="winner-modal.js?v=0.4.93"></script>
 <script src="dailies-popup.js?v=4"></script>
 <script>
 // Cloche dice overlay: shared module, configured for craps (2 dice, 2.0 scale)
