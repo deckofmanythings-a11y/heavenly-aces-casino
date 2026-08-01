@@ -235,7 +235,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.17</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.18</div>
 </div>
 
 <script>
@@ -251,7 +251,7 @@ function isDiscordActivity(){return location.hostname.endsWith('.discordsays.com
 // part of the same synchronous parse/execute pass as the rest of the page, before the
 // browser gets a chance to paint the initial (CSS-default) state.
 // Message of the Day for the Connecting-to-Discord screen. Set to '' to hide it.
-const MOTD_TEXT='Discord connectivity issues. Missing dailies today will not count against your streak bonuses.';
+const MOTD_TEXT="Discord connectivity issues fixed. Update and/or restart Discord if you still can't connect";
 if(isDiscordActivity()){
   document.getElementById('auth-status').classList.add('show');
   if(MOTD_TEXT){
