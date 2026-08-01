@@ -176,8 +176,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
    Decoupling them was the actual bug: the chip landed at ~80% of the invisible
    #light-spot hitbox, but the VISIBLE bulb graphic stayed at its old smaller size, so
    against what the player actually sees, the chip read as way oversized (~100%+). */
-#light-off-img,#light-on-img,#light-spot{left:1.104%;top:-27.154%;width:32.552%;height:28.041%}
-#light-spot{--chip:8.3cqh}
+/* Grown 1.5x from the previous pass (which was numerically correct for the chip/bulb
+   ratio but Deck flagged the bulb graphic itself as still reading too small -- plain
+   size increase requested, not a prominence/backdrop fix). --chip scaled by the same
+   1.5x so the ratio holds; left/top adjusted to keep it centered on roughly the same
+   point in the open felt above #bets-module. */
+#light-off-img,#light-on-img,#light-spot{left:-7.03%;top:-34.16%;width:48.83%;height:42.06%}
+#light-spot{--chip:12.45cqh}
 #light-off-img,#light-on-img{object-fit:contain}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 #light-info-btn{position:absolute;left:1%;top:-28.8%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
@@ -444,7 +449,8 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
      circles. Scaled down proportionally to the module's own much smaller height, same
      per-spot split as landscape (Trips' circle is bigger than Ante/Blind/Play's, Light
      targets ~60% instead of ~85%) -- see the landscape rule block's comment. */
-  #trips-spot,#ante-spot,#blind-spot,#play-spot,#light-spot{--chip:3.9cqh}
+  #trips-spot,#ante-spot,#blind-spot,#play-spot{--chip:3.9cqh}
+  #light-spot{--chip:5.85cqh}
 
   #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
   #bottom-left{flex:1;height:auto}
@@ -538,7 +544,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.24</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.25</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
