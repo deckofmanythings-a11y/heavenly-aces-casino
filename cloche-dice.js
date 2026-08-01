@@ -75,6 +75,14 @@
     faceImages: null,       // optional {1: dataURL, ... 6: dataURL} custom faces, all dice
     faceImagesPerDie: null, // optional [{1:url,...6:url}, ...] -- distinct faces per die index
                              // (e.g. destroyer's letter die vs number die), overrides faceImages
+    // The 2/3-point-toward-6 rotation math (pipRotationTowardFace) assumes a face's "baseline"
+    // (untransformed) art already has its point pip at canvas (.28,.28). That's true for the
+    // procedural pip drawing and for Sic-Bo's real dice art, but Craps' DIE_B64 art happens to
+    // draw the 2's two dots on the *other* diagonal -- a 90-degree mismatch baked into that one
+    // image, unrelated to the geometry. {value: 90} here says "this face's real art starts
+    // rotated 90 degrees from the procedural baseline", so the computed toward-6 rotation gets
+    // that offset folded in (via applyPipBaseRotation) before it's applied to the real texture.
+    pipBaseRotation: null,  // optional {2: 90, 3: 90, ...} per-value baseline correction (degrees)
     wallSegments: 14,
     zIndex: 9999,
     soundTheme: 'bell'      // 'bell' (default jovial chime) or 'action' (dramatic low drums +
@@ -150,6 +158,15 @@
     }
     return nearestDist(false) <= nearestDist(true) ? 0 : Math.PI / 2;
   }
+  // Folds CFG.pipBaseRotation's per-value correction into a computed 0/PI-2 rotation. The pip
+  // pattern is 180-degree-symmetric, so two 90-degree offsets cancel out (90+90=180 looks
+  // identical to 0) -- this is exactly an XOR of the two "is it rotated 90" flags, not a sum.
+  function applyPipBaseRotation(rot, value) {
+    const baseDeg = (CFG.pipBaseRotation && CFG.pipBaseRotation[value]) || 0;
+    const rotIsHalf = rot === Math.PI / 2;
+    const baseIsHalf = (((baseDeg % 180) + 180) % 180) !== 0;
+    return (rotIsHalf !== baseIsHalf) ? Math.PI / 2 : 0;
+  }
   // Rotation (radians, 0 or PI/2) to apply to each face's texture this relabel -- only 2 and 3
   // have a meaningful "point" (1/4/5/6's patterns are rotationally symmetric), so every other
   // face gets 0. Returns a full 6-length array indexed by geometry face, matching `values`.
@@ -159,8 +176,8 @@
     if (i6 < 0) return rot;
     const i2 = values.indexOf(2), i3 = values.indexOf(3);
     if (i2 >= 0 && i3 >= 0) {
-      rot[i2] = pipRotationTowardFace(i2, i3, i6);
-      rot[i3] = pipRotationTowardFace(i3, i2, i6);
+      rot[i2] = applyPipBaseRotation(pipRotationTowardFace(i2, i3, i6), 2);
+      rot[i3] = applyPipBaseRotation(pipRotationTowardFace(i3, i2, i6), 3);
     }
     return rot;
   }
