@@ -170,14 +170,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
    in the open felt just above #bets-module (module children are position:absolute,
    this just extends upward via a negative top), not inside the module itself --
    there's no free space left inside its own canvas for it. */
-/* #light-off-img/#light-on-img keep the ORIGINAL box -- that's the actual bulb graphic
-   the player sees (no baked circle art here to separately match), so it must not resize
-   just to tune the invisible chip-hitbox ratio. #light-spot (the hit-region + chip anchor)
-   gets its own independently-resized box so the same shared chip lands at ~80% of IT,
-   not the bulb image's box -- see the top of this rule block's comment for why Trips/
-   Ante/Blind/Play/Light all share one --chip value now. */
-#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%}
-#light-spot{left:1.104%;top:-27.154%;width:32.552%;height:28.041%;--chip:8.3cqh}
+/* #light-off-img/#light-on-img MUST share #light-spot's box, not keep their own smaller
+   one -- object-fit:contain already stops the bulb art from stretching/distorting no
+   matter what size box it's given, so there was never a real reason to decouple them.
+   Decoupling them was the actual bug: the chip landed at ~80% of the invisible
+   #light-spot hitbox, but the VISIBLE bulb graphic stayed at its old smaller size, so
+   against what the player actually sees, the chip read as way oversized (~100%+). */
+#light-off-img,#light-on-img,#light-spot{left:1.104%;top:-27.154%;width:32.552%;height:28.041%}
+#light-spot{--chip:8.3cqh}
 #light-off-img,#light-on-img{object-fit:contain}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 #light-info-btn{position:absolute;left:1%;top:-28.8%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
@@ -538,7 +538,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.23</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.24</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
