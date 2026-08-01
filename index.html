@@ -235,7 +235,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.16</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.17</div>
 </div>
 
 <script>
@@ -572,15 +572,12 @@ function showDiscordConnectError(e){
 }
 async function bootDiscordDM(){
   await tryRestoreSession();
-  // Do NOT fall through to runDiscordEntry() here -- ready() is confirmed to hang
-  // reliably (not flakily) on pc- (DM) launches, so attempting it would just burn
-  // the full timeout every time there's no already-saved session to restore. And
-  // per runDiscordEntry()'s catch above, no login-form fallback inside Discord --
-  // leave the "Connecting..." status up with a debug note instead.
-  if(!currentPlayer){
-    document.getElementById('auth-status').classList.add('show');
-    showDiscordConnectError(new Error("Skipped -- ready() hangs reliably on DM launches"));
-  }
+  // An earlier investigation found ready() hanging reliably on pc- (DM) launches and
+  // this used to skip straight past runDiscordEntry() to avoid burning the timeout
+  // every time. That finding turned out to have been made during an unrelated
+  // Discord-wide platform outage, not a real DM-specific limitation -- so this now
+  // attempts a real connection here too, same as a normal (non-DM) launch.
+  if(!currentPlayer)await runDiscordEntry();
 }
 if(isDiscordActivity()){
   if(isDiscordDM()){bootDiscordDM();}else{runDiscordEntry();}
