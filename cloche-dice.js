@@ -122,8 +122,11 @@
   // the {2,6,other} corner (wrong, e.g. lands next to 4 instead of 3) -- both are equally "close
   // to the edge", so the edge-only test picks the wrong one on roughly half of all relabels. The
   // 2/3 pip diagonal is 180-degree-symmetric (rotating it 180 degrees redraws the exact same
-  // pixels), so there are only ever two visually distinct choices, not four -- whichever of 0/90
-  // lands the point pip closer to that vertex is correct.
+  // pixels), so there are only ever two visually distinct rotations -- but the pattern always
+  // draws BOTH diagonal dots at once, and which of the two ends up nearest the target vertex
+  // depends on the rotation too, so both dots (not just the canvas (.28,.28) one) must be tested
+  // against the vertex -- checking only one dot picks the wrong rotation in most cases, since the
+  // *other* dot is frequently the one that actually reaches the target corner.
   function pipRotationTowardFace(faceIdx, otherFaceIdx, sixFaceIdx) {
     const N = FACE_NORMALS.map(v => [v.x, v.y, v.z]);
     const up = FACE_UP[faceIdx], right = FACE_RIGHT[faceIdx];
@@ -132,8 +135,8 @@
       (N[faceIdx][1] + N[otherFaceIdx][1] + N[sixFaceIdx][1]) * 0.5,
       (N[faceIdx][2] + N[otherFaceIdx][2] + N[sixFaceIdx][2]) * 0.5
     ];
-    function pipPos(rot90) {
-      let u = (.28 - .5) * 2, v = -(.28 - .5) * 2;
+    function pipPos(rot90, cx, cy) {
+      let u = (cx - .5) * 2, v = -(cy - .5) * 2;
       if (rot90) { const nu = v, nv = -u; u = nu; v = nv; }
       return [
         N[faceIdx][0] * 0.5 + right[0] * u * 0.4 + up[0] * v * 0.4,
@@ -142,7 +145,10 @@
       ];
     }
     function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
-    return dist(pipPos(false), vertex) <= dist(pipPos(true), vertex) ? 0 : Math.PI / 2;
+    function nearestDist(rot90) {
+      return Math.min(dist(pipPos(rot90, .28, .28), vertex), dist(pipPos(rot90, .72, .72), vertex));
+    }
+    return nearestDist(false) <= nearestDist(true) ? 0 : Math.PI / 2;
   }
   // Rotation (radians, 0 or PI/2) to apply to each face's texture this relabel -- only 2 and 3
   // have a meaningful "point" (1/4/5/6's patterns are rotationally symmetric), so every other
