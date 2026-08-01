@@ -92,15 +92,18 @@
       // 1.0 at the 0/180 (left-right) rays and ~0.46 at the 60/120/240/300 (top/bottom-leaning)
       // rays -- so the horizontal rays reach about twice as far as the vertical-leaning ones,
       // matching how far that oval used to extend in each direction.
+      // Whole set rotated -30deg (CCW) from the raw 0/60/120/180/240/300 layout per Deck, to
+      // bring the long (scale 1) rays closer to horizontal -- reach scale per ray is unchanged,
+      // just carried along with its own ray to the new angle.
       '.wm-winner-ray{',
       '  position:absolute;top:50%;left:50%;width:640px;height:640px;pointer-events:none;',
-      '  transform:translate(-50%,-50%) rotate(0deg) scale(1);',
+      '  transform:translate(-50%,-50%) rotate(-30deg) scale(1);',
       '}',
-      '.wm-winner-ray[data-ray="1"]{transform:translate(-50%,-50%) rotate(60deg) scale(.46)}',
-      '.wm-winner-ray[data-ray="2"]{transform:translate(-50%,-50%) rotate(120deg) scale(.46)}',
-      '.wm-winner-ray[data-ray="3"]{transform:translate(-50%,-50%) rotate(180deg) scale(1)}',
-      '.wm-winner-ray[data-ray="4"]{transform:translate(-50%,-50%) rotate(240deg) scale(.46)}',
-      '.wm-winner-ray[data-ray="5"]{transform:translate(-50%,-50%) rotate(300deg) scale(.46)}',
+      '.wm-winner-ray[data-ray="1"]{transform:translate(-50%,-50%) rotate(30deg) scale(.46)}',
+      '.wm-winner-ray[data-ray="2"]{transform:translate(-50%,-50%) rotate(90deg) scale(.46)}',
+      '.wm-winner-ray[data-ray="3"]{transform:translate(-50%,-50%) rotate(150deg) scale(1)}',
+      '.wm-winner-ray[data-ray="4"]{transform:translate(-50%,-50%) rotate(210deg) scale(.46)}',
+      '.wm-winner-ray[data-ray="5"]{transform:translate(-50%,-50%) rotate(270deg) scale(.46)}',
       // The beam is the growing/shrinking part: a single conic-gradient wedge, radially masked so
       // it fades to transparent well before its tip (smooth taper, no hard cutoff line), pulsing
       // length via animated scale -- per-instance randomized speed/distance rolled in
