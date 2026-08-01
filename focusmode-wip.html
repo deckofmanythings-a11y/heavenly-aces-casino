@@ -1718,7 +1718,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.3</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.4</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1797,19 +1797,31 @@ const DISCORD_CLIENT_ID='1528447760653746346';
 const HOP_MAP={hop11:[1,1],hop12:[1,2],hop13:[1,3],hop14:[1,4],hop15:[1,5],hop16:[1,6],hop22:[2,2],hop23:[2,3],hop24:[2,4],hop25:[2,5],hop26:[2,6],hop33:[3,3],hop34:[3,4],hop35:[3,5],hop36:[3,6],hop44:[4,4],hop45:[4,5],hop46:[4,6],hop55:[5,5],hop56:[5,6],hop66:[6,6]};
 
 // ── MODE-SPECIFIC CONSTANTS ───────────────────────────────────────────────────
-// Crapless: all 10 numbers are box numbers
-const ODDS_PAY_CRAPLESS={2:6,3:3,4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2,11:3,12:6};
-const ODDS_MULT_CRAPLESS={2:3,3:3,4:3,5:4,6:5,8:5,9:4,10:3,11:3,12:3};
-const ODDS_LABEL_CRAPLESS={2:'6:1',3:'3:1',4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1',11:'3:1',12:'6:1'};
-const NUM_DEFS_CRAPLESS={2:{label:'2',place:[11,2],buyRatio:119/20/0.95},3:{label:'3',place:[11,4],buyRatio:59/20/0.95},4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2},11:{label:'11',place:[11,4],buyRatio:59/20/0.95},12:{label:'12',place:[11,2],buyRatio:119/20/0.95}};
-const ALL_NUMS_CRAPLESS=[2,3,4,5,6,8,9,10,11,12];
-
-// Standard: only 4,5,6,8,9,10 are box numbers
-const ODDS_PAY_STANDARD={4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2};
-const ODDS_MULT_STANDARD={4:3,5:4,6:5,8:5,9:4,10:3};
-const ODDS_LABEL_STANDARD={4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1'};
-const NUM_DEFS_STANDARD={4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2}};
-const ALL_NUMS_STANDARD=[4,5,6,8,9,10];
+// Single source of truth for everything that used to be duplicated as parallel
+// *_STANDARD/*_CRAPLESS constants (one table per field, hand-kept in sync). The mutable
+// ODDS_PAY/ODDS_MULT/ODDS_LABEL/NUM_DEFS/ALL_NUMS/ALL_BOX_NUMS aliases below are still what
+// the rest of the file reads from (36 call sites) -- only *where they get their data* changes,
+// applyGameMode() now derives them from MODE_CONFIG[mode] in one line each instead of a
+// hand-written if/else repeating every field per mode.
+// Easy Craps (per Deck: "basically a configuration of Crapless, boards are nearly identical")
+// is not implemented as its own entry yet -- when it lands (Phase 5: no Come/Don't Come, adds
+// Low/High Field), it should overlay/extend MODE_CONFIG.crapless rather than duplicate it.
+const MODE_CONFIG={
+  crapless:{
+    oddsPay:{2:6,3:3,4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2,11:3,12:6},
+    oddsMult:{2:3,3:3,4:3,5:4,6:5,8:5,9:4,10:3,11:3,12:3},
+    oddsLabel:{2:'6:1',3:'3:1',4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1',11:'3:1',12:'6:1'},
+    numDefs:{2:{label:'2',place:[11,2],buyRatio:119/20/0.95},3:{label:'3',place:[11,4],buyRatio:59/20/0.95},4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2},11:{label:'11',place:[11,4],buyRatio:59/20/0.95},12:{label:'12',place:[11,2],buyRatio:119/20/0.95}},
+    allNums:[2,3,4,5,6,8,9,10,11,12]
+  },
+  standard:{
+    oddsPay:{4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2},
+    oddsMult:{4:3,5:4,6:5,8:5,9:4,10:3},
+    oddsLabel:{4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1'},
+    numDefs:{4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2}},
+    allNums:[4,5,6,8,9,10]
+  }
+};
 
 // Lay bets (standalone): bet 7 before number, pay 5% vig on win
 // LAY_PAY[n] = win / stake ratio
@@ -1821,13 +1833,13 @@ const DC_ODDS_PAY={4:0.5,5:2/3,6:5/6,8:5/6,9:2/3,10:0.5};
 // Max lay odds: potential win = 6x DC flat → layMax = 6 * flat / DC_ODDS_PAY[n]
 function dcOddsLim(flat,num){return r2(flat*6/DC_ODDS_PAY[num]);}
 
-// Live references — updated by applyGameMode()
-let ODDS_PAY=ODDS_PAY_CRAPLESS;
-let ODDS_MULT=ODDS_MULT_CRAPLESS;
-let ODDS_LABEL=ODDS_LABEL_CRAPLESS;
-let NUM_DEFS=NUM_DEFS_CRAPLESS;
-let ALL_NUMS=ALL_NUMS_CRAPLESS;
-let ALL_BOX_NUMS=ALL_NUMS_CRAPLESS;
+// Live references — updated by applyGameMode() from MODE_CONFIG[mode]
+let ODDS_PAY=MODE_CONFIG.crapless.oddsPay;
+let ODDS_MULT=MODE_CONFIG.crapless.oddsMult;
+let ODDS_LABEL=MODE_CONFIG.crapless.oddsLabel;
+let NUM_DEFS=MODE_CONFIG.crapless.numDefs;
+let ALL_NUMS=MODE_CONFIG.crapless.allNums;
+let ALL_BOX_NUMS=MODE_CONFIG.crapless.allNums;
 let activeGame='standard'; // real value set once startSession()/applyServerGameState() run
 // Hoisted up from its original position further down the script: the initial
 // applyGameMode('standard') call below needs this during its first updateUI() pass, and
@@ -2360,13 +2372,9 @@ if(window.ResizeObserver){
 
 function applyGameMode(mode){
   activeGame=mode;
-  if(mode==='standard'){
-    ODDS_PAY=ODDS_PAY_STANDARD;ODDS_MULT=ODDS_MULT_STANDARD;ODDS_LABEL=ODDS_LABEL_STANDARD;
-    NUM_DEFS=NUM_DEFS_STANDARD;ALL_NUMS=ALL_NUMS_STANDARD;ALL_BOX_NUMS=ALL_NUMS_STANDARD;
-  }else{
-    ODDS_PAY=ODDS_PAY_CRAPLESS;ODDS_MULT=ODDS_MULT_CRAPLESS;ODDS_LABEL=ODDS_LABEL_CRAPLESS;
-    NUM_DEFS=NUM_DEFS_CRAPLESS;ALL_NUMS=ALL_NUMS_CRAPLESS;ALL_BOX_NUMS=ALL_NUMS_CRAPLESS;
-  }
+  const cfg=MODE_CONFIG[mode]||MODE_CONFIG.crapless;
+  ODDS_PAY=cfg.oddsPay;ODDS_MULT=cfg.oddsMult;ODDS_LABEL=cfg.oddsLabel;
+  NUM_DEFS=cfg.numDefs;ALL_NUMS=cfg.allNums;ALL_BOX_NUMS=cfg.allNums;
   REPEATABLE=getRepeatable();
   // Update CSS column count for number strip: 6+1 DC box in standard, 10 in crapless
   // 6 real number columns for standard, not 7 -- dc-wait-wrap is the 7th grid item at
@@ -3506,7 +3514,7 @@ function buildStrip(){
   // #dc-wait-wrap's cleanup further down, or a stale standard box and a freshly-built crapless
   // one can coexist with the same id (getElementById silently returns whichever's first in the
   // document) -- exactly the "standard bet boxes still showing on the crapless number line" bug.
-  ALL_NUMS_STANDARD.forEach(n=>{
+  MODE_CONFIG.standard.allNums.forEach(n=>{
     ['nb-buy-'+n,'nb-place-'+n,'nb-lay-'+n].forEach(id=>{
       const stale=document.getElementById(id);if(stale)stale.remove();
     });
@@ -4227,7 +4235,7 @@ function switchLineMode(m){
   });
   // A number that was allowed under the old mode may not be under the new one -- refund
   // rather than leave money silently sitting on a bet the table no longer offers.
-  ALL_NUMS_CRAPLESS.forEach(n=>{
+  MODE_CONFIG.crapless.allNums.forEach(n=>{
     ['buy','place'].forEach(type=>{
       if(lineModeAllows(type,n))return;
       const key=type+n,amt=G.bets[key]||0;
@@ -4246,7 +4254,7 @@ function switchLineMode(m){
 // applyFocusVisibility() so the two systems compose as an AND, never fight each other.
 function applyLineModeGating(){
   if(activeGame!=='crapless')return;
-  ALL_NUMS_CRAPLESS.forEach(n=>{
+  MODE_CONFIG.crapless.allNums.forEach(n=>{
     if(!lineModeAllows('buy',n)){const el=document.getElementById('nb-buy-'+n);if(el)el.style.display='none';}
     if(!lineModeAllows('place',n)){const el=document.getElementById('nb-place-'+n);if(el)el.style.display='none';}
   });
