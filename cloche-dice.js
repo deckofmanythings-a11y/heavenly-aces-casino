@@ -501,6 +501,10 @@
   // different art (e.g. destroyer's letter die vs number die), so keying on value
   // alone would let one die's texture leak onto the other.
   const TEX_CACHE = {};
+  function refreshClone(clone, base) {
+    clone.image = base.image;
+    clone.needsUpdate = true;
+  }
   function faceTexture(value, imgMapOverride, rotation) {
     rotation = rotation || 0;
     const imgMap = imgMapOverride || CFG.faceImages;
@@ -508,16 +512,26 @@
       const url = imgMap[value];
       const baseKey = url;
       if (!TEX_CACHE[baseKey]) {
-        const base = new THREE.TextureLoader().load(url);
+        // Clones made before the image finishes loading never receive the pixels --
+        // TextureLoader mutates this texture's .image in place on load, it doesn't
+        // touch clones taken earlier -- so any rotated variant must be (re)cloned
+        // from the base only once the image is actually ready.
+        const base = new THREE.TextureLoader().load(url, () => {
+          for (const k in TEX_CACHE) {
+            if (k.startsWith(baseKey + ':')) refreshClone(TEX_CACHE[k], base);
+          }
+        });
         base.anisotropy = 4;
         TEX_CACHE[baseKey] = base;
       }
       if (!rotation) return TEX_CACHE[baseKey];
       const rotKey = url + ':' + rotation;
       if (TEX_CACHE[rotKey]) return TEX_CACHE[rotKey];
-      const rotTex = TEX_CACHE[baseKey].clone();
+      const base = TEX_CACHE[baseKey];
+      const rotTex = base.clone();
       rotTex.center.set(0.5, 0.5);
       rotTex.rotation = rotation;
+      if (base.image) rotTex.needsUpdate = true;
       TEX_CACHE[rotKey] = rotTex;
       return rotTex;
     }
