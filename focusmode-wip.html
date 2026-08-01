@@ -624,7 +624,9 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 .puck3d-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;box-shadow:inset 0 0 6px rgba(0,0,0,.5);overflow:hidden;}
 .puck3d-face.puck3d-front{transform:rotateX(90deg) translateZ(var(--puck-half-t,8px));}
 .puck3d-face.puck3d-back{transform:rotateX(-90deg) translateZ(var(--puck-half-t,8px));}
-.puck3d-face-img{position:absolute;inset:0;background-size:contain;background-repeat:no-repeat;background-position:center;}
+.puck3d-face-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-heavy);font-weight:900;font-size:16px;letter-spacing:.03em;border-radius:50%;}
+.puck-face-off{background:radial-gradient(circle at 35% 32%, #3a3a3a, #0a0a0a 72%);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);}
+.puck-face-on{background:radial-gradient(circle at 35% 32%, #ffffff, #d8d8d8 72%);color:#111;}
 .puck3d-front .puck3d-face-img{transform:scale(-1,-1);}
 .puck3d-edge-seg{position:absolute;left:50%;top:50%;background:linear-gradient(90deg,#0a0a0a,#2a2a2a 50%,#0a0a0a);backface-visibility:hidden;}
 @keyframes puckFlashGreen{
@@ -698,11 +700,14 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 .voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
 
-/* ===================== FELT IMAGE MODE (crapless) ===================== */
+/* ===================== FELT MODE ===================== */
 body.felt-mode #play-area{position:relative}
-#felt-stage{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);overflow:hidden}
+/* Phase 6 (CSS-only re-skin): the felt background was BlankFelt.webp -- Deck confirmed a flat
+   CSS gradient (matching the reference screenshots, which are gradient too, not woven texture)
+   rather than keeping a texture image. #felt-img (a real <img>, absolutely covering the stage)
+   is gone; --felt-bg (defined in Phase 2, unused until now) goes directly on #felt-stage. */
+#felt-stage{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);overflow:hidden;background:var(--felt-bg)}
 body.felt-mode #felt-stage{display:block}
-#felt-img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none;-webkit-user-drag:none}
 body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
 /* z-index:2 -- every reparented bet container (@name/#id items: Hard Ways, Hop Bets, One Roll
    Bets, num-zone/Buy/Place/Lay/DC/Come, Come/Pass/Field/Don't Pass bars, DC waiting box) had no
@@ -719,9 +724,9 @@ body.felt-mode #left-col,body.felt-mode #center-strip{display:none!important}
    exists to hide. Without this, the images were forced display:none while their (correctly
    sized/positioned) container divs stayed visible -- exactly the "toggle appears to work but
    nothing ever shows" symptom Deck reported. */
-body.felt-mode #felt-stage img:not(#felt-img):not(.chip-img):not(.puck-img):not(.fm-art-img):not(.bullet-icon):not(#fibo-icon){display:none!important}
+body.felt-mode #felt-stage img:not(.chip-img):not(.puck-img):not(.fm-art-img):not(.bullet-icon):not(#fibo-icon){display:none!important}
 #roll-history img{display:inline!important}
-body.felt-mode #felt-stage #roll-history img:not(#felt-img){display:inline!important}
+body.felt-mode #felt-stage #roll-history img{display:inline!important}
 /* Phase 4/5: .num-box/.nb-buy/.nb-mid/.nb-place/.nb-buy-left/.nb-lay (Phase 4), .bb/.horn-cell/
    .prop-circle/.prop-bar (Hard Ways/Hop Bets/C&E/Seven/Any Craps), and now .zone-bar/#pass-bar/
    #pass-main (Come/Field/Pass Line) all carved OUT of this list -- they render their own
@@ -750,6 +755,14 @@ body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:none!
    anymore. Kept as an explicit higher-specificity visibility:visible (rather than deleting the
    rule outright) so any future reuse of .nb-mid can't silently reintroduce invisible text. */
 body.felt-mode #felt-stage .nb-mid>span{visibility:visible}
+/* Phase 6: buildStrip() sets the numeral's font-size:40px as an inline style unconditionally
+   (same value regardless of mode), sized for the base (non-felt) view's much wider number
+   boxes. Felt mode's boxes are far narrower (~63px on Standard's 6-column strip, tighter still
+   on Crapless's 10-column one) -- at 40px, word labels like "NINE"/"SIX" overflowed into
+   neighboring boxes (only ever discoverable once Phase 4 made the numeral visible in felt mode
+   for the first time; it was always oversized, just invisible before). !important needed to
+   beat the inline style. */
+body.felt-mode #felt-stage .nb-mid>span{font-size:22px!important}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
 body.felt-mode.game-crapless #felt-stage .circle-wrap .has-stack{bottom:22%}
@@ -1576,7 +1589,6 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   <div id="swoop-layer"></div>
   <div id="play-area">
     <div id="felt-stage">
-      <img id="felt-img" src="BlankFelt.webp" alt="" draggable="false">
       <div id="fm-art-layer"></div>
     </div>
 
@@ -1809,7 +1821,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.10</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.11</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1949,17 +1961,10 @@ const CONTRACT=new Set(['pass','passodds']);
 function getRepeatable(){return new Set(['pass','dp','field','lowfield','highfield','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
 let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
-// ===================== FELT IMAGE MODE (crapless) =====================
-const FELT_IMG={
-  // Both games play on the same blank felt now -- BlankFelt.webp has no baked-in art at all
-  // (Hardways/Hop/number-line/Field/Come/Pass/etc. are all separate overlays in #fm-art-layer),
-  // so all four combinations use the same base image. Crapless used to point at the old fully-
-  // baked Crapless-Felt-with-Horn.gif/-HopBets.gif -- left over from before crapless had its
-  // own #fm-art-layer content, that old art's own baked-in labels were showing up doubled
-  // underneath the new overlays once crapless became reachable in Focus Mode.
-  crapless:{hw:'BlankFelt.webp',hop:'BlankFelt.webp'},
-  standard:{hw:'BlankFelt.webp',hop:'BlankFelt.webp'}
-};
+// Phase 6 (CSS-only re-skin): FELT_IMG (BlankFelt.webp per mode/tab -- all four combinations
+// pointed at the same single blank image anyway) is gone; #felt-stage's background is now the
+// --felt-bg gradient token directly, no per-tab swap needed since there was never any actual
+// per-tab art here.
 // [selector, leftPct, topPct, widthPct, heightPct, tab or null]
 // '@name' = the .bwrap around #bet-name (or the bet element itself if unwrapped)
 // Items whose position is identical on both felt sheets (measured on the crapless art;
@@ -2332,7 +2337,6 @@ function sizeDiceZone(){
 function feltApplyTab(t){
   feltTab=t;
   const mode=activeGame==='standard'?'standard':'crapless';
-  const im=document.getElementById('felt-img');if(im)im.src=FELT_IMG[mode][t];
   feltLayoutFor(mode).forEach(([sel,,,,,tab])=>{
     if(!tab)return;const el=feltEl(sel);if(!el)return;
     el.style.display=(tab===t)?'':'none';
@@ -4386,10 +4390,13 @@ function initPuck3D(){
   puck3dEl=document.createElement('div');puck3dEl.id='puck3d-wrap';
   puck3dEl.style.setProperty('--puck-half-t',(PUCK_THICK/2)+'px');
   puck3dInner=document.createElement('div');puck3dInner.id='puck3d-inner';
+  // Phase 6 (CSS-only re-skin): faces used to be Puck_Off.webp/Puck_On.webp background images;
+  // now a CSS radial-gradient disc (dark for OFF, light for ON, matching a real casino puck)
+  // with real "OFF"/"ON" text, same two-face/flip structure otherwise untouched.
   const front=document.createElement('div');front.className='puck3d-face puck3d-front';
-  const frontImg=document.createElement('div');frontImg.className='puck3d-face-img';frontImg.style.backgroundImage="url('Puck_Off.webp')";front.appendChild(frontImg);
+  const frontImg=document.createElement('div');frontImg.className='puck3d-face-img puck-face-off';frontImg.textContent='OFF';front.appendChild(frontImg);
   const back=document.createElement('div');back.className='puck3d-face puck3d-back';
-  const backImg=document.createElement('div');backImg.className='puck3d-face-img';backImg.style.backgroundImage="url('Puck_On.webp')";back.appendChild(backImg);
+  const backImg=document.createElement('div');backImg.className='puck3d-face-img puck-face-on';backImg.textContent='ON';back.appendChild(backImg);
   puck3dInner.appendChild(front);puck3dInner.appendChild(back);
   // Rim: a ring of thin strips standing on end, each rotated a bit further around Y and
   // pushed out to PUCK_RADIUS, so together they approximate the cylindrical edge connecting
