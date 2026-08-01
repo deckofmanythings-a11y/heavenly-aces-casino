@@ -801,7 +801,7 @@
     for (const d of dice) { scene.remove(d.mesh); world.remove(d.body); }
     dice = [];
     const s = CFG.dieSize;
-    const edgeR = s * 0.12;
+    const edgeR = s * 0.30;
 
     for (let i = 0; i < n; i++) {
       const imgMap = (CFG.faceImagesPerDie && CFG.faceImagesPerDie[i]) || CFG.faceImages;
@@ -820,7 +820,7 @@
       // zone -- most of the visible curve near an edge was being drawn with just one or two
       // polygons, which reads as faceted/sharp rather than smoothly rounded. More segments
       // gives the rounded band enough polygons to look smooth without changing edgeR itself.
-      const mesh = new THREE.Mesh(roundedBoxGeometry(s, edgeR, 10), mats);
+      const mesh = new THREE.Mesh(roundedBoxGeometry(s, edgeR, 14), mats);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       scene.add(mesh);
