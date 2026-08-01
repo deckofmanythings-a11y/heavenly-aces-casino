@@ -527,6 +527,19 @@
   }
 
   // ---------- textures ----------
+  // Shared by faceTexture's procedural pip drawing AND faceNormalMap's dent generation, so a
+  // real (non-procedural) dice image's pips and the drilled-hole normal map laid on top of it
+  // line up -- both go through the exact same rotation logic (see applyPipBaseRotation /
+  // faceTexture's rotation param), so as long as this table's positions are used for both, the
+  // dent stays aligned with wherever the actual printed/photographed dot ends up.
+  const PIP_POS = {
+    1: [[.5, .5]],
+    2: [[.28, .28], [.72, .72]],
+    3: [[.25, .25], [.5, .5], [.75, .75]],
+    4: [[.28, .28], [.72, .28], [.28, .72], [.72, .72]],
+    5: [[.25, .25], [.75, .25], [.5, .5], [.25, .75], [.75, .75]],
+    6: [[.28, .22], [.72, .22], [.28, .5], [.72, .5], [.28, .78], [.72, .78]]
+  };
   // Cache key is the actual image URL (or 'proc:<value>' for the generated pip faces),
   // not the raw value -- two dice can show the same numeric value with entirely
   // different art (e.g. destroyer's letter die vs number die), so keying on value
@@ -577,25 +590,79 @@
     g.fillStyle = bg;
     g.fillRect(0, 0, S, S);
     if (rotation) { g.translate(S / 2, S / 2); g.rotate(rotation); g.translate(-S / 2, -S / 2); }
-    const pos = {
-      1: [[.5, .5]],
-      2: [[.28, .28], [.72, .72]],
-      3: [[.25, .25], [.5, .5], [.75, .75]],
-      4: [[.28, .28], [.72, .28], [.28, .72], [.72, .72]],
-      5: [[.25, .25], [.75, .25], [.5, .5], [.25, .75], [.75, .75]],
-      6: [[.28, .22], [.72, .22], [.28, .5], [.72, .5], [.28, .78], [.72, .78]]
-    }[value];
+    const pos = PIP_POS[value];
+    // Flat fill, no baked-in highlight gradient -- faceNormalMap now supplies a real concave
+    // dent that responds to actual scene lighting; a static painted highlight here would fight
+    // it (a fixed offset "shine" reads as a convex glued-on ball no matter which way the real
+    // light comes from) instead of reinforcing it.
+    g.fillStyle = '#141414';
     for (const [x, y] of pos) {
       const px = x * S, py = y * S, r = S * 0.085;
-      const pg = g.createRadialGradient(px - r * 0.3, py - r * 0.3, r * 0.1, px, py, r);
-      pg.addColorStop(0, '#3a3a3a');
-      pg.addColorStop(1, '#0e0e0e');
-      g.fillStyle = pg;
       g.beginPath(); g.arc(px, py, r, 0, Math.PI * 2); g.fill();
     }
     const tex = new THREE.CanvasTexture(c);
     tex.anisotropy = 4;
     TEX_CACHE[cacheKey] = tex;
+    return tex;
+  }
+
+  // Drilled-hole normal map for a face's pips, so the "dots" read as actual concave dimples
+  // under the cloche's lighting instead of flat printed circles -- independent of whether the
+  // color comes from a real photo (Craps/Sic-Bo's DIE_B64/webp art) or the procedural canvas
+  // above, since it's generated purely from PIP_POS + the same rotation both maps share.
+  // Built from an explicit height field (not a hand-derived sphere-normal formula) because a
+  // numeric finite-difference gradient is much harder to get subtly wrong than trigonometry:
+  // the height profile (cos(pi*t)+1)/2 for t=dist/radius has zero slope at both the pip's
+  // center AND its rim by construction, so the dent blends into the flat surrounding surface
+  // with no visible seam, and centered numerical derivatives just fall out of that array.
+  const NORMAL_CACHE = {};
+  function faceNormalMap(value, rotation) {
+    rotation = rotation || 0;
+    const cacheKey = 'dent:' + value + ':' + rotation;
+    if (NORMAL_CACHE[cacheKey]) return NORMAL_CACHE[cacheKey];
+    const S = 256;
+    const height = new Float32Array(S * S);
+    const cosR = Math.cos(-rotation), sinR = Math.sin(-rotation);
+    const cx0 = S / 2, cy0 = S / 2;
+    const pipR = S * 0.085, depth = 0.55;
+    const pos = PIP_POS[value];
+    for (let py = 0; py < S; py++) {
+      for (let px = 0; px < S; px++) {
+        // undo the same canvas rotation faceTexture applies, so this height field lines up
+        // with PIP_POS's un-rotated coordinates exactly like the rotated color texture does
+        const ux = px - cx0, uy = py - cy0;
+        const rx = ux * cosR - uy * sinR + cx0, ry = ux * sinR + uy * cosR + cy0;
+        let h = 0;
+        for (const [x, y] of pos) {
+          const dx = rx - x * S, dy = ry - y * S;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < pipR) h = Math.min(h, -depth * (Math.cos(Math.PI * d / pipR) + 1) / 2);
+        }
+        height[py * S + px] = h;
+      }
+    }
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+    const img = g.createImageData(S, S);
+    for (let py = 0; py < S; py++) {
+      for (let px = 0; px < S; px++) {
+        const xL = height[py * S + Math.max(0, px - 1)], xR = height[py * S + Math.min(S - 1, px + 1)];
+        const yU = height[Math.max(0, py - 1) * S + px], yD = height[Math.min(S - 1, py + 1) * S + px];
+        let nx = (xR - xL), ny = (yD - yU), nz = 1;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        nx /= len; ny /= len; nz /= len;
+        const idx = (py * S + px) * 4;
+        img.data[idx] = (nx * 0.5 + 0.5) * 255;
+        img.data[idx + 1] = (ny * 0.5 + 0.5) * 255;
+        img.data[idx + 2] = (nz * 0.5 + 0.5) * 255;
+        img.data[idx + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 4;
+    NORMAL_CACHE[cacheKey] = tex;
     return tex;
   }
 
@@ -820,7 +887,8 @@
       // opaque white. Those discarded corner pixels then show whatever's behind the die
       // (the dark backdrop), instead of a stray white bleed on the curved/beveled edges.
       const mats = faceValues.map((v, i) => new THREE.MeshStandardMaterial({
-        map: faceTexture(v, imgMap, initRot[i]), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
+        map: faceTexture(v, imgMap, initRot[i]), normalMap: faceNormalMap(v, initRot[i]),
+        normalScale: new THREE.Vector2(1, 1), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
       }));
       // seg bumped 4 -> 10: the flat-face region only spans size-2*radius out of the full
       // face, so at seg=4 very few of a face's own grid lines actually land in the truly-flat
@@ -889,6 +957,7 @@
     const rot = pipRotationsForValues(values);
     for (let i = 0; i < 6; i++) {
       d.mesh.material[i].map = faceTexture(values[i], d.imgMap, rot[i]);
+      d.mesh.material[i].normalMap = faceNormalMap(values[i], rot[i]);
       d.mesh.material[i].needsUpdate = true;
     }
   }
