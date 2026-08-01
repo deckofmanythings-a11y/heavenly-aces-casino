@@ -110,7 +110,7 @@
       // buildRaysHTML() so the 6 rays breathe out of sync with each other.
       '.wm-winner-ray-beam{',
       '  position:absolute;inset:0;transform-origin:center;',
-      '  background:conic-gradient(from 0deg,rgba(255,224,130,.85) 0deg 34deg,rgba(255,224,130,0) 34deg 360deg);',
+      '  background:conic-gradient(from 0deg,rgba(255,224,130,.45) 0deg 34deg,rgba(255,224,130,0) 34deg 360deg);',
       '  -webkit-mask-image:radial-gradient(circle at center,#000 0%,#000 45%,transparent 100%);',
       '  mask-image:radial-gradient(circle at center,#000 0%,#000 45%,transparent 100%);',
       '  animation-name:wmRayPulse;animation-timing-function:ease-in-out;animation-iteration-count:infinite;',
