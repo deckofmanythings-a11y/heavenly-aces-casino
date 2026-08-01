@@ -32,7 +32,7 @@
   // all at frame 0, so they don't read as synced for the first couple seconds after the modal
   // opens.
   function buildRaysHTML() {
-    let html = '';
+    let html = '<div class="wm-winner-rays-spin">';
     for (let i = 0; i < 6; i++) {
       const dur = (4.5 + Math.random() * 3).toFixed(2);
       const delay = (Math.random() * 2.5).toFixed(2);
@@ -41,6 +41,7 @@
         '<div class="wm-winner-ray-beam" style="animation-duration:' + dur + 's;animation-delay:-' + delay + 's;--wm-ray-scale:' + scale + '"></div>' +
       '</div>';
     }
+    html += '</div>';
     return html;
   }
 
@@ -65,21 +66,25 @@
       '  -webkit-text-stroke:1.5px #5c3d00;',
       '  filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(255,215,0,.8));',
       '  letter-spacing:.02em}',
-      // wm-winner-rays is the rotating group: one shared rotation (exact same rate for all 6
-      // rays) applied here, sized dynamically to the payout text by sizeWinnerRays() below. The
-      // radial mask (not overflow:hidden) is what shapes it to an oval -- a mask fades opacity to
-      // 0 well inside the oval boundary, so rays taper away smoothly instead of getting sliced
-      // off by a hard clip edge.
+      // wm-winner-rays is the fixed oval window: sized dynamically to the payout text by
+      // sizeWinnerRays() below, and does NOT rotate -- it just holds the radial mask (not
+      // overflow:hidden) that shapes it to an oval, fading opacity to 0 well inside the boundary
+      // so rays taper away smoothly instead of getting sliced off by a hard clip edge. The oval
+      // itself must stay put lengthwise under the text; only its contents spin.
       '.wm-winner-rays{',
       '  position:absolute;top:50%;left:50%;width:440px;height:180px;z-index:1;',
       '  transform:translate(-50%,-50%);pointer-events:none;',
       '  -webkit-mask-image:radial-gradient(ellipse at center,#000 0%,#000 42%,transparent 82%);',
       '  mask-image:radial-gradient(ellipse at center,#000 0%,#000 42%,transparent 82%);',
-      '  animation:wmGodRaySpin 18s linear infinite;',
+      '}',
+      // wm-winner-rays-spin is the rotating group inside that fixed window -- one shared rotation
+      // (exact same rate for all 6 rays) so the rays sweep underneath the stationary oval mask.
+      '.wm-winner-rays-spin{',
+      '  position:absolute;inset:0;animation:wmGodRaySpin 18s linear infinite;',
       '}',
       '@keyframes wmGodRaySpin{',
-      '  from{transform:translate(-50%,-50%) rotate(0deg)}',
-      '  to{transform:translate(-50%,-50%) rotate(360deg)}',
+      '  from{transform:rotate(0deg)}',
+      '  to{transform:rotate(360deg)}',
       '}',
       // Each ray is its own fixed 640x640 square (undistorted by the oval\'s aspect ratio, same
       // trick the old single spinning disc used) pinned at a static 60deg-apart starting angle.
