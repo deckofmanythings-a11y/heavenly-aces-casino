@@ -118,6 +118,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bet-spot.light{width:min(67.5px,9.6vw);height:min(67.5px,9.6vw);border-color:rgba(255,255,255,.25);overflow:hidden}
 .bet-spot.light img{object-fit:contain}
 .bet-spot.light.active{border-color:#ffd700;background:rgba(255,215,0,.28);box-shadow:0 0 10px rgba(255,215,0,.5)}
+/* Sweep-to-lit -- ported wholesale from uth.html/breakout.html: light-on-img pops/fades
+   in over the felt's own idle light-off-img the instant a hand is dealt with the light
+   on (see dealHand()'s classList.remove->void offsetWidth->classList.add re-trigger). */
+@keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
+#light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 .bet-spot-name{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em}
 .paytable-info-btn{width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid rgba(255,215,0,.6);font-size:11px;font-family:Georgia,'Times New Roman',serif;font-style:italic;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-weight:800;position:absolute;top:-4px;right:-4px}
 
@@ -331,7 +336,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.11</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.12</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -396,9 +401,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
     <div id="bet-sidebar">
       <div class="bet-spot-wrap">
         <div class="bet-spot-name">The Light</div>
-        <div class="bet-spot light" id="light-spot" onclick="toggleLight()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleLight()">
-          <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
-          <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+        <div class="bet-spot light" id="light-spot" onclick="toggleLight()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleLight()" title="The Light — $5 progressive jackpot bet">
+          <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);object-fit:contain;pointer-events:none">
+          <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);object-fit:contain;pointer-events:none">
+          <span id="stk-light"></span>
           <button class="paytable-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
         </div>
       </div>
@@ -1044,8 +1050,16 @@ async function dealHand(){
   G.phase='selecting';
   document.getElementById('repeat-btn').disabled=false;
   ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until the deal settles
+  // Sweep the staged $5 chip away (not dimmed -- same noDim ghost style as a win-side
+  // sweep) BEFORE updateUI()/renderChipStacks() blanks #stk-light's text out from
+  // under it -- same convention as uth.html/breakout.html.
+  if(data.light)spawnChipGhost(document.getElementById('stk-light'),{noDim:true});
   renderDealtCardsAnimated();
   updateUI();
+  if(data.light){
+    const img=document.getElementById('light-on-img');
+    img.classList.remove('lit-in');void img.offsetWidth;img.classList.add('lit-in');
+  }
 }
 const DEAL_STAGGER_MS=90;
 function renderDealtCardsAnimated(){
@@ -1269,17 +1283,20 @@ function updateUI(){
   const locked=G.phase!=='betting';
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
   const fortuneAmt=locked?G.locked.fortune:(G.bets.fortune||0);
-  const lightActive=locked?G.locked.light:G.lightOn;
   applyChipStackVisual('stk-ante',anteAmt,locked);
   applyChipStackVisual('stk-fortune',fortuneAmt,locked);
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('ante-spot').classList.toggle('locked',locked);
   document.getElementById('fortune-spot').classList.toggle('active',fortuneAmt>0);
   document.getElementById('fortune-spot').classList.toggle('locked',locked);
-  document.getElementById('light-spot').classList.toggle('active',lightActive);
+  // The Light: a staged $5 stake shows like any other spot pre-deal (a real chip
+  // image, not just text), then the chip sweeps away and lightON.webp takes over
+  // once dealt (G.locked.light) -- same convention as uth.html/breakout.html.
+  applyChipStackVisual('stk-light',(!locked&&G.lightOn)?LIGHT_BET:0,false);
+  document.getElementById('light-spot').classList.toggle('active',!locked&&G.lightOn);
   document.getElementById('light-spot').classList.toggle('locked',locked);
-  document.getElementById('light-off-img').style.display=lightActive?'none':'';
-  document.getElementById('light-on-img').style.display=lightActive?'':'none';
+  document.getElementById('light-off-img').style.display=(locked&&G.locked.light)?'none':'';
+  document.getElementById('light-on-img').style.display=(locked&&G.locked.light)?'':'none';
 }
 
 // ── CHIP STACKS ON BET SPOTS -- ported wholesale from uth.html/craps ─────────
