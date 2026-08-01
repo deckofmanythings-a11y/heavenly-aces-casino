@@ -990,48 +990,54 @@ body.felt-mode #bottom-section{position:absolute;height:auto;background:rgba(0,0
 /* Lucky Roller art -- Deck's new cut element set: title/ovals and the three bet boxes are now
    separate images (LuckyRollerTitle.webp + Low/RollEmAll/HighRollsBox.webp) instead of one
    baked-together background, positioned via LR_LAYOUT (see enterFeltMode()). */
+/* Phase 3 (CSS-only re-skin): Lucky Roller's felt-mode boxes used to be baked-art images
+   (LuckyRollerTitle.webp + Low/RollEmAll/HighRollsBox.webp) with real text hidden underneath
+   and invisible pixel-scanned markers standing in for the printed digits. Converted to real
+   CSS + real text using the design tokens -- same box treatment the non-felt view already
+   used successfully, so felt mode now renders the actual DOM content instead of a picture of
+   it. LR_LAYOUT's positions/sizes are untouched (still valid boxes to place things in), only
+   what's drawn inside each box changed. */
 #lr-title-art{display:none}
 body.felt-mode #felt-stage #lucky-roller{background:transparent;border:none;padding:0}
 body.felt-mode #felt-stage #lucky-roller>*:not(.felt-lr){display:none!important}
 body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
-body.felt-mode #felt-stage #lr-title-art.felt-lr{display:block;z-index:1;background:url('LuckyRollerTitle.webp') center/100% 100% no-repeat;pointer-events:none}
+/* #lr-title-art measures ~174x50px on a full-size felt -- far too small for the base (non-felt)
+   view's 34px/30px title+pay type scale, which is why that text stays hidden here (see below)
+   and this gets its own small single-line label instead. */
+body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 13px var(--font-heavy);color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.04em;white-space:nowrap}
+body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER'}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
    the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again. */
 body.felt-mode #felt-stage #lucky-roller .lr-bonus-wrap.felt-lr{z-index:2}
-body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:transparent;border:none;width:100%;height:100%;border-radius:10px}
-body.felt-mode #felt-stage #lucky-roller #bbonus-low{background:url('LowRollsBox.webp') center/100% 100% no-repeat}
-body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar{background:url('RollEmAllBox.webp') center/100% 100% no-repeat}
-body.felt-mode #felt-stage #lucky-roller #bbonus-high{background:url('HighRollsBox.webp') center/100% 100% no-repeat}
+body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:var(--box-fill);border:var(--box-border);width:100%;height:100%;border-radius:6px}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{background:rgba(255,255,255,.10)}
-/* Hover-state override above forces background:transparent on :hover elsewhere in this file
-   (the "no hover highlighting" block) -- re-assert each box's own image so it doesn't vanish
-   on hover; higher specificity (id+:hover) wins over that rule's class+:hover selector. */
-body.felt-mode #felt-stage #lucky-roller #bbonus-low:hover{background:url('LowRollsBox.webp') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar:hover{background:url('RollEmAllBox.webp') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-high:hover{background:url('HighRollsBox.webp') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{}
-body.felt-mode #felt-stage #lucky-roller .lr-header,body.felt-mode #felt-stage #lucky-roller .lr-note,
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{display:none!important}
-body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:0}
-/* Equal-fifths flex distribution doesn't match the actual printed digits -- "8 9 10 11 12" isn't
-   evenly spaced like "2 3 4 5 6" (three of its five slots are 2-digit), so each glow sat next to
-   its number instead of on it. Positions below are each digit's real pixel center, scanned off
-   LuckyRollerTitle.webp's alpha channel (y=100-151 band) and converted to %-of-#bnums-low/high
-   (whose own width is calibrated to exactly the oval's pixel span, per the LR_LAYOUT comment) --
-   same method as the rest of this file's felt calibration, not eyeballed. */
-body.felt-mode #felt-stage #lucky-roller .lr-nums{position:relative;height:100%;width:100%;padding:0}
-body.felt-mode #felt-stage #lucky-roller .lr-num{position:absolute;top:6%;height:88%;width:15%;background:transparent;border:none;color:transparent;border-radius:8px;font-size:0;pointer-events:none;transform:translateX(-50%)}
-body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(1){left:14.6%}
-body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(2){left:32.4%}
-body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(3){left:49.6%}
-body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(4){left:67.6%}
-body.felt-mode #felt-stage #lucky-roller #bnums-low .lr-num:nth-child(5){left:85.4%}
-body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(1){left:31.0%}
-body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(2){left:45.0%}
-body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(3){left:52.6%;width:22%}
-body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(4){left:67.4%;width:22%}
-body.felt-mode #felt-stage #lucky-roller #bnums-high .lr-num:nth-child(5){left:82.2%;width:22%}
-body.felt-mode #felt-stage #lucky-roller .lr-nums{pointer-events:none}
+/* Each low/all/high box measures ~55x39px on a full-size felt -- the base view's title+pay text
+   (34px/30px) and the Roll'em All bar's inline style="font-size:30px/28px/38px" (set directly in
+   the HTML, so it beats any stylesheet rule short of !important) were both sized for a much
+   bigger box. Rather than fight those with more and more !important overrides, hide the full
+   title text (.lr-title) in this tiny context -- the shared LUCKY ROLLER label above already
+   identifies the section -- and keep only the payout-ratio text (.lr-pay), shrunk to fit, plus
+   the numbers below it. Only .lr-title/.lr-note are hidden, not the whole .lr-header container,
+   so the real "31 for 1"/"156 for 1" text already in the DOM still renders (no fake content
+   needed) for both the low/high boxes and (via its own inline-style override) Roll'em All. */
+body.felt-mode #felt-stage #lucky-roller .lr-title,body.felt-mode #felt-stage #lucky-roller .lr-note{display:none!important}
+body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:2px 2px 0;position:relative}
+body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:9px!important;font-weight:700;color:var(--color-gold);text-shadow:none}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{position:absolute;top:2px;left:0;right:0;text-align:center}
+body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:1px 2px 0}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{padding-top:11px!important}
+/* #bnums-low/#bnums-high are NOT nested inside their box in felt mode -- enterFeltMode()
+   reparents every LR_LAYOUT entry (including these) to be direct children of #lucky-roller,
+   each independently absolutely-positioned per its own LR_LAYOUT %-coordinates (a floating
+   strip that used to sit over the title art's printed "2 3 4 5 6" oval, not part of the
+   clickable box below it). That positioning is still correct and untouched (.felt-lr's own
+   position:absolute); only what's laid out INSIDE that strip changes here, via flex instead
+   of the old per-digit pixel-scanned nth-child offsets (which were calibrated to match the
+   now-deleted baked image and have nothing left to align to). */
+body.felt-mode #felt-stage #lucky-roller .lr-nums{height:auto;padding:0;display:flex;flex-wrap:wrap;align-content:center;gap:1px;justify-content:center}
+body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:11px;height:11px;font-size:8px;line-height:11px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.15);border-radius:2px;padding:0 1px}
+body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:9px;min-height:9px}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar #bstk-all{font-size:14px!important}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
 /* Felt art bakes the numbers themselves into the box image (base .lr-num above is
    color:transparent;font-size:0 -- no text to recolor), so a hit can't be shown by changing
@@ -1068,15 +1074,14 @@ body.felt-mode #felt-stage #lucky-roller .lr-bonus.has-bet,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar.has-bet{
   border-color:transparent!important;background:transparent!important;outline:none!important;
 }
-/* The has-bet rule above (predates the new cut art -- back when the box's visible art came
-   from #lucky-roller's own single background image showing through a transparent child, not
-   from the child itself) forces background:transparent!important the moment a bet lands,
-   which was wiping out each box's own new background image entirely (Deck: "half the box
-   disappears when I bet it"). Re-assert each box's own image with matching !important +
+/* The has-bet rule above forces background:transparent!important the moment a bet lands,
+   which would wipe out each box's own --box-fill background entirely (Deck: "half the box
+   disappears when I bet it" -- same bug this was originally fixed for, just against the new
+   CSS fill instead of the old baked art). Re-assert each box's fill with matching !important +
    higher id specificity so it survives .has-bet same as it already does on :hover. */
-body.felt-mode #felt-stage #lucky-roller #bbonus-low.has-bet{background:url('LowRollsBox.webp') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar.has-bet{background:url('RollEmAllBox.webp') center/100% 100% no-repeat!important}
-body.felt-mode #felt-stage #lucky-roller #bbonus-high.has-bet{background:url('HighRollsBox.webp') center/100% 100% no-repeat!important}
+body.felt-mode #felt-stage #lucky-roller #bbonus-low.has-bet,
+body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar.has-bet,
+body.felt-mode #felt-stage #lucky-roller #bbonus-high.has-bet{background:var(--box-fill)!important}
 body.felt-mode #felt-stage .odds-pay{display:none}
 /* Crapless-only reinforcement: Horn cell highlighting was still showing despite two earlier
    neutralization passes that should already cover it by source order. Could not find the exact
@@ -1760,7 +1765,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.5</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.6</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
