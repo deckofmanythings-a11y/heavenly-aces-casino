@@ -85,9 +85,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .zero-top{left:0.104%;top:0.168%;width:8.234%;height:31.229%}
 .zero-bot{left:0.104%;top:31.397%;width:8.234%;height:29.63%}
 .cell-stk{position:absolute;bottom:1px;right:2px;font-size:min(13px,1.8cqw);color:#ffd700;font-weight:700;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.9)}
-.mbtn-corner{display:none;position:absolute;top:1px;right:2px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.65);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:11px;line-height:12px;text-align:center;cursor:pointer;z-index:5;padding:0}
-.bet-cell:hover .mbtn-corner.vis{display:block}
-.mbtn-corner:hover{background:rgba(180,0,0,.7)}
+/* Removed site-wide (same as Sic-Bo): right-click and drag-off already remove a bet,
+   this corner button was redundant. display:none!important rather than deleting every
+   creation site, since one is inline markup (0/00) and others are built in JS. */
+.mbtn-corner{display:none!important}
 /* Split/corner targets: thin (or small square, for corners) click zones straddling the gold
    pinstripe border lines baked into the art between number cells. Fully transparent at rest
    (the baked border already reads fine on its own) -- only a hover/active highlight shows. */
@@ -310,7 +311,7 @@ body{--chip:82px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.31</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.32</div>
       <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
     </div>
     <div id="wheel-zone">
