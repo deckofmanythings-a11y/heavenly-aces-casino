@@ -32,7 +32,7 @@
   // all at frame 0, so they don't read as synced for the first couple seconds after the modal
   // opens.
   function buildRaysHTML() {
-    let html = '<div class="wm-winner-rays-spin">';
+    let html = '<div class="wm-winner-rays-wobble">';
     for (let i = 0; i < 6; i++) {
       const dur = (4.5 + Math.random() * 3).toFixed(2);
       const delay = (Math.random() * 2.5).toFixed(2);
@@ -66,43 +66,49 @@
       '  -webkit-text-stroke:1.5px #5c3d00;',
       '  filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(255,215,0,.8));',
       '  letter-spacing:.02em}',
-      // wm-winner-rays is the fixed oval window: sized dynamically to the payout text by
-      // sizeWinnerRays() below, and does NOT rotate -- it just holds the radial mask (not
-      // overflow:hidden) that shapes it to an oval, fading opacity to 0 well inside the boundary
-      // so rays taper away smoothly instead of getting sliced off by a hard clip edge. The oval
-      // itself must stay put lengthwise under the text; only its contents spin.
+      // wm-winner-rays is just the shared anchor point: centered on the text, scaled as a whole
+      // by --wm-ray-span (set by sizeWinnerRays() below) so the cluster grows for bigger payout
+      // text. No mask, no oval, no rotation of its own -- that all lives on its children now.
       '.wm-winner-rays{',
-      '  position:absolute;top:50%;left:50%;width:440px;height:180px;z-index:1;',
-      '  transform:translate(-50%,-50%);pointer-events:none;',
-      '  -webkit-mask-image:radial-gradient(ellipse at center,#000 0%,#000 42%,transparent 82%);',
-      '  mask-image:radial-gradient(ellipse at center,#000 0%,#000 42%,transparent 82%);',
+      '  position:absolute;top:50%;left:50%;z-index:1;pointer-events:none;',
+      '  transform:translate(-50%,-50%) scale(var(--wm-ray-span,1));',
       '}',
-      // wm-winner-rays-spin is the rotating group inside that fixed window -- one shared rotation
-      // (exact same rate for all 6 rays) so the rays sweep underneath the stationary oval mask.
-      '.wm-winner-rays-spin{',
-      '  position:absolute;inset:0;animation:wmGodRaySpin 18s linear infinite;',
+      // wm-winner-rays-wobble gives all 6 rays one shared, gentle back-and-forth rotation (+/-2.5deg,
+      // ~5deg total swing) -- same rate for every ray since it's a single animation on their
+      // common parent, not six independent ones.
+      '.wm-winner-rays-wobble{',
+      '  position:absolute;top:0;left:0;width:1px;height:1px;',
+      '  animation:wmGodRayWobble 7s ease-in-out infinite;',
       '}',
-      '@keyframes wmGodRaySpin{',
-      '  from{transform:rotate(0deg)}',
-      '  to{transform:rotate(360deg)}',
+      '@keyframes wmGodRayWobble{',
+      '  0%,100%{transform:rotate(-2.5deg)}',
+      '  50%{transform:rotate(2.5deg)}',
       '}',
-      // Each ray is its own fixed 640x640 square (undistorted by the oval\'s aspect ratio, same
-      // trick the old single spinning disc used) pinned at a static 60deg-apart starting angle.
-      // Only the beam inside it animates, at a per-instance randomized speed/distance rolled in
-      // buildRaysHTML() -- so all 6 rotate in lockstep via the parent above, but breathe out of
-      // sync with each other.
+      // Each ray is its own fixed 640x640 square (undistorted rotation/gradient math) pinned at a
+      // static 60deg-apart starting angle, same as before. The old oval's aspect ratio (440x180,
+      // i.e. semi-axes 220x90) now informs a static per-angle reach scale instead of a clip mask:
+      // r(theta) = a*b / sqrt((b*cos(theta))^2 + (a*sin(theta))^2), normalized to r(0)=1, gives
+      // 1.0 at the 0/180 (left-right) rays and ~0.46 at the 60/120/240/300 (top/bottom-leaning)
+      // rays -- so the horizontal rays reach about twice as far as the vertical-leaning ones,
+      // matching how far that oval used to extend in each direction.
       '.wm-winner-ray{',
       '  position:absolute;top:50%;left:50%;width:640px;height:640px;pointer-events:none;',
-      '  transform:translate(-50%,-50%) rotate(0deg);',
+      '  transform:translate(-50%,-50%) rotate(0deg) scale(1);',
       '}',
-      '.wm-winner-ray[data-ray="1"]{transform:translate(-50%,-50%) rotate(60deg)}',
-      '.wm-winner-ray[data-ray="2"]{transform:translate(-50%,-50%) rotate(120deg)}',
-      '.wm-winner-ray[data-ray="3"]{transform:translate(-50%,-50%) rotate(180deg)}',
-      '.wm-winner-ray[data-ray="4"]{transform:translate(-50%,-50%) rotate(240deg)}',
-      '.wm-winner-ray[data-ray="5"]{transform:translate(-50%,-50%) rotate(300deg)}',
+      '.wm-winner-ray[data-ray="1"]{transform:translate(-50%,-50%) rotate(60deg) scale(.46)}',
+      '.wm-winner-ray[data-ray="2"]{transform:translate(-50%,-50%) rotate(120deg) scale(.46)}',
+      '.wm-winner-ray[data-ray="3"]{transform:translate(-50%,-50%) rotate(180deg) scale(1)}',
+      '.wm-winner-ray[data-ray="4"]{transform:translate(-50%,-50%) rotate(240deg) scale(.46)}',
+      '.wm-winner-ray[data-ray="5"]{transform:translate(-50%,-50%) rotate(300deg) scale(.46)}',
+      // The beam is the growing/shrinking part: a single conic-gradient wedge, radially masked so
+      // it fades to transparent well before its tip (smooth taper, no hard cutoff line), pulsing
+      // length via animated scale -- per-instance randomized speed/distance rolled in
+      // buildRaysHTML() so the 6 rays breathe out of sync with each other.
       '.wm-winner-ray-beam{',
-      '  position:absolute;inset:0;border-radius:50%;transform-origin:center;',
+      '  position:absolute;inset:0;transform-origin:center;',
       '  background:conic-gradient(from 0deg,rgba(255,224,130,.85) 0deg 34deg,rgba(255,224,130,0) 34deg 360deg);',
+      '  -webkit-mask-image:radial-gradient(circle at center,#000 0%,#000 30%,transparent 78%);',
+      '  mask-image:radial-gradient(circle at center,#000 0%,#000 30%,transparent 78%);',
       '  animation-name:wmRayPulse;animation-timing-function:ease-in-out;animation-iteration-count:infinite;',
       '}',
       '@keyframes wmRayPulse{',
@@ -249,11 +255,12 @@
     })();
   }
 
-  // The god-ray oval is sized to the actual rendered payout text (not a hardcoded guess) by
+  // The god-ray cluster is scaled to the actual rendered payout text (not a hardcoded guess) by
   // measuring an offscreen clone with the final amount string -- the visible amount still
-  // starts at $0.00 and ticks up, so measuring the live element directly would size the oval
-  // far too small. Padded a bit larger than the raw text box so the rays bloom out around the
-  // digits rather than hugging them tightly.
+  // starts at $0.00 and ticks up, so measuring the live element directly would size the rays
+  // far too small. --wm-ray-span is a multiplier on the whole cluster (1 = the reference 440px-
+  // wide oval the per-ray reach scales in .wm-winner-ray were tuned against), so wider payout
+  // text blooms the rays out further without changing their relative reach per direction.
   function sizeWinnerRays(amount, fmt) {
     if (!amtEl || !raysEl) return;
     const clone = amtEl.cloneNode(false);
@@ -262,8 +269,7 @@
     document.body.appendChild(clone);
     const r = clone.getBoundingClientRect();
     clone.remove();
-    raysEl.style.width = Math.max(220, r.width * 1.15) + 'px';
-    raysEl.style.height = Math.max(120, r.height * 1.55) + 'px';
+    raysEl.style.setProperty('--wm-ray-span', (Math.max(220, r.width * 1.15) / 440).toFixed(3));
   }
 
   function defaultFmt(n) {
