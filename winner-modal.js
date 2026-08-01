@@ -27,18 +27,18 @@
 
   // ---------- DOM ----------
   // Six rays, each rolled its own pulse speed/distance within the same margin (duration
-  // 4.5-7.5s, scale 1.12-1.28) so they breathe out of sync with each other. Negative delays
-  // start each beam mid-cycle instead of all at frame 0, so they don't read as synced for the
-  // first couple seconds after the modal opens.
+  // 4.5-7.5s, scale 1.12-1.28 -- how far the tip reaches, not opacity) so they lengthen and
+  // retract out of sync with each other. Negative delays start each beam mid-cycle instead of
+  // all at frame 0, so they don't read as synced for the first couple seconds after the modal
+  // opens.
   function buildRaysHTML() {
     let html = '';
     for (let i = 0; i < 6; i++) {
       const dur = (4.5 + Math.random() * 3).toFixed(2);
       const delay = (Math.random() * 2.5).toFixed(2);
       const scale = (1.12 + Math.random() * 0.16).toFixed(3);
-      const opLo = (0.45 + Math.random() * 0.2).toFixed(2);
       html += '<div class="wm-winner-ray" data-ray="' + i + '">' +
-        '<div class="wm-winner-ray-beam" style="animation-duration:' + dur + 's;animation-delay:-' + delay + 's;--wm-ray-scale:' + scale + ';--wm-ray-op-lo:' + opLo + '"></div>' +
+        '<div class="wm-winner-ray-beam" style="animation-duration:' + dur + 's;animation-delay:-' + delay + 's;--wm-ray-scale:' + scale + '"></div>' +
       '</div>';
     }
     return html;
@@ -101,8 +101,8 @@
       '  animation-name:wmRayPulse;animation-timing-function:ease-in-out;animation-iteration-count:infinite;',
       '}',
       '@keyframes wmRayPulse{',
-      '  0%,100%{opacity:var(--wm-ray-op-lo,.55);transform:scale(1)}',
-      '  50%{opacity:1;transform:scale(var(--wm-ray-scale,1.18))}',
+      '  0%,100%{transform:scale(1)}',
+      '  50%{transform:scale(var(--wm-ray-scale,1.18))}',
       '}',
       '.wm-winner-coins{position:absolute;top:50%;left:50%;width:0;height:0;z-index:1;pointer-events:none;}',
       '#wm-modal-winner.big .wm-winner-box{animation:wmWinnerPop .35s cubic-bezier(.34,1.56,.64,1),wmBigWinPulse 1.1s ease-in-out infinite .35s}',
