@@ -104,7 +104,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    Light on top, Ante on bottom, per Deck's explicit order. ── */
 #bet-sidebar{display:flex;flex-direction:column;flex-shrink:0;align-items:center;justify-content:center;gap:2.2vh;padding:4px 2px}
 .bet-spot-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
-.bet-spot{width:min(64px,9vw);height:min(64px,9vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s;--chip:30px;--edge:calc(var(--chip)*0.16)}
+.bet-spot{width:min(64px,9vw);height:min(64px,9vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s;--chip:54px;--edge:calc(var(--chip)*0.16)}
 .bet-spot:hover{background:rgba(255,215,0,.14)}
 .bet-spot.active{border-color:#ffd700;background:rgba(255,215,0,.22)}
 .bet-spot.locked{cursor:default}
@@ -241,7 +241,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   .pc-slot-wrap .pc-card{--pc-w:8.4cqh}
   .row-label{width:11cqh;font-size:1.3cqh}
   #bet-sidebar{gap:1.4vh}
-  .bet-spot{width:min(46px,11vw);height:min(46px,11vw)}
+  .bet-spot{width:min(46px,11vw);height:min(46px,11vw);--chip:39px}
   #action-row{width:100%}
 }
 </style>
@@ -322,7 +322,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.8</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.9</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>

@@ -140,13 +140,17 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .panel-spot.active{}
 /* Bet-spot positions measured relative to #bets-module (the 561x651 art), not the
    table panel -- these are now children of #bets-module in the markup. */
-/* All five bet spots (Trips/Ante/Blind/Play/Light) share one --chip value so every
-   staked chip graphic renders at the exact same size regardless of how big or what
-   shape its own spot's hit-region/art happens to be. */
-#trips-spot{left:0%;top:7.373%;width:34.938%;height:30.108%;--chip:7cqh}
-#ante-spot{left:2.139%;top:42.550%;width:30.481%;height:26.267%;--chip:7cqh}
-#blind-spot{left:49.733%;top:42.550%;width:30.481%;height:26.267%;--chip:7cqh}
-#play-spot{left:2.139%;top:73.733%;width:30.481%;height:26.267%;--chip:7cqh}
+/* --chip is per-spot, tuned so the rendered chip-stack diameter lands at ~85% of that
+   spot's own hit-region diameter (Ante/Blind/Play are geometrically identical circles
+   so they share one value; Trips' circle is ~15% bigger so it needs its own larger
+   --chip to hit the same 85% target -- a uniform --chip across differently-sized
+   spots was previously landing Trips at ~63% and Ante/Blind/Play at ~72%, both under
+   the site-wide 80-90% target). Light gets its own smaller --chip (~60% target, see
+   below) since it's a fixed-stake side-bet spot, not a full player-bet circle. */
+#trips-spot{left:0%;top:7.373%;width:34.938%;height:30.108%;--chip:9.5cqh}
+#ante-spot{left:2.139%;top:42.550%;width:30.481%;height:26.267%;--chip:8.3cqh}
+#blind-spot{left:49.733%;top:42.550%;width:30.481%;height:26.267%;--chip:8.3cqh}
+#play-spot{left:2.139%;top:73.733%;width:30.481%;height:26.267%;--chip:8.3cqh}
 /* Circle-i payout-table buttons next to each bet spot -- opens #modal-paytable with
    the matching table (see openPaytable()/PAYTABLE_CONTENT). Positioned relative to
    #bets-module like the spots themselves. */
@@ -161,7 +165,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    in the open felt just above #bets-module (module children are position:absolute,
    this just extends upward via a negative top), not inside the module itself --
    there's no free space left inside its own canvas for it. */
-#light-spot,#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%;--chip:7cqh}
+#light-spot,#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%;--chip:5.8cqh}
 #light-off-img,#light-on-img{object-fit:contain}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 #light-info-btn{position:absolute;left:1%;top:-28.8%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
@@ -418,9 +422,13 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #light-info-btn{width:14%;height:9%}
   /* Portrait's #table-panel is much taller relative to its own width than landscape's
      letterboxed panel, so cqh (relative to #table-panel's height) is a much bigger
-     unit here -- landscape's 7cqh chip would render oversized against these smaller
-     circles. Scaled down proportionally to the module's own much smaller height. */
-  #trips-spot,#ante-spot,#blind-spot,#play-spot,#light-spot{--chip:3.3cqh}
+     unit here -- landscape's chip values would render oversized against these smaller
+     circles. Scaled down proportionally to the module's own much smaller height, same
+     per-spot split as landscape (Trips' circle is bigger than Ante/Blind/Play's, Light
+     targets ~60% instead of ~85%) -- see the landscape rule block's comment. */
+  #trips-spot{--chip:4.4cqh}
+  #ante-spot,#blind-spot,#play-spot{--chip:3.9cqh}
+  #light-spot{--chip:2.7cqh}
 
   #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
   #bottom-left{flex:1;height:auto}
@@ -512,7 +520,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.20</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.21</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>

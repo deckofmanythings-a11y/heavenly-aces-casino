@@ -808,9 +808,38 @@ body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{background:rgba(255
 body.felt-mode.game-standard #felt-stage .dp-name{display:none}
 body.felt-mode.game-standard #felt-stage #dp-bar12{display:none!important}
 /* ===== CHIP STACK BET INDICATORS ===== */
-#felt-stage{--chip:32px;--edge:calc(var(--chip)*0.16)}
+#felt-stage{--chip:56px;--edge:calc(var(--chip)*0.16)}
 body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
 body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{overflow:visible}
+/* Hardways bars are noticeably shorter than the other bet-spot boxes on this felt (measured
+   ~35px tall vs ~46-51px for the one-roll-bet/prop-circle/pass-line spots at the same felt
+   scale) -- the global --chip sized for those taller spots would overflow a hardways bar, so
+   scale the stack's own width back down locally to land in the same 80-90%-of-spot-diameter
+   target. NOTE: this deliberately overrides .has-stack's width directly rather than
+   redeclaring --chip on .bb -- `--chip:calc(var(--chip)*0.72)` on the SAME element that also
+   (via .has-stack) consumes --chip is a genuine CSS custom-property cycle (self-reference is
+   invalid at computed-value time even though it reads as "scale the inherited value"), which
+   silently resolved to an empty/invalid value and collapsed the chip stack to 0 width -- caught
+   by re-measuring after the first attempt. */
+body.felt-mode #felt-stage .bb .has-stack{width:calc(var(--chip)*0.72)}
+/* Lucky Roller bonus boxes (Low Rolls/Roll'em All/High Rolls) are this file's equivalent of a
+   Progressive-Light-style small fixed-stake side bet -- chip stacks there should read as ~60%
+   of the box's own diameter, not the full 80-90% player-bet-circle size. Same --chip-cycle
+   pitfall as above, so this also overrides width directly instead of redeclaring --chip. */
+body.felt-mode #felt-stage #lucky-roller .lr-bonus .has-stack,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .has-stack{width:calc(var(--chip)*0.62)}
+/* Place/Buy/Lay number tiles are much shorter than the other bet-spot boxes (measured ~40px
+   tall vs ~70-80px for the pass line/hop bet spots at the same felt scale) -- without this the
+   global --chip badly overflows them (measured ratio ~1.6, i.e. the chip stack was 60% wider
+   than the tile itself). */
+body.felt-mode #felt-stage .nb-buy .has-stack,
+body.felt-mode #felt-stage .nb-buy-left .has-stack,
+body.felt-mode #felt-stage .nb-place .has-stack,
+body.felt-mode #felt-stage .nb-lay .has-stack{width:calc(var(--chip)*0.53)}
+/* Don't Pass Bar is shorter than Pass Line at the same felt scale (measured ~64px vs ~80px) --
+   a chip sized to sit at 80-90% of Pass Line's height would run to ~100% of DP Bar's, so trim
+   it back specifically here to land in range on both bars. */
+body.felt-mode #felt-stage #dp-main .has-stack{width:calc(var(--chip)*0.85)}
 body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
 /* Come's own "COME" label is hidden in felt mode since the art draws it directly, so this is
    an estimate of where that painted text sits vertically within the box, not a measured value.
@@ -1745,7 +1774,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.41</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.42</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2207,7 +2236,7 @@ function sizeFeltStage(){
   const bsH=h*BOTTOM_SECTION_RATIO;
   const left=(W-w)/2,top=(H-groupH)/2;
   st.style.left=left+'px';st.style.top=top+'px';st.style.transform='none';
-  st.style.width=w+'px';st.style.height=h+'px';st.style.setProperty('--chip',Math.max(20,Math.round(h*0.052))+'px');
+  st.style.width=w+'px';st.style.height=h+'px';st.style.setProperty('--chip',Math.max(20,Math.round(h*0.091))+'px');
   // Below this width, #info-panel's fixed-percentage box (see FELT_LAYOUT) gets too narrow for
   // "Cash Out"/"Log Out" as text at any readable size -- see the body.felt-compact CSS rules.
   document.body.classList.toggle('felt-compact',w<520);
@@ -2944,7 +2973,7 @@ function spawnChipGhost(el,opts){
   // match to whatever the live felt is actually using right now, rather than a static fallback.
   const feltStageEl=document.getElementById('felt-stage');
   const liveChipVar=feltStageEl?getComputedStyle(feltStageEl).getPropertyValue('--chip').trim():'';
-  ghost.style.setProperty('--chip',liveChipVar||'32px');
+  ghost.style.setProperty('--chip',liveChipVar||'56px');
   if(chipSrc){
     const img=document.createElement('img');
     img.src=chipSrc;img.draggable=false;
@@ -3080,7 +3109,7 @@ function spawnWinPair(elId,amt,stays){
   winGhost.className='chip-ghost win-start';
   winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
   winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
-  winGhost.style.setProperty('--chip',liveChipVar||'32px');
+  winGhost.style.setProperty('--chip',liveChipVar||'56px');
   winGhost.innerHTML=chipStackHTML(amt,false,false,isFP);
   document.body.appendChild(winGhost);
   // Double rAF, not single -- a single rAF scheduled synchronously right after appendChild()
@@ -3104,7 +3133,7 @@ function spawnWinPair(elId,amt,stays){
     wagerGhost.className='chip-ghost';
     wagerGhost.style.left=rect.left+'px';wagerGhost.style.top=rect.top+'px';
     wagerGhost.style.width=rect.width+'px';wagerGhost.style.height=rect.height+'px';
-    wagerGhost.style.setProperty('--chip',liveChipVar||'32px');
+    wagerGhost.style.setProperty('--chip',liveChipVar||'56px');
     wagerGhost.innerHTML=stakeEl.innerHTML;
     document.body.appendChild(wagerGhost);
   }

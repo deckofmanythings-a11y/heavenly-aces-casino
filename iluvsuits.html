@@ -96,10 +96,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .panel-spot.locked{cursor:default}
 .panel-spot.inert{cursor:not-allowed}
 .panel-spot.active{}
-#ante-spot{left:56.78%;top:55.94%;width:5.50%;height:9.78%;--chip:7cqh}
-#play-spot{left:56.69%;top:67.94%;width:5.50%;height:9.78%;--chip:7cqh}
-#flushrush-spot{left:56.78%;top:44.33%;width:5.28%;height:9.39%;--chip:6.5cqh}
-#superflushrush-spot{left:63.81%;top:39.69%;width:5.28%;height:9.39%;--chip:6.5cqh}
+#ante-spot{left:56.78%;top:55.94%;width:5.50%;height:9.78%;--chip:8.3cqh}
+#play-spot{left:56.69%;top:67.94%;width:5.50%;height:9.78%;--chip:8.3cqh}
+#flushrush-spot{left:56.78%;top:44.33%;width:5.28%;height:9.39%;--chip:8cqh}
+#superflushrush-spot{left:63.81%;top:39.69%;width:5.28%;height:9.39%;--chip:8cqh}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 /* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
    baked-in bulb art (unlike UTH's), so both lightOFF.webp (idle) and lightON.webp (lit,
@@ -107,6 +107,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    Super Flush Rush circle and the I Luv Suits logo (per Deck's direction), sized to
    match the other circle spots. */
 #light-spot,#light-off-img,#light-on-img{left:73.5%;top:37.1%;width:5.28%;height:9.39%}
+#light-spot{--chip:5.6cqh}
 /* Explicit z-index required: light-off-img/light-on-img carry their own positive
    z-index, which paints above any sibling left at the default z-index:auto
    regardless of DOM order -- without this, the $5 chip label underneath got
@@ -401,7 +402,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.11</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.12</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
