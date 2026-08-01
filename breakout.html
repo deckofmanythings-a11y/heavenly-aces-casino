@@ -125,7 +125,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* THE LIGHT row -- a real flex item sized off its own square aspect ratio
    (lightOFF/ON.webp are 275x275), not a %-of-parent absolute box (that broke once
    #bets-module stopped having a definite height of its own). */
-#light-row{position:relative;width:40%;aspect-ratio:1/1;order:0}
+#light-row{position:relative;width:34.6%;aspect-ratio:1/1;order:0}
 
 /* Casino-felt printed rule text, drawn directly in the open felt (not baked into
    any art) -- an engraved-serif Google Font stands in for real printed felt type. */
@@ -173,8 +173,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
    #player-module, one inside #side-bets-module) since they're the same bet but
    render at different coordinates depending on which bottom-slot image is showing
    -- updateUI() updates both by class, only one is ever visible at a time. */
-#breakoutbonus-spot{left:4.07%;top:0%;width:33.7%;height:44.1%}
-#supertie-spot{left:0%;top:47.2%;width:30.3%;height:52.7%;--chip:72px}
+#breakoutbonus-spot{left:4.07%;top:0.55%;width:33.7%;height:43.0%}
+#supertie-spot{left:-2.15%;top:47.2%;width:34.6%;height:52.7%;--chip:72px}
 #player-module .spot-pairPlus{left:5.23%;top:0%;width:31.36%;height:48.41%}
 #player-module .spot-sweet17{left:0%;top:53.33%;width:35.88%;height:46.51%}
 #player-module .info-pairPlus{left:31%;top:2%}
@@ -196,12 +196,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
    rough guesses (left2%/top2%/38%/42% etc), which is why the chips looked
    randomly placed instead of centered on each badge/circle. */
 #fortunebet-spot{left:40.86%;top:12.36%;width:59.14%;height:87.64%;border-radius:50%}
-#trilux9-spot{left:0.84%;top:0%;width:31.14%;height:42.97%;--chip:72px}
+#trilux9-spot{left:-0.89%;top:-4.12%;width:34.6%;height:51.2%;--chip:72px}
 /* Bulb badge, not a felt circle -- the site-wide .has-stack default (top:38%, tuned for
    circles whose baked label sits below center) left the chip sitting noticeably above
    this badge's actual visual center. */
 #light-spot .has-stack{top:50%}
-#fortunebonus-spot{left:0%;top:60.74%;width:32.92%;height:39.26%}
+#fortunebonus-spot{left:0%;top:57.62%;width:32.92%;height:45.5%}
 
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.5cqh;font-weight:700;color:#ffd700;pointer-events:none;z-index:8}
 
@@ -284,7 +284,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .log-line{font-size:11px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #log-btn-bo{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
-.chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.chip{width:64px;height:64px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
 .chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
@@ -437,9 +437,11 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
   #bottom-left{flex:1;height:auto}
   #history-strip{display:none}
-  #bottom-bar{flex-wrap:nowrap;gap:2px;padding:2px 3px}
+  #bottom-bar{flex-wrap:nowrap;gap:2px;padding:2px 3px;overflow-x:auto;scrollbar-width:none}
+  #bottom-bar::-webkit-scrollbar{display:none}
   .chip[data-val="2"],.chip[data-val="3"],.chip[data-val="10"],.chip[data-val="50"]{display:none}
-  .chip{width:42px;height:42px;font-size:12px}
+  .chip{width:64px;height:64px;font-size:12px;flex-shrink:0}
+  #bottom-bar #hud-pnl,#bottom-bar .bar-btn{flex-shrink:0}
   .bar-btn{font-size:13px;padding:3px 5px;height:24px}
   #hud-pnl{font-size:15px;padding:0 2px}
   #action-row{width:100%;height:auto;flex:1}
@@ -542,7 +544,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.19</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.20</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>

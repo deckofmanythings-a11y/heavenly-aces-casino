@@ -9,6 +9,10 @@
 <script src="audio-settings.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* Single source of truth for chip-stack diameter so every chip (felt bet spots AND
+   the Chip Row denom buttons) renders at the exact same size -- overridden once in
+   the portrait media query below. */
+:root{--chip:54px}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
 
@@ -104,12 +108,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
    Light on top, Ante on bottom, per Deck's explicit order. ── */
 #bet-sidebar{display:flex;flex-direction:column;flex-shrink:0;align-items:center;justify-content:center;gap:2.2vh;padding:4px 2px}
 .bet-spot-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
-.bet-spot{width:min(64px,9vw);height:min(64px,9vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s;--chip:54px;--edge:calc(var(--chip)*0.16)}
+.bet-spot{width:min(60px,8.5vw);height:min(60px,8.5vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s;--edge:calc(var(--chip)*0.16)}
 .bet-spot:hover{background:rgba(255,215,0,.14)}
 .bet-spot.active{border-color:#ffd700;background:rgba(255,215,0,.22)}
 .bet-spot.locked{cursor:default}
 .bet-spot .bs-lock{position:absolute;bottom:-3px;right:-3px;background:#b02020;color:#fff;font-size:9px;border-radius:999px;padding:1px 4px;border:1px solid rgba(255,255,255,.6)}
-.bet-spot.light{border-color:rgba(255,255,255,.25);overflow:hidden}
+/* Light badge sized for its own ~80% chip-to-box ratio (chip stays the shared --chip
+   size; box is bigger than the other spots' since 54/0.8 > 54/0.9). */
+.bet-spot.light{width:min(67.5px,9.6vw);height:min(67.5px,9.6vw);border-color:rgba(255,255,255,.25);overflow:hidden}
 .bet-spot.light img{object-fit:contain}
 .bet-spot.light.active{border-color:#ffd700;background:rgba(255,215,0,.28);box-shadow:0 0 10px rgba(255,215,0,.5)}
 .bet-spot-name{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em}
@@ -151,7 +157,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .log-line{font-size:11px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #log-btn-paigow{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
-.chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.chip{width:var(--chip);height:var(--chip);border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
 .chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
@@ -242,7 +248,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
   .pc-slot-wrap .pc-card{--pc-w:8.4cqh}
   .row-label{width:11cqh;font-size:1.3cqh}
   #bet-sidebar{gap:1.4vh}
-  .bet-spot{width:min(46px,11vw);height:min(46px,11vw);--chip:39px}
+  :root{--chip:39px}
+  .bet-spot{width:min(43px,10.3vw);height:min(43px,10.3vw)}
+  .bet-spot.light{width:min(48.75px,11.7vw);height:min(48.75px,11.7vw)}
   #action-row{width:100%}
 }
 </style>
@@ -323,7 +331,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.10</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.11</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>

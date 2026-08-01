@@ -820,6 +820,14 @@ body.felt-mode.game-standard #felt-stage #dp-bar12{display:none!important}
    (see #light-spot / FELT_LAYOUT and the Lucky Roller box CSS) so a same-size chip lands
    at ~60% there naturally. */
 #felt-stage{--chip:30px;--edge:calc(var(--chip)*0.16)}
+/* Chip Row (#bottom-bar .chip, the $1/$5/$10/$25/$50/$100 denomination-selector buttons) lives
+   in #bottom-section -- a SIBLING of #felt-stage, not a descendant -- so it never picked up
+   #felt-stage's --chip and stayed at its CSS-authored fixed 30px (24px under the narrow-viewport
+   media query below) regardless of how the felt itself scaled. sizeFeltStage() now mirrors the
+   same computed chip px onto <body> (see JS), so this makes the Chip Row match every felt chip
+   stack's actual size exactly, in felt mode. !important beats the narrow-viewport .chip{24px}
+   media-query rule, which has equal specificity but comes later in source order otherwise. */
+body.felt-mode #bottom-bar .chip{width:var(--chip)!important;height:var(--chip)!important}
 body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
 body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{overflow:visible}
 body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
@@ -1756,7 +1764,7 @@ body.portrait-craps #felt-portrait{display:flex}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.43</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.44</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2222,7 +2230,16 @@ function sizeFeltStage(){
   // own height -- those are the shortest bet spots on this felt (see the CHIP STACK BET
   // INDICATORS CSS comment above), and every other bet type deliberately shares this same
   // flat size rather than getting its own larger multiplier.
-  st.style.width=w+'px';st.style.height=h+'px';st.style.setProperty('--chip',Math.max(16,Math.round(h*0.0424))+'px');
+  st.style.width=w+'px';st.style.height=h+'px';
+  const chipPx=Math.max(16,Math.round(h*0.0424));
+  st.style.setProperty('--chip',chipPx+'px');
+  // Chip Row (#bottom-bar .chip) lives in #bottom-section, a SIBLING of #felt-stage, not a
+  // descendant -- so setting --chip only on #felt-stage (above) never reaches it, and it was
+  // stuck at its CSS-authored fixed 30px/24px(narrow) forever while the felt's own chip
+  // stacks scaled with h. Mirroring the same value onto body lets the body.felt-mode
+  // #bottom-bar .chip rule (see CHIP STACK BET INDICATORS CSS) pick it up too, so the
+  // denomination-selector chips are finally the exact same size as every felt chip stack.
+  document.body.style.setProperty('--chip',chipPx+'px');
   // Below this width, #info-panel's fixed-percentage box (see FELT_LAYOUT) gets too narrow for
   // "Cash Out"/"Log Out" as text at any readable size -- see the body.felt-compact CSS rules.
   document.body.classList.toggle('felt-compact',w<520);

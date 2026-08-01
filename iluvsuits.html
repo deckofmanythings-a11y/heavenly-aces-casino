@@ -96,18 +96,18 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .panel-spot.locked{cursor:default}
 .panel-spot.inert{cursor:not-allowed}
 .panel-spot.active{}
-#ante-spot{left:56.78%;top:55.94%;width:5.50%;height:9.78%;--chip:8.3cqh}
-#play-spot{left:56.69%;top:67.94%;width:5.50%;height:9.78%;--chip:8.3cqh}
-#flushrush-spot{left:56.78%;top:44.33%;width:5.28%;height:9.39%;--chip:8cqh}
-#superflushrush-spot{left:63.81%;top:39.69%;width:5.28%;height:9.39%;--chip:8cqh}
+#ante-spot{left:56.88%;top:56.11%;width:5.31%;height:9.45%;--chip:8.5cqh}
+#play-spot{left:56.79%;top:68.11%;width:5.31%;height:9.45%;--chip:8.5cqh}
+#flushrush-spot{left:56.77%;top:44.30%;width:5.31%;height:9.45%;--chip:8.5cqh}
+#superflushrush-spot{left:63.80%;top:39.66%;width:5.31%;height:9.45%;--chip:8.5cqh}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 /* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
    baked-in bulb art (unlike UTH's), so both lightOFF.webp (idle) and lightON.webp (lit,
    post-deal) are placed as floating overlays -- positioned in the open gap between the
    Super Flush Rush circle and the I Luv Suits logo (per Deck's direction), sized to
    match the other circle spots. */
-#light-spot,#light-off-img,#light-on-img{left:73.5%;top:37.1%;width:5.28%;height:9.39%}
-#light-spot{--chip:8cqh}
+#light-off-img,#light-on-img{left:73.5%;top:37.1%;width:5.28%;height:9.39%}
+#light-spot{left:73.15%;top:36.48%;width:5.98%;height:10.63%;--chip:8.5cqh}
 /* Explicit z-index required: light-off-img/light-on-img carry their own positive
    z-index, which paints above any sibling left at the default z-index:auto
    regardless of DOM order -- without this, the $5 chip label underneath got
@@ -309,14 +309,15 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #player-region{left:7.5%;top:29%;width:85%;height:22%}
   .card-row{--pc-w:8cqh}
 
-  #flushrush-spot{left:43.2%;top:58.37%;width:11.47%;height:5.3%}
-  #ante-spot{left:43.2%;top:64.9%;width:11.47%;height:5.3%}
-  #play-spot{left:43.2%;top:71.43%;width:11.47%;height:5.3%}
-  #superflushrush-spot{left:56.27%;top:55.3%;width:13.07%;height:5.79%}
+  #flushrush-spot{left:43.17%;top:58.36%;width:11.54%;height:5.33%}
+  #ante-spot{left:43.40%;top:64.99%;width:11.08%;height:5.12%}
+  #play-spot{left:43.40%;top:71.52%;width:11.08%;height:5.12%}
+  #superflushrush-spot{left:56.23%;top:55.28%;width:13.15%;height:5.83%}
   /* THE LIGHT: portrait felt has the Super Flush Rush circle and the logo nearly
      touching corner-to-corner, so there's no real gap between them -- placed just
      above that cluster instead, biased toward the logo side. */
-  #light-spot,#light-off-img,#light-on-img{left:65%;top:45%;width:14%;height:7%}
+  #light-off-img,#light-on-img{left:65%;top:45%;width:14%;height:7%}
+  #light-spot{left:64.08%;top:44.54%;width:15.85%;height:7.92%}
   #light-info-btn{left:79.5%;top:45.5%;width:5%;height:2.5%}
 
   #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
@@ -402,7 +403,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.13</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.14</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>

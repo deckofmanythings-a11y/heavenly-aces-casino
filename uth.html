@@ -145,10 +145,17 @@ input,textarea{-webkit-user-select:text;user-select:text}
    tuning each spot's chip to its own circle's ratio. Trips' hit-region is ~15% bigger
    than Ante/Blind/Play's, so a same-size chip reads proportionally smaller there --
    that's expected/accepted, not a bug to fix by growing Trips' own chip again. */
-#trips-spot{left:0%;top:7.373%;width:34.938%;height:30.108%;--chip:8.3cqh}
-#ante-spot{left:2.139%;top:42.550%;width:30.481%;height:26.267%;--chip:8.3cqh}
-#blind-spot{left:49.733%;top:42.550%;width:30.481%;height:26.267%;--chip:8.3cqh}
-#play-spot{left:2.139%;top:73.733%;width:30.481%;height:26.267%;--chip:8.3cqh}
+/* FINAL PASS (this round): with --chip now flat/shared across all five spots, each
+   spot's own box is independently resized (while keeping its center anchored on the
+   same printed-circle position as before) so the SAME chip lands at ~90% of Trips/
+   Ante/Blind/Play's own box, and ~80% of Light's -- see #light-spot below. Trips'
+   box is still its own independent size from Ante/Blind/Play (converges to nearly
+   the same px because they now share the same target ratio + the same chip), it's
+   just no longer left at its old bigger size which under-filled at ~75%. */
+#trips-spot{left:3.004%;top:9.963%;width:28.931%;height:24.929%;--chip:8.3cqh}
+#ante-spot{left:2.912%;top:43.218%;width:28.936%;height:24.931%;--chip:8.3cqh}
+#blind-spot{left:50.506%;top:43.218%;width:28.936%;height:24.931%;--chip:8.3cqh}
+#play-spot{left:2.912%;top:74.401%;width:28.936%;height:24.931%;--chip:8.3cqh}
 /* Circle-i payout-table buttons next to each bet spot -- opens #modal-paytable with
    the matching table (see openPaytable()/PAYTABLE_CONTENT). Positioned relative to
    #bets-module like the spots themselves. */
@@ -163,7 +170,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
    in the open felt just above #bets-module (module children are position:absolute,
    this just extends upward via a negative top), not inside the module itself --
    there's no free space left inside its own canvas for it. */
-#light-spot,#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%;--chip:8.3cqh}
+/* #light-off-img/#light-on-img keep the ORIGINAL box -- that's the actual bulb graphic
+   the player sees (no baked circle art here to separately match), so it must not resize
+   just to tune the invisible chip-hitbox ratio. #light-spot (the hit-region + chip anchor)
+   gets its own independently-resized box so the same shared chip lands at ~80% of IT,
+   not the bulb image's box -- see the top of this rule block's comment for why Trips/
+   Ante/Blind/Play/Light all share one --chip value now. */
+#light-off-img,#light-on-img{left:2.139%;top:-26.267%;width:30.481%;height:26.267%}
+#light-spot{left:1.104%;top:-27.154%;width:32.552%;height:28.041%;--chip:8.3cqh}
 #light-off-img,#light-on-img{object-fit:contain}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
 #light-info-btn{position:absolute;left:1%;top:-28.8%;width:8%;height:6.5%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
@@ -198,7 +212,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #log-btn-uth{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
 .nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+/* Sized in vh (not fixed px) to track the felt's own cqh-based --chip size as the viewport
+   resizes -- #table-area/#bets-module's whole chain scales with vh in this layout (see
+   #top-row/#bottom-section's calc(100vh*N/16) heights), so 5.64vh lands within a fraction of
+   a px of the felt spots' chip diameter across a wide range of window sizes, verified at
+   900px, 1200px, and 750px viewport heights. Was a flat 52px, visibly mismatched (~52 vs
+   ~50.7px measured) -- new scope for this pass, not checked before. */
+.chip{width:5.64vh;height:5.64vh;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
 .chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
@@ -431,7 +451,9 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #history-strip{display:none}
   #bottom-bar{flex-wrap:nowrap;gap:2px;padding:2px 3px}
   .chip[data-val="2"],.chip[data-val="3"],.chip[data-val="10"],.chip[data-val="50"]{display:none}
-  .chip{width:42px;height:42px;font-size:12px}
+  /* Same vh-tracking approach as landscape's .chip rule -- verified at 900px and 750px
+     viewport heights, holds to ~3.90vh both times. Was a flat 42px vs felt's ~35.1px. */
+  .chip{width:3.9vh;height:3.9vh;font-size:12px}
   .bar-btn{font-size:13px;padding:3px 5px;height:24px}
   #hud-pnl{font-size:15px;padding:0 2px}
   #action-row{width:100%;height:auto;flex:1}
@@ -516,7 +538,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.22</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.23</div>
       <div id="game-mode-toggle" style="display:block">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
