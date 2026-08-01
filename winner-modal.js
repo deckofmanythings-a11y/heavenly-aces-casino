@@ -2,7 +2,8 @@
    winner-modal.js
    Shared "you win $X" overlay for the bubble machine tables: metallic
    gold payout text over a soft-edged dark glass panel sized to the actual
-   text, a 3D flipping gold-coin firework waterfall, and a "big win"
+   text, twinkling sparkles and a sweeping shine glint over the number,
+   a 3D flipping gold-coin firework waterfall, and a "big win"
    pulse/enlarge state. Builds its own DOM (like cloche-dice.js) so a
    host page just needs one script include and one function call.
 
@@ -26,6 +27,25 @@
   let winnerTimer = null, _winnerAmount = 0, _winnerAnimating = false, _onClose = null;
 
   // ---------- DOM ----------
+  // Fixed scatter of 7 spots (percentages of the amount-wrap box, so they track any payout
+  // width) rather than JS-random positions -- random placement risked sparkles clumping
+  // together or landing right on top of each other for short amounts. Each spot's own twinkle
+  // timing (duration + negative delay) IS randomized, so they still pop independently.
+  function buildSparklesHTML() {
+    const spots = [
+      { x: 4, y: 22, s: 18 }, { x: 94, y: 18, s: 22 }, { x: 50, y: 4, s: 15 },
+      { x: 14, y: 82, s: 24 }, { x: 86, y: 80, s: 18 }, { x: 40, y: 92, s: 13 },
+      { x: 66, y: 10, s: 20 }
+    ];
+    let html = '';
+    spots.forEach(function (p) {
+      const dur = (1.1 + Math.random() * 1.3).toFixed(2);
+      const delay = (Math.random() * 2).toFixed(2);
+      html += '<div class="wm-winner-sparkle" style="left:' + p.x + '%;top:' + p.y + '%;width:' + p.s + 'px;height:' + p.s + 'px;animation-duration:' + dur + 's;animation-delay:-' + delay + 's"></div>';
+    });
+    return html;
+  }
+
   function buildOverlay() {
     const style = document.createElement('style');
     style.textContent = [
@@ -58,15 +78,46 @@
       '  background:radial-gradient(ellipse at center,rgba(12,16,34,.82) 0%,rgba(12,16,34,.68) 42%,rgba(12,16,34,.32) 68%,rgba(12,16,34,0) 90%);',
       '}',
       '.wm-winner-coins{position:absolute;top:50%;left:50%;width:0;height:0;z-index:1;pointer-events:none;}',
+      // Sparkles: small 4-point glint stars (radial glow core + a thin cross of light through
+      // it, the classic "twinkle" icon shape) scattered around the number at fixed spots (see
+      // buildSparklesHTML() above), each with its own randomized twinkle speed so they don't
+      // flash in unison.
+      '.wm-winner-sparkles{position:absolute;inset:0;z-index:3;pointer-events:none;}',
+      '.wm-winner-sparkle{',
+      '  position:absolute;pointer-events:none;border-radius:50%;',
+      '  background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(255,244,200,.55) 35%,rgba(255,244,200,0) 70%);',
+      '  animation-name:wmSparkleTwinkle;animation-timing-function:ease-in-out;animation-iteration-count:infinite;',
+      '}',
+      '.wm-winner-sparkle::before,.wm-winner-sparkle::after{content:"";position:absolute;top:50%;left:50%;background:linear-gradient(90deg,transparent,#fff,transparent);}',
+      '.wm-winner-sparkle::before{width:220%;height:2px;transform:translate(-50%,-50%);}',
+      '.wm-winner-sparkle::after{width:2px;height:220%;transform:translate(-50%,-50%);}',
+      // transform:translate(-50%,-50%) is baked into every keyframe (not set as a separate base
+      // rule) because an animated transform replaces the property outright rather than composing
+      // with a static one -- omitting it here would let each sparkle's own top/left percentage
+      // (its center point) drift to become its top-left corner instead.
+      '@keyframes wmSparkleTwinkle{',
+      '  0%,100%{opacity:0;transform:translate(-50%,-50%) scale(.15) rotate(0deg)}',
+      '  50%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(25deg)}',
+      '}',
+      // Shine: a diagonal light band that sweeps across the amount-wrap every few seconds.
+      // mix-blend-mode:overlay means it brightens whatever's underneath (mostly the gold digits)
+      // instead of just painting a flat white stripe over everything.
+      '.wm-winner-shine{',
+      '  position:absolute;top:-20%;left:-60%;width:35%;height:140%;z-index:3;pointer-events:none;',
+      '  background:linear-gradient(75deg,transparent 0%,transparent 35%,rgba(255,255,255,.9) 50%,transparent 65%,transparent 100%);',
+      '  mix-blend-mode:overlay;animation:wmShineSweep 3.6s ease-in-out infinite;',
+      '}',
+      '@keyframes wmShineSweep{0%{left:-60%}22%{left:130%}100%{left:130%}}',
       '#wm-modal-winner.big .wm-winner-box{animation:wmWinnerPop .35s cubic-bezier(.34,1.56,.64,1),wmBigWinPulse 1.1s ease-in-out infinite .35s}',
       '@keyframes wmBigWinPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}',
       '#wm-modal-winner.big .wm-winner-title{font-size:48px}',
       '#wm-modal-winner.big .wm-winner-amount{font-size:160px}',
       '.wm-winner-bigtag{display:none;position:relative;z-index:2;font-size:24px;font-weight:900;letter-spacing:.15em;color:#ffe680;text-shadow:0 2px 6px rgba(0,0,0,.7);margin-bottom:2px}',
       '#wm-modal-winner.big .wm-winner-bigtag{display:block}',
-      // ---------- PUSH state: calmer sibling of the win celebration (no coin shower,
-      // silver/platinum text instead of gold; the glass panel stays -- it's just a legibility
-      // backdrop, not a celebration effect) -- see showPush() below.
+      // ---------- PUSH state: calmer sibling of the win celebration (no coin shower, no
+      // sparkles/shine, silver/platinum text instead of gold; the glass panel stays -- it's
+      // just a legibility backdrop, not a celebration effect) -- see showPush() below.
+      '#wm-modal-winner.push .wm-winner-sparkles,#wm-modal-winner.push .wm-winner-shine{display:none}',
       '#wm-modal-winner.push .wm-winner-amount{',
       '  background:linear-gradient(180deg,#f4f6f8 0%,#d8dee3 20%,#8b959c 48%,#eef1f3 55%,#aab2b8 75%,#5a6268 100%);',
       '  -webkit-background-clip:text;background-clip:text;color:transparent;',
@@ -96,6 +147,8 @@
           '<div class="wm-winner-glass"></div>' +
           '<div class="wm-winner-coins"></div>' +
           '<div class="wm-winner-amount">$0.00</div>' +
+          '<div class="wm-winner-sparkles">' + buildSparklesHTML() + '</div>' +
+          '<div class="wm-winner-shine"></div>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlayEl);
