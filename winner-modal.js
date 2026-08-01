@@ -26,6 +26,24 @@
   let winnerTimer = null, _winnerAmount = 0, _winnerAnimating = false, _onClose = null;
 
   // ---------- DOM ----------
+  // Six rays, each rolled its own pulse speed/distance within the same margin (duration
+  // 4.5-7.5s, scale 1.12-1.28) so they breathe out of sync with each other. Negative delays
+  // start each beam mid-cycle instead of all at frame 0, so they don't read as synced for the
+  // first couple seconds after the modal opens.
+  function buildRaysHTML() {
+    let html = '';
+    for (let i = 0; i < 6; i++) {
+      const dur = (4.5 + Math.random() * 3).toFixed(2);
+      const delay = (Math.random() * 2.5).toFixed(2);
+      const scale = (1.12 + Math.random() * 0.16).toFixed(3);
+      const opLo = (0.45 + Math.random() * 0.2).toFixed(2);
+      html += '<div class="wm-winner-ray" data-ray="' + i + '">' +
+        '<div class="wm-winner-ray-beam" style="animation-duration:' + dur + 's;animation-delay:-' + delay + 's;--wm-ray-scale:' + scale + ';--wm-ray-op-lo:' + opLo + '"></div>' +
+      '</div>';
+    }
+    return html;
+  }
+
   function buildOverlay() {
     const style = document.createElement('style');
     style.textContent = [
@@ -47,33 +65,46 @@
       '  -webkit-text-stroke:1.5px #5c3d00;',
       '  filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(255,215,0,.8));',
       '  letter-spacing:.02em}',
+      // wm-winner-rays is the rotating group: one shared rotation (exact same rate for all 6
+      // rays) applied here, sized dynamically to the payout text by sizeWinnerRays() below. The
+      // radial mask (not overflow:hidden) is what shapes it to an oval -- a mask fades opacity to
+      // 0 well inside the oval boundary, so rays taper away smoothly instead of getting sliced
+      // off by a hard clip edge.
       '.wm-winner-rays{',
       '  position:absolute;top:50%;left:50%;width:440px;height:180px;z-index:1;',
-      '  transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;pointer-events:none;',
-      '  animation:wmGodRayOpacityPulse 4.5s ease-in-out infinite,wmGodRayOvalBreathe 6.5s ease-in-out infinite;',
-      '}',
-      '.wm-winner-rays-spin{',
-      '  position:absolute;top:50%;left:50%;width:640px;height:640px;',
       '  transform:translate(-50%,-50%);pointer-events:none;',
-      '  background:repeating-conic-gradient(from 0deg,rgba(255,224,130,.78) 0deg 34deg,rgba(255,224,130,0) 34deg 60deg);',
-      '  animation:wmGodRaySpinPulse 18s ease-in-out infinite;',
+      '  -webkit-mask-image:radial-gradient(ellipse at center,#000 0%,#000 42%,transparent 82%);',
+      '  mask-image:radial-gradient(ellipse at center,#000 0%,#000 42%,transparent 82%);',
+      '  animation:wmGodRaySpin 18s linear infinite;',
+      '}',
+      '@keyframes wmGodRaySpin{',
+      '  from{transform:translate(-50%,-50%) rotate(0deg)}',
+      '  to{transform:translate(-50%,-50%) rotate(360deg)}',
+      '}',
+      // Each ray is its own fixed 640x640 square (undistorted by the oval\'s aspect ratio, same
+      // trick the old single spinning disc used) pinned at a static 60deg-apart starting angle.
+      // Only the beam inside it animates, at a per-instance randomized speed/distance rolled in
+      // buildRaysHTML() -- so all 6 rotate in lockstep via the parent above, but breathe out of
+      // sync with each other.
+      '.wm-winner-ray{',
+      '  position:absolute;top:50%;left:50%;width:640px;height:640px;pointer-events:none;',
+      '  transform:translate(-50%,-50%) rotate(0deg);',
+      '}',
+      '.wm-winner-ray[data-ray="1"]{transform:translate(-50%,-50%) rotate(60deg)}',
+      '.wm-winner-ray[data-ray="2"]{transform:translate(-50%,-50%) rotate(120deg)}',
+      '.wm-winner-ray[data-ray="3"]{transform:translate(-50%,-50%) rotate(180deg)}',
+      '.wm-winner-ray[data-ray="4"]{transform:translate(-50%,-50%) rotate(240deg)}',
+      '.wm-winner-ray[data-ray="5"]{transform:translate(-50%,-50%) rotate(300deg)}',
+      '.wm-winner-ray-beam{',
+      '  position:absolute;inset:0;border-radius:50%;transform-origin:center;',
+      '  background:conic-gradient(from 0deg,rgba(255,224,130,.85) 0deg 34deg,rgba(255,224,130,0) 34deg 360deg);',
+      '  animation-name:wmRayPulse;animation-timing-function:ease-in-out;animation-iteration-count:infinite;',
+      '}',
+      '@keyframes wmRayPulse{',
+      '  0%,100%{opacity:var(--wm-ray-op-lo,.55);transform:scale(1)}',
+      '  50%{opacity:1;transform:scale(var(--wm-ray-scale,1.18))}',
       '}',
       '.wm-winner-coins{position:absolute;top:50%;left:50%;width:0;height:0;z-index:1;pointer-events:none;}',
-      '@keyframes wmGodRaySpinPulse{',
-      '  0%{transform:translate(-50%,-50%) rotate(0deg) scale(1)}',
-      '  50%{transform:translate(-50%,-50%) rotate(180deg) scale(1.22)}',
-      '  100%{transform:translate(-50%,-50%) rotate(360deg) scale(1)}',
-      '}',
-      '@keyframes wmGodRayOpacityPulse{0%,100%{opacity:.55}50%{opacity:1}}',
-      '@keyframes wmGodRayOvalBreathe{',
-      '  0%{transform:translate(-50%,-50%) scale(1)}',
-      '  18%{transform:translate(-50%,-50%) scale(1.14)}',
-      '  34%{transform:translate(-50%,-50%) scale(0.92)}',
-      '  55%{transform:translate(-50%,-50%) scale(1.22)}',
-      '  71%{transform:translate(-50%,-50%) scale(0.96)}',
-      '  88%{transform:translate(-50%,-50%) scale(1.08)}',
-      '  100%{transform:translate(-50%,-50%) scale(1)}',
-      '}',
       '#wm-modal-winner.big .wm-winner-box{animation:wmWinnerPop .35s cubic-bezier(.34,1.56,.64,1),wmBigWinPulse 1.1s ease-in-out infinite .35s}',
       '@keyframes wmBigWinPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}',
       '#wm-modal-winner.big .wm-winner-title{font-size:48px}',
@@ -109,7 +140,7 @@
         '<div class="wm-winner-bigtag">BIG WIN</div>' +
         '<div class="wm-winner-title">🎉 Congratulations, you win 🎉</div>' +
         '<div class="wm-winner-amount-wrap">' +
-          '<div class="wm-winner-rays"><div class="wm-winner-rays-spin"></div></div>' +
+          '<div class="wm-winner-rays">' + buildRaysHTML() + '</div>' +
           '<div class="wm-winner-coins"></div>' +
           '<div class="wm-winner-amount">$0.00</div>' +
         '</div>' +

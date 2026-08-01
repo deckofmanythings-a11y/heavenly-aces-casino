@@ -1092,34 +1092,6 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   #roll-btn{font-size:20px;padding:6px 10px}
 }
 
-/* ══════════════ PORTRAIT CRAPS (Standard only) ══════════════
-   Uses Deck's actual craps-felt-portrait-*.png mockups as the felt background (same
-   art-image + overlay approach as Landscape's FELT_IMG/BlankFelt.webp), not a from-scratch
-   CSS redraw. Only genuinely new/dynamic UI (chip amounts, hit highlights, the mode
-   dropdown list, and the Bet Status list that didn't exist in the mockups) is overlaid. */
-#felt-portrait{display:none;flex-direction:column;padding:0;background:#0b4d33;color:#f3e9d2;font-family:inherit;box-sizing:border-box;width:100%}
-body.portrait-craps #play-area>*:not(#felt-portrait){display:none!important}
-body.portrait-craps #felt-portrait{display:flex}
-#pf-art{position:relative;width:100%;aspect-ratio:375/812;background-size:100% 100%;background-repeat:no-repeat;background-position:top center;overflow:hidden}
-#pf-art.mode-passline{background-image:url('craps-felt-portrait-passline.webp')}
-#pf-art.mode-luckyroller{background-image:url('craps-felt-portrait-luckyroller.webp')}
-#pf-art.mode-horn{background-image:url('craps-felt-portrait-horn-mode.webp')}
-#pf-art.mode-hardways{background-image:url('craps-felt-portrait-hardways-mode.webp')}
-#pf-art.mode-hopbets{background-image:url('craps-felt-portrait-hopbets-mode.webp')}
-#pf-art.mode-place{background-image:url('craps-felt-portrait-palce-mode.webp')}
-#pf-art.mode-buy{background-image:url('craps-felt-portrait-buy-mode.webp')}
-#pf-art.mode-lay{background-image:url('craps-felt-portrait-lay-mode.webp')}
-.pf-tap{position:absolute;cursor:pointer}
-.pf-hit{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .15s;background:rgba(60,255,140,.55);box-shadow:0 0 8px 2px rgba(60,255,140,.9)}
-.pf-hit.on{opacity:1}
-.pf-amt{position:absolute;font-size:11px;font-weight:700;color:#ffd700;text-shadow:0 1px 3px #000,0 0 2px #000;pointer-events:none;text-align:center}
-#pf-mode-dropdown{display:none;position:absolute;left:0;right:0;top:100%;z-index:50;background:#08321f;border:2px solid #d9843a;border-radius:6px;overflow:hidden}
-#pf-mode-dropdown.open{display:block}
-#pf-mode-dropdown .pf-opt{padding:8px;font-size:13px;cursor:pointer;color:#f3e9d2;background:#08321f;border-bottom:1px solid rgba(255,255,255,.1)}
-#pf-mode-dropdown .pf-opt:hover{background:rgba(255,255,255,.1)}
-#pf-status-list{display:flex;flex-direction:column;font-size:12px;padding:6px 10px;background:#0b4d33;border-top:1px solid rgba(255,255,255,.15)}
-#pf-status-list .pf-status-row{display:flex;justify-content:space-between;padding:2px 2px;opacity:.9}
-</style>
 </head>
 <body>
 
@@ -1537,21 +1509,6 @@ body.portrait-craps #felt-portrait{display:flex}
     <div id="felt-stage">
       <img id="felt-img" src="BlankFelt.webp" alt="" draggable="false">
       <div id="fm-art-layer"></div>
-    </div>
-
-    <!-- PORTRAIT CRAPS (Standard only) -- felt art is Deck's actual craps-felt-portrait-*.png
-         mockups (background-image, swapped per mode); everything below is a thin overlay of
-         invisible tap targets + dynamic text built by pfRender(), not hand-drawn felt. -->
-    <div id="felt-portrait">
-      <div id="pf-art" class="mode-passline">
-        <div id="pf-hit-overlay"></div>
-        <div id="pf-num-overlay"></div>
-        <div id="pf-mode-tap" class="pf-tap" onclick="pfToggleDropdown()">
-          <div id="pf-mode-dropdown"></div>
-        </div>
-        <div id="pf-lower-overlay"></div>
-      </div>
-      <div id="pf-status-list"></div>
     </div>
 
     <!-- LEFT COL -->
@@ -5047,7 +5004,6 @@ function updateUI(){
   const hopT=betTotal(Object.keys(HOP_MAP));
   const hwEl=document.getElementById('hw-total');if(hwEl)hwEl.textContent='$'+hwT.toFixed(2);
   const hopEl=document.getElementById('hop-total');if(hopEl)hopEl.textContent='$'+hopT.toFixed(2);
-  if(typeof pfRender==='function')pfRender();
   // Number strip
   ALL_NUMS.forEach(n=>{
     const be=document.getElementById('nb-buy-'+n),pe=document.getElementById('nb-place-'+n);if(!be)return;
@@ -5835,7 +5791,7 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
   const sum=d1+d2,hard=d1===d2;
   let returned=0;
   const act=(s.phase==='point'||s.betsOn)&&!s.betsOffThisRoll;
-  function loseBonus(){
+  function focusLoseBonus(){
     ['low','all','high'].forEach(t=>{if(s.bonus[t]>0){log.push('Bonus '+t+': lost '+s.bonus[t].toFixed(2));s.bonus[t]=0;}});
     s.bonus.lowHit=[];s.bonus.highHit=[];s.bonus.lowMax=s.bonus.allMax=s.bonus.highMax=0;
     s.bonus.open=true;s.bonus.locked=false;
@@ -5854,14 +5810,14 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
     const st=s.bets[key]||0;if(!st)return;
     delete s.bets[key];log.push(lbl+': lost '+st.toFixed(2));
   }
-  function sweepPlace(){
+  function focusSweepPlace(){
     FOCUS_ALL_NUMS.forEach(n=>{['place','buy'].forEach(t=>{
       const k=t+n;if(!s.bets[k])return;
       log.push((t==='buy'?'Buy':'Place')+' '+n+': lost '+s.bets[k].toFixed(2));
       delete s.bets[k];
     });});
   }
-  function loseComesBetsSeven(){
+  function focusLoseComesBetsSeven(){
     const ow=s.betsOn;
     s.comeBets.forEach(cb=>{
       log.push('Come ('+cb.num+'): lost '+cb.flat.toFixed(2)+'.');
@@ -5932,9 +5888,9 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
         if(hasPass)log.push('Front line winner — Pass Line wins.');
         if(ow)log.push('Come bets lose — odds were working and also lost.');
         else log.push('Come bets lose — odds returned (not working).');
-        loseComesBetsSeven();
+        focusLoseComesBetsSeven();
       }else if(hasPass)log.push('Front line winner — Pass Line wins.');
-      if(s.betsOn)sweepPlace();
+      if(s.betsOn)focusSweepPlace();
     }else if(sum===11){
       // Natural on the come-out: Pass Line wins, shooter stays on the come-out (no point set).
       // Bonus still locks -- it opens on a 7 and locks on the very next roll regardless of
@@ -5983,12 +5939,12 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
         log.push("Don't Pass Odds: +"+op.toFixed(2)+' (returned)');
         delete s.bets['dpodds'];
       }
-      sweepPlace();
+      focusSweepPlace();
       let msg='Seven-out — line away.';
       if(hadPass)msg+=' Pass Line loses.';
       if(hadCome||hadPreCome)msg+=' Come bets lose.';
       log.push(msg);
-      loseComesBetsSeven();
+      focusLoseComesBetsSeven();
       if(s.bets['come'])lose('come','Come (waiting)');
       // Don't Come: every landed bet wins when 7 arrives before its number, same event that
       // seven-outs the Pass Line/Come bets.
@@ -6991,207 +6947,11 @@ applyFocusVisibility();
 // manually reachable via ?tutorial=1 (see tutorialMaybeShowPopup()) or the debug panel.
 // window.addEventListener('load',tutorialMaybeShowPopup);
 
-// ══════════════ PORTRAIT CRAPS (Standard only) ══════════════
-// Uses Deck's actual craps-felt-portrait-*.png mockups as the felt background image
-// (background-image swapped per mode, exactly like Landscape's FELT_IMG/BlankFelt.webp
-// approach) -- this module only overlays the pieces that genuinely can't be baked into a
-// static mockup: tap targets, live chip amounts, hit highlights, the mode dropdown list,
-// and the Bet Status list (which didn't exist in the mockups). Row bands below are
-// pixel-scanned from the real PNGs (border-color edge detection down the vertical
-// center, same technique as the Crapless number-line calibration), not eyeballed --
-// they're identical across all 8 mockups since every mode uses the same row grid.
-const PF_ROWS={hit:[0,17.24],num:[17.24,29.68],mode:[29.68,41.5],r1:[41.5,53.6],r2:[53.6,66.0],r3:[66.0,78.2],r4:[78.2,90.5]};
-function pfBox(x0,y0,x1,y1){return 'left:'+x0+'%;top:'+y0+'%;width:'+(x1-x0)+'%;height:'+(y1-y0)+'%';}
-function pfAmtBox(x0,y0,x1,y1,amt){return amt?('<div class="pf-amt" style="'+pfBox(x0,y1-4,x1,y1)+'">'+fmt(amt)+'</div>'):'';}
-const PF_MODES=[
-  {id:'passline',label:'Pass/Come'},
-  {id:'luckyroller',label:'Lucky Roller',available:()=>G.bonus.open&&!G.bonus.locked},
-  {id:'horn',label:'Horn Bets'},
-  {id:'hardways',label:'Hard Ways'},
-  {id:'hopbets',label:'Hop Bets'},
-  {id:'place',label:'Place Bets'},
-  {id:'buy',label:'Buy Bets'},
-  {id:'lay',label:'Lay Bets'}
-];
-function pfModeAvailable(m){return m.available?m.available():true;}
-function isPortraitCraps(){return false;/* Portrait Craps disabled -- too many bugs to fix live with players in the games. Restore: `return window.matchMedia('(orientation: portrait)').matches&&activeGame==='standard';` */}
-function pfApplyOrientation(){
-  document.body.classList.toggle('portrait-craps',isPortraitCraps());
-  if(isPortraitCraps()){
-    const cur=PF_MODES.find(m=>m.id===G.portraitMode);
-    if(!cur||!pfModeAvailable(cur))G.portraitMode='passline';
-    pfBuildOnce();
-    pfRender();
-  }
-}
-window.addEventListener('resize',pfApplyOrientation);
-window.addEventListener('orientationchange',pfApplyOrientation);
-document.addEventListener('DOMContentLoaded',pfApplyOrientation);
-
-function pfToggleDropdown(){
-  const dd=document.getElementById('pf-mode-dropdown');
-  if(dd.classList.contains('open')){dd.classList.remove('open');return;}
-  dd.innerHTML=PF_MODES.filter(pfModeAvailable).map(m=>
-    '<div class="pf-opt" onclick="event.stopPropagation();pfSetMode(\''+m.id+'\')">'+m.label+'</div>'
-  ).join('');
-  dd.classList.add('open');
-}
-document.addEventListener('click',(e)=>{
-  const dd=document.getElementById('pf-mode-dropdown');
-  if(dd&&dd.classList.contains('open')&&!e.target.closest('#pf-mode-tap'))dd.classList.remove('open');
-});
-function pfSetMode(id){
-  G.portraitMode=id;
-  const dd=document.getElementById('pf-mode-dropdown');if(dd)dd.classList.remove('open');
-  pfRender();
-}
-function pfLrBet(t,ev){
-  if(ev&&ev.type==='contextmenu'){ev.preventDefault();bonusRemove(t);return;}
-  bonusBet(t);
-}
-function pfComeBet(which,ev){
-  const key=which==='come'?'come':'dc';
-  if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeBet(key);return;}
-  placeBet(key);
-}
-function pfNumberTap(n,ev){
-  const mode=G.portraitMode;
-  if(mode==='place'){if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeBet('place'+n);}else placeBet('place'+n);}
-  else if(mode==='buy'){if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeBet('buy'+n);}else placeBetWithCommissionCheck(()=>placeBet('buy'+n));}
-  else if(mode==='lay'){if(ev&&ev.type==='contextmenu'){ev.preventDefault();removeLay(n);}else placeBetWithCommissionCheck(()=>placeLay(n));}
-  // passline/hardways/hopbets/horn: number boxes are display-only (Come/DC travel automatically)
-}
-const PF_HORN_KEYS=['horn','aces','ace2','midnight','yo','anyCraps','any7','cande','eleven'];
-
-let _pfBuilt=false;
-function pfBuildOnce(){
-  if(_pfBuilt)return;_pfBuilt=true;
-  const[my0,my1]=PF_ROWS.mode;
-  document.getElementById('pf-mode-tap').style.cssText='position:absolute;'+pfBox(0,my0,100,my1);
-  // Hit-strip highlight dots -- approximate digit centers within Deck's pill art (no
-  // reliable auto-detected per-digit boundary from the border-scan; same "you'll have to
-  // figure it out" situation as the Crapless number-line calibration).
-  const lowXs=[9,15.5,22,28.5,35],highXs=[64,70.5,77,83.5,90];
-  document.getElementById('pf-hit-overlay').innerHTML=
-    LOW_NUMS.map((n,i)=>'<div class="pf-hit" id="pf-hit-'+n+'" style="'+pfBox(lowXs[i]-2,6.5,lowXs[i]+2,11)+'"></div>').join('')
-    +HIGH_NUMS.map((n,i)=>'<div class="pf-hit" id="pf-hit-'+n+'" style="'+pfBox(highXs[i]-2,6.5,highXs[i]+2,11)+'"></div>').join('');
-}
-
-function pfLowerHtml(mode){
-  const[r1a,r1b]=PF_ROWS.r1,[r2a,r2b]=PF_ROWS.r2,[r3a,r3b]=PF_ROWS.r3,[r4a,r4b]=PF_ROWS.r4;
-  if(mode==='passline'||mode==='luckyroller'||mode==='place'||mode==='buy'||mode==='lay'){
-    return '<div class="pf-tap" style="'+pfBox(0,r1a,50,r1b)+'" onclick="pfComeBet(\'come\',event)" oncontextmenu="pfComeBet(\'come\',event)"></div>'+pfAmtBox(0,r1a,50,r1b,G.bets.come||0)
-      +'<div class="pf-tap" style="'+pfBox(50,r1a,100,r1b)+'" onclick="pfComeBet(\'dc\',event)" oncontextmenu="pfComeBet(\'dc\',event)"></div>'+pfAmtBox(50,r1a,100,r1b,G.bets.dc||0)
-      +'<div class="pf-tap" style="'+pfBox(0,r2a,100,r2b)+'" onclick="placeBet(\'field\')" oncontextmenu="event.preventDefault();removeBet(\'field\')"></div>'+pfAmtBox(0,r2a,100,r2b,G.bets.field||0)
-      +'<div class="pf-tap" style="'+pfBox(55,r3a,100,r3b)+'" onclick="placeBet(\'dp\')" oncontextmenu="event.preventDefault();removeBet(\'dp\')"></div>'+pfAmtBox(55,r3a,100,r3b,G.bets.dp||0)
-      +'<div class="pf-tap" style="'+pfBox(55,r4a,100,r4b)+'" onclick="placeBet(\'pass\')" oncontextmenu="event.preventDefault();removeBet(\'pass\')"></div>'+pfAmtBox(55,r4a,100,r4b,G.bets.pass||0);
-  }
-  if(mode==='horn'){
-    const k=(key)=>G.bets[key]||0;
-    return '<div class="pf-tap" style="'+pfBox(0,r1a,50,r1b)+'" onclick="placeBet(\'aces\')" oncontextmenu="event.preventDefault();removeBet(\'aces\')"></div>'+pfAmtBox(0,r1a,50,r1b,k('aces'))
-      +'<div class="pf-tap" style="'+pfBox(50,r1a,100,r1b)+'" onclick="placeBet(\'ace2\')" oncontextmenu="event.preventDefault();removeBet(\'ace2\')"></div>'+pfAmtBox(50,r1a,100,r1b,k('ace2'))
-      +'<div class="pf-tap" style="'+pfBox(0,r2a,50,r2b)+'" onclick="placeBet(\'midnight\')" oncontextmenu="event.preventDefault();removeBet(\'midnight\')"></div>'+pfAmtBox(0,r2a,50,r2b,k('midnight'))
-      +'<div class="pf-tap" style="'+pfBox(50,r2a,100,r2b)+'" onclick="placeBet(\'yo\')" oncontextmenu="event.preventDefault();removeBet(\'yo\')"></div>'+pfAmtBox(50,r2a,100,r2b,k('yo'))
-      +'<div class="pf-tap" style="'+pfBox(0,r3a,100,r3b)+'" onclick="placeBet(\'horn\')" oncontextmenu="event.preventDefault();removeBet(\'horn\')"></div>'+pfAmtBox(0,r3a,100,r3b,k('horn'))
-      +'<div class="pf-tap" style="'+pfBox(0,r4a,50,r4b)+'" onclick="placeBet(\'any7\')" oncontextmenu="event.preventDefault();removeBet(\'any7\')"></div>'+pfAmtBox(0,r4a,50,r4b,k('any7'))
-      +'<div class="pf-tap" style="'+pfBox(50,r4a,100,r4b)+'" onclick="placeBet(\'anyCraps\')" oncontextmenu="event.preventDefault();removeBet(\'anyCraps\')"></div>'+pfAmtBox(50,r4a,100,r4b,k('anyCraps'));
-  }
-  if(mode==='hardways'){
-    return[['hard4',r1a,r1b],['hard6',r2a,r2b],['hard8',r3a,r3b],['hard10',r4a,r4b]].map(([key,a,b])=>
-      '<div class="pf-tap" style="'+pfBox(0,a,100,b)+'" onclick="placeBet(\''+key+'\')" oncontextmenu="event.preventDefault();removeBet(\''+key+'\')"></div>'+pfAmtBox(0,a,100,b,G.bets[key]||0)
-    ).join('');
-  }
-  if(mode==='hopbets'){
-    const keys=Object.keys(HOP_MAP);
-    const top=PF_ROWS.r1[0],bottom=90.5,rowH=(bottom-top)/11;
-    let html='';
-    for(let i=0;i<keys.length;i++){
-      const row=Math.floor(i/2),col=i%2;
-      const isLast=(i===keys.length-1)&&(keys.length%2===1);
-      const y0=top+row*rowH,y1=y0+rowH;
-      const x0=isLast?0:col*50,x1=isLast?100:(col+1)*50;
-      const key=keys[i];
-      html+='<div class="pf-tap" style="'+pfBox(x0,y0,x1,y1)+'" onclick="placeBet(\''+key+'\')" oncontextmenu="event.preventDefault();removeBet(\''+key+'\')"></div>'+pfAmtBox(x0,y0,x1,y1,G.bets[key]||0);
-    }
-    return html;
-  }
-  return '';
-}
-
-function pfRender(){
-  if(!isPortraitCraps())return;
-  pfBuildOnce();
-  const mode=G.portraitMode;
-  document.getElementById('pf-art').className='mode-'+mode;
-
-  // Hit-strip highlights (reuses Landscape's own Lucky Roller hit tracking)
-  ALL_BONUS.forEach(n=>{
-    const el=document.getElementById('pf-hit-'+n);if(!el)return;
-    el.classList.toggle('on',LOW_NUMS.includes(n)?G.bonus.lowHit.has(n):G.bonus.highHit.has(n));
-  });
-
-  // Number row vs Lucky Roller props (both sit in the PF_ROWS.num band)
-  const[ny0,ny1]=PF_ROWS.num;
-  const numOverlay=document.getElementById('pf-num-overlay');
-  if(mode==='luckyroller'){
-    const cw=100/3;
-    numOverlay.innerHTML=['low','all','high'].map((t,i)=>{
-      const x0=i*cw,x1=(i+1)*cw;
-      return '<div class="pf-tap" style="'+pfBox(x0,ny0,x1,ny1)+'" onclick="pfLrBet(\''+t+'\',event)" oncontextmenu="pfLrBet(\''+t+'\',event)"></div>'+pfAmtBox(x0,ny0,x1,ny1,G.bonus[t]);
-    }).join('');
-  }else{
-    const cw=100/6;
-    const travelModes=(mode==='passline'||mode==='hardways'||mode==='hopbets'||mode==='horn');
-    numOverlay.innerHTML=ALL_NUMS_STANDARD.map((n,i)=>{
-      let amt=0;
-      if(travelModes){
-        const cb=G.comeBets.find(c=>c.num===n),dcb=G.dcBets.find(c=>c.num===n);
-        amt=r2((cb?cb.flat+(cb.odds||0):0)+(dcb?dcb.flat+(dcb.odds||0):0));
-      }else if(mode==='place')amt=G.bets['place'+n]||0;
-      else if(mode==='buy')amt=G.bets['buy'+n]||0;
-      else if(mode==='lay')amt=G.bets['lay'+n]||0;
-      const isPoint=G.phase==='point'&&G.point===n;
-      const x0=i*cw,x1=(i+1)*cw;
-      return '<div class="pf-tap" style="'+pfBox(x0,ny0,x1,ny1)+(isPoint?';box-shadow:inset 0 0 0 3px #fff':'')+'" onclick="pfNumberTap('+n+',event)" oncontextmenu="pfNumberTap('+n+',event)"></div>'+pfAmtBox(x0,ny0,x1,ny1,amt);
-    }).join('')
-    // On/Off indicator: black border around the whole number line while off (comeout, no
-    // point yet) -- same replacement for the sliding puck as Landscape's .line-off class.
-    +(G.phase==='comeout'?'<div class="pf-tap" style="'+pfBox(0,ny0,100,ny1)+';border:3px solid #000;pointer-events:none"></div>':'');
-  }
-
-  // Lower panel (cheap to fully rebuild per render, keeps amounts always in sync)
-  document.getElementById('pf-lower-overlay').innerHTML=pfLowerHtml(mode);
-
-  // Bet status list
-  const comeTotal=r2(betTotal(['pass','passodds','dp','dpodds'])+
-    G.comeBets.reduce((s,c)=>r2(s+c.flat+(c.odds||0)),0)+
-    G.dcBets.reduce((s,c)=>r2(s+c.flat+(c.odds||0)),0));
-  const lrTotal=r2(G.bonus.low+G.bonus.all+G.bonus.high);
-  const hornTotal=betTotal(PF_HORN_KEYS);
-  const hopTotal=betTotal(Object.keys(HOP_MAP));
-  const hardTotal=betTotal(['hard4','hard6','hard8','hard10']);
-  const placeTotal=betTotal(ALL_NUMS_STANDARD.map(n=>'place'+n));
-  const buyTotal=betTotal(ALL_NUMS_STANDARD.map(n=>'buy'+n));
-  const layTotal=betTotal(ALL_NUMS_STANDARD.map(n=>'lay'+n));
-  const rows=[
-    ['Pass/Come',comeTotal,true],
-    ['Lucky Roller',lrTotal,false],
-    ['Horn',hornTotal,false],
-    ['Hops',hopTotal,false],
-    ['Hard Ways',hardTotal,false],
-    ['Place',placeTotal,false],
-    ['Buy',buyTotal,false],
-    ['Lay',layTotal,false]
-  ];
-  document.getElementById('pf-status-list').innerHTML=rows.filter(r=>r[2]||r[1]>0).map(r=>
-    '<div class="pf-status-row"><span>'+r[0]+':</span><span>'+fmt(r[1])+'</span></div>'
-  ).join('');
-}
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
 <script src="cloche-dice.js?v=0.7.0"></script>
-<script src="winner-modal.js?v=0.4.88"></script>
+<script src="winner-modal.js?v=0.4.89"></script>
 <script src="dailies-popup.js?v=4"></script>
 <script>
 // Cloche dice overlay: shared module, configured for craps (2 dice, 2.0 scale)
