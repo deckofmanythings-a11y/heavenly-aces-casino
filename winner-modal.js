@@ -27,15 +27,15 @@
 
   // ---------- DOM ----------
   // Six rays, each rolled its own pulse speed/distance within the same margin (duration
-  // 4.5-7.5s, shrinking to .35-.55x and stretching out to 1.5-2x its base reach -- a big,
-  // obvious swing, not a subtle one) so they lengthen and retract out of sync with each other.
+  // 1.5-2.5s -- 3x the original 4.5-7.5s pace per Deck -- shrinking to .35-.55x and stretching
+  // out to 1.5-2x its base reach) so they lengthen and retract out of sync with each other.
   // Negative delays start each beam mid-cycle instead of all at frame 0, so they don't read as
   // synced for the first couple seconds after the modal opens.
   function buildRaysHTML() {
     let html = '<div class="wm-winner-rays-wobble">';
     for (let i = 0; i < 6; i++) {
-      const dur = (4.5 + Math.random() * 3).toFixed(2);
-      const delay = (Math.random() * 2.5).toFixed(2);
+      const dur = (1.5 + Math.random()).toFixed(2);
+      const delay = (Math.random() * 0.83).toFixed(2);
       const scaleMin = (0.35 + Math.random() * 0.2).toFixed(3);
       const scaleMax = (1.5 + Math.random() * 0.5).toFixed(3);
       html += '<div class="wm-winner-ray" data-ray="' + i + '">' +
