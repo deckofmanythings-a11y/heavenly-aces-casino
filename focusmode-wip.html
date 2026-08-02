@@ -267,7 +267,13 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
    width). This corrects the calibrated "default" itself, not a --font-scale shrink -- these
    two were always ~4-13px too big for their own box, just invisible until nowrap stopped
    hiding it behind a wrap. */
-body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(44px * var(--font-scale,1))!important}
+/* 44px (the earlier "confirmed safe" size) only ever checked each of the 3 flex children --
+   odds/SEVEN/odds -- for its OWN internal overflow (nowrap fit). It never checked whether
+   their COMBINED width fit the row: measured live, odds+name+odds summed to 171px against
+   ~159px of available content width (#bet-any7's padding eats a few px off the calibrated
+   box), overflowing ~12px to the right since the row has overflow:visible and no flex-shrink.
+   Trimmed until the sum actually fits with margin. */
+body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(38px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:calc(28px * var(--font-scale,1))!important}
 .prop-bar-stk{font-size:17px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
@@ -2233,7 +2239,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.13</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.14</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
