@@ -2193,7 +2193,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.10</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.11</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2375,7 +2375,7 @@ const FELT_LAYOUT=[
   // same x/width as #lucky-roller directly above it, with a small gap before LR's top edge.
   // exitFeltMode() already restores any FELT_LAYOUT element to its original DOM home via the
   // same feltHomes mechanism used everywhere else, so list mode is unaffected.
-  ['#history-strip',  38.594,3.9, 22.656,3.4,null],
+  ['#history-strip',  38.594,2.9, 22.656,4.4,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -2825,22 +2825,27 @@ function sizeFeltStage(){
   }
   sizeDiceZone();
 }
-// Shrinks the 3D dice (rendered into #dice-canvas, sitting in #dice-zone between the Low
-// Rolls/Roll'em All/High Rolls props) whenever they'd otherwise get close enough to the
-// #bnums-low/#bnums-high number-pill rows to obscure a number -- LR_LAYOUT's percentages
-// are fixed, so at some felt sizes/aspect ratios the dice-zone box can end up close enough
-// to its neighbors that the actual rendered dice (not just their invisible flex box) crowd
-// into the pill rows. Re-measured on every resize since it depends on real pixel geometry.
+// Shrinks the 3D dice (rendered into #dice-canvas, sitting in #dice-zone) whenever they'd
+// otherwise get close enough to a neighboring panel to overlap it. Originally checked gap
+// against #bnums-low/#bnums-high (back when #dice-zone sat between them) -- Deck's drag-tool
+// export later moved #dice-zone to a different spot entirely ("up and to the left, into the
+// previously-empty area above Hard Ways", see LR_LAYOUT's own comment), leaving the gap check
+// comparing two elements that are no longer adjacent at all. That produced a nonsense large
+// negative "gap" on every resize, permanently pinning the dice to this function's 0.5x floor
+// regardless of actual window/felt size (confirmed live: transform stuck at scale(0.5) even
+// at full reference width) -- NOT what "scale with the box" means, and it masked a real
+// separate overlap with #left-col-header (measured live: ~18px overlap at 1600px width) that
+// this function was never checking for. Fixed to measure against the panel #dice-zone
+// actually sits beside now. Re-measured on every resize since it depends on real pixel geometry.
 const DICE_ZONE_MARGIN=4; // minimum px gap to keep clear on each side
 function sizeDiceZone(){
   const dz=document.getElementById('dice-zone'),wrap=document.getElementById('dice-canvas-wrap');
-  const bl=document.getElementById('bnums-low'),bh=document.getElementById('bnums-high');
-  if(!dz||!wrap||!bl||!bh)return;
+  const lch=document.getElementById('left-col-header');
+  if(!dz||!wrap||!lch)return;
   wrap.style.transform='none'; // reset before measuring real (unshrunk) geometry
-  const dzR=dz.getBoundingClientRect(),blR=bl.getBoundingClientRect(),bhR=bh.getBoundingClientRect();
+  const dzR=dz.getBoundingClientRect(),lchR=lch.getBoundingClientRect();
   if(!dzR.width)return; // not laid out yet (e.g. felt mode not entered)
-  const leftGap=dzR.left-blR.right,rightGap=bhR.left-dzR.right;
-  const worstGap=Math.min(leftGap,rightGap);
+  const worstGap=dzR.left-lchR.right; // only #left-col-header is ever close enough to matter
   if(worstGap>=DICE_ZONE_MARGIN)return; // already clear, leave at full size
   // Scale is centered (transform-origin defaults to 50% 50%), so shrinking width w by factor
   // s frees (w-s*w)/2 px on EACH side -- solve for the s that recovers the missing margin.
