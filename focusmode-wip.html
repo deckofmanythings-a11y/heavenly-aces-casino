@@ -602,9 +602,17 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 #calib-layer{position:absolute;inset:0;z-index:200;pointer-events:none}
 .calib-box{position:absolute;border:2px dashed #0ff;background:rgba(0,255,255,.15);cursor:move;pointer-events:auto;box-sizing:border-box}
 .calib-box.dragging{background:rgba(0,255,255,.3);border-color:#fff}
+.calib-box.selected{border-color:#f0f;border-style:solid;box-shadow:0 0 0 1px rgba(255,0,255,.4),0 0 8px 2px rgba(255,0,255,.5)}
 .calib-box .calib-label{position:absolute;top:1px;left:2px;font-size:10px;color:#0ff;background:rgba(0,0,0,.6);padding:0 3px;border-radius:2px;white-space:nowrap;pointer-events:none}
 .calib-box .calib-handle{position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;background:#0ff;border:1px solid #003;border-radius:3px;cursor:nwse-resize;pointer-events:auto}
 .calib-box .calib-dot{position:absolute;left:50%;top:50%;width:6px;height:6px;background:#f0f;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+/* Nudge-arrow movement handles (Deck: "give me some movement handles... snap to 5px so
+   everything can stay super perfect aligned") -- deterministic +/-5px steps on the selected
+   box, same SNAP_PX increment drag/resize already round to, so keyboard/button nudges and
+   mouse-drag can never disagree with each other. */
+.calib-nudge-btn{width:22px;height:22px;padding:0;font-size:11px;line-height:1;background:rgba(0,255,255,.15);border:1px solid rgba(0,255,255,.5);border-radius:3px;color:#0ff;cursor:pointer}
+.calib-nudge-btn:hover{background:rgba(0,255,255,.3)}
+.calib-nudge-btn:active{background:rgba(0,255,255,.5)}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
 .info-section{margin-bottom:12px}
 .info-section h3{font-size:19px;font-weight:700;color:#ffe066;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
@@ -1485,7 +1493,12 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
        eyeballing screenshots and reporting pixel offsets back and forth. See calibXxx() funcs. -->
   <div id="calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff">
     <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
-    <span id="calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Drag a box to move it, corner handle to resize</span>
+    <span id="calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Click a box to select it, drag to move, corner handle to resize</span>
+    <div id="calib-nudge" style="display:grid;grid-template-columns:22px 22px 22px;grid-template-rows:22px 22px 22px;gap:2px">
+      <div></div><button class="calib-nudge-btn" onclick="calibNudge(0,-1)" title="Up 5px">▲</button><div></div>
+      <button class="calib-nudge-btn" onclick="calibNudge(-1,0)" title="Left 5px">◀</button><div></div><button class="calib-nudge-btn" onclick="calibNudge(1,0)" title="Right 5px">▶</button>
+      <div></div><button class="calib-nudge-btn" onclick="calibNudge(0,1)" title="Down 5px">▼</button><div></div>
+    </div>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibReset()">Reset</button>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibExport()">Export</button>
     <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleCalibMode()">Exit</button>
@@ -1866,7 +1879,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.13</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.14</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5701,26 +5714,51 @@ function calibBuildLayer(){
     const dot=document.createElement('div'); dot.className='calib-dot';
     const handle=document.createElement('div'); handle.className='calib-handle';
     box.appendChild(lbl); box.appendChild(dot); box.appendChild(handle);
+    box.classList.toggle('selected',sel===calibSelectedSel);
     box.addEventListener('pointerdown',e=>calibStartDrag(e,box,sel));
     handle.addEventListener('pointerdown',e=>{e.stopPropagation();calibStartResize(e,box,sel);});
     layer.appendChild(box);
   });
 }
-// Whole-pixel snapping (Deck: "the decimals throw me off") -- calibState is still stored as %
-// (that's what the CSS positioning needs), but every value is snapped so its pixel equivalent
-// on the 3200x1800 reference canvas is always a whole number, and the live readout/export show
-// that whole-pixel number instead of the % decimal.
-function pxSnapPct(pct,total){ return Math.round(pct/100*total)/total*100; }
+// 5px snapping (Deck: "snap to 5px increments so everything can stay super perfect aligned" --
+// was whole-pixel/1px before). calibState is still stored as % (that's what the CSS positioning
+// needs), but every value is snapped so its pixel equivalent on the 3200x1800 reference canvas
+// is always a multiple of SNAP_PX, and the live readout/export show that whole number instead
+// of the % decimal. Drag, resize, nudge buttons, and arrow keys all funnel through this same
+// constant so none of them can disagree with each other.
+const SNAP_PX=5;
+function pxSnapPct(pct,total){ return Math.round(pct/100*total/SNAP_PX)*SNAP_PX/total*100; }
 function calibStatusText(sel){
   const s=calibState[sel];
   const px=Math.round(s.x/100*FM_CANVAS_W),py=Math.round(s.y/100*FM_CANVAS_H);
   const pw=Math.round(s.w/100*FM_CANVAS_W),ph=Math.round(s.h/100*FM_CANVAS_H);
   return calibLabelFor(sel)+' -- x:'+px+'px y:'+py+'px w:'+pw+'px h:'+ph+'px';
 }
+// Currently-selected box (persists across drags/tab switches so the nudge buttons/arrow keys
+// below have something to act on even when the mouse isn't actively dragging).
+let calibSelectedSel=null;
+function calibSelect(sel){
+  calibSelectedSel=sel;
+  document.getElementById('calib-selected').textContent=sel?calibStatusText(sel):'Click a box to select it, drag to move, corner handle to resize';
+  document.querySelectorAll('#calib-layer .calib-box').forEach(b=>b.classList.toggle('selected',b.dataset.sel===sel));
+}
+// Movement handles (Deck: "give me some movement handles") -- nudges the selected box by exactly
+// one SNAP_PX step per press, via the toolbar's arrow buttons or the arrow keys (see the
+// keydown listener in toggleCalibMode). dx/dy are direction units (-1/0/1), not pixels.
+function calibNudge(dx,dy){
+  if(!calibSelectedSel||!calibState[calibSelectedSel])return;
+  const s=calibState[calibSelectedSel];
+  const stepXPct=SNAP_PX/FM_CANVAS_W*100,stepYPct=SNAP_PX/FM_CANVAS_H*100;
+  s.x=Math.max(0,Math.min(100-s.w,pxSnapPct(s.x,FM_CANVAS_W)+dx*stepXPct));
+  s.y=Math.max(0,Math.min(100-s.h,pxSnapPct(s.y,FM_CANVAS_H)+dy*stepYPct));
+  const box=document.querySelector('#calib-layer .calib-box[data-sel="'+CSS.escape(calibSelectedSel)+'"]');
+  if(box){ box.style.left=s.x+'%'; box.style.top=s.y+'%'; }
+  document.getElementById('calib-selected').textContent=calibStatusText(calibSelectedSel);
+}
 function calibStartDrag(e,box,sel){
   e.preventDefault();
+  calibSelect(sel);
   box.classList.add('dragging');
-  document.getElementById('calib-selected').textContent=calibStatusText(sel);
   const rect=calibFeltRect();
   const startX=e.clientX,startY=e.clientY;
   const orig={x:calibState[sel].x,y:calibState[sel].y};
@@ -5738,14 +5776,15 @@ function calibStartDrag(e,box,sel){
 }
 function calibStartResize(e,box,sel){
   e.preventDefault();
+  calibSelect(sel);
   const rect=calibFeltRect();
   const startX=e.clientX,startY=e.clientY;
   const orig={w:calibState[sel].w,h:calibState[sel].h};
   function move(ev){
     const dwPct=(ev.clientX-startX)/rect.width*100;
     const dhPct=(ev.clientY-startY)/rect.height*100;
-    calibState[sel].w=pxSnapPct(Math.max(1/FM_CANVAS_W*100,orig.w+dwPct),FM_CANVAS_W);
-    calibState[sel].h=pxSnapPct(Math.max(1/FM_CANVAS_H*100,orig.h+dhPct),FM_CANVAS_H);
+    calibState[sel].w=pxSnapPct(Math.max(SNAP_PX/FM_CANVAS_W*100,orig.w+dwPct),FM_CANVAS_W);
+    calibState[sel].h=pxSnapPct(Math.max(SNAP_PX/FM_CANVAS_H*100,orig.h+dhPct),FM_CANVAS_H);
     box.style.width=calibState[sel].w+'%'; box.style.height=calibState[sel].h+'%';
     document.getElementById('calib-selected').textContent=calibStatusText(sel);
   }
@@ -5753,6 +5792,20 @@ function calibStartResize(e,box,sel){
   document.addEventListener('pointermove',move);
   document.addEventListener('pointerup',up);
 }
+// Arrow-key nudging while calibrate mode is active -- same 5px step as the on-screen buttons.
+// Ignored while focus is inside a text input (export textarea) so arrow keys still work for
+// normal text editing there.
+function calibKeyHandler(e){
+  if(!calibActive||!calibSelectedSel)return;
+  const tag=(document.activeElement&&document.activeElement.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA')return;
+  const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
+  const d=map[e.key];
+  if(!d)return;
+  e.preventDefault();
+  calibNudge(d[0],d[1]);
+}
+document.addEventListener('keydown',calibKeyHandler);
 function toggleCalibMode(){
   calibActive=!calibActive;
   document.getElementById('calib-toolbar').classList.toggle('hidden',!calibActive);
@@ -5763,6 +5816,7 @@ function toggleCalibMode(){
   }else{
     const layer=document.getElementById('calib-layer');
     if(layer)layer.remove();
+    calibSelectedSel=null;
   }
 }
 function calibReset(){
