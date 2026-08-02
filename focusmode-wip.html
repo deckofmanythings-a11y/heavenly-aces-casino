@@ -1027,6 +1027,14 @@ body.felt-mode.game-standard #felt-stage .num-box.felt-abs{position:absolute}
    they overlapped). Lifted above every other felt-abs box so the overflow is always visible. */
 body.felt-mode.game-standard #felt-stage .num-box.felt-abs{z-index:5}
 body.felt-mode #felt-stage #dc-wait-wrap.felt-abs{z-index:5}
+/* #come-slot-N/#dc-slot-N are separate .felt-abs siblings of #nb-numberbox-N now (reparented
+   independently, not nested inside it), sharing the same default z-index:2 -- meaning the
+   numberbox's own z-index:5 above rendered ON TOP of them. Deck: "You put those bets UNDER the
+   number and they are too small and dimmed and unclickable" -- all three symptoms are this one
+   stacking bug: visually dimmed by the numberbox's own translucent fill painting over them,
+   and unclickable because the higher-stacked numberbox (not the chip underneath it) was the one
+   actually receiving the click. Lifted above the numberbox instead of below it. */
+body.felt-mode #felt-stage .come-slot.felt-abs,body.felt-mode #felt-stage .dc-chip-box.felt-abs{z-index:6}
 /* Phase 4: the old per-number Box4-10 art (and later, the single continuous Number_Line
    image) is gone -- .num-box's real CSS border/fill (--box-border/--box-fill-flat) is now the
    only frame each number cell has, so the !important suppression that used to hide it
@@ -1086,7 +1094,7 @@ body.felt-mode.game-standard #felt-stage #dp-odds-cell.active::after{
    chip further below the game's one consistent size, THEIR BOXES were enlarged instead
    (see #light-spot / FELT_LAYOUT and the Lucky Roller box CSS) so a same-size chip lands
    at ~60% there naturally. */
-#felt-stage{--chip:30px;--edge:calc(var(--chip)*0.16);--come-chip-size:calc(var(--chip)*0.5)}
+#felt-stage{--chip:30px;--edge:calc(var(--chip)*0.16);--come-chip-size:var(--chip)}
 /* Chip Row (#bottom-bar .chip, the $1/$5/$10/$25/$50/$100 denomination-selector buttons) lives
    in #bottom-section -- a SIBLING of #felt-stage, not a descendant -- so it never picked up
    #felt-stage's --chip and stayed at its CSS-authored fixed 30px (24px under the narrow-viewport
@@ -2094,7 +2102,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.49</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.50</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
