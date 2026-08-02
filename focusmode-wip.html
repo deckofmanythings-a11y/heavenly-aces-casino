@@ -1879,7 +1879,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.15</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.16</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2030,9 +2030,9 @@ let REPEATABLE=getRepeatable();
 const FELT_LAYOUT=[
   // C / C&E / E circles -- each now its own real, individually calibrated position (Deck's
   // export) instead of one shared draggable stack.
-  ['@anyCraps-circle', 34.844,60.278, 6.562,11.056,null],
-  ['@cande',           34.844,71.667, 6.562,11.056,null],
-  ['@eleven',          34.844,83.056, 6.562,11.056,null],
+  ['@anyCraps-circle', 33.125,65.833, 3.906,6.667,null],
+  ['@cande',           33.125,73.056, 3.906,6.667,null],
+  ['@eleven',          33.125,80.278, 3.906,6.667,null],
   ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
   // Shrunk from 17.00 -> 12.00 now that the game selector is a single-button dropdown instead
@@ -2074,8 +2074,8 @@ const FELT_LAYOUT=[
   // fixed gap above Hard Ways -- there isn't room for both this turn, see the long FM_ART
   // comment on propbets for the full explanation.
   // Reshaped/repositioned via Deck's own drag-tool calibration pass (narrower, taller).
-  ['#tab-hw',   3.125,14.722, 11.438,3.833,null],
-  ['#tab-hop', 20.781,14.722, 11.312,3.889,null],
+  ['#tab-hw',   4.844,28.056, 11.406,3.611,null],
+  ['#tab-hop', 19.375,28.056, 11.406,3.611,null],
   // Crapless-only Line Mode A/B/C toggle. Moved from under Hardways/Hop Bets to directly below
   // the crapless number line instead (Deck's request) -- x/w now match CRAPLESS_LAYOUT's
   // #num-zone exactly (1200,1960px on the 3200x1800 canvas), y sits just under its bottom edge
@@ -2089,7 +2089,7 @@ const FELT_LAYOUT=[
   // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
   // touching any of Deck's calibrated bet-box coordinates above/below it.
-  ['#hw-panel-label',  0.438,40.5, 35,11,'hw'],
+  ['#hw-panel-label',  9.688,32.5, 16.25,3.611,'hw'],
   ['#hop-panel-label', 0.438,40.5, 35,11,'hop'],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
@@ -2113,13 +2113,13 @@ const FELT_LAYOUT=[
   // back byte-for-byte identical or within sub-pixel rounding noise and were left untouched.
   // Any 7 moved up ~9px; Any Craps grew taller (7.889% -> 11.5%, +65px); every Hop Bets pill
   // shifted down 8-20px and slightly right (2-11px) -- see below.
-  ['@any7',            3.844,52.667, 28,10.778,'hw'],
-  ['@aces',            3.875,63.944, 7.219,10.278,'hw'],
-  ['@ace2',           24.281,64, 7.594,10.167,'hw'],
-  ['@horn',           11.188,69.722, 13.188,9.944,'hw'],
-  ['@midnight',        3.719,75, 7.438,10.167,'hw'],
-  ['@yo',             24.438,75.333, 7.375,10.111,'hw'],
-  ['@anyCraps',        3.625,85.667, 28.219,11.5,'hw'],
+  ['@any7',            3.906,56.944, 27.812,6.667,'hw'],
+  ['@aces',            3.906,63.889, 7.219,10.278,'hw'],
+  ['@ace2',           24.531,63.889, 7.187,10.278,'hw'],
+  ['@horn',           11.25,69.722, 13.125,9.722,'hw'],
+  ['@midnight',        3.906,74.722, 7.187,10.278,'hw'],
+  ['@yo',             24.531,74.722, 7.187,10.278,'hw'],
+  ['@anyCraps',        3.906,85.278, 27.812,6.667,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
   ['@hop13',          4.688,53.778, 8.812,6.222,'hop'],
   ['@hop16',         15.344,53.667, 8.75,6.222,'hop'],
@@ -2270,10 +2270,10 @@ const STANDARD_LAYOUT=[
   // bottom-anchored reposition instead -- the two images move in opposite directions
   // (Hard Ways down, HopHardWays up) since aligning their BOTTOMS is what makes the
   // gold boxes line up given HopHardWays is the taller asset.
-  ['@hard6',           0.531,23.722, 14,7.5,'hw'],
-  ['@hard10',         20.906,23.722, 14.219,8,'hw'],
-  ['@hard8',           0.531,31.556, 14.062,7.833,'hw'],
-  ['@hard4',          20.938,31.722, 14.219,7.667,'hw'],
+  ['@hard6',           3.906,36.389, 13.906,7.5,'hw'],
+  ['@hard10',         17.812,36.389, 13.906,7.5,'hw'],
+  ['@hard8',           3.906,43.889, 13.906,7.5,'hw'],
+  ['@hard4',          17.812,43.889, 13.906,7.5,'hw'],
   ['@hop22',          21.031,31.611, 14.25,7.889,'hop'],
   ['@hop44',           0.312,31.556, 14.25,7.889,'hop'],
   ['@hop33',           0.312,23.444, 14.25,7.889,'hop'],
