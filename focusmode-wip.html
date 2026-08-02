@@ -430,7 +430,14 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-bar .dp-name{font-size:57px!important}
 .dp-stk{font-size:13px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
 .dp-note{font-size:9px;color:rgba(255,255,255,.35)}
-#dp-odds-cell{background:var(--box-fill-flat);border-top:0.5px solid rgba(255,255,255,.15);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none}
+/* display was 'none' (JS toggled it to 'block' once shown), never 'flex' -- unlike
+   #pass-odds-cell (flex column, justify-content:center) above, so its lbl/stk/pay children
+   just stacked in plain block flow. With .dp-odds-lbl left empty (see that comment) and
+   .dp-odds-stk empty until a bet exists, both collapse to 0 height, leaving .dp-odds-pay's
+   "—" placeholder sitting right at the top of the cell instead of centered (Deck: "There is a
+   tiny pink - at the top of the odds box in the Don't Pass"). Matched to #pass-odds-cell's own
+   flex treatment. */
+#dp-odds-cell{background:var(--box-fill-flat);border-top:0.5px solid rgba(255,255,255,.15);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none;flex-direction:column;justify-content:center}
 #dp-odds-cell:hover{background:rgba(255,255,255,.12)}
 #dp-odds-cell.active{background:transparent}
 .dp-odds-lbl{font-size:9px;color:rgba(255,130,130,.5);display:block}
@@ -1397,6 +1404,10 @@ body.felt-mode #felt-stage #lucky-roller #bbonus-low.has-bet,
 body.felt-mode #felt-stage #lucky-roller #bbonus-all-bar.has-bet,
 body.felt-mode #felt-stage #lucky-roller #bbonus-high.has-bet{background:var(--box-fill)!important}
 body.felt-mode #felt-stage .odds-pay{display:none}
+/* Deck: "there's no placeholder in Pass Line's odds box though" -- Pass hides its own '—'
+   placeholder entirely in felt mode (above); .dp-odds-pay had no matching rule, so its default
+   '—' text rendered visibly instead of being hidden the same way. */
+body.felt-mode #felt-stage .dp-odds-pay{display:none}
 /* Crapless-only reinforcement: Horn cell highlighting was still showing despite two earlier
    neutralization passes that should already cover it by source order. Could not find the exact
    conflicting rule by reading the stylesheet, so this forces the issue shut rather than leaving
@@ -2126,7 +2137,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.59</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.60</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5656,7 +5667,7 @@ function updateUI(){
     // itself already gates on that), this only changes whether the box/divider is drawn.
     const feltOn=document.body.classList.contains('felt-mode');
     const dpOddsShown=feltOn||(dpA>0&&G.point);
-    if(dpOddsCell)dpOddsCell.style.display=dpOddsShown?'block':'none';
+    if(dpOddsCell)dpOddsCell.style.display=dpOddsShown?'flex':'none';
     // Unlike Pass Line's #pass-odds-cell (always present, always splitting #pass-bar), Don't
     // Pass's #dp-odds-cell only exists once a point's up -- #dp-main is the FULL bar width the
     // rest of the time, so its chip's felt-mode anchor (see #dp-main.has-oddscell .has-stack)
