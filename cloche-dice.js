@@ -167,19 +167,28 @@
     const baseIsHalf = (((baseDeg % 180) + 180) % 180) !== 0;
     return (rotIsHalf !== baseIsHalf) ? Math.PI / 2 : 0;
   }
-  // Rotation (radians, 0 or PI/2) to apply to each face's texture this relabel -- only 2 and 3
-  // have a meaningful "point" (1/4/5/6's patterns are rotationally symmetric), so every other
-  // face gets 0. Returns a full 6-length array indexed by geometry face, matching `values`.
+  // Rotation (radians, 0 or PI/2) to apply this relabel -- only 2 and 3 have a meaningful
+  // "point" (1/4/5/6's patterns are rotationally symmetric), so every other face gets 0.
+  // Returns two parallel 6-length arrays indexed by geometry face, matching `values`:
+  //   tex -- for faceTexture(), with CFG.pipBaseRotation folded in so a face whose real art
+  //          has a baked-in diagonal offset (e.g. Craps' DIE_B64[2]) still displays correctly.
+  //   geo -- for faceNormalMap(), WITHOUT that correction. The dimples are carved straight
+  //          from PIP_POS, which has no idea any particular image's pips start on the "wrong"
+  //          diagonal -- feeding it the art-corrected `tex` value (as a single shared array
+  //          used to) rotates the dents by CFG.pipBaseRotation's offset relative to where the
+  //          color pips actually land, landing them in the blank field instead of on the dot.
   function pipRotationsForValues(values) {
-    const rot = [0, 0, 0, 0, 0, 0];
+    const tex = [0, 0, 0, 0, 0, 0], geo = [0, 0, 0, 0, 0, 0];
     const i6 = values.indexOf(6);
-    if (i6 < 0) return rot;
+    if (i6 < 0) return { tex, geo };
     const i2 = values.indexOf(2), i3 = values.indexOf(3);
     if (i2 >= 0 && i3 >= 0) {
-      rot[i2] = applyPipBaseRotation(pipRotationTowardFace(i2, i3, i6), 2);
-      rot[i3] = applyPipBaseRotation(pipRotationTowardFace(i3, i2, i6), 3);
+      geo[i2] = pipRotationTowardFace(i2, i3, i6);
+      geo[i3] = pipRotationTowardFace(i3, i2, i6);
+      tex[i2] = applyPipBaseRotation(geo[i2], 2);
+      tex[i3] = applyPipBaseRotation(geo[i3], 3);
     }
-    return rot;
+    return { tex, geo };
   }
 
   // ---------- module state ----------
@@ -887,7 +896,7 @@
       // opaque white. Those discarded corner pixels then show whatever's behind the die
       // (the dark backdrop), instead of a stray white bleed on the curved/beveled edges.
       const mats = faceValues.map((v, i) => new THREE.MeshStandardMaterial({
-        map: faceTexture(v, imgMap, initRot[i]), normalMap: faceNormalMap(v, initRot[i]),
+        map: faceTexture(v, imgMap, initRot.tex[i]), normalMap: faceNormalMap(v, initRot.geo[i]),
         normalScale: new THREE.Vector2(1, 1), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
       }));
       // seg bumped 4 -> 10: the flat-face region only spans size-2*radius out of the full
@@ -956,8 +965,8 @@
     d.faceValues = values;
     const rot = pipRotationsForValues(values);
     for (let i = 0; i < 6; i++) {
-      d.mesh.material[i].map = faceTexture(values[i], d.imgMap, rot[i]);
-      d.mesh.material[i].normalMap = faceNormalMap(values[i], rot[i]);
+      d.mesh.material[i].map = faceTexture(values[i], d.imgMap, rot.tex[i]);
+      d.mesh.material[i].normalMap = faceNormalMap(values[i], rot.geo[i]);
       d.mesh.material[i].needsUpdate = true;
     }
   }

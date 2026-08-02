@@ -230,8 +230,18 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .prop-bar-odds{font-size:17px;font-weight:600;white-space:nowrap}
 /* Font-size overrides from Calibrate Mode's font tool -- Any 7 and Any Craps got different
    sizes, both scoped to their own bar so they don't leak onto each other. */
-body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(48px * var(--font-scale,1))!important}
-body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:calc(41px * var(--font-scale,1))!important}
+/* Deck: "SEVEN and ANY CRAPS are busting out of the right side of the cell instead of
+   shrinking." The white-space:nowrap fix above let them overflow instead of wrap, which was
+   the wrong instinct -- Deck wants them to actually FIT, not spill out. Binary-searched (via
+   the box's real available width minus padding vs. each nowrap span's natural scrollWidth) the
+   largest font-size that genuinely fits "SEVEN"+"5 for 1"x2 / "ANY CRAPS"+"8 for 1"x2 on one
+   line with zero overflow: 48px->44px for Any 7, 41px->28px for Any Craps (ANY CRAPS needs a
+   much bigger cut since it's a longer word carrying the same two odds labels in the same box
+   width). This corrects the calibrated "default" itself, not a --font-scale shrink -- these
+   two were always ~4-13px too big for their own box, just invisible until nowrap stopped
+   hiding it behind a wrap. */
+body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(44px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:calc(28px * var(--font-scale,1))!important}
 .prop-bar-stk{font-size:17px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
@@ -7598,7 +7608,7 @@ applyFocusVisibility();
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="cloche-dice.js?v=0.7.0"></script>
+<script src="cloche-dice.js?v=0.7.1"></script>
 <script src="winner-modal.js?v=0.5.2"></script>
 <script src="dailies-popup.js?v=4"></script>
 <script>
