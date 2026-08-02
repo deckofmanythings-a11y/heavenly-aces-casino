@@ -913,7 +913,6 @@ body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important
 body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:44px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
 body.felt-mode #felt-stage .prop-circle{font-size:26px!important}
-body.felt-mode.game-crapless #felt-stage .circle-wrap .has-stack{bottom:22%}
 
 /* readable stakes over the art */
 body.felt-mode #felt-stage .stk,body.felt-mode #felt-stage .nb-stk,body.felt-mode #felt-stage .hc-stk,
@@ -954,8 +953,13 @@ body.felt-mode.game-crapless #felt-stage .nb-place{flex:0 0 21%}
    visually) so, once Deck calibrates all three flush against each other, the stacked pieces
    read as one continuous frame instead of Buy/Place's shaded backgrounds floating separately
    above/below an unrelated-looking box. */
-body.felt-mode.game-crapless #felt-stage .nb-buy{border:var(--box-border);border-bottom:none;border-radius:var(--box-radius) var(--box-radius) 0 0}
-body.felt-mode.game-crapless #felt-stage .nb-place{border:var(--box-border);border-top:none;border-radius:0 0 var(--box-radius) var(--box-radius)}
+/* The dropped inner edge is a TRANSPARENT border, not none: with the global border-box sizing,
+   a missing 4px edge shrinks the padding box asymmetrically, so the chip anchor's top:50%
+   (percentages resolve against the padding box) landed 2px off the border-box center that the
+   calibrator's dot marks. Transparent keeps the "no line against the numeral" look with a
+   symmetric reference box -- measured ±2px on every crapless Buy/Place chip before this. */
+body.felt-mode.game-crapless #felt-stage .nb-buy{border:var(--box-border);border-bottom-color:transparent;border-radius:var(--box-radius) var(--box-radius) 0 0}
+body.felt-mode.game-crapless #felt-stage .nb-place{border:var(--box-border);border-top-color:transparent;border-radius:0 0 var(--box-radius) var(--box-radius)}
 body.felt-mode.game-crapless #felt-stage .num-box{border-radius:0}
 /* nb-puckbox-N: only meaningful once STANDARD_LAYOUT gives it a real position/size (felt mode
    only -- Standard only, Crapless has no puckbox). Same solid border/fill treatment as
@@ -963,16 +967,6 @@ body.felt-mode.game-crapless #felt-stage .num-box{border-radius:0}
    borders so they look separate") -- a real box now, not a dashed gold "landing pad" outline.
    The puck itself is unaffected, still a circle once it actually lands here. */
 body.felt-mode.game-standard #felt-stage .nb-puckbox{display:block;position:absolute;pointer-events:none;background:rgba(255,255,255,.07);border:var(--box-border)}
-/* The "move up 40% chip height" adjustment above was calibrated back when Buy was the TOP
-   THIRD of one tall shared #num-zone box -- 6% of that box's height plus a chip-relative
-   nudge was a reasonable amount to clear the felt art below it. Buy now has its own small,
-   individually-positioned 94px-tall box (Deck: "you are still using a single Num Zone" fix),
-   so that same offset massively overshoots a box this short and pushes the chip toward the
-   top instead of centering it (Deck screenshot: calibrator's true-center dot sits well below
-   where the chip actually renders). True-centers instead, same technique already used for
-   Field/Pass/Don't Pass's chip anchors once those got their own individually-sized boxes. */
-body.felt-mode.game-crapless #felt-stage .nb-buy .has-stack,
-body.felt-mode.game-crapless #felt-stage .nb-place .has-stack{top:50%;bottom:auto;transform:translate(-50%,-50%)}
 body.felt-mode.game-crapless #prop-block>.bwrap{flex:0 0 21%}
 body.felt-mode.game-crapless #prop-block .horn-stack{flex:1}
 /* On/Off puck row: pulled out of #num-zone's own flex column entirely (was eating into its
@@ -1117,7 +1111,16 @@ body.felt-mode.game-standard #felt-stage #dp-odds-cell.active::after{
 body.felt-mode #bottom-bar .chip{width:var(--chip)!important;height:var(--chip)!important}
 body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
 body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{overflow:visible}
-body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
+/* Deck: "Make sure all bet chips land perfectly centered on the center dot of the bet box"
+   (the calib-dot IS each box's geometric center). One uniform dead-center anchor for every
+   stake in both modes, replacing the old bottom:6% default plus a pile of per-box vertical
+   compensations (Come 35%/22%, crapless circles 22%, Field/DP/crapless Buy+Place re-centers)
+   that only existed because the default wasn't centered. margin:0 kills the 1px margin-top
+   some stake spans carry from their base styles -- on an absolute element it shifts the box
+   off-center by that much. Pass/DP keep a HORIZONTAL offset below (39.47%/60.53%): their
+   calibrated box is the full bar, but the chip's parent is the sub-box next to the odds cell,
+   so plain left:50% would miss the bar's true center by half the odds cell's width. */
+body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);margin:0;width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
 /* Deck: "the text in a bet box shifts when a chip graphic is present ... looks unpolished."
    Root cause: a stake-text span only became position:absolute (via .has-stack, added above)
    once a bet actually existed -- while empty it sat in normal flow reserving its own
@@ -1132,37 +1135,25 @@ body.felt-mode #felt-stage .dp-stk,body.felt-mode #felt-stage .dp-odds-stk,
 body.felt-mode #felt-stage #stk-pass,body.felt-mode #felt-stage #stk-passodds,body.felt-mode #felt-stage #stk-come,
 body.felt-mode #felt-stage #stk-field,body.felt-mode #felt-stage #stk-dc-wait,body.felt-mode #felt-stage .lr-stake,
 body.felt-mode #felt-stage #stk-light{
-  position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;
+  position:absolute;inset:auto;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);margin:0;width:var(--chip);min-height:0;pointer-events:none;
 }
 /* nb-place had 3 flex-column children (label/stake/payout) with justify-content:center; with
    the stake permanently out of flow now, only label+payout remain -- center them as a tight
    pair would look wrong (that gap was previously held open by the stake's own reserved
    height), so pin them to the box's top/bottom edges instead, same visual spread as before. */
 body.felt-mode #felt-stage .nb-place{justify-content:space-between}
-/* Come's own "COME" label is hidden in felt mode since the art draws it directly, so this is
-   an estimate of where that painted text sits vertically within the box, not a measured value.
-   Every other zone (Pass, Field, DP) keeps the default 6% anchor -- only Come is overridden. */
-body.felt-mode.game-standard #felt-stage #come-bar .has-stack{bottom:35%}
-body.felt-mode.game-crapless #felt-stage #come-bar .has-stack{bottom:22%}
-/* Field/Pass/Don't Pass chips were landing well off Deck's calibrated marker (screenshot: "not
-   landing on the pink dots") -- #field-bar/#pass-bar/#dp-bar's own x/y/w/h were already correct
-   (confirmed pixel-for-pixel against Deck's calibrator export), so the marker is each bar's true
-   geometric center, not a separately-calibrated point. The generic bottom:6% anchor above was
-   never centering on that: #field-bar has no odds-cell split, so its chip only needed proper
-   vertical centering; #pass-main/#dp-main are each individually position:relative (the .zone-note
-   lock badge on Pass needs that), and only span the ~82.6% of their bar left AFTER Pass Line's
-   17.4%-wide #pass-odds-cell / BEFORE Don't Pass's #dp-odds-cell -- so their own 50% midpoint
-   misses the full bar's real center by half the odds-cell's width. 39.47%/60.53% are that same
-   50%-of-the-full-bar point, re-expressed as a percentage of just the narrower sub-box:
-   (50-17.4)/82.6=39.47% for Pass (odds-cell first), 50/82.6=60.53% for DP (odds-cell second). */
-body.felt-mode #felt-stage #field-bar .has-stack{top:50%;bottom:auto;transform:translate(-50%,-50%)}
-body.felt-mode #felt-stage #pass-main .has-stack{left:39.47%;top:50%;bottom:auto;transform:translate(-50%,-50%)}
-/* #pass-odds-cell is always present so #pass-main is always the same ~82.6%-of-bar width above,
-   but #dp-odds-cell only exists once a point's up with a DP bet (see updateUI()'s
-   dpMain.classList.toggle('has-oddscell',...)) -- #dp-main is the FULL bar the rest of the
-   time, so its chip belongs at plain 50%, not the odds-cell-adjusted 60.53%. */
-body.felt-mode #felt-stage #dp-main .has-stack{top:50%;bottom:auto;transform:translate(-50%,-50%)}
-body.felt-mode #felt-stage #dp-main.has-oddscell .has-stack{left:60.53%}
+/* Pass/DP horizontal re-centers (see the big comment on the base .has-stack rule above):
+   #pass-main/#dp-main only span the ~82.6% of their bar left after the 17.4%-wide odds cell,
+   so their own 50% midpoint misses the full bar's true center by half the odds cell's width.
+   39.47% is that same 50%-of-the-full-bar point re-expressed as a percentage of just the
+   narrower sub-box: (50-17.4)/82.6. DP uses the SAME value as Pass now -- it was 60.53%
+   (odds-cell-second math) from before 0.0.36 flipped #dp-odds-cell to the LEFT via order:-1
+   (Interblock reference), which made DP's geometry identical to Pass's; the stale constant
+   was landing DP's chip a full odds-cell-width right of the bar's center dot (measured
+   +115.8px at test size). .has-oddscell is effectively always on in felt mode since 0.0.54.
+   Vertical is inherited from the base centered anchor. */
+body.felt-mode #felt-stage #pass-main .has-stack{left:39.47%}
+body.felt-mode #felt-stage #dp-main.has-oddscell .has-stack{left:39.47%}
 
 .chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
@@ -2142,7 +2133,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.3</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.4</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4114,7 +4105,9 @@ function buildStrip(){
       +'<span style="font-size:57px;font-weight:400;font-family:system-ui,sans-serif;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
       +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
       +'</span>'
-      +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px"></div>';
+      // No margin-top here: as an inline style it beats the felt-mode stake rule's margin:0,
+      // and on the now-absolutely-centered chip anchor it read as a 1px off-center error.
+      +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:1.2em;line-height:1.2"></div>';
     dcBox.appendChild(dcMid);
     dcWrap.appendChild(dcBox);strip.appendChild(dcWrap);
   }
