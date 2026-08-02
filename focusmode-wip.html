@@ -432,6 +432,24 @@ body.felt-mode #felt-stage .roll-pip.rp-first .rp-num{width:calc(34px * var(--fo
    collapsed the chips to 0x0 instead of shrinking them) -- routed through the differently-named
    --come-chip-size custom property (#felt-stage) instead, which has no such cycle. */
 body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{--chip: var(--come-chip-size);background:transparent;border:none;padding:0;width:100%;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1px}
+/* --come-chip-size was built (see the comment above) to be a smaller-than-normal --chip for
+   this exact spot, but nothing ever actually set it smaller -- it was just aliased right back
+   to the full --chip at #felt-stage (line ~1247), so a single flat-only chip and a flat+odds
+   PAIR both rendered at full felt chip size. .come-on-box's flex-wrap:wrap (inherited from its
+   base, non-felt-mode rule above) means an oversized pair doesn't spill past the box sideways,
+   it wraps to a second row instead -- and box height wasn't sized for two stacked rows either,
+   so the wrapped pair overflows the bottom instead (Deck: "shrink the chips so they fit inside
+   their boxes when the odds are there side-by-side"). Landscape's own boxes/chip scaling never
+   actually trip this in practice (verified live across several window sizes -- felt WIDTH drives
+   the box, felt HEIGHT drives --chip, and at 16:9 that ratio stays comfortable everywhere), but
+   portrait's much taller felt drives --chip far bigger relative to its narrower Come/DC boxes,
+   reproducing the wrap-then-overflow every time -- confirmed live (flat/odds chips landed on
+   separate rows, second one running 34px past the box's bottom edge, at full size). Scoped to
+   body.felt-portrait so landscape's already-correct chips stay untouched. :has() keeps it
+   conditional within portrait too -- only kicks in once .odds-half actually has a chip in it,
+   so a lone flat bet (the common case) keeps its normal full size. */
+body.felt-portrait #felt-stage .come-on-box:has(.odds-half:not(:empty)),
+body.felt-portrait #felt-stage .dc-on-box:has(.odds-half:not(:empty)){--chip: calc(var(--come-chip-size) * 0.55)}
 body.felt-mode #felt-stage .dc-on-box{flex-direction:row-reverse}
 body.felt-mode #felt-stage .come-half{position:static;left:auto;transform:none;width:auto;display:flex;align-items:center;justify-content:center}
 
@@ -2291,7 +2309,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.5</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.6</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
