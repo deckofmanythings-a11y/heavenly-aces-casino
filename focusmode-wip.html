@@ -1786,7 +1786,8 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="modal-btn" onclick="saveLayout()" title="Saves whatever's on the felt right now as your Load Layout starting bets">Save Current as Layout</button>
         <button class="modal-btn cancel" onclick="clearSavedLayout()" title="Deletes the saved layout">Clear Saved Layout</button>
       </div>
-      <div style="margin-top:8px;text-align:right;display:flex;gap:8px;justify-content:flex-end">
+      <div style="margin-top:8px;text-align:right;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <button class="modal-btn" id="portrait-mode-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="togglePortraitMode()">📱 Enter Portrait Mode</button>
         <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleCalibMode()">🎯 Calibrate Positions (Debug)</button>
         <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleTutorialDebug()">🎓 Tutorial (Debug)</button>
       </div>
@@ -2239,7 +2240,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.14</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.0</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2777,7 +2778,27 @@ const STANDARD_LAYOUT=[
   ['#come-slot-10',   82.5,  35.833, 8.438,5.833,null],
   ['#dc-slot-10',     82.5,  29.722, 8.438,6.111,null]
 ];
-function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
+// ── PORTRAIT MODE (Deck: "give me a button... I will move the bet boxes around and configure
+// the layout for that specific aspect ratio") ───────────────────────────────────────────────
+// Landscape and portrait need genuinely separate position data (a 9:16 stage can't share
+// 16:9-tuned percentages), but they use the exact same selector list -- runtime-cloned from
+// the landscape arrays (not hand-duplicated in source) so every entry starts present and
+// labeled instead of an empty ruler set, and so there's nothing here to keep in sync by hand.
+// Deck's process: toggle Portrait Mode on, enter Calibrate Mode, drag everything into place
+// (starting positions don't matter, they're landscape percentages squished into a portrait
+// box), Export, and hand the result back to be pasted in as real literal arrays here --
+// same workflow as every other calibration pass in this file, just a second orientation.
+const PORTRAIT_FELT_LAYOUT=FELT_LAYOUT.map(e=>e.slice());
+const PORTRAIT_STANDARD_LAYOUT=STANDARD_LAYOUT.map(e=>e.slice());
+const PORTRAIT_CRAPLESS_LAYOUT=CRAPLESS_LAYOUT.map(e=>e.slice());
+const PORTRAIT_LR_LAYOUT=LR_LAYOUT.map(e=>e.slice());
+let feltPortrait=localStorage.getItem('rh_focus_portrait')==='1';
+function feltLayoutFor(mode){
+  const felt=feltPortrait?PORTRAIT_FELT_LAYOUT:FELT_LAYOUT;
+  const spec=feltPortrait?(mode==='standard'?PORTRAIT_STANDARD_LAYOUT:PORTRAIT_CRAPLESS_LAYOUT):(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT);
+  return felt.concat(spec);
+}
+function curLrLayout(){ return feltPortrait?PORTRAIT_LR_LAYOUT:LR_LAYOUT; }
 // id -> tab ('hw'/'hop'/null) for every '@name' entry, derived from the layout arrays
 // themselves rather than a separately hand-kept list (Focus Mode is standard-only, so
 // this is built off feltLayoutFor('standard') specifically). Used by applyFocusVisibility()
@@ -2837,12 +2858,13 @@ function sizeFeltStage(){
   if(!pa||!st)return;
   const W=pa.clientWidth,H=pa.clientHeight;if(!W||!H)return;
   // Felt-stage and bottom-section are sized as one contain-fit group (felt keeps its
-  // real 16:9 ratio; bottom-section is BOTTOM_SECTION_RATIO of the felt's own height,
+  // real aspect ratio -- FM_CANVAS_W/FM_CANVAS_H, 16:9 landscape or 9:16 portrait, see
+  // togglePortraitMode(); bottom-section is BOTTOM_SECTION_RATIO of the felt's own height,
   // stacked immediately beneath it), then the whole group is centered in #play-area --
   // same math as the old single-box contain-fit, just with bottom-section's height
   // folded into the budget so there's always room for it below the felt with zero gap.
-  let w=W,h=w*9/16,groupH=h*(1+BOTTOM_SECTION_RATIO);
-  if(groupH>H){h=H/(1+BOTTOM_SECTION_RATIO);w=h*16/9;groupH=H;}
+  let w=W,h=w*FM_CANVAS_H/FM_CANVAS_W,groupH=h*(1+BOTTOM_SECTION_RATIO);
+  if(groupH>H){h=H/(1+BOTTOM_SECTION_RATIO);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=H;}
   const bsH=h*BOTTOM_SECTION_RATIO;
   const left=(W-w)/2,top=(H-groupH)/2;
   st.style.left=left+'px';st.style.top=top+'px';st.style.transform='none';
@@ -2955,7 +2977,7 @@ function enterFeltMode(){
     pa.appendChild(bs);
   }
   const lr=document.getElementById('lucky-roller');
-  if(lr){LR_LAYOUT.forEach(([sel,l,t,w,h])=>{
+  if(lr){curLrLayout().forEach(([sel,l,t,w,h])=>{
     const el=lrEl(sel);if(!el)return;
     if(!feltHomes.has(el))feltHomes.set(el,{parent:el.parentNode,next:el.nextSibling});
     lr.appendChild(el);el.classList.add('felt-lr');
@@ -2976,7 +2998,7 @@ function enterFeltMode(){
 }
 function exitFeltMode(){
   if(!feltActive)return;
-  LR_LAYOUT.forEach(([sel])=>{
+  curLrLayout().forEach(([sel])=>{
     const el=lrEl(sel);if(!el)return;
     const home=feltHomes.get(el);if(!home)return;
     el.classList.remove('felt-lr');
@@ -3020,6 +3042,15 @@ if(window.ResizeObserver){
     if(pa)new ResizeObserver(sizeFeltStage).observe(pa);
   });
 }
+// Reflect a portrait-mode choice that carried over from localStorage (feltPortrait itself is
+// already read at script-parse time, well before this fires -- FM_CANVAS_W/H are already
+// correct -- this just syncs the button label/body class once the DOM exists to hold them).
+document.addEventListener('DOMContentLoaded',()=>{
+  if(!feltPortrait)return;
+  document.body.classList.add('felt-portrait');
+  const btn=document.getElementById('portrait-mode-btn');
+  if(btn)btn.textContent='📱 Exit Portrait Mode';
+});
 
 function applyGameMode(mode){
   activeGame=mode;
@@ -6015,7 +6046,29 @@ const FOCUS_ONEROLL_IDS={seven:['bet-any7'],anycraps:['bet-anyCraps','bet-anyCra
 // (pointer-events:none) so positions/scale can be checked and tweaked before this gets
 // wired to real click handlers -- the existing CSS-drawn bet cells underneath still do the
 // actual clicking/staking for now.
-const FM_CANVAS_W=3200,FM_CANVAS_H=1800;
+// let, not const -- togglePortraitMode() swaps these to the portrait canvas (1800x3200) so
+// the calibration tool's exported px numbers reference the right-shaped canvas for whichever
+// orientation is active. feltPortrait (declared up near FELT_LAYOUT) is read here at load so
+// a page that starts in portrait mode gets the right canvas from the first paint, not just
+// after the next toggle.
+let FM_CANVAS_W=feltPortrait?1800:3200,FM_CANVAS_H=feltPortrait?3200:1800;
+function togglePortraitMode(){
+  feltPortrait=!feltPortrait;
+  localStorage.setItem('rh_focus_portrait',feltPortrait?'1':'0');
+  FM_CANVAS_W=feltPortrait?1800:3200;FM_CANVAS_H=feltPortrait?3200:1800;
+  document.body.classList.toggle('felt-portrait',feltPortrait);
+  const btn=document.getElementById('portrait-mode-btn');
+  if(btn)btn.textContent=feltPortrait?'📱 Exit Portrait Mode':'📱 Enter Portrait Mode';
+  // Re-run the felt/Lucky Roller reparenting loops against the newly-active layout arrays
+  // (feltLayoutFor()/curLrLayout() both check feltPortrait already) so the real bet boxes
+  // actually move, not just the stage's own aspect ratio.
+  if(feltActive){exitFeltMode();enterFeltMode();}
+  sizeFeltStage();
+  // Calibrate Mode's ghost rulers are seeded from calibBaseEntries() (itself built off
+  // feltLayoutFor()/curLrLayout()) at the moment it's turned on -- if it's already open when
+  // the orientation flips, rebuild now instead of leaving stale landscape rulers on screen.
+  if(calibActive){calibState=calibInitState();calibBuildLayer();calibPositionToolbar();}
+}
 // Buy and DC(landed) share the same x column (left half of each number box); Place and Lay
 // share the other (right half, +138px). Buy/Place sit in the top row (y=731), Lay/DC in the
 // bottom row (y=389) -- read directly off Deck's measured table, not derived/offset math.
@@ -6136,7 +6189,7 @@ let calibState=null; // {selector: {x,y,w,h,tab}} in % of canvas, keyed by the l
 // felt stage), so they're still synthesized below.
 function calibExtraEntries(){
   const out=[];
-  const lr=FELT_LAYOUT.find(e=>e[0]==='#lucky-roller');
+  const lr=(feltPortrait?PORTRAIT_FELT_LAYOUT:FELT_LAYOUT).find(e=>e[0]==='#lucky-roller');
   if(lr){
     const lx=lr[1],ly=lr[2],lw=lr[3],lh=lr[4];
     // 'dice' -> LR_LAYOUT's '#dice-zone' entry: the two 3D Outcome Dice showing the last roll's
@@ -6146,7 +6199,7 @@ function calibExtraEntries(){
     // calibration mode"). Exported the same way as low/all/high: whole-canvas px here, then
     // hand-converted back to %-of-#lucky-roller when pasted into LR_LAYOUT's '#dice-zone' row.
     ['low','all','high','dice'].forEach(key=>{
-      const e=LR_LAYOUT.find(x=>x[0]===(key==='dice'?'#dice-zone':key)); if(!e)return;
+      const e=curLrLayout().find(x=>x[0]===(key==='dice'?'#dice-zone':key)); if(!e)return;
       const rx=e[1],ry=e[2],rw=e[3],rh=e[4];
       out.push(['@lr-'+key, lx+rx/100*lw, ly+ry/100*lh, rw/100*lw, rh/100*lh, null]);
     });
