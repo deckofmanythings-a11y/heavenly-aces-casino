@@ -2126,7 +2126,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.58</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.59</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4065,12 +4065,15 @@ function buildStrip(){
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:45px;font-weight:900;letter-spacing:.03em;line-height:1.1;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
-      // Explicit font-weight:400 -- this span is a direct child of .nb-mid, which gets
-      // font-weight:900!important from body.felt-mode #felt-stage .nb-mid>span (for the
-      // numeral/DON'T COME text), inherited down into BAR since it doesn't set its own weight.
-      // DP's BAR isn't inside that structure and was already 400 -- Deck: "Do you see how one
-      // is a thin font and the other is more bold? I want them BOTH to be the THIN font."
-      +'<span style="font-size:57px;font-weight:400;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
+      // font-weight:400 alone wasn't enough (Deck: "I am looking at 0.0.58 and the Dont Come
+      // one is very obviously not thin") -- this span is a direct child of .nb-mid, which sets
+      // BOTH font-weight:900!important AND font-family:var(--font-heavy) ("Arial Black" first
+      // in that stack). Arial Black is a single-weight face -- it only exists as black/bold,
+      // so font-weight:400 on it is meaningless, the glyphs stay heavy regardless. DP's BAR
+      // isn't inside .nb-mid at all and renders in the page's plain system-ui default, which
+      // actually has a real normal weight. Overriding font-family here too, to that same
+      // default stack, not just font-weight.
+      +'<span style="font-size:57px;font-weight:400;font-family:system-ui,sans-serif;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
       +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
       +'</span>'
       +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px"></div>';
