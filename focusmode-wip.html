@@ -26,16 +26,20 @@
      with a subtle top-to-bottom inner gradient (not flat) -- e.g. the
      Place/Buy number cells' lighter "BUY" strip vs. darker numeral body. */
   --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
-  --box-fill-flat: rgba(10,50,28,.6);
   --box-border: 2px solid rgba(255,255,255,.15);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
      Hopping Hardways, Hop Bets) -> Mid (--felt-bg, the background itself) -> Dark
-     (--box-fill-flat above -- Seven, Any Craps, Come, Pass Line, Number Boxes, already this
-     shade by default) -> Darkest (Title Bars: panel labels, section headers). */
-  --box-fill-lightest: rgba(46,145,80,.55);
-  --box-fill-darkest: rgba(2,16,9,.8);
+     (--box-fill-flat below -- Seven, Any Craps, Come, Pass Line, Number Boxes, already this
+     shade by default) -> Darkest (Title Bars: panel labels, section headers).
+     Every fill is a gradient now, not a flat color (Deck: "every color used on the page should
+     be gradient unless otherwise noted, including bg, boxes, and fonts") -- same overall
+     tone/alpha as the old flat values, just split top-lighter/bottom-darker like --box-fill
+     above already was. */
+  --box-fill-flat: linear-gradient(180deg, rgba(14,60,34,.55) 0%, rgba(6,35,20,.68) 100%);
+  --box-fill-lightest: linear-gradient(180deg, rgba(60,175,95,.5) 0%, rgba(32,115,62,.62) 100%);
+  --box-fill-darkest: linear-gradient(180deg, rgba(5,24,14,.75) 0%, rgba(1,9,5,.86) 100%);
 
   /* Typography: heavy bold sans for numerals/most labels; a script/italic face
      specifically for spelled-out "Six"/"Nine" (NUM_DEFS already emits these as
@@ -48,6 +52,19 @@
   --color-passline: #4a9eff;  /* PASS LINE label */
   --color-gold: #ffd700;      /* buttons, active-state glow, win highlights */
   --color-text: #ffffff;
+
+  /* Text gradients (Deck: fonts should be gradient too) -- applied via background-clip:text
+     wherever a selector below opts in (.grad-white/.grad-gold/.grad-red/.grad-metallic-gold).
+     Not blanket-applied to every span on the page (auth screen, modals, HUD numbers, tutorial
+     text, etc. stay solid) -- scoped to the felt's own big bet-box labels/numerals, the visual
+     surface this whole redesign has actually been about. */
+  --text-grad-white: linear-gradient(180deg, #ffffff 0%, #cfd2d6 100%);
+  --text-grad-gold: linear-gradient(180deg, #fff6cf 0%, #ffd700 55%, #b8860b 100%);
+  --text-grad-red: linear-gradient(180deg, #ff9a9a 0%, #ff4444 55%, #b81f1f 100%);
+  /* Metallic gold specifically for "LUCKY ROLLER" -- alternating light/dark bands (not a
+     smooth 2-stop fade like --text-grad-gold) is what actually reads as "metallic" rather
+     than just "gold-colored". */
+  --text-grad-metallic-gold: linear-gradient(180deg, #fff9df 0%, #ffe066 18%, #b8860b 38%, #ffd700 52%, #8a6205 68%, #ffe884 84%, #fff3c4 100%);
 
   /* Spacing scale matched to the existing box metrics already in use on this
      felt (.nb-buy's padding:1px 2px, etc.) -- deliberately tight, not a fresh
@@ -170,7 +187,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #prop-block{flex:9;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .prop-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;cursor:pointer;transition:background .12s;flex-shrink:0;background:var(--box-fill-flat);border:var(--box-border);border-radius:var(--box-radius)}
 .prop-bar:hover{background:rgba(255,255,255,.08)}
-.prop-bar-name{font-size:21px;font-weight:900;letter-spacing:.08em}
+.prop-bar-name{font-size:21px;font-weight:900;letter-spacing:.08em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
 .prop-bar-odds{font-size:17px;font-weight:600}
 .prop-bar-stk{font-size:17px;color:#ffd700;min-height:11px;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
@@ -183,7 +200,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .hc-stk{font-size:15px;color:var(--color-gold);min-height:10px}
 .horn-center{background:var(--box-fill-lightest);flex:1;flex-direction:row;gap:6px}
 .horn-center:hover{background:rgba(255,255,255,.18)}
-.horn-center-name{font-size:21px;font-weight:900;color:var(--color-gold);letter-spacing:.05em;font-family:var(--font-heavy)}
+.horn-center-name{font-size:21px;font-weight:900;letter-spacing:.05em;font-family:var(--font-heavy);background:var(--text-grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:15px;font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
@@ -243,7 +260,7 @@ body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justi
 .nb-place{background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-place:hover{background:rgba(255,255,255,.1)}
 .nb-place.active{}
-.nb-lbl{font-size:11px;color:rgba(255,255,255,.5);display:block;letter-spacing:.04em}
+.nb-lbl{font-size:11px;display:block;letter-spacing:.04em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important;opacity:.6}
 .nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:9px}
 .nb-pay{font-size:11px;color:rgba(255,255,255,.4);display:block}
 .off-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;background:rgba(0,0,0,.5)}
@@ -278,7 +295,7 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
    #come-bar/#field-bar/#pass-main rules below (they already set a background, just the
    generic --box-fill gradient) for the actual token swap, not here. */
 .zone-bar.active-bar{}
-.zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;color:#fff}
+.zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
@@ -342,14 +359,14 @@ body.felt-mode #felt-stage #left-col-header #fibo-icon{width:calc(var(--chip)*0.
 body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip)*0.24)}
 /* Don't Pass stub */
 #dont-pass-stub{display:none;flex:1;min-height:0;border-radius:4px;background:rgba(40,0,0,.3);border:0.5px solid rgba(255,80,80,.2);align-items:center;justify-content:center;flex-direction:column;opacity:.5;cursor:not-allowed}
-.dp-stub-name{font-size:16px;font-weight:900;letter-spacing:.08em;color:rgba(255,100,100,.7)}
+.dp-stub-name{font-size:16px;font-weight:900;letter-spacing:.08em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;opacity:.7}
 .dp-stub-note{font-size:11px;color:rgba(255,255,255,.3)}
 /* Don't Pass real bar */
 #dp-bar{display:none;flex:2;min-height:0;border-radius:var(--box-radius);background:var(--box-fill);border:var(--box-border);flex-direction:column;overflow:hidden}
 #dp-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .12s}
 #dp-main:hover{background:rgba(255,255,255,.1)}
 #dp-main.active-bar{background:transparent}
-.dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;color:var(--color-loss)}
+.dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .dp-stk{font-size:13px;color:var(--color-gold);min-height:10px}
 .dp-note{font-size:9px;color:rgba(255,255,255,.35)}
 #dp-odds-cell{background:var(--box-fill-flat);border-top:0.5px solid rgba(255,255,255,.15);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none}
@@ -376,7 +393,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .nb-lay{flex:1;background:rgba(255,255,255,.07);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-lay:hover{background:rgba(255,255,255,.15)}
 .nb-lay.active{background:transparent}
-.nb-lay .nb-lbl{color:var(--color-loss)}
+.nb-lay .nb-lbl{background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
 .nb-lay .nb-stk{color:#ff9999}
 /* Phase 8: nb-puckbox-N -- not a bet spot (no click handler), purely the point-marker's real,
    calibratable landing target. Base view hides it (only meaningful once individually
@@ -791,7 +808,7 @@ body.felt-mode #felt-stage .nb-mid>span{visibility:visible}
    neighboring boxes (only ever discoverable once Phase 4 made the numeral visible in felt mode
    for the first time; it was always oversized, just invisible before). !important needed to
    beat the inline style. */
-body.felt-mode #felt-stage .nb-mid>span{font-size:26px!important;font-weight:900!important;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+body.felt-mode #felt-stage .nb-mid>span{font-size:26px!important;font-weight:900!important;text-shadow:0 1px 2px rgba(0,0,0,.6);background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 body.felt-mode #felt-stage .nb-num-word{transform:rotate(-30deg)}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
@@ -800,7 +817,8 @@ body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;al
    number list, both un-hidden above now that their old FM_ART baked the text in, get the
    same treatment. SEVEN/ANY CRAPS (.prop-bar-name) and C/C&E/E (.prop-circle) were sized for
    the old art's larger painted circles/bars -- bumped up now that real CSS is the only frame. */
-body.felt-mode #felt-stage .nb-lbl{color:rgba(255,255,255,.85)!important;font-weight:800!important;font-size:12px!important}
+body.felt-mode #felt-stage .nb-lbl{background:var(--text-grad-white)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important;opacity:1;font-weight:800!important;font-size:12px!important}
+body.felt-mode #felt-stage .nb-lay .nb-lbl{background:var(--text-grad-red)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important}
 body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
 body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:16px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
@@ -1115,7 +1133,7 @@ body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
    view's 34px/30px title+pay type scale, which is why that text stays hidden here (see below)
    and this gets its own small single-line label instead. */
 body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 13px var(--font-heavy);color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.04em;white-space:nowrap}
-body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER'}
+body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER';background:var(--text-grad-metallic-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
    the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again.
    #bnums-low/#bnums-high never got the same treatment (Phase 7 bug: grown taller, they now sit
@@ -1919,7 +1937,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.25</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.26</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
