@@ -295,6 +295,19 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
    the box even at the correct ratio). Trimmed + nowrap as a safety net, same pattern as
    HARD WAYS/PROPOSITION BETS/SEVEN/ANY CRAPS earlier this session. */
 #bet-horn .horn-center-name{font-size:calc(28px * var(--font-scale,1))!important;white-space:nowrap}
+/* Portrait-only (Deck's Calibrate Mode font tool export, FM_FONT_SIZES): Hard Ways' "N for 1"
+   text and Aces/Ace2/Midnight/Yo/Horn Bet's pay text all got their own smaller portrait sizes,
+   distinct from the shared landscape values above (.pay 16px base, .hc-pay 24px, horn 28px).
+   Scoped to body.felt-portrait so landscape is untouched. */
+body.felt-portrait #felt-stage #bet-hard6 .pay,
+body.felt-portrait #felt-stage #bet-hard10 .pay,
+body.felt-portrait #felt-stage #bet-hard8 .pay,
+body.felt-portrait #felt-stage #bet-hard4 .pay{font-size:calc(18px * var(--font-scale,1))!important}
+body.felt-portrait #felt-stage #bet-aces .hc-pay,
+body.felt-portrait #felt-stage #bet-ace2 .hc-pay,
+body.felt-portrait #felt-stage #bet-midnight .hc-pay,
+body.felt-portrait #felt-stage #bet-yo .hc-pay{font-size:calc(16px * var(--font-scale,1))!important}
+body.felt-portrait #felt-stage #bet-horn .horn-center-name{font-size:calc(16px * var(--font-scale,1))!important}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:calc(15px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
@@ -1015,14 +1028,20 @@ body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block
    was stuck at the base unscaled 15px, overflowing the box at small felt sizes instead of
    shrinking with everything else around it. */
 body.felt-mode #felt-stage .field-info{font-size:calc(15px * var(--font-scale,1))!important}
-/* Portrait-only (Deck's Calibrate Mode font tool, exported as FM_FONT_SIZES: {'#field-bar':26})
-   -- #field-bar's portrait box is a different shape than landscape's, so it needed its own
-   smaller size for the "FIELD" text/numbers-list/pays-double line together. Scoped to
-   body.felt-portrait specifically so landscape's own separately-tuned 44px/15px above (still
-   correct for landscape's box) are untouched. */
+/* Portrait-only -- #field-bar's portrait box is a different shape than landscape's, so it
+   needed its own size for the "FIELD" text/numbers-list/pays-double line together. Scoped to
+   body.felt-portrait so landscape's own separately-tuned 44px/15px above are untouched.
+   26px (the original guess) was leaving most of the box empty (measured live: content used
+   only 34px of the box's 100px height, 116px of its 192px width, at the felt widths tested
+   this session) -- Deck: "I tried to bump up the Field bet fonts to no avail" (the calibration
+   font tool's live nudge does work, confirmed by direct test, but nothing came through in the
+   last export -- likely Reset was pressed, or Export wasn't, before it got captured). Binary-
+   searched the real max that fits with margin at felt-width 448 (a representative sub-1400
+   test point, same method as every other fit-fix this session): 18px rendered at that width's
+   0.32 scale -> 18/0.32=56.25, rounded down to 55 for a safety margin. */
 body.felt-portrait #felt-stage #field-bar .zone-name,
 body.felt-portrait #felt-stage #field-bar div[style*="font-size:15px"],
-body.felt-portrait #felt-stage #field-bar .field-info{font-size:calc(26px * var(--font-scale,1))!important}
+body.felt-portrait #felt-stage #field-bar .field-info{font-size:calc(55px * var(--font-scale,1))!important}
 /* Portrait-only (Deck: "Seven box should line break the odds after the word Seven (and remove
    the other odds)... Any Craps box should line break the odds after the word Craps") -- each
    box has two identical .prop-bar-odds spans (one on either side of the name, landscape's
@@ -2272,7 +2291,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.4</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.5</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2839,10 +2858,10 @@ const PORTRAIT_FELT_LAYOUT=[
   ['#hw-panel-label',  0,59.062, 43.056,3.75,'hw'],
   ['#hop-panel-label-1', 9.667,32.5, 16.278,3.625,'hop'],
   ['#hop-panel-label-2', 4.556,51.656, 26.889,3.344,'hop'],
-  ['@hard6',           0,62.813, 21.389,7.187,'hw'],
-  ['@hard10',         21.389,62.813, 21.389,7.187,'hw'],
-  ['@hard8',           0,70, 21.389,7.187,'hw'],
-  ['@hard4',          21.389,70, 21.389,7.187,'hw'],
+  ['@hard6',           0,62.656, 21.389,7.187,'hw'],
+  ['@hard10',         21.389,62.5, 21.389,7.187,'hw'],
+  ['@hard8',           0,69.688, 21.389,7.187,'hw'],
+  ['@hard4',          21.389,69.531, 21.389,7.187,'hw'],
   ['@hop22',          17.833,43.875, 13.889,7.5,'hop'],
   ['@hop44',           3.889,43.875, 13.889,7.5,'hop'],
   ['@hop33',           3.889,36.375, 13.889,7.5,'hop'],
@@ -2850,9 +2869,9 @@ const PORTRAIT_FELT_LAYOUT=[
   ['#prop-panel-label', -0.278,77.188, 43.056,3.75,'hw'],
   ['@any7',           12.778,81.094, 17.5,6.25,'hw'],
   ['@aces',            0,81.25, 12.778,9.375,'hw'],
-  ['@ace2',           30.278,80.938, 12.778,9.375,'hw'],
+  ['@ace2',           30.278,80.781, 12.778,9.375,'hw'],
   ['@horn',           12.778,87.344, 17.5,6.25,'hw'],
-  ['@midnight',        0,90.625, 12.778,9.375,'hw'],
+  ['@midnight',        0,90.469, 12.778,9.375,'hw'],
   ['@yo',             30.278,90.625, 12.778,9.375,'hw'],
   ['@anyCraps',       12.778,93.75, 17.5,6.25,'hw'],
   ['@hop13',           4.556,55.281, 8.778,6.125,'hop'],
@@ -2907,8 +2926,8 @@ const PORTRAIT_STANDARD_LAYOUT=[
   ['#nb-place-9',      56.667,42.5, 6.944,5.469,null],
   ['#nb-buy-9',        63.611,42.5, 7.222,5.469,null],
   ['#nb-lay-10',       77.778,24.219, 7.222,5.469,null],
-  ['#nb-place-10',     78.333,42.5, 6.944,5.469,null],
-  ['#nb-buy-10',       70.833,42.5, 7.5,5.469,null],
+  ['#nb-place-10',     70.833,42.5, 6.944,5.469,null],
+  ['#nb-buy-10',       77.778,42.5, 7.5,5.469,null],
   ['#come-slot-4',      0,36.094, 14.167,6.406,null],
   ['#dc-slot-4',        0,30, 14.167,6.406,null],
   ['#come-slot-5',     14.167,36.094, 14.167,6.406,null],
