@@ -1023,6 +1023,17 @@ body.felt-mode #felt-stage .field-info{font-size:calc(15px * var(--font-scale,1)
 body.felt-portrait #felt-stage #field-bar .zone-name,
 body.felt-portrait #felt-stage #field-bar div[style*="font-size:15px"],
 body.felt-portrait #felt-stage #field-bar .field-info{font-size:calc(26px * var(--font-scale,1))!important}
+/* Portrait-only (Deck: "Seven box should line break the odds after the word Seven (and remove
+   the other odds)... Any Craps box should line break the odds after the word Craps") -- each
+   box has two identical .prop-bar-odds spans (one on either side of the name, landscape's
+   left/right layout), so this drops the FIRST one and stacks the box into a column instead of
+   a row: name+stake (already its own inner block) on top, the surviving second .prop-bar-odds
+   span directly below it. Landscape's own row layout is untouched (no body.felt-portrait
+   scope there). */
+body.felt-portrait #felt-stage #bet-any7,
+body.felt-portrait #felt-stage #bet-anyCraps{flex-direction:column}
+body.felt-portrait #felt-stage #bet-any7 .prop-bar-odds:first-of-type,
+body.felt-portrait #felt-stage #bet-anyCraps .prop-bar-odds:first-of-type{display:none}
 body.felt-mode #felt-stage .prop-bar-name{font-size:calc(27px * var(--font-scale,1))!important}
 /* Measured live at font-scale=0.421 (a representative sub-1400 test point, same as every other
    fit-fix this session): 26px-calibrated C&E was overflowing its circle by ~2px -- trimmed. */
@@ -1468,6 +1479,18 @@ body.felt-mode #felt-stage #lucky-roller .lr-body{position:absolute;inset:0;heig
 body.felt-mode #felt-stage #lucky-roller .lr-nums{height:auto;padding:0;display:flex;flex-wrap:wrap;align-content:center;gap:2px;justify-content:center}
 body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:calc(20px * var(--font-scale,1));height:calc(20px * var(--font-scale,1));font-size:calc(15px * var(--font-scale,1));line-height:calc(20px * var(--font-scale,1));font-weight:800;color:rgba(255,255,255,.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:0 2px}
 body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:calc(9px * var(--font-scale,1));min-height:1.2em;line-height:1.2}
+/* Portrait-only (Deck: "Can we make the Lucky Roller numbers and Lucky Roller text bigger?") --
+   #lucky-roller's portrait box grew a lot in the latest calibration pass (a wide 1225x150 bar
+   vs landscape's narrow 408x107 strip), so the landscape-tuned 17-18px title/pay text and
+   20px/15px number pills read as small relative to the new box. Scoped to body.felt-portrait
+   so landscape's own sizes above are untouched. */
+body.felt-portrait #felt-stage #lucky-roller .lr-title,
+body.felt-portrait #felt-stage #lucky-roller .lr-explain,
+body.felt-portrait #felt-stage #lucky-roller .lr-pay,
+body.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-title,
+body.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
+body.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:calc(26px * var(--font-scale,1))!important}
+body.felt-portrait #felt-stage #lucky-roller .lr-num{min-width:calc(30px * var(--font-scale,1));height:calc(30px * var(--font-scale,1));font-size:calc(22px * var(--font-scale,1));line-height:calc(30px * var(--font-scale,1))}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar #bstk-all{font-size:calc(14px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
 /* Felt art bakes the numbers themselves into the box image (base .lr-num above is
@@ -2249,7 +2272,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.3</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.4</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
