@@ -2133,7 +2133,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.4</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.5</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2343,7 +2343,10 @@ const FELT_LAYOUT=[
   // kept in FELT_LAYOUT (not moved into CRAPLESS_LAYOUT) so enter/exit-felt-mode logic, which
   // expects every mode-agnostic entry to be handled the same regardless of activeGame, doesn't
   // need to change.
-  ['#line-mode-toggle', 39.844,48.889, 59.375,4.444,null],
+  // Shifted down 120 canvas px with the crapless number strip it sits under (one puck height,
+  // see CRAPLESS_LAYOUT's numberbox comment). Crapless-only visually (display:none otherwise),
+  // so this shared FELT_LAYOUT entry moving doesn't affect Standard.
+  ['#line-mode-toggle', 39.844,55.556, 59.375,4.444,null],
   // Panel labels (Phase 7 polish): sit in the real gap between the hard4/6/8/10-or-hop22/33/
   // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
@@ -2486,7 +2489,7 @@ const CRAPLESS_LAYOUT=[
   // one's hit-region gets its own separate absolute position too, matching exactly instead of
   // being sub-divided by a shared grid with its own independent (and slightly different)
   // rounding.
-  ['#num-zone',      37.50,23.556,61.25,24.83,null],
+  ['#num-zone',      37.50,30.222,61.25,24.83,null],
   // 10 numbers x 196px-wide slices (1960/10, matching the FM_ART cl-*-N tiles' own x/w exactly
   // -- same 1200-start, 196-step math, so Buy/Place always lines up with its number's actual
   // art tile regardless of any grid-rounding elsewhere). Buy/Place height (94px each, Place
@@ -2500,36 +2503,43 @@ const CRAPLESS_LAYOUT=[
   // alignCraplessNumBoxOverlays() hack. That hack is removed now that every piece is
   // independently calibrated the same way, same as Hard Ways/Hop Bets/etc already are --
   // seeded here from the grid's own current rendered position, ready for Deck to refine.
-  ['#nb-numberbox-2',  39.844, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-3',  45.781, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-4',  51.719, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-5',  57.656, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-6',  63.594, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-8',  69.531, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-9',  75.469, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-10', 81.406, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-11', 87.344, 28.889,5.938,14.444,null],
-  ['#nb-numberbox-12', 93.281, 28.889,5.938,14.444,null],
-  ['#nb-buy-2',   39.844,23.333,5.938,5.556,null],
-  ['#nb-place-2', 39.844,43.333,5.938,5.556,null],
-  ['#nb-buy-3',   45.781,23.333,5.938,5.556,null],
-  ['#nb-place-3', 45.781,43.333,5.938,5.556,null],
-  ['#nb-buy-4',   51.719,23.333,5.938,5.556,null],
-  ['#nb-place-4', 51.719,43.333,5.938,5.556,null],
-  ['#nb-buy-5',   57.656,23.333,5.938,5.556,null],
-  ['#nb-place-5', 57.656,43.333,5.938,5.556,null],
-  ['#nb-buy-6',   63.594,23.333,5.938,5.556,null],
-  ['#nb-place-6', 63.594,43.333,5.938,5.556,null],
-  ['#nb-buy-8',   69.531,23.333,5.938,5.556,null],
-  ['#nb-place-8', 69.531,43.333,5.938,5.556,null],
-  ['#nb-buy-9',   75.469,23.333,5.938,5.556,null],
-  ['#nb-place-9', 75.469,43.333,5.938,5.556,null],
-  ['#nb-buy-10',   81.406,23.333,5.938,5.556,null],
-  ['#nb-place-10', 81.406,43.333,5.938,5.556,null],
-  ['#nb-buy-11',   87.344,23.333,5.938,5.556,null],
-  ['#nb-place-11', 87.344,43.333,5.938,5.556,null],
-  ['#nb-buy-12',   93.281,23.333,5.938,5.556,null],
-  ['#nb-place-12', 93.281,43.333,5.938,5.556,null],
+  // Whole Buy/number/Place column (and come-slots + line-mode toggle below) shifted DOWN 120
+  // canvas px = one puck height (Deck: "Move all of the BUY, Number Box, PLACE, and
+  // #line-mode-toggle down that many pixels... so now it lands on top of the outside of the
+  // BUY boxes") -- the ON puck used to overlap the Buy row; the freed 120px band above the new
+  // Buy top is exactly where it lands now. 120 = the puck's height on the 3200x1800 canvas
+  // (its natural 60 CSS px at the felt's design size, now pinned to exactly 120 canvas px in
+  // crapless via updateUI()'s synthetic fit -- see the puck branch there).
+  ['#nb-numberbox-2',  39.844, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-3',  45.781, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-4',  51.719, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-5',  57.656, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-6',  63.594, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-8',  69.531, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-9',  75.469, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-10', 81.406, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-11', 87.344, 35.556,5.938,14.444,null],
+  ['#nb-numberbox-12', 93.281, 35.556,5.938,14.444,null],
+  ['#nb-buy-2',   39.844,30,5.938,5.556,null],
+  ['#nb-place-2', 39.844,50,5.938,5.556,null],
+  ['#nb-buy-3',   45.781,30,5.938,5.556,null],
+  ['#nb-place-3', 45.781,50,5.938,5.556,null],
+  ['#nb-buy-4',   51.719,30,5.938,5.556,null],
+  ['#nb-place-4', 51.719,50,5.938,5.556,null],
+  ['#nb-buy-5',   57.656,30,5.938,5.556,null],
+  ['#nb-place-5', 57.656,50,5.938,5.556,null],
+  ['#nb-buy-6',   63.594,30,5.938,5.556,null],
+  ['#nb-place-6', 63.594,50,5.938,5.556,null],
+  ['#nb-buy-8',   69.531,30,5.938,5.556,null],
+  ['#nb-place-8', 69.531,50,5.938,5.556,null],
+  ['#nb-buy-9',   75.469,30,5.938,5.556,null],
+  ['#nb-place-9', 75.469,50,5.938,5.556,null],
+  ['#nb-buy-10',   81.406,30,5.938,5.556,null],
+  ['#nb-place-10', 81.406,50,5.938,5.556,null],
+  ['#nb-buy-11',   87.344,30,5.938,5.556,null],
+  ['#nb-place-11', 87.344,50,5.938,5.556,null],
+  ['#nb-buy-12',   93.281,30,5.938,5.556,null],
+  ['#nb-place-12', 93.281,50,5.938,5.556,null],
   // #come-slot-N landing zones -- Crapless has real Come bets (just no Don't Come/dark side),
   // so #come-slot-N gets created here too (buildStrip() makes one for every number regardless
   // of mode), but it was never given a CRAPLESS_LAYOUT entry, only STANDARD_LAYOUT's. Left
@@ -2537,16 +2547,19 @@ const CRAPLESS_LAYOUT=[
   // text around -- the exact bug already fixed for Standard (Deck: "Come bets are moving the
   // text inside the number box in Crapless"). Positioned at the same relative fraction of the
   // numberbox that Standard's own come-slot-N entries use.
-  ['#come-slot-2',  39.906,35.944,5.844,6.722,null],
-  ['#come-slot-3',  45.844,35.944,5.844,6.722,null],
-  ['#come-slot-4',  51.781,35.944,5.844,6.722,null],
-  ['#come-slot-5',  57.719,35.944,5.844,6.722,null],
-  ['#come-slot-6',  63.656,35.944,5.844,6.722,null],
-  ['#come-slot-8',  69.594,35.944,5.844,6.722,null],
-  ['#come-slot-9',  75.531,35.944,5.844,6.722,null],
-  ['#come-slot-10', 81.469,35.944,5.844,6.722,null],
-  ['#come-slot-11', 87.406,35.944,5.844,6.722,null],
-  ['#come-slot-12', 93.344,35.944,5.844,6.722,null],
+  // Shifted down the same 120 canvas px as the number strip they live inside -- Deck's list
+  // named Buy/numberbox/Place/line-toggle, but these land INSIDE the numberboxes, so leaving
+  // them behind would strand every Come chip 120px above its number.
+  ['#come-slot-2',  39.906,42.611,5.844,6.722,null],
+  ['#come-slot-3',  45.844,42.611,5.844,6.722,null],
+  ['#come-slot-4',  51.781,42.611,5.844,6.722,null],
+  ['#come-slot-5',  57.719,42.611,5.844,6.722,null],
+  ['#come-slot-6',  63.656,42.611,5.844,6.722,null],
+  ['#come-slot-8',  69.594,42.611,5.844,6.722,null],
+  ['#come-slot-9',  75.531,42.611,5.844,6.722,null],
+  ['#come-slot-10', 81.469,42.611,5.844,6.722,null],
+  ['#come-slot-11', 87.406,42.611,5.844,6.722,null],
+  ['#come-slot-12', 93.344,42.611,5.844,6.722,null],
   // Come/Field/Pass share Pass Line's x/w and stay zero-gapped, same as standard, but with no
   // Don't Pass/Don't Come row: Field drops into Don't Pass's old slot (bottom flush against
   // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
@@ -4859,7 +4872,12 @@ function updatePuck3D(target,state,fitEl){
   const cx=px-effR;
   // cornerOf/plain-anchor center the puck vertically on py; topOf instead puts the puck's
   // BOTTOM edge (2*effR below its own top) at py, so it sits flush above the target.
-  const cy=target.topOf?(py-2*effR):(py-effR);
+  // target.lift (screen px, optional, topOf only): raises the landing spot that many px above
+  // the anchor's top edge -- crapless uses it to perch the puck on the BUY row's top (one
+  // buy-row-height above the numberbox it anchors to) while still anchoring to the numberbox,
+  // which is always visible; nb-buy-N itself gets display:none'd in some line modes, so it
+  // can't be the anchor directly (getBoundingClientRect on display:none is all zeros).
+  const cy=target.topOf?(py-2*effR-(target.lift||0)):(py-effR);
   const moved=el!==puck3dAnchor; // sliding to a new number/off-spot, not just a redundant re-render
   puck3dEl.style.transformOrigin='0 0';
   puck3dEl.style.transform='translate('+cx+'px,'+cy+'px) scale('+scale+')';
@@ -5655,20 +5673,27 @@ function updateUI(){
     updatePuck3D(puckTarget,puckState,puckFit);
   }else{
     let puckTarget=null,puckState=null;
+    // Crapless puck is pinned to a fixed CANVAS size (120px tall on the 3200x1800 reference,
+    // its natural 60 CSS px at the felt's design width) via this synthetic fit box -- same
+    // scale-with-the-felt treatment Standard's calibrated #nb-puckbox-N already gives it.
+    // Without this its 60px was fixed SCREEN size, so "the strip moved down one puck height"
+    // (Deck's request, see CRAPLESS_LAYOUT) would only line up at one window size.
+    const _pst=document.getElementById('felt-stage');
+    const _psh=_pst?_pst.clientHeight:0;
+    const _pd=_psh*(120/1800);
+    const puckFit=_pd>0?{getBoundingClientRect:()=>({width:_pd,height:_pd})}:null;
     if(G.phase==='point'){
-      // Anchored to nb-numberbox-N -- the number's own OUTER cell wrapper, always visible and always
-      // the same top edge regardless of line mode -- rather than nb-buy-N/nb-mid-N individually.
-      // Deck: "make the puck in Crapless sit above the number line, just touching the top of
-      // the number boxes" (previously it fell back to nb-mid-N's top -- BELOW where Buy would
-      // sit -- whenever Buy wasn't offered on the point number in Limited/No Buy-Place line
-      // mode, so the puck dipped to a different height depending on line mode/point number
-      // instead of staying flush with the top of the number line the way it does in Full).
+      // Anchored to nb-numberbox-N -- the number's own OUTER cell wrapper, always visible and
+      // always the same top edge regardless of line mode (nb-buy-N gets display:none'd in some
+      // line modes, so it can't be the anchor) -- lifted one buy-row height (100 canvas px)
+      // above it so the puck's bottom edge sits exactly on the BUY box's outside top edge
+      // (Deck: "so now it lands on top of the outside of the BUY boxes").
       const anchorEl=document.getElementById('nb-numberbox-'+G.point);
-      if(anchorEl){puckTarget={topOf:anchorEl};puckState='on';}
+      if(anchorEl){puckTarget={topOf:anchorEl,lift:_psh*(100/1800)};puckState='on';}
     }else if(G.phase==='comeout'){
       puckTarget=document.getElementById('puck-off-crapless');puckState='off';
     }
-    updatePuck3D(puckTarget,puckState);
+    updatePuck3D(puckTarget,puckState,puckFit);
     const nz=document.getElementById('num-zone');if(nz)nz.classList.toggle('line-off',G.phase==='comeout');
   }
   // Don't Pass bar
