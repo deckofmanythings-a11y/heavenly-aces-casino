@@ -1639,7 +1639,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
   <!-- CALIBRATION MODE: drag/resize every bet target directly on the real felt instead of
        eyeballing screenshots and reporting pixel offsets back and forth. See calibXxx() funcs. -->
-  <div id="calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff">
+  <div id="calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff;flex-wrap:wrap;max-width:94vw">
     <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
     <span id="calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Click a box to select it, drag to move, corner handle to resize</span>
     <div id="calib-nudge" style="display:grid;grid-template-columns:22px 22px 22px;grid-template-rows:22px 22px 22px;gap:2px">
@@ -1652,6 +1652,11 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <span id="calib-font-size" style="font-size:11px;color:rgba(255,255,255,.7);min-width:34px;text-align:center">--px</span>
       <button class="calib-nudge-btn" onclick="calibFontNudge(-1)" title="Font size down 1px">▼</button>
     </div>
+    <!-- The two 3D Outcome Dice (#dice-zone, showing the last roll's result) have no normal
+         click-a-box-to-select ruler at all -- unlike Low/All/High, #dice-zone was never
+         surfaced through calibExtraEntries(), so calibSelect() had nothing to select. This
+         button targets the new '@lr-dice' ruler directly. -->
+    <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibSelect('@lr-dice')">🎲 Outcome Dice</button>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibReset()">Reset</button>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibExport()">Export</button>
     <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleCalibMode()">Exit</button>
@@ -2033,7 +2038,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.39</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.40</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2336,6 +2341,7 @@ function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
   if(sel==='all'){const e=document.getElementById('bbonus-all-bar');return e?e.closest('.lr-bonus-wrap'):null;}
   if(sel==='high'){const e=document.getElementById('bbonus-high');return e?e.closest('.lr-bonus-wrap'):null;}
+  if(sel==='dice')return document.getElementById('dice-zone');
   return document.querySelector(sel);
 }
 // Crapless-specific positions, measured directly on the crapless felt art.
@@ -5829,8 +5835,14 @@ function calibExtraEntries(){
   const lr=FELT_LAYOUT.find(e=>e[0]==='#lucky-roller');
   if(lr){
     const lx=lr[1],ly=lr[2],lw=lr[3],lh=lr[4];
-    ['low','all','high'].forEach(key=>{
-      const e=LR_LAYOUT.find(x=>x[0]===key); if(!e)return;
+    // 'dice' -> LR_LAYOUT's '#dice-zone' entry: the two 3D Outcome Dice showing the last roll's
+    // result. It's a real LR_LAYOUT entry (unlike low/all/high, which resolve through lrEl()'s
+    // bbonus-* ids) but was never surfaced to the calibration system at all, so it had no ruler
+    // and calibSelect('#dice-zone') threw (Deck: "make a widget to place the Outcome Dice in
+    // calibration mode"). Exported the same way as low/all/high: whole-canvas px here, then
+    // hand-converted back to %-of-#lucky-roller when pasted into LR_LAYOUT's '#dice-zone' row.
+    ['low','all','high','dice'].forEach(key=>{
+      const e=LR_LAYOUT.find(x=>x[0]===(key==='dice'?'#dice-zone':key)); if(!e)return;
       const rx=e[1],ry=e[2],rw=e[3],rh=e[4];
       out.push(['@lr-'+key, lx+rx/100*lw, ly+ry/100*lh, rw/100*lw, rh/100*lh, null]);
     });
@@ -5867,7 +5879,7 @@ function calibInitState(){
   return st;
 }
 function calibFeltRect(){ return document.getElementById('felt-stage').getBoundingClientRect(); }
-function calibLabelFor(sel){ return sel.charAt(0)==='@'?sel.slice(1):sel; }
+function calibLabelFor(sel){ if(sel==='@lr-dice')return 'Outcome Dice'; return sel.charAt(0)==='@'?sel.slice(1):sel; }
 function calibBuildLayer(){
   const stage=document.getElementById('felt-stage');
   let layer=document.getElementById('calib-layer');
@@ -6033,6 +6045,21 @@ function calibKeyHandler(e){
   calibNudge(d[0],d[1]);
 }
 document.addEventListener('keydown',calibKeyHandler);
+// Docks the toolbar just under Any Craps's actual on-screen box instead of a fixed top:8px
+// guess -- Deck: "relocate the calibration tool to below the Any Craps bet." Computed from the
+// real rendered position (not a hardcoded offset) so it still lands correctly across viewport
+// sizes/felt layouts. Falls back to the original centered-at-top spot if Any Craps isn't found
+// (e.g. crapless mode, which has no Any Craps box).
+function calibPositionToolbar(){
+  const bar=document.getElementById('calib-toolbar');
+  const anchor=document.getElementById('bet-anyCraps');
+  if(!bar)return;
+  if(!anchor){bar.style.top='8px';bar.style.left='50%';bar.style.transform='translateX(-50%)';return;}
+  const r=anchor.getBoundingClientRect();
+  bar.style.transform='none';
+  bar.style.top=Math.round(r.bottom+8)+'px';
+  bar.style.left=Math.round(Math.max(8,Math.min(window.innerWidth-8-bar.offsetWidth,r.left)))+'px';
+}
 function toggleCalibMode(){
   calibActive=!calibActive;
   document.getElementById('calib-toolbar').classList.toggle('hidden',!calibActive);
@@ -6041,10 +6068,13 @@ function toggleCalibMode(){
     if(!calibState)calibState=calibInitState();
     calibBuildLayer();
     calibUpdateFontReadout();
+    calibPositionToolbar();
+    window.addEventListener('resize',calibPositionToolbar);
   }else{
     const layer=document.getElementById('calib-layer');
     if(layer)layer.remove();
     calibSelectedSel=null;
+    window.removeEventListener('resize',calibPositionToolbar);
   }
 }
 function calibReset(){
