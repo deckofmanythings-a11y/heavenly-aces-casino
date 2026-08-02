@@ -235,12 +235,12 @@ body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justi
    script vs heavy face. */
 .num-box{border:var(--box-border);border-radius:var(--box-radius);overflow:hidden;background:var(--box-fill-flat);display:flex;flex-direction:column;height:100%}
 .num-box.is-point{border:2px solid #fff;box-shadow:0 0 5px rgba(255,255,255,.4)}
-.nb-buy{background:var(--box-fill-lightest);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-buy{background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-buy:hover{background:rgba(255,255,255,.15)}
 .nb-buy.active{background:transparent}
 .nb-mid{background:transparent;border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:40px;font-weight:700;font-family:var(--font-heavy);color:var(--color-text);flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
 .nb-num-word{font-family:var(--font-script);font-style:italic}
-.nb-place{background:var(--box-fill-lightest);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-place{background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-place:hover{background:rgba(255,255,255,.1)}
 .nb-place.active{}
 .nb-lbl{font-size:11px;color:rgba(255,255,255,.5);display:block;letter-spacing:.04em}
@@ -370,7 +370,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .dc-rm{font-size:9px;background:rgba(120,0,0,.6);border:none;color:#ff9999;cursor:pointer;padding:0 2px;border-radius:1px;line-height:1.3}
 /* Lay cell in number box (right half of buy) */
 .nb-buy-wrap{display:flex;flex:1;border-bottom:0.5px solid rgba(255,255,255,.1)}
-.nb-buy-left{flex:1;background:var(--box-fill-lightest);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s;border-right:0.5px solid rgba(255,255,255,.08)}
+.nb-buy-left{flex:1;background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-buy-left:hover{background:rgba(255,255,255,.15)}
 .nb-buy-left.active{background:transparent}
 .nb-lay{flex:1;background:rgba(255,255,255,.07);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
@@ -817,6 +817,13 @@ body.felt-mode #num-strip-h{flex:1;padding:0;gap:2px}
 body.felt-mode #felt-stage .nb-buy{flex:0 0 21%}
 body.felt-mode #felt-stage .nb-mid{flex:1}
 body.felt-mode #felt-stage .nb-place{flex:0 0 21%}
+/* Phase 8: #nb-numberbox-N now holds only the numeral (Buy/Lay/Place all individually
+   reparented out of it) -- .nb-mid's border-bottom used to separate it from those bands when
+   they were still nested siblings inside the same box; now it just sits flush against the box's
+   own outer border, reading as two redundant horizontal lines instead of a clean single frame.
+   Base (non-felt list-mode) view is untouched -- there Buy/Place really are still stacked
+   siblings inside the same box, so the separator still means something. */
+body.felt-mode #felt-stage .nb-mid{border-bottom:none}
 body.felt-mode #felt-stage .horn-cell{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stack{justify-content:space-between;gap:0;width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stack .circle-wrap{width:100%;height:28%}
@@ -843,11 +850,11 @@ body.felt-mode.game-crapless #felt-stage .nb-buy{border:var(--box-border);border
 body.felt-mode.game-crapless #felt-stage .nb-place{border:var(--box-border);border-top:none;border-radius:0 0 var(--box-radius) var(--box-radius)}
 body.felt-mode.game-crapless #felt-stage .num-box{border-radius:0}
 /* nb-puckbox-N: only meaningful once STANDARD_LAYOUT gives it a real position/size (felt mode
-   only -- Standard only, Crapless has no puckbox). A dashed circle inscribed in the box's own
-   footprint (not the box's own square outline) reads more like a real "landing pad" marker than
-   a plain rectangle would. */
+   only -- Standard only, Crapless has no puckbox). Dashed rectangle "landing pad" outline
+   matching the box's own footprint (Deck: "don't use an ellipse for the puck box, use a
+   rectangle" -- the puck itself stays a circle once it actually lands here). */
 body.felt-mode.game-standard #felt-stage .nb-puckbox{display:block;position:absolute;pointer-events:none}
-body.felt-mode.game-standard #felt-stage .nb-puckbox::after{content:'';position:absolute;inset:8%;border:1.5px dashed rgba(255,215,0,.35);border-radius:50%}
+body.felt-mode.game-standard #felt-stage .nb-puckbox::after{content:'';position:absolute;inset:8%;border:1.5px dashed rgba(255,215,0,.35);border-radius:var(--box-radius)}
 /* The "move up 40% chip height" adjustment above was calibrated back when Buy was the TOP
    THIRD of one tall shared #num-zone box -- 6% of that box's height plus a chip-relative
    nudge was a reasonable amount to clear the felt art below it. Buy now has its own small,
@@ -1909,7 +1916,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.22</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.23</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
