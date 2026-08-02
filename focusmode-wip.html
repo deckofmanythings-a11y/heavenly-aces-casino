@@ -236,6 +236,8 @@ body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justi
 /* Font-size override from Calibrate Mode's font tool -- Deck only resized #hw-panel-label
    itself, hop-panel-label-1/2 keep the shared 13px above. */
 body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
+/* Deck: "Give me a title bar for the Proposition Bets, same font size as Hard Ways." */
+body.felt-mode #felt-stage #prop-panel-label{font-size:42px!important}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -1894,6 +1896,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           <div class="bwrap"><div class="bb" id="bet-hard8" onclick="placeBet('hard8')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hard8')"><span class="dp"><img class="dice-combo-img" src="marble44.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hard8"></span><span class="pay">10 for 1</span></div></div>
         </div>
         <div id="prop-block">
+          <div id="prop-panel-label" class="fm-panel-label">PROPOSITION BETS</div>
           <div class="bwrap"><div id="bet-any7" onclick="placeBet('any7')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('any7')" class="prop-bar" style="background:var(--box-fill-flat)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">SEVEN</div><div class="prop-bar-stk" id="stk-any7"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span></div></div>
           <div class="horn-stack">
             <div class="horn-row" style="border-bottom:0.5px solid rgba(255,255,255,.1)">
@@ -2048,7 +2051,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
             <div id="dp-main" onclick="placeBet('dp')" oncontextmenu="event.preventDefault();event.stopPropagation();removeDpFlat()">
               <div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap">
                 <div class="dp-name" style="font-size:23px">DON'T PASS</div>
-                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:23px;color:rgba(255,150,150,.85)">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px"></div>
+                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:57px;color:rgba(255,150,150,.85)">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:90px;height:45px"></div>
               </div>
               <div class="dp-stk" id="stk-dp"></div>
               <div class="dp-note" id="note-dp"></div>
@@ -2114,7 +2117,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.53</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.54</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2359,6 +2362,23 @@ const FELT_LAYOUT=[
   // back byte-for-byte identical or within sub-pixel rounding noise and were left untouched.
   // Any 7 moved up ~9px; Any Craps grew taller (7.889% -> 11.5%, +65px); every Hop Bets pill
   // shifted down 8-20px and slightly right (2-11px) -- see below.
+  // Hard Ways / Hopping Hard Ways / Hop Bets pills -- shared between Standard and Crapless now
+  // (Deck: "Apply all numbers, values, positions of Hard Ways... from Standard mode to Crapless
+  // mode"), same as @any7/@aces/@horn/etc and @hop13-46 below already were. Was two separately-
+  // calibrated copies (STANDARD_LAYOUT/CRAPLESS_LAYOUT); Standard's values are the ones kept.
+  ['@hard6',           3.906,36.389, 13.906,7.5,'hw'],
+  ['@hard10',         17.812,36.389, 13.906,7.5,'hw'],
+  ['@hard8',           3.906,43.889, 13.906,7.5,'hw'],
+  ['@hard4',          17.812,43.889, 13.906,7.5,'hw'],
+  ['@hop22',          17.812,43.889, 13.906,7.5,'hop'],
+  ['@hop44',           3.906,43.889, 13.906,7.5,'hop'],
+  ['@hop33',           3.906,36.389, 13.906,7.5,'hop'],
+  ['@hop55',          17.812,36.389, 13.906,7.5,'hop'],
+  // Title bar for the Any7/Aces/Horn/etc cluster, same treatment as #hw-panel-label (Deck:
+  // "Give me a title bar for the Proposition Bets, same font size as Hard Ways, positioned
+  // just on top of the Seven box") -- same x/w as @any7 itself, same height as hw-panel-label,
+  // sitting flush against @any7's top edge with zero gap.
+  ['#prop-panel-label', 3.906,53.333, 27.812,3.611,'hw'],
   ['@any7',            3.906,56.944, 27.812,6.667,'hw'],
   ['@aces',            3.906,63.889, 7.219,10.278,'hw'],
   ['@ace2',           24.531,63.889, 7.187,10.278,'hw'],
@@ -2433,26 +2453,12 @@ function lrEl(sel){
 }
 // Crapless-specific positions, measured directly on the crapless felt art.
 const CRAPLESS_LAYOUT=[
-  // Hard Ways / Hopping Hard Ways pills measured directly on the crapless felt art -- this
-  // panel sits at a different x-position on crapless than on standard, confirmed by dots on
-  // both tables, so it can no longer be one shared coordinate set for both games.
-  // Re-calibrated by Deck's drag tool (px on 3200x1800 canvas): hard6/10/8/4 moved up ~80px
-  // and hard6/8's column moved left while hard10/4's column moved right, widening the gap
-  // between the two columns. hop22/44/33/55 aren't independently draggable (calib tool only
-  // shows whichever tab is active) but occupy the exact same physical slot as their hard
-  // twin by design (see STANDARD_LAYOUT's matching comment -- "moved by the same amount so
-  // tab-switching doesn't jump"), so they're mirrored to the same new coordinates here rather
-  // than left pointing at hard's old, now-stale position.
-  // Moved down ~12.5% (225px) as a group (Deck's drag-tool export) -- same x/w/h as before,
-  // only y changed.
-  ['@hard6',           0.469,36.111,14.25, 7.889,'hw'],
-  ['@hard10',         21.094,36.111,14.25, 7.889,'hw'],
-  ['@hard8',           0.469,43.889,14.25, 7.889,'hw'],
-  ['@hard4',          21.094,43.889,14.25, 7.889,'hw'],
-  ['@hop22',          21.094,43.889,14.25, 7.889,'hop'],
-  ['@hop44',           0.469,43.889,14.25, 7.889,'hop'],
-  ['@hop33',           0.469,36.111,14.25, 7.889,'hop'],
-  ['@hop55',          21.094,36.111,14.25, 7.889,'hop'],
+  // Hard Ways/Hopping Hard Ways/Hop Bets pills used to be their own separately-calibrated copy
+  // here (this panel sat at a different x-position on crapless than on standard, per the felt
+  // art) -- Deck explicitly asked to apply Standard's Hard Ways/Prop/Hop/C/C&E/E/Lucky Roller/
+  // Dice numbers to Crapless instead, so @hard6/10/8/4 and @hop22/44/33/55 moved up into
+  // FELT_LAYOUT as one shared source (matching how @any7/@aces/@horn/etc and @hop13-46 already
+  // worked) rather than keeping two copies that can drift apart again.
   // x/y match the 'craplessline-*' FM_ART entries' x:1200,y:424 (right edge ~40px off the
   // felt, 100px down, per Deck's live-site feedback). Height re-derived for the art's updated
   // native size (447px, was 344px -- see the matching FM_ART comment): 447/1800*100=24.833.
@@ -2532,23 +2538,6 @@ const CRAPLESS_LAYOUT=[
 const STANDARD_LAYOUT=[
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- ground
   // truth, do not re-derive from reference images again.
-  // Shifted up with the Hard Ways art (see FM_ART for the full explanation of why this can't
-  // go further without shrinking the header's own content too) -- hop22/33/44/55 (the 'hop'
-  // tab's twin cells, same physical slot) moved by the same amount so tab-switching doesn't
-  // jump.
-  // Hard Ways cells shifted down 2.222% (40px) to track HardWays.webp's own 40px shift
-  // (see FM_ART). Hop22/33/44/55 shifted UP 2.222% (40px) to track HopHardWays.webp's
-  // bottom-anchored reposition instead -- the two images move in opposite directions
-  // (Hard Ways down, HopHardWays up) since aligning their BOTTOMS is what makes the
-  // gold boxes line up given HopHardWays is the taller asset.
-  ['@hard6',           3.906,36.389, 13.906,7.5,'hw'],
-  ['@hard10',         17.812,36.389, 13.906,7.5,'hw'],
-  ['@hard8',           3.906,43.889, 13.906,7.5,'hw'],
-  ['@hard4',          17.812,43.889, 13.906,7.5,'hw'],
-  ['@hop22',          17.812,43.889, 13.906,7.5,'hop'],
-  ['@hop44',           3.906,43.889, 13.906,7.5,'hop'],
-  ['@hop33',           3.906,36.389, 13.906,7.5,'hop'],
-  ['@hop55',          17.812,36.389, 13.906,7.5,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
   // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
   // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
@@ -4054,16 +4043,20 @@ function buildStrip(){
   if(isStd){
     const psp=document.createElement('div');psp.style.cssText='display:flex;align-items:center;justify-content:center;height:100%';pr.appendChild(psp);
     const dcWrap=document.createElement('div');dcWrap.className='num-box-wrap';dcWrap.id='dc-wait-wrap';
-    const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:rgba(60,0,0,.25);border-color:rgba(255,80,80,.3);cursor:pointer;position:relative';
+    // Was a one-off dark maroon fill/border, not the shared "Dark Side Red" treatment every
+    // other loss-side box uses (green box-fill + red gradient TEXT, not a red box) -- Deck:
+    // "Don't Come box needs to be the same Dark Side Red that Seven, Any Craps, and Don't Pass
+    // use." Matched to the same tokens (--box-fill-flat/--box-border) those use.
+    const dcBox=document.createElement('div');dcBox.className='num-box';dcBox.id='dc-wait-bar';dcBox.style.cssText='background:var(--box-fill-flat);border:var(--box-border);cursor:pointer;position:relative';
     // Anchor sits ABOVE the box (not inside it), centered over its width, mirroring how the ON
     // puck anchors sit in the row above each number box -- Deck wants OFF parked adjacent-and-
     // above the Don't Come waiting box, not nested in its corner.
     const dcOffPuck=document.createElement('div');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-anchor';dcOffPuck.style.cssText='position:absolute;left:50%;bottom:100%;margin-bottom:6px;width:90px;height:90px;visibility:hidden;pointer-events:none;transform:translate(-50%,-15%)';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
-    dcMid.innerHTML='<span style="font-size:45px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
+    dcMid.innerHTML='<span style="font-size:45px;font-weight:900;letter-spacing:.03em;line-height:1.1;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
-      +'<span style="font-size:45px;color:rgba(255,150,150,.85)">BAR</span>'
+      +'<span style="font-size:45px;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
       +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
       +'</span>'
       +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px"></div>';
@@ -5638,7 +5631,14 @@ function updateUI(){
     const dpMain=document.getElementById('dp-main');if(dpMain)dpMain.classList.toggle('active-bar',dpA>0);
     const dpMb=document.getElementById('m-dp');if(dpMb)dpMb.style.display=dpA?'block':'none';
     const dpOddsCell=document.getElementById('dp-odds-cell');
-    const dpOddsShown=dpA>0&&G.point;
+    // Was hidden until a point was up AND a DP bet existed -- Deck: "Pass Line has a vertical
+    // line showing where the Odds bets will go. Add that to Don't Pass." Pass Line's own
+    // #pass-odds-cell is always visible (always splitting #pass-bar), giving it that permanent
+    // divider affordance even before a point exists; #dp-odds-cell now does the same in felt
+    // mode. Actually being able to ADD odds still requires a real DP point (addOddsAmt('dp',..)
+    // itself already gates on that), this only changes whether the box/divider is drawn.
+    const feltOn=document.body.classList.contains('felt-mode');
+    const dpOddsShown=feltOn||(dpA>0&&G.point);
     if(dpOddsCell)dpOddsCell.style.display=dpOddsShown?'block':'none';
     // Unlike Pass Line's #pass-odds-cell (always present, always splitting #pass-bar), Don't
     // Pass's #dp-odds-cell only exists once a point's up -- #dp-main is the FULL bar width the
