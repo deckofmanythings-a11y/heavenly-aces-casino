@@ -290,19 +290,21 @@ body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
 .come-flat-amt{font-size:14px;font-weight:700;color:#7eff9a}
 .come-odds-btn{font-size:11px;background:rgba(0,90,40,.6);border:0.5px solid rgba(0,200,100,.4);border-radius:2px;color:#7eff9a;padding:1px 2px;cursor:pointer}
 .come-odds-amt{font-size:11px;color:#ffe066}
-body.felt-mode #felt-stage .come-on-box{background:transparent;border:none;padding:0;gap:0;width:100%;height:100%;position:relative;display:block}
-body.felt-mode #felt-stage .dc-on-box{background:transparent;border:none;padding:0;gap:0;width:100%;height:100%;position:relative;display:block}
-body.felt-mode #felt-stage .come-half{position:absolute;left:50%;transform:translateX(-50%);width:auto;display:flex;align-items:center;justify-content:center}
-body.felt-mode #felt-stage .come-half.flat-half{bottom:0}
-body.felt-mode #felt-stage .come-half.odds-half{top:0}
-body.felt-mode #felt-stage .dc-on-box{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px}
-body.felt-mode #felt-stage .dc-on-box .come-half{position:static;left:auto;transform:none;width:auto}
+/* Come/DC bet+odds chips sit side-by-side in the number box, per the Interblock reference
+   (Come bet chip left, Come Odds chip right; Don't Come Odds chip left, DC bet chip right --
+   both with the odds chip nearest the arrow+multiplier badge pointing into the base bet).
+   DOM order is always flat-half then odds-half; .dc-on-box uses row-reverse to flip the
+   visual order for Don't Come without touching the JS that builds it. */
+body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{background:transparent;border:none;padding:0;width:100%;height:100%;position:relative;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1px}
+body.felt-mode #felt-stage .dc-on-box{flex-direction:row-reverse}
+body.felt-mode #felt-stage .come-half{position:static;left:auto;transform:none;width:auto;display:flex;align-items:center;justify-content:center}
 
 /* .come-half is width:auto (so it can shrink-wrap and center), which breaks the width:100%
    chain .chip-stack normally relies on to size itself off its parent. Give it a definite
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
 body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
 body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
+body.felt-mode #felt-stage .mult-badge{font-size:9px;font-weight:700;color:#ffd700;background:rgba(0,0,0,.55);border:1px solid rgba(255,215,0,.55);border-radius:3px;padding:0 2px;line-height:1.5;white-space:nowrap;pointer-events:none;z-index:6}
 .come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:#ff9a9a;font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
 
 /* Come / Field / Pass */
@@ -1985,7 +1987,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.34</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.35</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5404,6 +5406,7 @@ function updateUI(){
         maybeTriggerChipSound('come-flat-'+cb.num,cb.flat);
         maybeTriggerChipSound('come-odds-'+cb.num,cur);
         html+='<div class="come-half flat-half" id="combox-flat-'+n+'">'+chipStackHTML(cb.flat,false,true)+'</div>';
+        if(cur>0)html+='<div class="mult-badge">◀'+Math.round(cur/cb.flat)+'x</div>';
         html+='<div class="come-half odds-half" id="combox-odds-'+n+'" onclick="event.stopPropagation();addComeOddsAmt('+cbIdx+',G.chip)" oncontextmenu="event.preventDefault();event.stopPropagation();removeComeOdds('+cbIdx+')">'+(cur>0?chipStackHTML(cur,G.phase==='comeout'||!G.betsOn||G.betsOffThisRoll):'')+'</div>';
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
         }else{
@@ -5427,6 +5430,7 @@ function updateUI(){
         maybeTriggerChipSound('dc-odds-'+dc.num,cur);
         const dcOff=!G.betsOn||G.betsOffThisRoll;
         html+='<div class="come-half flat-half" id="dcbox-flat-'+n+'">'+chipStackHTML(dc.flat,dcOff)+'</div>';
+        if(cur>0)html+='<div class="mult-badge">'+Math.round(cur/dc.flat)+'x▶</div>';
         html+='<div class="come-half odds-half" id="dcbox-odds-'+n+'" onclick="event.stopPropagation();addDcOddsAmt('+dcIdx+',G.chip)">'+(cur>0?chipStackHTML(cur,dcOff):'')+'</div>';
         if(canOdds)html+='<button class="dc-odds-btn" onclick="event.stopPropagation();openDcLayOdds('+dcIdx+')">+L</button>';
       }else{
