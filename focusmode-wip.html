@@ -41,13 +41,19 @@
      ANY CRAPS" -- confirmed live via Range.getClientRects(): "5 for 1" was genuinely splitting
      into two line boxes at reduced scale). Falls back to 1 outside #felt-stage (var's default),
      so nothing changes anywhere --font-scale isn't set. */
-  --box-border: calc(4px * var(--font-scale,1)) solid rgba(255,255,255,.4);
+  /* Deck: "reduce the thickness of the borders on the boxes at lower resolutions... at the
+     screenshotted resolution I think we can get away with 1px." Plain calc(4px*scale) gives a
+     non-integer 1.68px at that resolution, which browsers round UP when rendering -- looks
+     thicker than intended relative to the shrunk box. round(down,...,1px) floors to a whole
+     px instead, so it visibly thins out faster than the font does; max(1px,...) keeps it from
+     disappearing to 0 at extreme scale. */
+  --box-border: max(1px, round(down, calc(4px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
   /* Same color/opacity as --box-border, just 2px instead of 4px -- on the small prop-bet cells
      (Horn Bet, Seven, Any Craps, Aces/Ace2/Midnight/Yo) a 4px border eats a much bigger share
      of the box's own small footprint than it does on Pass Line/Come/Field/number boxes, which
      read as visibly thicker there even though the token value is identical everywhere (Deck:
      "the borders on the Horn bets, Seven, Any Craps seem extra thick"). */
-  --box-border-thin: calc(2px * var(--font-scale,1)) solid rgba(255,255,255,.4);
+  --box-border-thin: max(1px, round(down, calc(2px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -96,6 +102,17 @@
   --space-md: 4px;
   --space-lg: 6px;
 }
+/* --box-border/--box-border-thin's var(--font-scale,1) reference was never actually scaling --
+   custom properties resolve nested var() refs at their OWN definition scope, and :root never
+   has --font-scale set (only #felt-stage does, via JS inline style), so the fallback (1) got
+   baked into the inherited value at :root itself, before it ever reached #felt-stage. Borders
+   rendered at the full 4px/2px at every window size regardless of felt scale. Redeclaring the
+   same formula here, at #felt-stage (where --font-scale actually lives), makes the var()
+   resolve against the real local value instead of the root fallback. */
+#felt-stage{
+  --box-border: max(1px, round(down, calc(4px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border-thin: max(1px, round(down, calc(2px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
@@ -128,7 +145,17 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* Hardways/Hop Bets tab buttons: one row with name + $ value inline instead of stacked lines,
    so the button itself needs less height (Deck: "make them one row with both the name and
    $value") -- lets the shorter box sit closer to the art above it. */
-#tab-hw,#tab-hop{flex-direction:row!important;gap:6px!important;justify-content:center}
+#tab-hw,#tab-hop{flex-direction:row!important;gap:calc(6px * var(--font-scale,1))!important;justify-content:center}
+/* The list-mode narrow-viewport media query (.mode-btn{font-size:13px}, see @media(max-width:
+   900px) below) isn't scoped to list mode, so it was winning the cascade over the scaled base
+   19px rule above on any felt viewport under 900px wide (same specificity, later in source,
+   neither !important) -- pinning HARDWAYS/HOP BETS to a flat unscaled 13px that overflowed/
+   wrapped instead of shrinking with the felt. !important here beats it regardless of order. */
+body.felt-mode #felt-stage .mode-btn{font-size:calc(19px * var(--font-scale,1))!important}
+/* #tab-hw/#tab-hop's box is much more cramped than a typical .mode-btn (one row, name + a
+   dynamic "$0.00" value, only 67x12px at small felt sizes) -- the shared 19px still wrapped/
+   overflowed there even once correctly scaled. Own smaller size + nowrap safety net. */
+body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size:calc(15px * var(--font-scale,1))!important;white-space:nowrap}
 .mode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
 .mode-btn-amt{font-size:calc(17px * var(--font-scale,1));color:#ffd700;font-weight:600}
 
@@ -257,8 +284,11 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 .horn-center{background:var(--box-fill-lightest);flex:1;flex-direction:row;gap:6px}
 .horn-center:hover{background:rgba(255,255,255,.18)}
 .horn-center-name{font-size:21px;font-weight:900;letter-spacing:.05em;font-family:var(--font-heavy);background:var(--text-grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-/* Font-size override from Calibrate Mode's font tool. */
-#bet-horn .horn-center-name{font-size:calc(39px * var(--font-scale,1))!important}
+/* Font-size override from Calibrate Mode's font tool -- re-measured live at font-scale=0.421,
+   "HORN BET" was wrapping to 2 lines instead of shrinking (39px calibrated was too wide for
+   the box even at the correct ratio). Trimmed + nowrap as a safety net, same pattern as
+   HARD WAYS/PROPOSITION BETS/SEVEN/ANY CRAPS earlier this session. */
+#bet-horn .horn-center-name{font-size:calc(28px * var(--font-scale,1))!important;white-space:nowrap}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:calc(15px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
@@ -963,16 +993,26 @@ body.felt-mode #felt-stage .nb-lbl{background:var(--text-grad-white)!important;-
 body.felt-mode #felt-stage .nb-lay .nb-lbl{background:var(--text-grad-red)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important}
 /* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) --
    Buy/Lay share one size, Place gets its own smaller one. */
+/* Re-measured live at font-scale=0.421 (BUY/PLACE were overflowing their cells by 5-6px even
+   at the correct ratio -- the calibrated base was just too big for the box) -- trimmed both,
+   same fit-at-representative-sub-1400-scale method as every other correction this session. */
 body.felt-mode #felt-stage .nb-buy .nb-lbl,body.felt-mode #felt-stage .nb-buy-left .nb-lbl,
-body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:calc(30px * var(--font-scale,1))!important}
-body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:calc(21px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:calc(24px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:calc(14px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .pay{display:block!important;font-size:calc(16px * var(--font-scale,1))!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
 /* Deck: "Make the font used for the numbers in the field box (2-3...11-12) be the same font
    size as the word Field." FIELD itself (.zone-name) is forced to 36px below (was only 16px
    here, much smaller). */
 body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:calc(44px * var(--font-scale,1))!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+/* .field-info ("pays double" + dice icons below FIELD) had no felt-mode override at all --
+   the icons were already scaled (see comboImg's calc() width/height), but the wrapping text
+   was stuck at the base unscaled 15px, overflowing the box at small felt sizes instead of
+   shrinking with everything else around it. */
+body.felt-mode #felt-stage .field-info{font-size:calc(15px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:calc(27px * var(--font-scale,1))!important}
-body.felt-mode #felt-stage .prop-circle{font-size:calc(26px * var(--font-scale,1))!important}
+/* Measured live at font-scale=0.421 (a representative sub-1400 test point, same as every other
+   fit-fix this session): 26px-calibrated C&E was overflowing its circle by ~2px -- trimmed. */
+body.felt-mode #felt-stage .prop-circle{font-size:calc(23px * var(--font-scale,1))!important}
 
 /* readable stakes over the art */
 body.felt-mode #felt-stage .stk,body.felt-mode #felt-stage .nb-stk,body.felt-mode #felt-stage .hc-stk,
@@ -2193,7 +2233,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.12</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.13</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
