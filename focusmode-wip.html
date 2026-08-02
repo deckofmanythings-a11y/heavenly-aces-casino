@@ -2083,7 +2083,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.47</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.48</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2257,7 +2257,9 @@ const FELT_LAYOUT=[
   // Re-tuned again (Deck's drag-tool export) -- now 22.656x6.111%, shrunk back down and moved
   // right/down from the previous pass. LR_LAYOUT's low/all/high/#dice-zone entries (all stored
   // as %-of-THIS-box) were recomputed from the export again too -- see their own comments.
-  ['#lucky-roller',   38.594,4.722, 22.656,6.111,null],
+  // Re-tuned again -- moved down and shrunk vertically (22.656x6.111% -> 22.656x3.333%, same
+  // width, y 4.722->7.5). LR_LAYOUT's low/all/high/#dice-zone recomputed from it again too.
+  ['#lucky-roller',   38.594,7.5, 22.656,3.333,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -2386,10 +2388,10 @@ const LR_LAYOUT=[
   // moved to a totally different physical spot (up and to the left, into the previously-empty
   // area above Hard Ways), which is why its x/y go negative/>100 -- that's still valid CSS
   // (positioned outside the parent's own box), not a mistake.
-  ['#dice-zone',  -118.622,209.098,53.796,163.639],
-  ['low',      0.000,100.000,29.657,131.828],
-  ['all',     35.174,100.000,29.657,131.828],
-  ['high',    70.343,100.000,29.657,131.828]
+  ['#dice-zone',  -118.622,300.030,53.796,300.030],
+  ['low',      0.000,100.000,29.657,241.704],
+  ['all',     35.174,100.000,29.657,241.704],
+  ['high',    70.343,100.000,29.657,241.704]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
