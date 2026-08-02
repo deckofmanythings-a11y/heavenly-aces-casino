@@ -99,15 +99,23 @@
       '  0%,100%{opacity:0;transform:translate(-50%,-50%) scale(.15) rotate(0deg)}',
       '  50%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(25deg)}',
       '}',
-      // Shine: a diagonal light band that sweeps across the amount-wrap every few seconds.
-      // mix-blend-mode:overlay means it brightens whatever's underneath (mostly the gold digits)
-      // instead of just painting a flat white stripe over everything.
-      '.wm-winner-shine{',
-      '  position:absolute;top:-20%;left:-60%;width:35%;height:140%;z-index:3;pointer-events:none;',
-      '  background:linear-gradient(75deg,transparent 0%,transparent 35%,rgba(255,255,255,.9) 50%,transparent 65%,transparent 100%);',
-      '  mix-blend-mode:overlay;animation:wmShineSweep 3.6s ease-in-out infinite;',
+      // Shine: previously a big blended rectangle sweeping over the whole amount-wrap, which
+      // smeared against the dark glass panel and the gaps between letters, not just the gold
+      // digits -- looked like a harsh diagonal smudge. Replaced with the standard "clipped text
+      // shimmer" trick instead: a ::after that duplicates the number via attr(data-value) (kept
+      // in sync by JS alongside every amtEl.textContent write) and clips ITS OWN moving highlight
+      // gradient to the exact glyph shapes with background-clip:text, same as the base gold fill
+      // -- so the shine only ever touches the letters themselves.
+      '.wm-winner-amount::after{',
+      '  content:attr(data-value);position:absolute;inset:0;z-index:3;pointer-events:none;',
+      '  display:inline-flex;align-items:center;justify-content:center;',
+      '  background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.95) 50%,transparent 65%);',
+      '  background-size:260% 100%;background-position:-130% 0;background-repeat:no-repeat;',
+      '  -webkit-background-clip:text;background-clip:text;color:transparent;',
+      '  -webkit-text-stroke:1.5px transparent;',
+      '  animation:wmShineSweep 3.6s ease-in-out infinite;',
       '}',
-      '@keyframes wmShineSweep{0%{left:-60%}22%{left:130%}100%{left:130%}}',
+      '@keyframes wmShineSweep{0%{background-position:-130% 0}22%{background-position:130% 0}100%{background-position:130% 0}}',
       '#wm-modal-winner.big .wm-winner-box{animation:wmWinnerPop .35s cubic-bezier(.34,1.56,.64,1),wmBigWinPulse 1.1s ease-in-out infinite .35s}',
       '@keyframes wmBigWinPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}',
       '#wm-modal-winner.big .wm-winner-title{font-size:48px}',
@@ -117,7 +125,8 @@
       // ---------- PUSH state: calmer sibling of the win celebration (no coin shower, no
       // sparkles/shine, silver/platinum text instead of gold; the glass panel stays -- it's
       // just a legibility backdrop, not a celebration effect) -- see showPush() below.
-      '#wm-modal-winner.push .wm-winner-sparkles,#wm-modal-winner.push .wm-winner-shine{display:none}',
+      '#wm-modal-winner.push .wm-winner-sparkles{display:none}',
+      '#wm-modal-winner.push .wm-winner-amount::after{display:none}',
       '#wm-modal-winner.push .wm-winner-amount{',
       '  background:linear-gradient(180deg,#f4f6f8 0%,#d8dee3 20%,#8b959c 48%,#eef1f3 55%,#aab2b8 75%,#5a6268 100%);',
       '  -webkit-background-clip:text;background-clip:text;color:transparent;',
@@ -146,9 +155,8 @@
         '<div class="wm-winner-amount-wrap">' +
           '<div class="wm-winner-glass"></div>' +
           '<div class="wm-winner-coins"></div>' +
-          '<div class="wm-winner-amount">$0.00</div>' +
+          '<div class="wm-winner-amount" data-value="$0.00">$0.00</div>' +
           '<div class="wm-winner-sparkles">' + buildSparklesHTML() + '</div>' +
-          '<div class="wm-winner-shine"></div>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlayEl);
@@ -270,6 +278,14 @@
     return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  // Keeps data-value in lockstep with the visible text on every tick -- the shine's ::after
+  // reads it via attr(data-value) so its clipped highlight always matches the current digits,
+  // including mid-count-up, not just the final settled amount.
+  function setAmtText(text) {
+    amtEl.textContent = text;
+    amtEl.dataset.value = text;
+  }
+
   // ---------- public API ----------
   const WinnerModal = {
     // amount<=0 is a no-op -- every host page's existing behavior is to just skip the modal
@@ -285,7 +301,7 @@
       overlayEl.classList.remove('push');
       overlayEl.classList.remove('hidden');
       titleEl.textContent = options.title || '🎉 Congratulations, you win 🎉';
-      amtEl.textContent = '$0.00';
+      setAmtText('$0.00');
       sizeWinnerGlass(amount, fmt);
       spawnCoinWaterfall(options.big ? 56 : 34);
       const start = performance.now();
@@ -293,10 +309,10 @@
         if (!_winnerAnimating) return;
         const t = Math.min((now - start) / 2000, 1);
         const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        amtEl.textContent = fmt(Math.round(e * amount * 100) / 100);
+        setAmtText(fmt(Math.round(e * amount * 100) / 100));
         if (t < 1) requestAnimationFrame(tick);
         // held long enough for the longer coin shower to finish
-        else { _winnerAnimating = false; amtEl.textContent = fmt(amount); winnerTimer = setTimeout(() => WinnerModal.close(), 3000); }
+        else { _winnerAnimating = false; setAmtText(fmt(amount)); winnerTimer = setTimeout(() => WinnerModal.close(), 3000); }
       }
       requestAnimationFrame(tick);
     },
@@ -314,16 +330,16 @@
       overlayEl.classList.add('push');
       overlayEl.classList.remove('hidden');
       titleEl.textContent = options.title || 'Push! Bets returned!';
-      amtEl.textContent = '$0.00';
+      setAmtText('$0.00');
       sizeWinnerGlass(amount, fmt);
       const start = performance.now();
       function tick(now) {
         if (!_winnerAnimating) return;
         const t = Math.min((now - start) / 1200, 1);
         const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        amtEl.textContent = fmt(Math.round(e * amount * 100) / 100);
+        setAmtText(fmt(Math.round(e * amount * 100) / 100));
         if (t < 1) requestAnimationFrame(tick);
-        else { _winnerAnimating = false; amtEl.textContent = fmt(amount); winnerTimer = setTimeout(() => WinnerModal.close(), 2000); }
+        else { _winnerAnimating = false; setAmtText(fmt(amount)); winnerTimer = setTimeout(() => WinnerModal.close(), 2000); }
       }
       requestAnimationFrame(tick);
     },
