@@ -58,7 +58,7 @@
      Not blanket-applied to every span on the page (auth screen, modals, HUD numbers, tutorial
      text, etc. stay solid) -- scoped to the felt's own big bet-box labels/numerals, the visual
      surface this whole redesign has actually been about. */
-  --text-grad-white: linear-gradient(180deg, #ffffff 0%, #f2f2f2 100%);
+  --text-grad-white: linear-gradient(180deg, #ffffff 0%, #e6e6e6 100%);
   --text-grad-gold: linear-gradient(180deg, #fff6cf 0%, #ffd700 55%, #b8860b 100%);
   --text-grad-red: linear-gradient(180deg, #ff9a9a 0%, #ff4444 55%, #b81f1f 100%);
   /* Metallic gold specifically for "LUCKY ROLLER" -- alternating light/dark bands (not a
@@ -191,8 +191,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .prop-bar-odds{font-size:17px;font-weight:600}
 /* Font-size overrides from Calibrate Mode's font tool -- Any 7 and Any Craps got different
    sizes, both scoped to their own bar so they don't leak onto each other. */
-#bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:48px!important}
-#bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:41px!important}
+body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:48px!important}
+body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:41px!important}
 .prop-bar-stk{font-size:17px;color:#ffd700;min-height:11px;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
@@ -826,7 +826,7 @@ body.felt-mode #felt-stage .nb-mid>span{visibility:visible}
    neighboring boxes (only ever discoverable once Phase 4 made the numeral visible in felt mode
    for the first time; it was always oversized, just invisible before). !important needed to
    beat the inline style. */
-body.felt-mode #felt-stage .nb-mid>span{font-weight:900!important;text-shadow:0 1px 2px rgba(0,0,0,.6);background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+body.felt-mode #felt-stage .nb-mid>span{font-weight:900!important;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) -- digit
    numbers (4/5/8/10) and spelled-out word numbers (Six/Nine, narrower script glyphs) were
    sized differently, so this replaces the old single shared 26px rule with two. */
@@ -968,6 +968,15 @@ body.felt-mode.game-standard #felt-stage .num-box{position:relative}
    which broke nb-numberbox-N's positioning entirely (fell into normal document flow, stacking
    every number straight down the page instead of where STANDARD_LAYOUT actually placed it). */
 body.felt-mode.game-standard #felt-stage .num-box.felt-abs{position:absolute}
+/* All .felt-abs siblings share the same z-index:2, so stacking order among them falls back to
+   DOM order -- #nb-numberbox-N gets appended to #felt-stage BEFORE #nb-lay-N/#nb-buy-N/
+   #nb-place-N/#nb-puckbox-N (STANDARD_LAYOUT's array order), so it renders BEHIND them. With
+   the huge numeral font sizes from Calibrate Mode's font tool now overflowing well past the
+   numberbox's own bounds (Deck: "number boxes... STILL gray" -- the white gradient numerals
+   were correct, just visually buried under the neighboring boxes' own translucent fills where
+   they overlapped). Lifted above every other felt-abs box so the overflow is always visible. */
+body.felt-mode.game-standard #felt-stage .num-box.felt-abs{z-index:5}
+body.felt-mode #felt-stage #dc-wait-wrap.felt-abs{z-index:5}
 /* Phase 4: the old per-number Box4-10 art (and later, the single continuous Number_Line
    image) is gone -- .num-box's real CSS border/fill (--box-border/--box-fill-flat) is now the
    only frame each number cell has, so the !important suppression that used to hide it
@@ -1970,7 +1979,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.30</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.31</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
