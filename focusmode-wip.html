@@ -1909,7 +1909,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.21</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.22</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2114,7 +2114,7 @@ const FELT_LAYOUT=[
   // kept in FELT_LAYOUT (not moved into CRAPLESS_LAYOUT) so enter/exit-felt-mode logic, which
   // expects every mode-agnostic entry to be handled the same regardless of activeGame, doesn't
   // need to change.
-  ['#line-mode-toggle', 37.5,49.444, 61.25,2.778,null],
+  ['#line-mode-toggle', 39.375,48.611, 60,4.444,null],
   // Panel labels (Phase 7 polish): sit in the real gap between the hard4/6/8/10-or-hop22/33/
   // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
@@ -2333,7 +2333,7 @@ const STANDARD_LAYOUT=[
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
   // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
   // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
-  ['#dc-wait-wrap',   90.875,22.722, 8.562,25.167,null],
+  ['#dc-wait-wrap',   90.938,23.889, 8.281,24.444,null],
   // Come/Field/Don't Pass/Pass Line stacked with zero gap between rows (Deck: "should all be
   // perfectly stacked with no space between them") -- matches the FM_ART bar images exactly
   // (same x/w/h/seams as pass/dp/come/field above, now corrected to their real 1368-wide
@@ -2342,12 +2342,12 @@ const STANDARD_LAYOUT=[
   // Shifted down 11.056% (199px) as a group along with the FM_ART bar images above --
   // pass-bar's new bottom (86.223+11.556=97.779% -> 1760px) is exactly 40px above the
   // felt's bottom edge.
-  ['#come-bar',       56.656,49.889, 42.75,11.556,null],
-  ['#field-bar',      56.656,61.444, 42.75,15.389,null],
-  ['#dp-bar',         56.656,76.833, 42.75,9.389,null],
-  ['#pass-bar',       56.656,86.222, 42.75,11.556,null],
+  ['#come-bar',       56.719,57.222, 42.812,9.167,null],
+  ['#field-bar',      56.719,66.389, 42.812,12.5,null],
+  ['#dp-bar',         56.719,88.333, 42.812,9.444,null],
+  ['#pass-bar',       56.719,78.889, 42.812,9.444,null],
   // Same placement/derivation as the crapless copy above -- see that comment.
-  ['#light-spot',     49.844,86.222, 6.5,11.556,null],
+  ['#light-spot',     51.406,88.333, 5.312,9.444,null],
   // Buy/Place/Lay per number -- now individually calibrated real positions (Deck's drag-tool
   // export) instead of the CSS flex-split #num-zone used to size them into. Pulled directly
   // into #felt-stage by enterFeltMode() same as everything else here.
@@ -2357,40 +2357,40 @@ const STANDARD_LAYOUT=[
   // alignStandardNumBoxOverlays() hack. That hack is removed now that every piece is
   // independently calibrated the same way -- seeded here from the grid's own current
   // rendered position, ready for Deck to refine.
-  ['#nb-numberbox-4',  35.125,24.944, 8.4375,22.278,null],
-  ['#nb-numberbox-5',  43.844,24.944, 8.4375,22.278,null],
-  ['#nb-numberbox-6',  52.563,24.944, 8.4375,22.278,null],
-  ['#nb-numberbox-8',  61.281,24.944, 8.4375,22.278,null],
-  ['#nb-numberbox-9',  70.000,24.944, 8.4375,22.278,null],
-  ['#nb-numberbox-10', 78.719,24.944, 8.4375,22.278,null],
+  ['#nb-numberbox-4',  39.375,29.722, 8.594,12.5,null],
+  ['#nb-numberbox-5',  47.969,29.722, 8.594,12.5,null],
+  ['#nb-numberbox-6',  56.563,29.722, 8.594,12.5,null],
+  ['#nb-numberbox-8',  65.156,29.722, 8.594,12.5,null],
+  ['#nb-numberbox-9',  73.75,29.722, 8.594,12.5,null],
+  ['#nb-numberbox-10', 82.344,29.722, 8.594,12.5,null],
   // nb-puckbox-N: where the ON puck lands and shrinks to fit for this number's point (see
   // updatePuck3D()'s new fitEl param) -- seeded 90x90 centered on nb-lay-N's old cornerOf
   // target point (the puck's previous fixed-size landing spot), now a real calibratable box
   // instead of a floating fixed-radius circle with no footprint of its own.
-  ['#nb-puckbox-4',   37.938,22.444, 2.8125,5.0,null],
-  ['#nb-puckbox-5',   46.656,22.444, 2.8125,5.0,null],
-  ['#nb-puckbox-6',   55.375,22.444, 2.8125,5.0,null],
-  ['#nb-puckbox-8',   64.094,22.444, 2.8125,5.0,null],
-  ['#nb-puckbox-9',   72.813,22.444, 2.8125,5.0,null],
-  ['#nb-puckbox-10',  81.531,22.444, 2.8125,5.0,null],
-  ['#nb-lay-4',       41.906,22.5, 4.469,5.5,null],
-  ['#nb-place-4',     37.438,42.333, 4.469,5.722,null],
-  ['#nb-buy-4',       41.906,42.333, 4.469,5.722,null],
-  ['#nb-lay-5',       50.813,22.5, 4.469,5.5,null],
-  ['#nb-place-5',     46.344,42.333, 4.469,5.722,null],
-  ['#nb-buy-5',       50.813,42.333, 4.469,5.722,null],
-  ['#nb-lay-6',       59.719,22.5, 4.469,5.5,null],
-  ['#nb-place-6',     55.25,42.333, 4.469,5.722,null],
-  ['#nb-buy-6',       59.719,42.333, 4.469,5.722,null],
-  ['#nb-lay-8',       68.625,22.5, 4.469,5.5,null],
-  ['#nb-place-8',     64.156,42.333, 4.469,5.722,null],
-  ['#nb-buy-8',       68.625,42.333, 4.469,5.722,null],
-  ['#nb-lay-9',       77.531,22.5, 4.469,5.5,null],
-  ['#nb-place-9',     73.062,42.333, 4.469,5.722,null],
-  ['#nb-buy-9',       77.531,42.333, 4.469,5.722,null],
-  ['#nb-lay-10',      86.438,22.5, 4.469,5.5,null],
-  ['#nb-place-10',    81.969,42.333, 4.469,5.722,null],
-  ['#nb-buy-10',      86.438,42.333, 4.469,5.722,null]
+  ['#nb-puckbox-4',   39.375,23.889, 4.375,5.833,null],
+  ['#nb-puckbox-5',   47.969,23.889, 4.375,5.833,null],
+  ['#nb-puckbox-6',   56.563,23.889, 4.375,5.833,null],
+  ['#nb-puckbox-8',   65.156,23.889, 4.375,5.833,null],
+  ['#nb-puckbox-9',   73.75,23.889, 4.375,5.833,null],
+  ['#nb-puckbox-10',  82.344,23.889, 4.375,5.833,null],
+  ['#nb-lay-4',       43.75,23.889, 4.219,5.833,null],
+  ['#nb-place-4',     39.375,42.222, 4.375,5.833,null],
+  ['#nb-buy-4',       43.75,42.222, 4.219,5.833,null],
+  ['#nb-lay-5',       52.344,23.889, 4.219,5.833,null],
+  ['#nb-place-5',     47.969,42.222, 4.375,5.833,null],
+  ['#nb-buy-5',       52.344,42.222, 4.219,5.833,null],
+  ['#nb-lay-6',       60.938,23.889, 4.219,5.833,null],
+  ['#nb-place-6',     56.563,42.222, 4.375,5.833,null],
+  ['#nb-buy-6',       60.938,42.222, 4.219,5.833,null],
+  ['#nb-lay-8',       69.531,23.889, 4.219,5.833,null],
+  ['#nb-place-8',     65.156,42.222, 4.375,5.833,null],
+  ['#nb-buy-8',       69.531,42.222, 4.219,5.833,null],
+  ['#nb-lay-9',       78.125,23.889, 4.219,5.833,null],
+  ['#nb-place-9',     73.75,42.222, 4.375,5.833,null],
+  ['#nb-buy-9',       78.125,42.222, 4.219,5.833,null],
+  ['#nb-lay-10',      86.719,23.889, 4.219,5.833,null],
+  ['#nb-place-10',    82.344,42.222, 4.375,5.833,null],
+  ['#nb-buy-10',      86.719,42.222, 4.219,5.833,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 // id -> tab ('hw'/'hop'/null) for every '@name' entry, derived from the layout arrays
