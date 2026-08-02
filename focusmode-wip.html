@@ -189,6 +189,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .prop-bar:hover{background:rgba(255,255,255,.08)}
 .prop-bar-name{font-size:21px;font-weight:900;letter-spacing:.08em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
 .prop-bar-odds{font-size:17px;font-weight:600}
+/* Font-size overrides from Calibrate Mode's font tool -- Any 7 and Any Craps got different
+   sizes, both scoped to their own bar so they don't leak onto each other. */
+#bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:48px!important}
+#bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:41px!important}
 .prop-bar-stk{font-size:17px;color:#ffd700;min-height:11px;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
@@ -197,16 +201,24 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .horn-cell:hover{background:rgba(255,255,255,.1)}
 .hc-dice{font-size:min(36px,3vh);line-height:1}
 .hc-pay{font-size:14px;color:rgba(255,255,255,.5);margin-top:1px}
+/* Font-size override from Calibrate Mode's font tool -- Aces/Ace2/Midnight/Yo (the four
+   non-center Horn Bet cells) all got the same size. */
+#bet-aces .hc-pay,#bet-ace2 .hc-pay,#bet-midnight .hc-pay,#bet-yo .hc-pay{font-size:24px!important}
 .hc-stk{font-size:15px;color:var(--color-gold);min-height:10px}
 .horn-center{background:var(--box-fill-lightest);flex:1;flex-direction:row;gap:6px}
 .horn-center:hover{background:rgba(255,255,255,.18)}
 .horn-center-name{font-size:21px;font-weight:900;letter-spacing:.05em;font-family:var(--font-heavy);background:var(--text-grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+/* Font-size override from Calibrate Mode's font tool. */
+#bet-horn .horn-center-name{font-size:39px!important}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:15px;font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
 .fm-panel-label{display:none}
 /* Deck's 4-tier green system: title/label bars (this + .hop-section-hdr above) are Darkest. */
 body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:13px;line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
+/* Font-size override from Calibrate Mode's font tool -- Deck only resized #hw-panel-label
+   itself, hop-panel-label-1/2 keep the shared 13px above. */
+body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -296,6 +308,10 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
    generic --box-fill gradient) for the actual token swap, not here. */
 .zone-bar.active-bar{}
 .zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+/* Font-size overrides from Calibrate Mode's font tool -- Come/Pass Line share one size,
+   Field gets its own smaller one (Don't Pass isn't a .zone-name, see .dp-name below). */
+#come-bar .zone-name,#pass-bar .zone-name{font-size:76px!important}
+#field-bar .zone-name{font-size:36px!important}
 .zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
@@ -367,6 +383,8 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-main:hover{background:rgba(255,255,255,.1)}
 #dp-main.active-bar{background:transparent}
 .dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+/* Font-size override from Calibrate Mode's font tool. */
+#dp-bar .dp-name{font-size:57px!important}
 .dp-stk{font-size:13px;color:var(--color-gold);min-height:10px}
 .dp-note{font-size:9px;color:rgba(255,255,255,.35)}
 #dp-odds-cell{background:var(--box-fill-flat);border-top:0.5px solid rgba(255,255,255,.15);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none}
@@ -808,7 +826,12 @@ body.felt-mode #felt-stage .nb-mid>span{visibility:visible}
    neighboring boxes (only ever discoverable once Phase 4 made the numeral visible in felt mode
    for the first time; it was always oversized, just invisible before). !important needed to
    beat the inline style. */
-body.felt-mode #felt-stage .nb-mid>span{font-size:26px!important;font-weight:900!important;text-shadow:0 1px 2px rgba(0,0,0,.6);background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+body.felt-mode #felt-stage .nb-mid>span{font-weight:900!important;text-shadow:0 1px 2px rgba(0,0,0,.6);background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+/* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) -- digit
+   numbers (4/5/8/10) and spelled-out word numbers (Six/Nine, narrower script glyphs) were
+   sized differently, so this replaces the old single shared 26px rule with two. */
+body.felt-mode #felt-stage .nb-num-digit{font-size:72px!important}
+body.felt-mode #felt-stage .nb-num-word{font-size:48px!important}
 body.felt-mode #felt-stage .nb-num-word{transform:rotate(-30deg)}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
@@ -817,8 +840,13 @@ body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;al
    number list, both un-hidden above now that their old FM_ART baked the text in, get the
    same treatment. SEVEN/ANY CRAPS (.prop-bar-name) and C/C&E/E (.prop-circle) were sized for
    the old art's larger painted circles/bars -- bumped up now that real CSS is the only frame. */
-body.felt-mode #felt-stage .nb-lbl{background:var(--text-grad-white)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important;opacity:1;font-weight:800!important;font-size:12px!important}
+body.felt-mode #felt-stage .nb-lbl{background:var(--text-grad-white)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important;opacity:1;font-weight:800!important}
 body.felt-mode #felt-stage .nb-lay .nb-lbl{background:var(--text-grad-red)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important}
+/* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) --
+   Buy/Lay share one size, Place gets its own smaller one. */
+body.felt-mode #felt-stage .nb-buy .nb-lbl,body.felt-mode #felt-stage .nb-buy-left .nb-lbl,
+body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:30px!important}
+body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:21px!important}
 body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
 body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:16px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
@@ -1942,7 +1970,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.29</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.30</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2113,7 +2141,7 @@ const FELT_LAYOUT=[
   // HighRollsBox.webp), same master template/canvas as the old art -- box is the union bounding
   // box of the title art + the three bet boxes, measured directly off the crop tool's exported
   // stage coordinates (x:1220,y:15,w:775,h:350 on the 3200x1800 canvas).
-  ['#lucky-roller',   43.281,8.611, 14.062,5.278,null],
+  ['#lucky-roller',   41.562,8.889, 17.344,5.278,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -3845,9 +3873,9 @@ function buildStrip(){
     const dcOffPuck=document.createElement('div');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-anchor';dcOffPuck.style.cssText='position:absolute;left:50%;bottom:100%;margin-bottom:6px;width:90px;height:90px;visibility:hidden;pointer-events:none;transform:translate(-50%,-15%)';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
-    dcMid.innerHTML='<span style="font-size:23px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
+    dcMid.innerHTML='<span style="font-size:45px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
-      +'<span style="font-size:23px;color:rgba(255,150,150,.85)">BAR</span>'
+      +'<span style="font-size:45px;color:rgba(255,150,150,.85)">BAR</span>'
       +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
       +'</span>'
       +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:9px;margin-top:1px"></div>';
@@ -5827,7 +5855,14 @@ let calibFontSizes={}; // selector -> px, only entries the font tool has actuall
 function calibTextLeaves(el){
   const out=[];
   (function walk(node){
-    if(node.children.length===0){
+    // A node counts as a leaf if it has no element children (the old check -- still needed
+    // for plain text-only spans) OR if it has its OWN direct text node(s), even alongside
+    // element children -- e.g. "DON'T<br>COME" is a <span> whose real text is two text nodes
+    // split by a <br>, so children.length is 1 (the <br>), not 0, and the old check skipped
+    // it entirely (Deck: "the font sizer only resizes the word BAR in the Don't Come box" --
+    // the sibling "DON'T COME" span was silently dropped by this exact case).
+    const hasOwnText=[...node.childNodes].some(n=>n.nodeType===3&&n.textContent.trim());
+    if(hasOwnText||node.children.length===0){
       if(node.textContent&&node.textContent.trim())out.push(node);
       return;
     }
