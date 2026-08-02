@@ -634,6 +634,14 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
 
 /* ── BOTTOM BAR ── */
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
+/* .bb-row: invisible to layout by default (display:contents), so #bottom-bar's real children
+   are its grandchildren flattened up one level -- identical single-row result to before this
+   was split into two wrapper divs. Portrait turns each wrapper into an actual row instead (see
+   below), stacking chips+layout controls above status+bet-management controls -- landscape is
+   untouched either way. */
+.bb-row{display:contents}
+body.felt-portrait #bottom-bar{flex-direction:column;padding:1px 4px}
+body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;flex:1;min-height:0;width:100%}
 .chip{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp');}
@@ -2298,23 +2306,33 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       </div>
       <!-- Chips row (1 unit) -->
       <div id="bottom-bar">
-        <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
-        <button class="bar-btn" id="undo-btn" onclick="clearLastBet()" title="Undo last bet action">Clear Last Bet</button>
-        <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
-        <div class="chip" data-val="2" onclick="selectChip(2)">$2</div>
-        <div class="chip" data-val="3" onclick="selectChip(3)">$3</div>
-        <div class="chip" data-val="5" onclick="selectChip(5)">$5</div>
-        <div class="chip" data-val="10" onclick="selectChip(10)">$10</div>
-        <div class="chip" data-val="25" onclick="selectChip(25)">$25</div>
-        <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
-        <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
-        <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.6</span>
+        <!-- Portrait-only two-row split (Deck: "make the bottom bar be two rows so the chips
+             and buttons aren't fighting for space with the Roll button") -- .bb-row is
+             display:contents everywhere by default, so these two wrapper divs are invisible to
+             layout and every child flattens directly into #bottom-bar's own row, byte-identical
+             to the old single-row markup. body.felt-portrait turns them into two real stacked
+             rows instead (see the .bb-row CSS). Landscape untouched either way. -->
+        <div class="bb-row">
+          <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
+          <button class="bar-btn" id="undo-btn" onclick="clearLastBet()" title="Undo last bet action">Clear Last Bet</button>
+          <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
+          <div class="chip" data-val="2" onclick="selectChip(2)">$2</div>
+          <div class="chip" data-val="3" onclick="selectChip(3)">$3</div>
+          <div class="chip" data-val="5" onclick="selectChip(5)">$5</div>
+          <div class="chip" data-val="10" onclick="selectChip(10)">$10</div>
+          <div class="chip" data-val="25" onclick="selectChip(25)">$25</div>
+          <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
+          <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         </div>
-        <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
-        <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
-        <button class="bar-btn" id="double-btn" onclick="doubleBet()">Double</button>
-        <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
+        <div class="bb-row">
+          <div style="flex:1;display:flex;align-items:center;justify-content:center">
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.7</span>
+          </div>
+          <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
+          <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
+          <button class="bar-btn" id="double-btn" onclick="doubleBet()">Double</button>
+          <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
+        </div>
       </div>
     </div>
     <!-- ROLL spans both rows -->
@@ -3020,6 +3038,13 @@ function feltEl(sel){
 // on-felt sizing (FELT_LAYOUT used to give it 13.00% of felt height) so it reads the
 // same size as before, just relocated below the art instead of overlaid on it.
 const BOTTOM_SECTION_RATIO=0.13;
+// Portrait's #bottom-bar splits into two stacked rows (see the .bb-row CSS -- Deck: "make the
+// bottom bar be two rows so the chips and buttons aren't fighting for space with the Roll
+// button") instead of landscape's one wide row, so it needs roughly double the height budget
+// to avoid squeezing each row back down to the same cramped size split had. Landscape is
+// untouched (still 0.13, one row).
+const BOTTOM_SECTION_RATIO_PORTRAIT=0.24;
+function curBottomSectionRatio(){ return feltPortrait?BOTTOM_SECTION_RATIO_PORTRAIT:BOTTOM_SECTION_RATIO; }
 // ── RESPONSIVE FONT SCALE ─────────────────────────────────────────────────────
 // Deck: "All current font sizes are the default/maximum... if the window shrinks, shrink the
 // text in those boxes to continue to fit inside the newly shrunken boxes without needing any
@@ -3050,9 +3075,10 @@ function sizeFeltStage(){
   // stacked immediately beneath it), then the whole group is centered in #play-area --
   // same math as the old single-box contain-fit, just with bottom-section's height
   // folded into the budget so there's always room for it below the felt with zero gap.
-  let w=W,h=w*FM_CANVAS_H/FM_CANVAS_W,groupH=h*(1+BOTTOM_SECTION_RATIO);
-  if(groupH>H){h=H/(1+BOTTOM_SECTION_RATIO);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=H;}
-  const bsH=h*BOTTOM_SECTION_RATIO;
+  const bsRatio=curBottomSectionRatio();
+  let w=W,h=w*FM_CANVAS_H/FM_CANVAS_W,groupH=h*(1+bsRatio);
+  if(groupH>H){h=H/(1+bsRatio);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=H;}
+  const bsH=h*bsRatio;
   const left=(W-w)/2,top=(H-groupH)/2;
   st.style.left=left+'px';st.style.top=top+'px';st.style.transform='none';
   // 0.0424 sized so a staked chip stack lands at ~85% of the Buy/Place/Lay number tiles'
