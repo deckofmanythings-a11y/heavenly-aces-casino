@@ -336,7 +336,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.12</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.13</div>
       <div id="game-mode-toggle">
         <button class="gmode-btn-home" onclick="dNav('index.html')">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
       </div>
@@ -868,7 +868,7 @@ function closeProgressiveModal(){document.getElementById('modal-progressive').cl
 // designed paytable, not a copy of any specific casino's literal posted table (same
 // spirit as roll-uth's Trips/Blind tables).
 const PAYTABLE_CONTENT={
-  ante:{title:'Ante — Pai Gow Rules',rows:[],note:'Your 7 cards split into a 5-card High hand and a 2-card Low hand -- either you set the split, or the house sets it for you. The dealer\'s 7 cards are always set the house way and shown face up immediately. Win both hands: even money. Split 1-1: push. Lose both: lose. A tie ("copy") on either hand goes to the dealer. No commission is charged -- in exchange, if your own 7 cards form a Seven Card Straight Flush, an outright win pushes instead of paying.'},
+  ante:{title:'Ante — Pai Gow Rules',rows:[],note:'Your 7 cards split into a 5-card High hand and a 2-card Low hand -- either you set the split, or the house sets it for you. The dealer\'s 7 cards are always set the house way and shown face up immediately. Win both hands: even money. Split 1-1: push. Lose both: lose. A tie ("copy") on either hand goes to the dealer. No commission is charged -- in exchange, if your own 7 cards form a Seven Card Straight Flush, an outright win pushes instead of paying. If the dealer\'s High hand is a bare Ace High (no pair), the Ante pushes automatically, no matter what you have.'},
   fortune:{title:'Fortune',rows:[
     ['Seven Card Straight Flush','8000 to 1'],['Five Aces','400 to 1'],['Royal Flush','150 to 1'],
     ['Straight Flush','50 to 1'],['Four of a Kind','25 to 1'],['Full House','5 to 1'],['Flush','4 to 1'],
