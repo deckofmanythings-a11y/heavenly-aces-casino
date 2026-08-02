@@ -1835,6 +1835,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   <!-- CALIBRATION MODE: drag/resize every bet target directly on the real felt instead of
        eyeballing screenshots and reporting pixel offsets back and forth. See calibXxx() funcs. -->
   <div id="calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff;flex-wrap:wrap;max-width:94vw">
+    <span id="calib-toolbar-handle" onpointerdown="calibToolbarStartDrag(event)" title="Drag to move this toolbar" style="cursor:move;color:#0ff;font-weight:700;padding:2px 4px;margin:-2px -4px -2px -6px;-webkit-user-select:none;user-select:none">⠿</span>
     <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
     <span id="calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Click a box to select it, drag to move, corner handle to resize</span>
     <div id="calib-nudge" style="display:grid;grid-template-columns:22px 22px 22px;grid-template-rows:22px 22px 22px;gap:2px">
@@ -2240,7 +2241,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.0</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.1</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -6407,7 +6408,14 @@ document.addEventListener('keydown',calibKeyHandler);
 // real rendered position (not a hardcoded offset) so it still lands correctly across viewport
 // sizes/felt layouts. Falls back to the original centered-at-top spot if Any Craps isn't found
 // (e.g. crapless mode, which has no Any Craps box).
+// calibToolbarManual: once Deck drags the toolbar (via its ⠿ handle, Deck: "give me a handle
+// on the Calibrate Mode box to move it out of the way"), auto-docking stops overriding that --
+// otherwise the very next resize event (or the next toggleCalibMode() call) would snap it right
+// back under Any Craps, undoing the whole point of moving it out of the way. Reset to false
+// on Exit so the NEXT calibrate session starts fresh at its normal docked spot.
+let calibToolbarManual=false;
 function calibPositionToolbar(){
+  if(calibToolbarManual)return;
   const bar=document.getElementById('calib-toolbar');
   const anchor=document.getElementById('bet-anyCraps');
   if(!bar)return;
@@ -6416,6 +6424,27 @@ function calibPositionToolbar(){
   bar.style.transform='none';
   bar.style.top=Math.round(r.bottom+8)+'px';
   bar.style.left=Math.round(Math.max(8,Math.min(window.innerWidth-8-bar.offsetWidth,r.left)))+'px';
+}
+function calibToolbarStartDrag(e){
+  e.preventDefault();
+  const bar=document.getElementById('calib-toolbar');
+  if(!bar)return;
+  calibToolbarManual=true;
+  const startX=e.clientX,startY=e.clientY;
+  const r=bar.getBoundingClientRect();
+  bar.style.transform='none';
+  bar.style.left=Math.round(r.left)+'px';
+  bar.style.top=Math.round(r.top)+'px';
+  const origLeft=r.left,origTop=r.top;
+  function move(ev){
+    const x=Math.max(0,Math.min(window.innerWidth-bar.offsetWidth,origLeft+(ev.clientX-startX)));
+    const y=Math.max(0,Math.min(window.innerHeight-bar.offsetHeight,origTop+(ev.clientY-startY)));
+    bar.style.left=Math.round(x)+'px';
+    bar.style.top=Math.round(y)+'px';
+  }
+  function up(){ document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
 }
 function toggleCalibMode(){
   calibActive=!calibActive;
@@ -6432,6 +6461,7 @@ function toggleCalibMode(){
     if(layer)layer.remove();
     calibSelectedSel=null;
     window.removeEventListener('resize',calibPositionToolbar);
+    calibToolbarManual=false;
   }
 }
 function calibReset(){
