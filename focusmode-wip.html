@@ -1267,22 +1267,31 @@ body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-st
    (the box is real CSS now, no baked-in art title to fall back on), pay odds bumped slightly,
    numbers (below) made dramatically bigger -- the dominant element in the box. */
 body.felt-mode #felt-stage #lucky-roller .lr-note{display:none!important}
+/* Deck: "There's still instructional text and the lines in the wrong order in the Roll'em
+   box." .lr-explain ("5 before a 7" / "All nums before 7") was never actually hidden -- only
+   .lr-note was -- so it kept rendering as a 3rd line nobody asked for. The intended text is
+   just title + payout ratio (Low Rolls / 31 for 1, High Rolls / 31 for 1, Roll'em All / 156
+   for 1), so .lr-explain is hidden the same way .lr-note already is. That also removes the
+   "wrong order" bug in Roll'em All specifically: .lr-pay used to be pulled out of flow with
+   position:absolute;top:11px so it would visually land ABOVE the still-present .lr-explain
+   line instead of below it (title, then pay-floating-over-explain, then explain still in flow
+   underneath) -- with explain gone, pay can just flow normally after title again, so that
+   absolute-positioning hack (and the padding-top:19px that compensated for it) is gone too. */
+body.felt-mode #felt-stage #lucky-roller .lr-explain{display:none!important}
 body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800;color:rgba(255,255,255,.8);letter-spacing:.02em;line-height:1.1}
-body.felt-mode #felt-stage #lucky-roller .lr-explain{line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:1px 2px 0;position:relative;display:flex;flex-direction:column;align-items:center;gap:0}
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--color-gold);text-shadow:none}
 /* Font sizes now set uniformly per box (Calibrate Mode's font tool -- Deck set Low/High/All to
    18px/18px/17px uniformly across title+explain+pay, replacing the old differentiated
-   7px/6px/9px split). */
+   7px/6px/9px split). explain is still sized here even though hidden, in case it's ever
+   unhidden again -- costs nothing while display:none. */
 body.felt-mode #felt-stage #lucky-roller .lr-title,
 body.felt-mode #felt-stage #lucky-roller .lr-explain,
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:18px!important}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:17px!important}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{position:absolute;top:11px;left:0;right:0;text-align:center}
 body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:1px 2px 0}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{padding-top:19px!important}
 /* #bnums-low/#bnums-high are NOT nested inside their box in felt mode -- enterFeltMode()
    reparents every LR_LAYOUT entry (including these) to be direct children of #lucky-roller,
    each independently absolutely-positioned per its own LR_LAYOUT %-coordinates (a floating
@@ -2062,7 +2071,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.44</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.45</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
