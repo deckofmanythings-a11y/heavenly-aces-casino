@@ -1879,7 +1879,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.14</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.15</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2030,9 +2030,9 @@ let REPEATABLE=getRepeatable();
 const FELT_LAYOUT=[
   // C / C&E / E circles -- each now its own real, individually calibrated position (Deck's
   // export) instead of one shared draggable stack.
-  ['@anyCraps-circle', 34.844,52.556, 6.563,11.056,null],
-  ['@cande',           34.844,63.611, 6.563,11.056,null],
-  ['@eleven',          34.844,74.722, 6.563,11.056,null],
+  ['@anyCraps-circle', 34.844,60.278, 6.562,11.056,null],
+  ['@cande',           34.844,71.667, 6.562,11.056,null],
+  ['@eleven',          34.844,83.056, 6.562,11.056,null],
   ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
   // Shrunk from 17.00 -> 12.00 now that the game selector is a single-button dropdown instead
@@ -2050,7 +2050,7 @@ const FELT_LAYOUT=[
   // HighRollsBox.webp), same master template/canvas as the old art -- box is the union bounding
   // box of the title art + the three bet boxes, measured directly off the crop tool's exported
   // stage coordinates (x:1220,y:15,w:775,h:350 on the 3200x1800 canvas).
-  ['#lucky-roller',   38.125, 0.833,24.219,19.444,null],
+  ['#lucky-roller',   38.125,0.833, 24.219,19.444,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -2060,7 +2060,7 @@ const FELT_LAYOUT=[
   // (38.125+24.219=62.344) and #info-panel's left edge (82.50): (62.344+82.50)/2=72.422. y is
   // the average of both boxes' own vertical centers (10.555 and 9.20): 9.878. Zero-size, see
   // the HTML comment on #puck-off-crapless for why.
-  ['#puck-off-crapless', 72.4375, 9.8889, 0, 0, null],
+  ['#puck-off-crapless', 72.438,9.889, 0,0, null],
   // #bottom-section is deliberately NOT in this list -- it no longer gets reparented
   // into #felt-stage/positioned as % of the felt art. It now lives in #play-area
   // instead, sized/positioned directly in sizeFeltStage() so it sits flush below the
@@ -2074,8 +2074,8 @@ const FELT_LAYOUT=[
   // fixed gap above Hard Ways -- there isn't room for both this turn, see the long FM_ART
   // comment on propbets for the full explanation.
   // Reshaped/repositioned via Deck's own drag-tool calibration pass (narrower, taller).
-  ['#tab-hw',   0.250,14.60,11.438,3.833,null],
-  ['#tab-hop', 24.063,14.60,11.313,3.889,null],
+  ['#tab-hw',   3.125,14.722, 11.438,3.833,null],
+  ['#tab-hop', 20.781,14.722, 11.312,3.889,null],
   // Crapless-only Line Mode A/B/C toggle. Moved from under Hardways/Hop Bets to directly below
   // the crapless number line instead (Deck's request) -- x/w now match CRAPLESS_LAYOUT's
   // #num-zone exactly (1200,1960px on the 3200x1800 canvas), y sits just under its bottom edge
@@ -2084,13 +2084,13 @@ const FELT_LAYOUT=[
   // kept in FELT_LAYOUT (not moved into CRAPLESS_LAYOUT) so enter/exit-felt-mode logic, which
   // expects every mode-agnostic entry to be handled the same regardless of activeGame, doesn't
   // need to change.
-  ['#line-mode-toggle', 37.50,49.444,61.25,2.80,null],
+  ['#line-mode-toggle', 37.5,49.444, 61.25,2.778,null],
   // Panel labels (Phase 7 polish): sit in the real gap between the hard4/6/8/10-or-hop22/33/
   // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
   // touching any of Deck's calibrated bet-box coordinates above/below it.
-  ['#hw-panel-label',  0.4375,40.50,35.00,11.00,'hw'],
-  ['#hop-panel-label', 0.4375,40.50,35.00,11.00,'hop'],
+  ['#hw-panel-label',  0.438,40.5, 35,11,'hw'],
+  ['#hop-panel-label', 0.438,40.5, 35,11,'hop'],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
@@ -2113,27 +2113,27 @@ const FELT_LAYOUT=[
   // back byte-for-byte identical or within sub-pixel rounding noise and were left untouched.
   // Any 7 moved up ~9px; Any Craps grew taller (7.889% -> 11.5%, +65px); every Hop Bets pill
   // shifted down 8-20px and slightly right (2-11px) -- see below.
-  ['@any7',            3.8438,52.6667,28.000,10.778,'hw'],
-  ['@aces',            3.875,63.945, 7.219,10.278,'hw'],
-  ['@ace2',           24.281,64.000, 7.594,10.167,'hw'],
-  ['@horn',           11.188,69.722,13.188, 9.944,'hw'],
-  ['@midnight',        3.719,75.000, 7.438,10.167,'hw'],
-  ['@yo',             24.438,75.334, 7.375,10.111,'hw'],
-  ['@anyCraps',        3.625,85.6667,28.2187,11.5,'hw'],
+  ['@any7',            3.844,52.667, 28,10.778,'hw'],
+  ['@aces',            3.875,63.944, 7.219,10.278,'hw'],
+  ['@ace2',           24.281,64, 7.594,10.167,'hw'],
+  ['@horn',           11.188,69.722, 13.188,9.944,'hw'],
+  ['@midnight',        3.719,75, 7.438,10.167,'hw'],
+  ['@yo',             24.438,75.333, 7.375,10.111,'hw'],
+  ['@anyCraps',        3.625,85.667, 28.219,11.5,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
-  ['@hop13',          4.6875,53.7778, 8.8125, 6.2222,'hop'],
-  ['@hop16',         15.3438,53.6667, 8.750, 6.2222,'hop'],
-  ['@hop26',         25.9062,53.7222, 8.8125, 6.2222,'hop'],
-  ['@hop14',          4.6875,60.6667, 8.8125, 6.2222,'hop'],
-  ['@hop25',         15.4063,60.4444, 8.750, 6.2222,'hop'],
-  ['@hop35',         25.9062,60.4444, 8.8125, 6.2222,'hop'],
-  ['@hop23',          4.7188,67.3889, 8.8125, 6.2222,'hop'],
-  ['@hop34',         15.3438,67.1667, 8.750, 6.2222,'hop'],
-  ['@hop36',         25.9062,67.4444, 8.8125, 6.2222,'hop'],
-  ['@hop24',          4.7188,74.1111, 8.8125, 6.2222,'hop'],
-  ['@hop45',         25.9062,74.1667, 8.8125, 6.2222,'hop'],
-  ['@hop15',          4.6875,80.7778, 8.8125, 6.2222,'hop'],
-  ['@hop46',         25.8438,80.8333, 8.8125, 6.2222,'hop']
+  ['@hop13',          4.688,53.778, 8.812,6.222,'hop'],
+  ['@hop16',         15.344,53.667, 8.75,6.222,'hop'],
+  ['@hop26',         25.906,53.722, 8.812,6.222,'hop'],
+  ['@hop14',          4.688,60.667, 8.812,6.222,'hop'],
+  ['@hop25',         15.406,60.444, 8.75,6.222,'hop'],
+  ['@hop35',         25.906,60.444, 8.812,6.222,'hop'],
+  ['@hop23',          4.719,67.389, 8.812,6.222,'hop'],
+  ['@hop34',         15.344,67.167, 8.75,6.222,'hop'],
+  ['@hop36',         25.906,67.444, 8.812,6.222,'hop'],
+  ['@hop24',          4.719,74.111, 8.812,6.222,'hop'],
+  ['@hop45',         25.906,74.167, 8.812,6.222,'hop'],
+  ['@hop15',          4.688,80.778, 8.812,6.222,'hop'],
+  ['@hop46',         25.844,80.833, 8.812,6.222,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
 // Recalibrated for Deck's new cut Lucky Roller art -- computed directly from the crop tool's
@@ -2270,18 +2270,18 @@ const STANDARD_LAYOUT=[
   // bottom-anchored reposition instead -- the two images move in opposite directions
   // (Hard Ways down, HopHardWays up) since aligning their BOTTOMS is what makes the
   // gold boxes line up given HopHardWays is the taller asset.
-  ['@hard6',           0.531,23.722,14.000, 7.500,'hw'],
-  ['@hard10',         20.906,23.722,14.219, 8.000,'hw'],
-  ['@hard8',           0.531,31.555,14.063, 7.833,'hw'],
-  ['@hard4',          20.938,31.722,14.219, 7.667,'hw'],
-  ['@hop22',          21.031,31.611,14.250, 7.889,'hop'],
-  ['@hop44',           0.313,31.556,14.250, 7.889,'hop'],
-  ['@hop33',           0.313,23.445,14.250, 7.889,'hop'],
-  ['@hop55',          21.063,23.556,14.250, 7.889,'hop'],
+  ['@hard6',           0.531,23.722, 14,7.5,'hw'],
+  ['@hard10',         20.906,23.722, 14.219,8,'hw'],
+  ['@hard8',           0.531,31.556, 14.062,7.833,'hw'],
+  ['@hard4',          20.938,31.722, 14.219,7.667,'hw'],
+  ['@hop22',          21.031,31.611, 14.25,7.889,'hop'],
+  ['@hop44',           0.312,31.556, 14.25,7.889,'hop'],
+  ['@hop33',           0.312,23.444, 14.25,7.889,'hop'],
+  ['@hop55',          21.062,23.556, 14.25,7.889,'hop'],
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
   // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
   // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
-  ['#dc-wait-wrap',   90.875,22.722, 8.563,25.167,null],
+  ['#dc-wait-wrap',   90.875,22.722, 8.562,25.167,null],
   // Come/Field/Don't Pass/Pass Line stacked with zero gap between rows (Deck: "should all be
   // perfectly stacked with no space between them") -- matches the FM_ART bar images exactly
   // (same x/w/h/seams as pass/dp/come/field above, now corrected to their real 1368-wide
@@ -2290,33 +2290,33 @@ const STANDARD_LAYOUT=[
   // Shifted down 11.056% (199px) as a group along with the FM_ART bar images above --
   // pass-bar's new bottom (86.223+11.556=97.779% -> 1760px) is exactly 40px above the
   // felt's bottom edge.
-  ['#come-bar',       56.656,49.889,42.750,11.556,null],
-  ['#field-bar',      56.656,61.445,42.750,15.389,null],
-  ['#dp-bar',         56.656,76.834,42.750, 9.389,null],
-  ['#pass-bar',       56.656,86.223,42.750,11.556,null],
+  ['#come-bar',       56.656,49.889, 42.75,11.556,null],
+  ['#field-bar',      56.656,61.444, 42.75,15.389,null],
+  ['#dp-bar',         56.656,76.833, 42.75,9.389,null],
+  ['#pass-bar',       56.656,86.222, 42.75,11.556,null],
   // Same placement/derivation as the crapless copy above -- see that comment.
-  ['#light-spot',     49.856,86.223, 6.5,11.556,null],
+  ['#light-spot',     49.844,86.222, 6.5,11.556,null],
   // Buy/Place/Lay per number -- now individually calibrated real positions (Deck's drag-tool
   // export) instead of the CSS flex-split #num-zone used to size them into. Pulled directly
   // into #felt-stage by enterFeltMode() same as everything else here.
-  ['#nb-lay-4',       41.906,22.500, 4.469, 5.500,null],
-  ['#nb-place-4',     37.438,42.333, 4.469, 5.722,null],
-  ['#nb-buy-4',       41.906,42.333, 4.469, 5.722,null],
-  ['#nb-lay-5',       50.813,22.500, 4.469, 5.500,null],
-  ['#nb-place-5',     46.344,42.333, 4.469, 5.722,null],
-  ['#nb-buy-5',       50.813,42.333, 4.469, 5.722,null],
-  ['#nb-lay-6',       59.719,22.500, 4.469, 5.500,null],
-  ['#nb-place-6',     55.250,42.333, 4.469, 5.722,null],
-  ['#nb-buy-6',       59.719,42.333, 4.469, 5.722,null],
-  ['#nb-lay-8',       68.625,22.500, 4.469, 5.500,null],
-  ['#nb-place-8',     64.156,42.333, 4.469, 5.722,null],
-  ['#nb-buy-8',       68.625,42.333, 4.469, 5.722,null],
-  ['#nb-lay-9',       77.531,22.500, 4.469, 5.500,null],
-  ['#nb-place-9',     73.063,42.333, 4.469, 5.722,null],
-  ['#nb-buy-9',       77.531,42.333, 4.469, 5.722,null],
-  ['#nb-lay-10',      86.438,22.500, 4.469, 5.500,null],
-  ['#nb-place-10',    81.969,42.333, 4.469, 5.722,null],
-  ['#nb-buy-10',      86.438,42.333, 4.469, 5.722,null]
+  ['#nb-lay-4',       41.906,22.5, 4.469,5.5,null],
+  ['#nb-place-4',     37.438,42.333, 4.469,5.722,null],
+  ['#nb-buy-4',       41.906,42.333, 4.469,5.722,null],
+  ['#nb-lay-5',       50.813,22.5, 4.469,5.5,null],
+  ['#nb-place-5',     46.344,42.333, 4.469,5.722,null],
+  ['#nb-buy-5',       50.813,42.333, 4.469,5.722,null],
+  ['#nb-lay-6',       59.719,22.5, 4.469,5.5,null],
+  ['#nb-place-6',     55.25,42.333, 4.469,5.722,null],
+  ['#nb-buy-6',       59.719,42.333, 4.469,5.722,null],
+  ['#nb-lay-8',       68.625,22.5, 4.469,5.5,null],
+  ['#nb-place-8',     64.156,42.333, 4.469,5.722,null],
+  ['#nb-buy-8',       68.625,42.333, 4.469,5.722,null],
+  ['#nb-lay-9',       77.531,22.5, 4.469,5.5,null],
+  ['#nb-place-9',     73.062,42.333, 4.469,5.722,null],
+  ['#nb-buy-9',       77.531,42.333, 4.469,5.722,null],
+  ['#nb-lay-10',      86.438,22.5, 4.469,5.5,null],
+  ['#nb-place-10',    81.969,42.333, 4.469,5.722,null],
+  ['#nb-buy-10',      86.438,42.333, 4.469,5.722,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 // id -> tab ('hw'/'hop'/null) for every '@name' entry, derived from the layout arrays
