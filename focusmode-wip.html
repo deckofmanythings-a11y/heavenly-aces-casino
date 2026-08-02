@@ -114,13 +114,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Left col header (matches left col width) */
 #left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:3px}
-.mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);cursor:pointer;font-size:19px;font-weight:700;color:rgba(255,255,255,.6)}
+.mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);cursor:pointer;font-size:calc(19px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.6)}
 /* Hardways/Hop Bets tab buttons: one row with name + $ value inline instead of stacked lines,
    so the button itself needs less height (Deck: "make them one row with both the name and
    $value") -- lets the shorter box sit closer to the art above it. */
 #tab-hw,#tab-hop{flex-direction:row!important;gap:6px!important;justify-content:center}
 .mode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
-.mode-btn-amt{font-size:17px;color:#ffd700;font-weight:600}
+.mode-btn-amt{font-size:calc(17px * var(--font-scale,1));color:#ffd700;font-weight:600}
 
 /* Lucky Roller strip */
 #lucky-roller{flex:1;display:flex;align-items:stretch;background:rgba(0,0,0,.25);padding:3px 4px;gap:4px;border-right:1px solid rgba(255,255,255,.1)}
@@ -147,7 +147,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* Dice zone inside lucky roller */
 #dice-zone{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
 #dice-canvas-wrap{position:relative;flex-shrink:0}
-#dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:26px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
+#dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:calc(26px * var(--font-scale,1));font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
 .rollem-all-bar{border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;transition:background .12s;position:relative}
 .rollem-all-bar:hover{background:rgba(255,255,255,.08)}
 .rollem-all-bar.has-bet{}
@@ -183,7 +183,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Hard Ways grid */
 .hw-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex:4;min-height:0}
-.bb{background:var(--box-fill-lightest);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:19px;padding:3px 2px 2px;cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bb{background:var(--box-fill-lightest);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:calc(19px * var(--font-scale,1));padding:3px 2px 2px;cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .bb:hover{background:rgba(255,255,255,.15)}
 .bb.active{}
 .bb .pay{font-size:15px;color:rgba(255,255,255,.4);display:block;margin-top:1px}
@@ -208,8 +208,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .prop-bar-odds{font-size:17px;font-weight:600}
 /* Font-size overrides from Calibrate Mode's font tool -- Any 7 and Any Craps got different
    sizes, both scoped to their own bar so they don't leak onto each other. */
-body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:48px!important}
-body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:41px!important}
+body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(48px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:calc(41px * var(--font-scale,1))!important}
 .prop-bar-stk{font-size:17px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
@@ -220,24 +220,24 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 .hc-pay{font-size:14px;color:rgba(255,255,255,.5);margin-top:1px}
 /* Font-size override from Calibrate Mode's font tool -- Aces/Ace2/Midnight/Yo (the four
    non-center Horn Bet cells) all got the same size. */
-#bet-aces .hc-pay,#bet-ace2 .hc-pay,#bet-midnight .hc-pay,#bet-yo .hc-pay{font-size:24px!important}
+#bet-aces .hc-pay,#bet-ace2 .hc-pay,#bet-midnight .hc-pay,#bet-yo .hc-pay{font-size:calc(24px * var(--font-scale,1))!important}
 .hc-stk{font-size:15px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
 .horn-center{background:var(--box-fill-lightest);flex:1;flex-direction:row;gap:6px}
 .horn-center:hover{background:rgba(255,255,255,.18)}
 .horn-center-name{font-size:21px;font-weight:900;letter-spacing:.05em;font-family:var(--font-heavy);background:var(--text-grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size override from Calibrate Mode's font tool. */
-#bet-horn .horn-center-name{font-size:39px!important}
+#bet-horn .horn-center-name{font-size:calc(39px * var(--font-scale,1))!important}
 
 /* Hop bets */
-.hop-section-hdr{text-align:center;padding:2px;font-size:15px;font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
+.hop-section-hdr{text-align:center;padding:2px;font-size:calc(15px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
 .fm-panel-label{display:none}
 /* Deck's 4-tier green system: title/label bars (this + .hop-section-hdr above) are Darkest. */
-body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:13px;line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
+body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:calc(13px * var(--font-scale,1));line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
 /* Font-size override from Calibrate Mode's font tool -- Deck only resized #hw-panel-label
    itself, hop-panel-label-1/2 keep the shared 13px above. */
-body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
+body.felt-mode #felt-stage #hw-panel-label{font-size:calc(42px * var(--font-scale,1))!important}
 /* Deck: "Give me a title bar for the Proposition Bets, same font size as Hard Ways." */
-body.felt-mode #felt-stage #prop-panel-label{font-size:42px!important}
+body.felt-mode #felt-stage #prop-panel-label{font-size:calc(42px * var(--font-scale,1))!important}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -256,7 +256,7 @@ body.felt-mode #felt-stage #prop-panel-label{font-size:42px!important}
 .circle-stk{font-size:14px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
 .mbtn-circle{display:none!important}
 .sc-stack{display:flex;flex-direction:column;gap:3px;flex:1}
-.sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:#fff;font-size:15px;padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
+.sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:#fff;font-size:calc(15px * var(--font-scale,1));padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
 .sc-btn:hover{background:rgba(255,255,255,.2)}
 .sc-btn.on{background:rgba(100,200,100,.25);border-color:#7ee87e;color:#7ee87e}
 .sc-btn.locked{background:rgba(255,190,60,.25);border-color:#ffbe3c;color:#ffbe3c}
@@ -293,7 +293,7 @@ body.felt-mode #felt-stage #prop-panel-label{font-size:42px!important}
 .nb-place.active{}
 .nb-lbl{font-size:11px;display:block;letter-spacing:.04em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important;opacity:.6}
 .nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
-.nb-pay{font-size:11px;color:rgba(255,255,255,.4);display:block}
+.nb-pay{font-size:calc(11px * var(--font-scale,1));color:rgba(255,255,255,.4);display:block}
 .off-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;background:rgba(0,0,0,.5)}
 .off-ov span{font-size:15px;font-weight:700;color:rgba(255,200,0,.95)}
 .num-box-wrap{position:relative}
@@ -330,7 +330,7 @@ body.felt-mode #felt-stage .come-half{position:static;left:auto;transform:none;w
    chain .chip-stack normally relies on to size itself off its parent. Give it a definite
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
 body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
-body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
+body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:calc(9px * var(--font-scale,1));padding:0 3px;z-index:8}
 /* #come-slot-N/#dc-slot-N are now real calibratable landing zones (STANDARD_LAYOUT, one pair
    per number) instead of one hardcoded CSS anchor shared by every number -- Deck: "do you need
    to create landing zones for the DC and Come bets and odds for each box that I need to tune?
@@ -353,8 +353,8 @@ body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{he
 .zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size overrides from Calibrate Mode's font tool -- Come/Pass Line share one size,
    Field gets its own smaller one (Don't Pass isn't a .zone-name, see .dp-name below). */
-#come-bar .zone-name,#pass-bar .zone-name{font-size:76px!important}
-#field-bar .zone-name{font-size:44px!important}
+#come-bar .zone-name,#pass-bar .zone-name{font-size:calc(76px * var(--font-scale,1))!important}
+#field-bar .zone-name{font-size:calc(44px * var(--font-scale,1))!important}
 .zone-stk{font-size:19px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px}
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
@@ -427,7 +427,7 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-main.active-bar{background:transparent}
 .dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size override from Calibrate Mode's font tool. */
-#dp-bar .dp-name{font-size:57px!important}
+#dp-bar .dp-name{font-size:calc(57px * var(--font-scale,1))!important}
 .dp-stk{font-size:13px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
 .dp-note{font-size:9px;color:rgba(255,255,255,.35)}
 /* display was 'none' (JS toggled it to 'block' once shown), never 'flex' -- unlike
@@ -459,7 +459,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:none;display:flex;align-items:center;justify-content:center}
 .dc-on-box{background:rgba(140,0,0,.85);border:1px solid rgba(255,100,100,.6);border-radius:3px;padding:1px 3px;font-size:10px;color:#ffaaaa;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:2px}
 .dc-flat-amt{font-size:10px;color:#ffcccc}
-.dc-odds-btn{font-size:9px;background:rgba(200,0,0,.5);border:0.5px solid rgba(255,100,100,.4);border-radius:2px;color:#ff9999;padding:0 2px;cursor:pointer;line-height:1.3}
+.dc-odds-btn{font-size:calc(9px * var(--font-scale,1));background:rgba(200,0,0,.5);border:0.5px solid rgba(255,100,100,.4);border-radius:2px;color:#ff9999;padding:0 2px;cursor:pointer;line-height:1.3}
 .dc-odds-amt{font-size:9px;color:#ff6666}
 .dc-rm{font-size:9px;background:rgba(120,0,0,.6);border:none;color:#ff9999;cursor:pointer;padding:0 2px;border-radius:1px;line-height:1.3}
 /* Lay cell in number box (right half of buy) */
@@ -889,11 +889,11 @@ body.felt-mode #felt-stage .nb-mid>span{font-weight:900!important;background:var
 /* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) -- digit
    numbers (4/5/8/10) and spelled-out word numbers (Six/Nine, narrower script glyphs) were
    sized differently, so this replaces the old single shared 26px rule with two. */
-body.felt-mode #felt-stage .nb-num-digit{font-size:72px!important}
-body.felt-mode #felt-stage .nb-num-word{font-size:48px!important}
+body.felt-mode #felt-stage .nb-num-digit{font-size:calc(72px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .nb-num-word{font-size:calc(48px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .nb-num-word{transform:rotate(-30deg)}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
-body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
+body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:calc(21px * var(--font-scale,1))}
 /* Phase 7 polish: BUY/PLACE/LAY labels barely read against the felt at their original 11px/
    50%-opacity -- brighten + bold them. Hard Ways/Hop Bets odds (.pay) and the Field bar's
    number list, both un-hidden above now that their old FM_ART baked the text in, get the
@@ -904,15 +904,15 @@ body.felt-mode #felt-stage .nb-lay .nb-lbl{background:var(--text-grad-red)!impor
 /* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) --
    Buy/Lay share one size, Place gets its own smaller one. */
 body.felt-mode #felt-stage .nb-buy .nb-lbl,body.felt-mode #felt-stage .nb-buy-left .nb-lbl,
-body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:30px!important}
-body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:21px!important}
-body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
+body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:calc(30px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:calc(21px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .pay{display:block!important;font-size:calc(16px * var(--font-scale,1))!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
 /* Deck: "Make the font used for the numbers in the field box (2-3...11-12) be the same font
    size as the word Field." FIELD itself (.zone-name) is forced to 36px below (was only 16px
    here, much smaller). */
-body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:44px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
-body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
-body.felt-mode #felt-stage .prop-circle{font-size:26px!important}
+body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:calc(44px * var(--font-scale,1))!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+body.felt-mode #felt-stage .prop-bar-name{font-size:calc(27px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .prop-circle{font-size:calc(26px * var(--font-scale,1))!important}
 
 /* readable stakes over the art */
 body.felt-mode #felt-stage .stk,body.felt-mode #felt-stage .nb-stk,body.felt-mode #felt-stage .hc-stk,
@@ -1213,7 +1213,7 @@ body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)
    flex with align-items:center, which only centers horizontally -- no justify-content, so text
    sat top-aligned instead of vertically centered). Added justify-content:center too (Deck:
    "Change #line-mode-toggle text to vertically center justified"). */
-body.felt-mode #felt-stage #line-mode-toggle .mode-btn{font-size:27px!important;justify-content:center}
+body.felt-mode #felt-stage #line-mode-toggle .mode-btn{font-size:calc(27px * var(--font-scale,1))!important;justify-content:center}
 body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.22)}
 /* Game selector went from one collapsed row to an always-visible 3-row grid (Deck: "make all
    games' game selector work and look like Destroyer's") -- same off-chip scaling as the rest
@@ -1276,7 +1276,7 @@ body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
    --font-script for Six/Nine, just an actually-cursive stack instead of a plain serif) and
    bumped 13px -> 22px. Letter-spacing dropped too -- connected script letterforms read wrong
    spaced apart the way the old bold sans title was. */
-body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 22px 'Brush Script MT','Segoe Script','Lucida Handwriting',cursive;color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.01em;white-space:nowrap}
+body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 22px 'Brush Script MT','Segoe Script','Lucida Handwriting',cursive;font-size:calc(22px * var(--font-scale,1));color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.01em;white-space:nowrap}
 body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER';background:var(--text-grad-metallic-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
    the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again.
@@ -1327,10 +1327,10 @@ body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--col
    again -- costs nothing while display:none. */
 body.felt-mode #felt-stage #lucky-roller .lr-title,
 body.felt-mode #felt-stage #lucky-roller .lr-explain,
-body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:17px!important}
+body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:calc(17px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:18px!important}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:calc(18px * var(--font-scale,1))!important}
 /* THE actual Low/High-vs-Roll'em-All formatting difference (Deck kept flagging it; every
    style-level check came back identical because it's structural, not cosmetic): Roll'em All's
    title/pay are DIRECT children of a justify-content:center flex box, so its text block is
@@ -1352,9 +1352,9 @@ body.felt-mode #felt-stage #lucky-roller .lr-body{position:absolute;inset:0;heig
    of the old per-digit pixel-scanned nth-child offsets (which were calibrated to match the
    now-deleted baked image and have nothing left to align to). */
 body.felt-mode #felt-stage #lucky-roller .lr-nums{height:auto;padding:0;display:flex;flex-wrap:wrap;align-content:center;gap:2px;justify-content:center}
-body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:20px;height:20px;font-size:15px;line-height:20px;font-weight:800;color:rgba(255,255,255,.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:0 2px}
-body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:9px;min-height:1.2em;line-height:1.2}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar #bstk-all{font-size:14px!important}
+body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:calc(20px * var(--font-scale,1));height:calc(20px * var(--font-scale,1));font-size:calc(15px * var(--font-scale,1));line-height:calc(20px * var(--font-scale,1));font-weight:800;color:rgba(255,255,255,.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:0 2px}
+body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:calc(9px * var(--font-scale,1));min-height:1.2em;line-height:1.2}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar #bstk-all{font-size:calc(14px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
 /* Felt art bakes the numbers themselves into the box image (base .lr-num above is
    color:transparent;font-size:0 -- no text to recolor), so a hit can't be shown by changing
@@ -2064,7 +2064,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
                 <!-- Deck: "these are not the same. The DC box one should match the DP box
                      one." BAR was a flat rgba(255,150,150,.85) color, not the red-gradient-clip
                      technique .dp-name (DON'T PASS) and DC's own BAR both use -- matched. -->
-                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:57px;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:90px;height:45px"></div>
+                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:calc(57px * var(--font-scale,1));background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:calc(90px * var(--font-scale,1));height:calc(45px * var(--font-scale,1))"></div>
               </div>
               <div class="dp-stk" id="stk-dp"></div>
               <div class="dp-note" id="note-dp"></div>
@@ -2133,7 +2133,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.6</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.7</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2698,6 +2698,25 @@ function feltEl(sel){
 // on-felt sizing (FELT_LAYOUT used to give it 13.00% of felt height) so it reads the
 // same size as before, just relocated below the art instead of overlaid on it.
 const BOTTOM_SECTION_RATIO=0.13;
+// ── RESPONSIVE FONT SCALE ─────────────────────────────────────────────────────
+// Deck: "All current font sizes are the default/maximum... if the window shrinks, shrink the
+// text in those boxes to continue to fit inside the newly shrunken boxes without needing any
+// line breaks."
+//
+// Every felt-mode px font-size is wrapped as calc(Npx * var(--font-scale,1)), and this scale
+// is min(1, feltWidth/REF). The HARD CAP AT 1 is the load-bearing design decision: a previous
+// attempt at this (0.0.32, reverted in 0.0.33) used an uncapped feltWidth/741 -- 741 was the
+// felt width of the TEST browser window, so on Deck's real (much wider) window every font
+// multiplied ~2.5x ("every font is a zillion times too big"). With the cap, any window at or
+// above REF renders every font at EXACTLY its current calibrated px -- fonts can shrink below
+// current size, but growing past it is structurally impossible.
+//
+// REF=1400 is deliberately a bit BELOW Deck's estimated felt width (~1500-2000, inferred from
+// the calibrated font/box ratios, e.g. Line Mode's 27px text in a 55-canvas-px box), so their
+// current setup sits in the scale=1 zone and looks byte-identical to before. Below 1400 the
+// felt's boxes and its text shrink by the SAME linear factor, so whatever fit without wrapping
+// at full size keeps fitting at every smaller size (phones included).
+const FELT_FONT_REF_W=1400;
 function sizeFeltStage(){
   const pa=document.getElementById('play-area'),st=document.getElementById('felt-stage');
   const bs=document.getElementById('bottom-section');
@@ -2727,6 +2746,10 @@ function sizeFeltStage(){
   // #bottom-bar .chip rule (see CHIP STACK BET INDICATORS CSS) pick it up too, so the
   // denomination-selector chips are finally the exact same size as every felt chip stack.
   document.body.style.setProperty('--chip',chipPx+'px');
+  // See the FELT_FONT_REF_W comment above -- capped at 1 so fonts can only ever SHRINK from
+  // their calibrated px values, never grow. Set on the stage; every scaled element lives
+  // inside it and inherits the var (elements outside fall back to the calc()'s ,1 default).
+  st.style.setProperty('--font-scale',String(Math.min(1,w/FELT_FONT_REF_W)));
   // Below this width, #info-panel's fixed-percentage box (see FELT_LAYOUT) gets too narrow for
   // "Cash Out"/"Log Out" as text at any readable size -- see the body.felt-compact CSS rules.
   document.body.classList.toggle('felt-compact',w<520);
@@ -2894,7 +2917,7 @@ function applyGameMode(mode){
   // Wire bar-12 die images in DP bar (uses DIE_B64 — only available after it's defined)
   {
     // Populate field info with die images
-    const comboImg=(sz)=>(a,b)=>{const hi=Math.max(a,b),lo=Math.min(a,b);return '<img class="dice-combo-img" src="marble'+hi+lo+'.png" style="width:'+(parseInt(sz)*2)+'px;height:'+sz+';vertical-align:middle">';};
+    const comboImg=(sz)=>(a,b)=>{const hi=Math.max(a,b),lo=Math.min(a,b);return '<img class="dice-combo-img" src="marble'+hi+lo+'.png" style="width:calc('+(parseInt(sz)*2)+'px * var(--font-scale,1));height:calc('+sz+' * var(--font-scale,1));vertical-align:middle">';};
     const ci=comboImg('14px');
     const fiC=document.getElementById('field-info-crapless');
     const fiS=document.getElementById('field-info-standard');
@@ -4105,7 +4128,7 @@ function buildStrip(){
     const dcOffPuck=document.createElement('div');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-anchor';dcOffPuck.style.cssText='position:absolute;left:50%;bottom:100%;margin-bottom:6px;width:90px;height:90px;visibility:hidden;pointer-events:none;transform:translate(-50%,-15%)';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
-    dcMid.innerHTML='<span style="font-size:45px;font-weight:900;letter-spacing:.03em;line-height:1.1;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">DON\'T<br>COME</span>'
+    dcMid.innerHTML='<span style="font-size:calc(45px * var(--font-scale,1));font-weight:900;letter-spacing:.03em;line-height:1.1;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
       // font-weight:400 alone wasn't enough (Deck: "I am looking at 0.0.58 and the Dont Come
       // one is very obviously not thin") -- this span is a direct child of .nb-mid, which sets
@@ -4115,8 +4138,8 @@ function buildStrip(){
       // isn't inside .nb-mid at all and renders in the page's plain system-ui default, which
       // actually has a real normal weight. Overriding font-family here too, to that same
       // default stack, not just font-weight.
-      +'<span style="font-size:57px;font-weight:400;font-family:system-ui,sans-serif;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
-      +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
+      +'<span style="font-size:calc(57px * var(--font-scale,1));font-weight:400;font-family:system-ui,sans-serif;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
+      +'<img class="dice-combo-img" src="marble66.png" style="width:calc(36px * var(--font-scale,1));height:calc(18px * var(--font-scale,1))">'
       +'</span>'
       // No margin-top here: as an inline style it beats the felt-mode stake rule's margin:0,
       // and on the now-absolutely-centered chip anchor it read as a 1px off-center error.
