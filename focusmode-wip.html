@@ -2241,7 +2241,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.1</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.2</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2782,17 +2782,131 @@ const STANDARD_LAYOUT=[
 // ── PORTRAIT MODE (Deck: "give me a button... I will move the bet boxes around and configure
 // the layout for that specific aspect ratio") ───────────────────────────────────────────────
 // Landscape and portrait need genuinely separate position data (a 9:16 stage can't share
-// 16:9-tuned percentages), but they use the exact same selector list -- runtime-cloned from
-// the landscape arrays (not hand-duplicated in source) so every entry starts present and
-// labeled instead of an empty ruler set, and so there's nothing here to keep in sync by hand.
-// Deck's process: toggle Portrait Mode on, enter Calibrate Mode, drag everything into place
-// (starting positions don't matter, they're landscape percentages squished into a portrait
-// box), Export, and hand the result back to be pasted in as real literal arrays here --
-// same workflow as every other calibration pass in this file, just a second orientation.
-const PORTRAIT_FELT_LAYOUT=FELT_LAYOUT.map(e=>e.slice());
-const PORTRAIT_STANDARD_LAYOUT=STANDARD_LAYOUT.map(e=>e.slice());
+// 16:9-tuned percentages), but they share the exact same selector list. Standard's portrait
+// layout below is Deck's first real drag-tool export (converted px-on-1800x3200-canvas ->
+// %-of-felt, same math as every landscape calibration pass); Crapless hasn't been calibrated
+// for portrait yet, so PORTRAIT_CRAPLESS_LAYOUT stays a runtime clone of the landscape values
+// as a placeholder (still fully usable as a Calibrate Mode starting point) until its own
+// export comes back.
+// PORTRAIT_FELT_LAYOUT: Deck's export, whole px on the 1800x3200 portrait canvas -> %-of-felt
+// (x/1800*100, y/3200*100). .sc-stack/#left-col-header/#info-panel aren't in the export
+// (calibBaseEntries() skips them, same as landscape) -- kept as landscape's own values until
+// Deck calibrates those for portrait too.
+const PORTRAIT_FELT_LAYOUT=[
+  ['@anyCraps-circle', 50.833,65.938, 3.889,6.656,null],
+  ['@cande',           50.833,72.656, 3.889,6.656,null],
+  ['@eleven',          50.556,79.219, 3.889,6.656,null],
+  ['.sc-stack',        42.60,60.00, 9.40,18.00,null],
+  ['#left-col-header', 0.40, 0.70,12.60,12.60,null],
+  ['#lucky-roller',    38.611,7.5, 22.667,3.344,null],
+  ['#history-strip',   38.611,0, 22.667,4.375,null],
+  ['#info-panel',      82.50, 0.70,17.00,20.50,null],
+  ['#puck-off-crapless', 72.444,9.875, 0,0, null],
+  ['#tab-hw',          2.778,54.531, 11.667,3.75,null],
+  ['#tab-hop',        26.389,54.531, 11.667,3.75,null],
+  ['#line-mode-toggle', 0,50.469, 100,3.125,null],
+  ['#hw-panel-label',  0,59.062, 43.056,3.75,'hw'],
+  ['#hop-panel-label-1', 9.667,32.5, 16.278,3.625,'hop'],
+  ['#hop-panel-label-2', 4.556,51.656, 26.889,3.344,'hop'],
+  ['@hard6',           0,62.813, 21.389,7.187,'hw'],
+  ['@hard10',         21.389,62.813, 21.389,7.187,'hw'],
+  ['@hard8',           0,70, 21.389,7.187,'hw'],
+  ['@hard4',          21.389,70, 21.389,7.187,'hw'],
+  ['@hop22',          17.833,43.875, 13.889,7.5,'hop'],
+  ['@hop44',           3.889,43.875, 13.889,7.5,'hop'],
+  ['@hop33',           3.889,36.375, 13.889,7.5,'hop'],
+  ['@hop55',          17.833,36.375, 13.889,7.5,'hop'],
+  ['#prop-panel-label', -0.278,77.188, 43.056,3.75,'hw'],
+  ['@any7',           12.778,81.094, 17.5,6.25,'hw'],
+  ['@aces',            0,81.25, 12.778,9.375,'hw'],
+  ['@ace2',           30.278,81.094, 12.778,9.375,'hw'],
+  ['@horn',           12.778,87.344, 17.5,6.25,'hw'],
+  ['@midnight',        0,90.625, 12.778,9.375,'hw'],
+  ['@yo',             30.556,90.469, 12.778,9.375,'hw'],
+  ['@anyCraps',       12.778,93.75, 17.5,6.25,'hw'],
+  ['@hop13',           4.556,55.281, 8.778,6.125,'hop'],
+  ['@hop16',          13.611,55.281, 8.778,6.125,'hop'],
+  ['@hop26',          22.667,55.281, 8.778,6.125,'hop'],
+  ['@hop14',           4.556,61.656, 8.778,6.125,'hop'],
+  ['@hop25',          13.611,61.656, 8.778,6.125,'hop'],
+  ['@hop35',          22.667,61.656, 8.778,6.125,'hop'],
+  ['@hop23',           4.556,68.063, 8.778,6.125,'hop'],
+  ['@hop34',          13.611,68.063, 8.778,6.125,'hop'],
+  ['@hop36',          22.667,68.063, 8.778,6.125,'hop'],
+  ['@hop24',           4.556,74.438, 8.778,6.125,'hop'],
+  ['@hop45',          22.667,74.438, 8.778,6.125,'hop'],
+  ['@hop15',           4.556,80.844, 8.778,6.125,'hop'],
+  ['@hop46',          22.667,80.844, 8.778,6.125,'hop']
+];
+// PORTRAIT_STANDARD_LAYOUT: same export/conversion, the Standard-only entries. #num-zone isn't
+// in the export (skipped, same as landscape) -- kept as landscape's own value.
+const PORTRAIT_STANDARD_LAYOUT=[
+  ['#num-zone',        35.13,22.22,52.03,25.00,null],
+  ['#dc-wait-wrap',    85,24.219, 15,23.75,null],
+  ['#come-bar',        57.222,60.156, 42.778,9.063,null],
+  ['#field-bar',       57.222,69.219, 42.778,12.5,null],
+  ['#dp-bar',          57.222,81.719, 42.778,9.063,null],
+  ['#pass-bar',        56.944,90.781, 42.778,9.063,null],
+  ['#light-spot',      44.722,93.75, 11.111,6.25,null],
+  ['#nb-numberbox-4',   0,29.688, 14.167,12.812,null],
+  ['#nb-numberbox-5',  14.167,29.688, 14.167,12.812,null],
+  ['#nb-numberbox-6',  28.333,29.688, 14.167,12.812,null],
+  ['#nb-numberbox-8',  42.5,29.688, 14.167,12.812,null],
+  ['#nb-numberbox-9',  56.667,29.688, 14.167,12.812,null],
+  ['#nb-numberbox-10', 70.833,29.531, 14.167,12.812,null],
+  ['#nb-puckbox-4',     0,24.219, 6.944,5.469,null],
+  ['#nb-puckbox-5',    14.167,24.219, 6.944,5.469,null],
+  ['#nb-puckbox-6',    28.333,24.219, 6.944,5.469,null],
+  ['#nb-puckbox-8',    42.5,24.219, 6.944,5.469,null],
+  ['#nb-puckbox-9',    56.667,24.219, 6.944,5.469,null],
+  ['#nb-puckbox-10',   70.833,24.219, 6.944,5.469,null],
+  ['#nb-lay-4',         6.944,24.219, 7.222,5.469,null],
+  ['#nb-place-4',      -0.278,42.5, 6.944,5.469,null],
+  ['#nb-buy-4',         6.667,42.5, 7.222,5.469,null],
+  ['#nb-lay-5',        21.111,24.219, 7.222,5.469,null],
+  ['#nb-place-5',      13.889,42.5, 7.222,5.469,null],
+  ['#nb-buy-5',        21.111,42.5, 7.222,5.469,null],
+  ['#nb-lay-6',        35.278,24.219, 7.222,5.469,null],
+  ['#nb-place-6',      28.333,42.5, 6.944,5.469,null],
+  ['#nb-buy-6',        35.278,42.5, 7.222,5.469,null],
+  ['#nb-lay-8',        49.444,24.219, 7.222,5.469,null],
+  ['#nb-place-8',      42.5,42.5, 6.944,5.469,null],
+  ['#nb-buy-8',        49.444,42.5, 7.222,5.469,null],
+  ['#nb-lay-9',        63.611,24.219, 7.222,5.469,null],
+  ['#nb-place-9',      56.667,42.5, 6.944,5.469,null],
+  ['#nb-buy-9',        63.611,42.5, 7.222,5.469,null],
+  ['#nb-lay-10',       77.778,24.219, 7.222,5.469,null],
+  ['#nb-place-10',     78.333,42.5, 6.944,5.469,null],
+  ['#nb-buy-10',       70.833,42.5, 7.5,5.469,null],
+  ['#come-slot-4',      0,36.094, 14.167,6.406,null],
+  ['#dc-slot-4',        0,30, 14.167,6.406,null],
+  ['#come-slot-5',     14.167,36.094, 14.167,6.406,null],
+  ['#dc-slot-5',       14.167,30, 14.167,6.406,null],
+  ['#come-slot-6',     28.333,36.094, 14.167,6.406,null],
+  ['#dc-slot-6',       28.333,30, 14.167,6.406,null],
+  ['#come-slot-8',     42.778,36.25, 14.167,6.406,null],
+  ['#dc-slot-8',       43.056,30, 14.167,6.406,null],
+  ['#come-slot-9',     56.944,36.406, 14.167,6.406,null],
+  ['#dc-slot-9',       56.944,30, 14.167,6.406,null],
+  ['#come-slot-10',    71.111,35.938, 14.167,6.406,null],
+  ['#dc-slot-10',      71.389,30, 14.167,6.406,null]
+];
 const PORTRAIT_CRAPLESS_LAYOUT=CRAPLESS_LAYOUT.map(e=>e.slice());
-const PORTRAIT_LR_LAYOUT=LR_LAYOUT.map(e=>e.slice());
+// PORTRAIT_LR_LAYOUT: #lr-title-art/#bnums-low/#bnums-high aren't calibration-tool-tracked at
+// all (same as landscape, see LR_LAYOUT's own comment) -- kept as landscape's own values.
+// low/all/high/#dice-zone came from Deck's '@lr-low'/'@lr-all'/'@lr-high'/'@lr-dice' export
+// entries, converted %-of-#lucky-roller the same way as every landscape LR_LAYOUT update this
+// session: relX=(px_x-lrBox.x)/lrBox.w*100 etc., using THIS export's own '#lucky-roller' row
+// (695,240,408,107 on the 1800x3200 canvas) as the reference box.
+const PORTRAIT_LR_LAYOUT=[
+  ['#lr-title-art', 0.774, 2.000,97.032,61.429],
+  ['#bnums-low',   1.290, 4.000,32.258,44.000],
+  ['#bnums-high', 64.000, 4.000,32.258,44.000],
+  ['#dice-zone', -110.294,93.458, 89.461,182.243],
+  ['low',      0,100, 29.657,241.121],
+  ['all',     35.049,100, 29.657,241.121],
+  ['high',    70.343,100, 29.657,241.121]
+];
 let feltPortrait=localStorage.getItem('rh_focus_portrait')==='1';
 function feltLayoutFor(mode){
   const felt=feltPortrait?PORTRAIT_FELT_LAYOUT:FELT_LAYOUT;
