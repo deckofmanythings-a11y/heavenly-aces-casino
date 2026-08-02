@@ -1250,13 +1250,20 @@ body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-st
    (the box is real CSS now, no baked-in art title to fall back on), pay odds bumped slightly,
    numbers (below) made dramatically bigger -- the dominant element in the box. */
 body.felt-mode #felt-stage #lucky-roller .lr-note{display:none!important}
-body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-size:7px!important;font-weight:800;color:rgba(255,255,255,.8);letter-spacing:.02em;line-height:1.1}
-body.felt-mode #felt-stage #lucky-roller .lr-explain{font-size:6px!important;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800;color:rgba(255,255,255,.8);letter-spacing:.02em;line-height:1.1}
+body.felt-mode #felt-stage #lucky-roller .lr-explain{line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:1px 2px 0;position:relative;display:flex;flex-direction:column;align-items:center;gap:0}
-body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:9px!important;font-weight:700;color:var(--color-gold);text-shadow:none}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title{font-size:10px!important}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain{font-size:7px!important;white-space:nowrap}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{position:absolute;top:11px;left:0;right:0;text-align:center;font-size:9px!important}
+body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--color-gold);text-shadow:none}
+/* Font sizes now set uniformly per box (Calibrate Mode's font tool -- Deck set Low/High/All to
+   18px/18px/17px uniformly across title+explain+pay, replacing the old differentiated
+   7px/6px/9px split). */
+body.felt-mode #felt-stage #lucky-roller .lr-title,
+body.felt-mode #felt-stage #lucky-roller .lr-explain,
+body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:18px!important}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:17px!important}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{position:absolute;top:11px;left:0;right:0;text-align:center}
 body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:1px 2px 0}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{padding-top:19px!important}
 /* #bnums-low/#bnums-high are NOT nested inside their box in felt mode -- enterFeltMode()
@@ -2038,7 +2045,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.41</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.42</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2209,7 +2216,11 @@ const FELT_LAYOUT=[
   // HighRollsBox.webp), same master template/canvas as the old art -- box is the union bounding
   // box of the title art + the three bet boxes, measured directly off the crop tool's exported
   // stage coordinates (x:1220,y:15,w:775,h:350 on the 3200x1800 canvas).
-  ['#lucky-roller',   41.562,8.889, 17.344,5.278,null],
+  // Grown substantially (Deck's drag-tool export) -- was 17.344x5.278%, now 29.219x10.278%,
+  // roughly doubling in each dimension and shifting left/up. Since the box itself moved,
+  // LR_LAYOUT's low/all/high/#dice-zone entries (all stored as %-of-THIS-box) were recomputed
+  // from the export too -- see their own comments in LR_LAYOUT.
+  ['#lucky-roller',   35.313,0.556, 29.219,10.278,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -2332,10 +2343,16 @@ const LR_LAYOUT=[
   // stacked with them, and sizeDiceZone() shrinks the dice automatically if margins get tight.
   ['#bnums-low',   1.290, 4.000,32.258,44.000],
   ['#bnums-high', 64.000, 4.000,32.258,44.000],
-  ['#dice-zone',  33.548, 0.00,30.452,50.571],
-  ['low',    0,100,33.333,121.053],
-  ['all',   33.333,100,33.333,121.053],
-  ['high',  66.667,100,33.333,121.053]
+  // #dice-zone/low/all/high recomputed from Deck's drag-tool export now that #lucky-roller
+  // itself grew/moved (see FELT_LAYOUT's own comment) -- all four are %-of-#lucky-roller's
+  // NEW box, so they had to be re-derived, not just carried over. #dice-zone in particular
+  // moved to a totally different physical spot (up and to the left, into the previously-empty
+  // area above Hard Ways), which is why its x/y go negative/>100 -- that's still valid CSS
+  // (positioned outside the parent's own box), not a mistake.
+  ['#dice-zone',  -80.749,164.865,41.711,97.297],
+  ['low',    11.230,100.000,22.995,78.378],
+  ['all',    38.503,100.000,22.995,78.378],
+  ['high',   65.775,100.000,22.995,78.378]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
