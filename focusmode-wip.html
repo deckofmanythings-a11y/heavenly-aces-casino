@@ -1218,6 +1218,11 @@ body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--ch
 body.felt-mode #felt-stage #info-panel .info-row:nth-child(2) .info-btn{font-size:calc(var(--chip)*0.30)!important;padding:calc(var(--chip)*0.06) calc(var(--chip)*0.11)!important}
 body.felt-mode #felt-stage #info-panel .bullet-icon{width:calc(var(--chip)*0.12)!important}
 body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.28);padding:calc(var(--chip)*0.07) calc(var(--chip)*0.1)}
+/* Calibrate Mode font tool: #line-mode-toggle -> 27px. Its buttons are .mode-btn (a column
+   flex with align-items:center, which only centers horizontally -- no justify-content, so text
+   sat top-aligned instead of vertically centered). Added justify-content:center too (Deck:
+   "Change #line-mode-toggle text to vertically center justified"). */
+body.felt-mode #felt-stage #line-mode-toggle .mode-btn{font-size:27px!important;justify-content:center}
 body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.22)}
 /* Game selector went from one collapsed row to an always-visible 3-row grid (Deck: "make all
    games' game selector work and look like Destroyer's") -- same off-chip scaling as the rest
@@ -2137,7 +2142,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.2</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.3</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2541,16 +2546,16 @@ const CRAPLESS_LAYOUT=[
   // text around -- the exact bug already fixed for Standard (Deck: "Come bets are moving the
   // text inside the number box in Crapless"). Positioned at the same relative fraction of the
   // numberbox that Standard's own come-slot-N entries use.
-  ['#come-slot-2',  39.897,35.952,5.831,6.745,null],
-  ['#come-slot-3',  45.834,35.952,5.831,6.745,null],
-  ['#come-slot-4',  51.772,35.952,5.831,6.745,null],
-  ['#come-slot-5',  57.709,35.952,5.831,6.745,null],
-  ['#come-slot-6',  63.647,35.952,5.831,6.745,null],
-  ['#come-slot-8',  69.584,35.952,5.831,6.745,null],
-  ['#come-slot-9',  75.522,35.952,5.831,6.745,null],
-  ['#come-slot-10', 81.459,35.952,5.831,6.745,null],
-  ['#come-slot-11', 87.397,35.952,5.831,6.745,null],
-  ['#come-slot-12', 93.334,35.952,5.831,6.745,null],
+  ['#come-slot-2',  39.906,35.944,5.844,6.722,null],
+  ['#come-slot-3',  45.844,35.944,5.844,6.722,null],
+  ['#come-slot-4',  51.781,35.944,5.844,6.722,null],
+  ['#come-slot-5',  57.719,35.944,5.844,6.722,null],
+  ['#come-slot-6',  63.656,35.944,5.844,6.722,null],
+  ['#come-slot-8',  69.594,35.944,5.844,6.722,null],
+  ['#come-slot-9',  75.531,35.944,5.844,6.722,null],
+  ['#come-slot-10', 81.469,35.944,5.844,6.722,null],
+  ['#come-slot-11', 87.406,35.944,5.844,6.722,null],
+  ['#come-slot-12', 93.344,35.944,5.844,6.722,null],
   // Come/Field/Pass share Pass Line's x/w and stay zero-gapped, same as standard, but with no
   // Don't Pass/Don't Come row: Field drops into Don't Pass's old slot (bottom flush against
   // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
