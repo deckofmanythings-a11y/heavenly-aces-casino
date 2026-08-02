@@ -2133,7 +2133,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.5</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.6</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2346,7 +2346,7 @@ const FELT_LAYOUT=[
   // Shifted down 120 canvas px with the crapless number strip it sits under (one puck height,
   // see CRAPLESS_LAYOUT's numberbox comment). Crapless-only visually (display:none otherwise),
   // so this shared FELT_LAYOUT entry moving doesn't affect Standard.
-  ['#line-mode-toggle', 39.844,55.556, 59.375,4.444,null],
+  ['#line-mode-toggle', 39.844,55.556, 59.375,3.056,null],
   // Panel labels (Phase 7 polish): sit in the real gap between the hard4/6/8/10-or-hop22/33/
   // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
@@ -2570,9 +2570,9 @@ const CRAPLESS_LAYOUT=[
   // see the 'come-crapless'/'field-crapless'/'pass-crapless' FM_ART comments) -- these three
   // were left at their OLD pixel positions after the art swap, so the clickable area and the
   // visible bar stopped agreeing (same class of bug as Lucky Roller's edge-click miss).
-  ['#come-bar',      56.656,58.778,42.750,10.944,null],
-  ['#field-bar',     56.656,69.722,42.750,15.500,null],
-  ['#pass-bar',      56.656,85.222,42.750,12.556,null],
+  ['#come-bar',      56.719,58.889,42.656,10.833,null],
+  ['#field-bar',     56.719,69.722,42.656,15.278,null],
+  ['#pass-bar',      56.719,85.000,42.656,12.500,null],
   // Immediately left of the Pass Line (Deck's placement request), same y/h so it sits
   // flush against pass-bar's row. Width derived from height to keep the light art square:
   // 12.556% of 1800px=226px tall -> 226/3200=7.0625% wide.
