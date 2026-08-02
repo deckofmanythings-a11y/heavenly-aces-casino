@@ -1015,6 +1015,14 @@ body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block
    was stuck at the base unscaled 15px, overflowing the box at small felt sizes instead of
    shrinking with everything else around it. */
 body.felt-mode #felt-stage .field-info{font-size:calc(15px * var(--font-scale,1))!important}
+/* Portrait-only (Deck's Calibrate Mode font tool, exported as FM_FONT_SIZES: {'#field-bar':26})
+   -- #field-bar's portrait box is a different shape than landscape's, so it needed its own
+   smaller size for the "FIELD" text/numbers-list/pays-double line together. Scoped to
+   body.felt-portrait specifically so landscape's own separately-tuned 44px/15px above (still
+   correct for landscape's box) are untouched. */
+body.felt-portrait #felt-stage #field-bar .zone-name,
+body.felt-portrait #felt-stage #field-bar div[style*="font-size:15px"],
+body.felt-portrait #felt-stage #field-bar .field-info{font-size:calc(26px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:calc(27px * var(--font-scale,1))!important}
 /* Measured live at font-scale=0.421 (a representative sub-1400 test point, same as every other
    fit-fix this session): 26px-calibrated C&E was overflowing its circle by ~2px -- trimmed. */
@@ -2241,7 +2249,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.2</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.3</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2793,13 +2801,13 @@ const STANDARD_LAYOUT=[
 // (calibBaseEntries() skips them, same as landscape) -- kept as landscape's own values until
 // Deck calibrates those for portrait too.
 const PORTRAIT_FELT_LAYOUT=[
-  ['@anyCraps-circle', 50.833,65.938, 3.889,6.656,null],
-  ['@cande',           50.833,72.656, 3.889,6.656,null],
-  ['@eleven',          50.556,79.219, 3.889,6.656,null],
+  ['@anyCraps-circle', 39.722,54.375, 7.222,4.063,null],
+  ['@cande',           47.222,54.063, 8.056,4.531,null],
+  ['@eleven',          55.556,54.219, 7.222,4.063,null],
   ['.sc-stack',        42.60,60.00, 9.40,18.00,null],
   ['#left-col-header', 0.40, 0.70,12.60,12.60,null],
-  ['#lucky-roller',    38.611,7.5, 22.667,3.344,null],
-  ['#history-strip',   38.611,0, 22.667,4.375,null],
+  ['#lucky-roller',    14.167,4.844, 68.056,4.688,null],
+  ['#history-strip',   14.167,0, 68.056,4.688,null],
   ['#info-panel',      82.50, 0.70,17.00,20.50,null],
   ['#puck-off-crapless', 72.444,9.875, 0,0, null],
   ['#tab-hw',          2.778,54.531, 11.667,3.75,null],
@@ -2819,10 +2827,10 @@ const PORTRAIT_FELT_LAYOUT=[
   ['#prop-panel-label', -0.278,77.188, 43.056,3.75,'hw'],
   ['@any7',           12.778,81.094, 17.5,6.25,'hw'],
   ['@aces',            0,81.25, 12.778,9.375,'hw'],
-  ['@ace2',           30.278,81.094, 12.778,9.375,'hw'],
+  ['@ace2',           30.278,80.938, 12.778,9.375,'hw'],
   ['@horn',           12.778,87.344, 17.5,6.25,'hw'],
   ['@midnight',        0,90.625, 12.778,9.375,'hw'],
-  ['@yo',             30.556,90.469, 12.778,9.375,'hw'],
+  ['@yo',             30.278,90.625, 12.778,9.375,'hw'],
   ['@anyCraps',       12.778,93.75, 17.5,6.25,'hw'],
   ['@hop13',           4.556,55.281, 8.778,6.125,'hop'],
   ['@hop16',          13.611,55.281, 8.778,6.125,'hop'],
@@ -2844,16 +2852,16 @@ const PORTRAIT_STANDARD_LAYOUT=[
   ['#num-zone',        35.13,22.22,52.03,25.00,null],
   ['#dc-wait-wrap',    85,24.219, 15,23.75,null],
   ['#come-bar',        57.222,60.156, 42.778,9.063,null],
-  ['#field-bar',       57.222,69.219, 42.778,12.5,null],
-  ['#dp-bar',          57.222,81.719, 42.778,9.063,null],
-  ['#pass-bar',        56.944,90.781, 42.778,9.063,null],
+  ['#field-bar',       57.222,69.375, 42.778,12.5,null],
+  ['#dp-bar',          57.222,81.875, 42.778,9.063,null],
+  ['#pass-bar',        57.222,90.938, 42.778,9.063,null],
   ['#light-spot',      44.722,93.75, 11.111,6.25,null],
   ['#nb-numberbox-4',   0,29.688, 14.167,12.812,null],
   ['#nb-numberbox-5',  14.167,29.688, 14.167,12.812,null],
   ['#nb-numberbox-6',  28.333,29.688, 14.167,12.812,null],
   ['#nb-numberbox-8',  42.5,29.688, 14.167,12.812,null],
   ['#nb-numberbox-9',  56.667,29.688, 14.167,12.812,null],
-  ['#nb-numberbox-10', 70.833,29.531, 14.167,12.812,null],
+  ['#nb-numberbox-10', 70.833,29.688, 14.167,12.812,null],
   ['#nb-puckbox-4',     0,24.219, 6.944,5.469,null],
   ['#nb-puckbox-5',    14.167,24.219, 6.944,5.469,null],
   ['#nb-puckbox-6',    28.333,24.219, 6.944,5.469,null],
@@ -2884,28 +2892,32 @@ const PORTRAIT_STANDARD_LAYOUT=[
   ['#dc-slot-5',       14.167,30, 14.167,6.406,null],
   ['#come-slot-6',     28.333,36.094, 14.167,6.406,null],
   ['#dc-slot-6',       28.333,30, 14.167,6.406,null],
-  ['#come-slot-8',     42.778,36.25, 14.167,6.406,null],
-  ['#dc-slot-8',       43.056,30, 14.167,6.406,null],
-  ['#come-slot-9',     56.944,36.406, 14.167,6.406,null],
+  ['#come-slot-8',     42.5,36.094, 14.167,6.406,null],
+  ['#dc-slot-8',       42.5,30, 14.167,6.406,null],
+  ['#come-slot-9',     56.944,36.094, 14.167,6.406,null],
   ['#dc-slot-9',       56.944,30, 14.167,6.406,null],
-  ['#come-slot-10',    71.111,35.938, 14.167,6.406,null],
-  ['#dc-slot-10',      71.389,30, 14.167,6.406,null]
+  ['#come-slot-10',    71.111,36.094, 14.167,6.406,null],
+  ['#dc-slot-10',      71.111,30, 14.167,6.406,null]
 ];
 const PORTRAIT_CRAPLESS_LAYOUT=CRAPLESS_LAYOUT.map(e=>e.slice());
 // PORTRAIT_LR_LAYOUT: #lr-title-art/#bnums-low/#bnums-high aren't calibration-tool-tracked at
 // all (same as landscape, see LR_LAYOUT's own comment) -- kept as landscape's own values.
 // low/all/high/#dice-zone came from Deck's '@lr-low'/'@lr-all'/'@lr-high'/'@lr-dice' export
 // entries, converted %-of-#lucky-roller the same way as every landscape LR_LAYOUT update this
-// session: relX=(px_x-lrBox.x)/lrBox.w*100 etc., using THIS export's own '#lucky-roller' row
-// (695,240,408,107 on the 1800x3200 canvas) as the reference box.
+// session: relX=(px_x-lrBox.x)/lrBox.w*100 etc. Re-derived a second time (Deck's follow-up
+// export) since #lucky-roller itself changed substantially (408x107 -> a much wider/shorter
+// 1225x150 bar) -- low/all/high/dice all had to be recomputed against the NEW box, not just
+// carried over. #dice-zone moved to a totally different spot again too (relY=1043%, far below
+// #lucky-roller's own now-much-shorter height) -- same "still valid CSS, not a mistake" case
+// as landscape's own #dice-zone, just a more extreme number since the parent box shrank.
 const PORTRAIT_LR_LAYOUT=[
   ['#lr-title-art', 0.774, 2.000,97.032,61.429],
   ['#bnums-low',   1.290, 4.000,32.258,44.000],
   ['#bnums-high', 64.000, 4.000,32.258,44.000],
-  ['#dice-zone', -110.294,93.458, 89.461,182.243],
-  ['low',      0,100, 29.657,241.121],
-  ['all',     35.049,100, 29.657,241.121],
-  ['high',    70.343,100, 29.657,241.121]
+  ['#dice-zone', 80.816,1043.333, 29.796,130.000],
+  ['low',      18.776,100, 20.816,136.667],
+  ['all',     39.592,100, 20.816,136.667],
+  ['high',    60.408,100, 20.816,136.667]
 ];
 let feltPortrait=localStorage.getItem('rh_focus_portrait')==='1';
 function feltLayoutFor(mode){
