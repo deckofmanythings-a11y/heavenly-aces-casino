@@ -309,7 +309,18 @@ body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
    "where the Don't ended up on the 4, and where the Come ended up on the 5" was wrong --
    DC was pinned near the LAY line while Come sat in normal flow lower down; screenshot of the
    correct placement showed both chip pairs centered at the same height, no badge). */
-body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{background:transparent;border:none;padding:0;width:100%;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1px}
+/* Two full-felt-size chip stacks (flat+odds) side by side need roughly 2x --chip plus a gap --
+   Deck's calibrated Come/DC landing zones are real, tighter boxes now (8.438% wide), so at full
+   --chip size the pair overflowed right past the box entirely (Deck: "DC and Come are still not
+   using the spots we made" -- the BOX was correct, the chips inside it were just too big for it
+   and spilled out). Scoping --chip down locally shrinks both the chip width (.come-half
+   .chip-stack below) and the chip-stack's own inline height (chipStackHTML()'s
+   calc(var(--chip) + var(--edge)*n) -- --edge is itself calc(var(--chip)*.16), so it re-resolves
+   off whatever --chip it inherits automatically). Can't self-reference --chip directly
+   (--chip:calc(var(--chip)*.5) is a guaranteed-invalid cycle per spec -- confirmed live, it
+   collapsed the chips to 0x0 instead of shrinking them) -- routed through the differently-named
+   --come-chip-size custom property (#felt-stage) instead, which has no such cycle. */
+body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{--chip: var(--come-chip-size);background:transparent;border:none;padding:0;width:100%;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1px}
 body.felt-mode #felt-stage .dc-on-box{flex-direction:row-reverse}
 body.felt-mode #felt-stage .come-half{position:static;left:auto;transform:none;width:auto;display:flex;align-items:center;justify-content:center}
 
@@ -1075,7 +1086,7 @@ body.felt-mode.game-standard #felt-stage #dp-odds-cell.active::after{
    chip further below the game's one consistent size, THEIR BOXES were enlarged instead
    (see #light-spot / FELT_LAYOUT and the Lucky Roller box CSS) so a same-size chip lands
    at ~60% there naturally. */
-#felt-stage{--chip:30px;--edge:calc(var(--chip)*0.16)}
+#felt-stage{--chip:30px;--edge:calc(var(--chip)*0.16);--come-chip-size:calc(var(--chip)*0.5)}
 /* Chip Row (#bottom-bar .chip, the $1/$5/$10/$25/$50/$100 denomination-selector buttons) lives
    in #bottom-section -- a SIBLING of #felt-stage, not a descendant -- so it never picked up
    #felt-stage's --chip and stayed at its CSS-authored fixed 30px (24px under the narrow-viewport
@@ -2083,7 +2094,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.48</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.49</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4433,42 +4444,17 @@ function renderChipStacks(){
   });
 }
 const _updateUI_orig=updateUI;
-updateUI=function(){_updateUI_orig();renderChipStacks();applyBetAreaNudges();};
-// Manual pixel nudges on top of the (already-correct, pre-existing) Buy/Place/Lay/Come/DC
-// positions, per Deck's follow-up. Pure CSS transform (not position/left/top), so it can't
-// touch the flex layout that positions these correctly in the first place -- purely additive,
-// zero risk of the reflow/collapse issues from the earlier (now-removed) custom positioning
-// system. Offsets are in px on the 3200x1800 reference canvas, scaled to the felt's actual
-// rendered size so they land the same regardless of window size.
-function applyBetAreaNudges(){
-  const stage=document.getElementById('felt-stage');
-  if(!stage||!document.body.classList.contains('felt-mode'))return;
-  const sx=stage.clientWidth/FM_CANVAS_W,sy=stage.clientHeight/FM_CANVAS_H;
-  if(!sx||!sy)return;
-  // .come-half elements (combox-flat/odds, dcbox-flat/odds) already carry translateX(-50%) for
-  // horizontal centering -- an inline style would otherwise clobber it, not add to it. No
-  // per-number drift correction here -- Come/Don't Come are already correctly aligned without
-  // it (Deck: "Remove the drift correction on the Don't Come spot and Come spot").
-  const nudgeComeHalf=(idFn,dxPx,dyPx)=>{
-    ALL_NUMS.forEach(n=>{
-      const el=document.getElementById(idFn(n));
-      if(el)el.style.transform='translateX(-50%) translate('+(dxPx*sx)+'px,'+(dyPx*sy)+'px)';
-    });
-  };
-  // Standard's Buy/Place/Lay cells used to need a manual per-number drift correction here
-  // (nudgePlain(), removed) on top of STANDARD_LAYOUT's own per-number x/y/w/h -- but
-  // STANDARD_LAYOUT's entries are themselves now individually hand-calibrated via the drag
-  // tool (whole pixels, already final positions), so the old nudge was stacking a second,
-  // now-stale offset on top of an already-correct position, shifting every Buy/Place/Lay cell
-  // ~75-90 canvas-px off (Deck: "Place/Buy/Lay bet placements are messed up, but the Calibrator
-  // makes them appear perfect" -- the Calibrator reads STANDARD_LAYOUT directly and never ran
-  // this nudge, only real gameplay's updateUI()->applyBetAreaNudges() did).
-  nudgeComeHalf(n=>'combox-flat-'+n,  90,-90);
-  nudgeComeHalf(n=>'combox-odds-'+n,  90,-90);
-  nudgeComeHalf(n=>'dcbox-flat-'+n,   150,-90);
-  nudgeComeHalf(n=>'dcbox-odds-'+n,   150,-90);
-}
-window.addEventListener('resize',()=>{ if(typeof updateUI==='function')applyBetAreaNudges(); });
+updateUI=function(){_updateUI_orig();renderChipStacks();};
+// applyBetAreaNudges() used to apply manual pixel-offset transforms on top of Come/DC's chip
+// positions (combox-flat/odds-N, dcbox-flat/odds-N) -- back when #come-slot-N/#dc-slot-N were a
+// single hardcoded CSS anchor shared by every number, this was the only way to correct drift.
+// Now that each number has its own individually hand-calibrated #come-slot-N/#dc-slot-N landing
+// zone (STANDARD_LAYOUT, already final absolute positions), this nudge was stacking a SECOND,
+// now-stale offset on top of an already-correct position -- the exact same bug already found
+// and fixed for Buy/Place/Lay above (see that comment), just never cleaned up here too (Deck:
+// "DC and Come are still not using the spots we made" -- confirmed live via computed transform:
+// matrix(1,0,0,1,51.5,-35.4) on the chip, ~50-90 canvas-px off from its actual calibrated box).
+// Nothing left for this function to do, so it (and its resize listener) are gone.
 
 // Moved to the end of this script block (see the matching comment there) -- calling it here
 // triggers updateUI() before several later-declared `let`s (dualSplit, puck3dEl, ...) have
