@@ -373,7 +373,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .nb-buy-left{flex:1;background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-buy-left:hover{background:rgba(255,255,255,.15)}
 .nb-buy-left.active{background:transparent}
-.nb-lay{flex:1;background:rgba(255,255,255,.07);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-lay{flex:1;background:rgba(255,255,255,.07);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-lay:hover{background:rgba(255,255,255,.15)}
 .nb-lay.active{background:transparent}
 .nb-lay .nb-lbl{color:var(--color-loss)}
@@ -850,11 +850,11 @@ body.felt-mode.game-crapless #felt-stage .nb-buy{border:var(--box-border);border
 body.felt-mode.game-crapless #felt-stage .nb-place{border:var(--box-border);border-top:none;border-radius:0 0 var(--box-radius) var(--box-radius)}
 body.felt-mode.game-crapless #felt-stage .num-box{border-radius:0}
 /* nb-puckbox-N: only meaningful once STANDARD_LAYOUT gives it a real position/size (felt mode
-   only -- Standard only, Crapless has no puckbox). Dashed rectangle "landing pad" outline
-   matching the box's own footprint (Deck: "don't use an ellipse for the puck box, use a
-   rectangle" -- the puck itself stays a circle once it actually lands here). */
-body.felt-mode.game-standard #felt-stage .nb-puckbox{display:block;position:absolute;pointer-events:none}
-body.felt-mode.game-standard #felt-stage .nb-puckbox::after{content:'';position:absolute;inset:8%;border:1.5px dashed rgba(255,215,0,.35);border-radius:var(--box-radius)}
+   only -- Standard only, Crapless has no puckbox). Same solid border/fill treatment as
+   .nb-lay right next to it (Deck: "match the tone and look of the Lay box, give them visible
+   borders so they look separate") -- a real box now, not a dashed gold "landing pad" outline.
+   The puck itself is unaffected, still a circle once it actually lands here. */
+body.felt-mode.game-standard #felt-stage .nb-puckbox{display:block;position:absolute;pointer-events:none;background:rgba(255,255,255,.07);border:var(--box-border)}
 /* The "move up 40% chip height" adjustment above was calibrated back when Buy was the TOP
    THIRD of one tall shared #num-zone box -- 6% of that box's height plus a chip-relative
    nudge was a reasonable amount to clear the felt art below it. Buy now has its own small,
@@ -926,9 +926,12 @@ body.felt-mode.game-standard #felt-stage .num-box.felt-abs{position:absolute}
    image) is gone -- .num-box's real CSS border/fill (--box-border/--box-fill-flat) is now the
    only frame each number cell has, so the !important suppression that used to hide it
    whenever felt art was underneath no longer applies. */
-body.felt-mode.game-standard #felt-stage .nb-buy-wrap{position:absolute;left:0;width:100%;top:0%;height:21.59%;display:flex}
-body.felt-mode.game-standard #felt-stage .nb-mid{position:absolute;left:0;width:100%;top:21.59%;height:56.09%}
-body.felt-mode.game-standard #felt-stage .nb-place-wrap{position:absolute;left:0;width:100%;top:77.68%;height:22.32%;display:flex}
+/* Phase 8: nb-buy-wrap/nb-mid/nb-place-wrap's old 4-band absolute-percentage split (this box
+   used to be ONE shared container for puck/DC-Lay/Number/Place-Buy bands) is gone now that
+   Buy/Lay/Place/Puckbox are all individually reparented out of it -- nb-mid is #nb-numberbox-N's
+   only remaining content, so it just needs to fill the box (the plain `flex:1` rule above,
+   with no explicit top/height). Leaving the old top:21.59%/height:56.09% active left an empty
+   gap above the numeral, which read as a stray horizontal line at the box's top edge. */
 body.felt-mode.game-standard #felt-stage .nb-buy-wrap>*,
 body.felt-mode.game-standard #felt-stage .nb-place-wrap>*{position:relative;width:50%;height:100%;flex:none}
 body.felt-mode.game-standard #felt-stage .nb-buy-left,
@@ -1916,7 +1919,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.23</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.24</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
