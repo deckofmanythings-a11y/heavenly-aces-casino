@@ -1312,14 +1312,17 @@ body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800
    1px 2px 0 padding vs 4px 6px, no justify-content vs center). Matched exactly. */
 body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:4px 6px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--color-gold);text-shadow:none}
-/* Font sizes set uniformly per box (Calibrate Mode's font tool). Low/High were 18px while All
-   was 17px -- Deck spotted that 1px mismatch as the boxes not being "formatted the same" and
-   recalibrated Low/High down to 17px too, so now all three genuinely share one rule instead of
-   a base 18px + a rollem-all-bar-specific 17px override. explain is still sized here even
-   though hidden, in case it's ever unhidden again -- costs nothing while display:none. */
+/* Font sizes set per box (Calibrate Mode's font tool). Was briefly unified at 17px for all
+   three (Deck had spotted an 18px-vs-17px mismatch as boxes not being "formatted the same") --
+   next export deliberately re-split it, bumping Roll'em All back up to 18px while leaving
+   Low/High at 17px. explain is still sized here even though hidden, in case it's ever unhidden
+   again -- costs nothing while display:none. */
 body.felt-mode #felt-stage #lucky-roller .lr-title,
 body.felt-mode #felt-stage #lucky-roller .lr-explain,
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:17px!important}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:18px!important}
 body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:1px 2px 0}
 /* #bnums-low/#bnums-high are NOT nested inside their box in felt mode -- enterFeltMode()
    reparents every LR_LAYOUT entry (including these) to be direct children of #lucky-roller,
@@ -2100,7 +2103,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.51</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.52</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
