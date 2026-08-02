@@ -354,7 +354,7 @@ body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{he
 /* Font-size overrides from Calibrate Mode's font tool -- Come/Pass Line share one size,
    Field gets its own smaller one (Don't Pass isn't a .zone-name, see .dp-name below). */
 #come-bar .zone-name,#pass-bar .zone-name{font-size:76px!important}
-#field-bar .zone-name{font-size:36px!important}
+#field-bar .zone-name{font-size:44px!important}
 .zone-stk{font-size:19px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px}
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
@@ -910,7 +910,7 @@ body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important
 /* Deck: "Make the font used for the numbers in the field box (2-3...11-12) be the same font
    size as the word Field." FIELD itself (.zone-name) is forced to 36px below (was only 16px
    here, much smaller). */
-body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:36px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:44px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
 body.felt-mode #felt-stage .prop-circle{font-size:26px!important}
 body.felt-mode.game-crapless #felt-stage .circle-wrap .has-stack{bottom:22%}
@@ -2137,7 +2137,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.0</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.1</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2347,7 +2347,7 @@ const FELT_LAYOUT=[
   // kept in FELT_LAYOUT (not moved into CRAPLESS_LAYOUT) so enter/exit-felt-mode logic, which
   // expects every mode-agnostic entry to be handled the same regardless of activeGame, doesn't
   // need to change.
-  ['#line-mode-toggle', 39.375,48.611, 60,4.444,null],
+  ['#line-mode-toggle', 39.844,48.889, 59.375,4.444,null],
   // Panel labels (Phase 7 polish): sit in the real gap between the hard4/6/8/10-or-hop22/33/
   // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
@@ -2504,36 +2504,36 @@ const CRAPLESS_LAYOUT=[
   // alignCraplessNumBoxOverlays() hack. That hack is removed now that every piece is
   // independently calibrated the same way, same as Hard Ways/Hop Bets/etc already are --
   // seeded here from the grid's own current rendered position, ready for Deck to refine.
-  ['#nb-numberbox-2',  37.5,   26.278,5.75, 22.111,null],
-  ['#nb-numberbox-3',  43.25,  26.278,5.75, 22.111,null],
-  ['#nb-numberbox-4',  49.0,   26.278,5.75, 22.111,null],
-  ['#nb-numberbox-5',  54.75,  26.278,5.75, 22.111,null],
-  ['#nb-numberbox-6',  60.5,   26.278,6.156,22.111,null],
-  ['#nb-numberbox-8',  66.656, 26.278,5.75, 22.111,null],
-  ['#nb-numberbox-9',  72.406, 26.278,9.125,22.111,null],
-  ['#nb-numberbox-10', 81.5,   26.278,5.75, 22.111,null],
-  ['#nb-numberbox-11', 87.25,  26.278,5.75, 22.111,null],
-  ['#nb-numberbox-12', 93.0,   26.278,5.75, 22.111,null],
-  ['#nb-buy-2',   37.5000,23.5556,6.1250,5.2222,null],
-  ['#nb-place-2', 37.5000,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-3',   43.6250,23.5556,6.1250,5.2222,null],
-  ['#nb-place-3', 43.6250,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-4',   49.7500,23.5556,6.1250,5.2222,null],
-  ['#nb-place-4', 49.7500,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-5',   55.8750,23.5556,6.1250,5.2222,null],
-  ['#nb-place-5', 55.8750,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-6',   62.0000,23.5556,6.1250,5.2222,null],
-  ['#nb-place-6', 62.0000,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-8',   68.1250,23.5556,6.1250,5.2222,null],
-  ['#nb-place-8', 68.1250,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-9',   74.2500,23.5556,6.1250,5.2222,null],
-  ['#nb-place-9', 74.2500,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-10',   80.3750,23.5556,6.1250,5.2222,null],
-  ['#nb-place-10', 80.3750,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-11',   86.5000,23.5556,6.1250,5.2222,null],
-  ['#nb-place-11', 86.5000,43.1667,6.1250,5.2222,null],
-  ['#nb-buy-12',   92.6250,23.5556,6.1250,5.2222,null],
-  ['#nb-place-12', 92.6250,43.1667,6.1250,5.2222,null],
+  ['#nb-numberbox-2',  39.844, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-3',  45.781, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-4',  51.719, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-5',  57.656, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-6',  63.594, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-8',  69.531, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-9',  75.469, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-10', 81.406, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-11', 87.344, 28.889,5.938,14.444,null],
+  ['#nb-numberbox-12', 93.281, 28.889,5.938,14.444,null],
+  ['#nb-buy-2',   39.844,23.333,5.938,5.556,null],
+  ['#nb-place-2', 39.844,43.333,5.938,5.556,null],
+  ['#nb-buy-3',   45.781,23.333,5.938,5.556,null],
+  ['#nb-place-3', 45.781,43.333,5.938,5.556,null],
+  ['#nb-buy-4',   51.719,23.333,5.938,5.556,null],
+  ['#nb-place-4', 51.719,43.333,5.938,5.556,null],
+  ['#nb-buy-5',   57.656,23.333,5.938,5.556,null],
+  ['#nb-place-5', 57.656,43.333,5.938,5.556,null],
+  ['#nb-buy-6',   63.594,23.333,5.938,5.556,null],
+  ['#nb-place-6', 63.594,43.333,5.938,5.556,null],
+  ['#nb-buy-8',   69.531,23.333,5.938,5.556,null],
+  ['#nb-place-8', 69.531,43.333,5.938,5.556,null],
+  ['#nb-buy-9',   75.469,23.333,5.938,5.556,null],
+  ['#nb-place-9', 75.469,43.333,5.938,5.556,null],
+  ['#nb-buy-10',   81.406,23.333,5.938,5.556,null],
+  ['#nb-place-10', 81.406,43.333,5.938,5.556,null],
+  ['#nb-buy-11',   87.344,23.333,5.938,5.556,null],
+  ['#nb-place-11', 87.344,43.333,5.938,5.556,null],
+  ['#nb-buy-12',   93.281,23.333,5.938,5.556,null],
+  ['#nb-place-12', 93.281,43.333,5.938,5.556,null],
   // Come/Field/Pass share Pass Line's x/w and stay zero-gapped, same as standard, but with no
   // Don't Pass/Don't Come row: Field drops into Don't Pass's old slot (bottom flush against
   // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
