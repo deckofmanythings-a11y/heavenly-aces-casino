@@ -100,6 +100,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .lr-body{padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;justify-content:center}
 .lr-nums{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
 .lr-num{position:relative;width:32px;height:32px;border-radius:3px;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:rgba(255,255,255,.4);border:0.5px solid rgba(255,255,255,.15)}
+.lr-explain{font-size:11px;color:rgba(255,255,255,.45);display:block}
 .lr-num.hit{background:transparent;color:#7ee87e;border-color:#7ee87e}
 .lr-stake{font-size:38px;font-weight:600;color:#ffd700;min-height:12px}
 .lr-note{font-size:15px;color:rgba(255,255,255,.4)}
@@ -179,6 +180,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:15px;font-weight:700;color:rgba(255,255,255,.55);background:rgba(0,0,0,.3);letter-spacing:.05em;flex-shrink:0}
+.fm-panel-label{display:none}
+body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:13px;line-height:1.25;white-space:normal}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -747,8 +750,9 @@ body.felt-mode #felt-stage .prop-bar.active{}
    gone and they render real CSS instead -- see the matching visibility fixes below. Phase 5b:
    .zone-name/.field-info (Come/Field/Pass/Don't Pass's own labels) unhidden too now that their
    FM_ART is gone. */
-body.felt-mode #felt-stage .pay,
-body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:none!important}
+/* Phase 7 polish: .pay (Hard Ways/Hop odds) and the Field bar's number list are real content
+   now that their FM_ART is gone -- unhidden and boosted for legibility, see felt-mode overrides
+   further below. */
 /* .nb-mid>span{visibility:hidden} used to blanket-hide every numeral, including the Phase 4
    Place/Buy digits -- that was a real bug (shipped invisible numerals), fixed in Phase 4/5b:
    #dc-wait-bar's own DCWaitingBox.webp is removed now too, so nothing needs this hidden
@@ -762,9 +766,20 @@ body.felt-mode #felt-stage .nb-mid>span{visibility:visible}
    neighboring boxes (only ever discoverable once Phase 4 made the numeral visible in felt mode
    for the first time; it was always oversized, just invisible before). !important needed to
    beat the inline style. */
-body.felt-mode #felt-stage .nb-mid>span{font-size:22px!important}
+body.felt-mode #felt-stage .nb-mid>span{font-size:26px!important;font-weight:900!important;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+body.felt-mode #felt-stage .nb-num-word{transform:rotate(-30deg)}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
+/* Phase 7 polish: BUY/PLACE/LAY labels barely read against the felt at their original 11px/
+   50%-opacity -- brighten + bold them. Hard Ways/Hop Bets odds (.pay) and the Field bar's
+   number list, both un-hidden above now that their old FM_ART baked the text in, get the
+   same treatment. SEVEN/ANY CRAPS (.prop-bar-name) and C/C&E/E (.prop-circle) were sized for
+   the old art's larger painted circles/bars -- bumped up now that real CSS is the only frame. */
+body.felt-mode #felt-stage .nb-lbl{color:rgba(255,255,255,.85)!important;font-weight:800!important;font-size:12px!important}
+body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
+body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:16px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
+body.felt-mode #felt-stage .prop-circle{font-size:26px!important}
 body.felt-mode.game-crapless #felt-stage .circle-wrap .has-stack{bottom:22%}
 
 /* readable stakes over the art */
@@ -793,6 +808,15 @@ body.felt-mode #felt-stage #pass-main{flex:1}
 body.felt-mode.game-crapless #felt-stage .nb-buy{flex:0 0 21%}
 body.felt-mode.game-crapless #felt-stage .nb-mid{flex:1}
 body.felt-mode.game-crapless #felt-stage .nb-place{flex:0 0 21%}
+/* Phase 7 polish: Buy/Place are independently-positioned siblings of the numeral box (see
+   alignCraplessNumBoxOverlays()), not nested inside its border -- give them their own matching
+   border on the outer edges only (Buy's own bottom border already separates it from the
+   numeral visually) so, snapped flush by that function, the three stacked pieces read as one
+   continuous frame instead of Buy/Place's shaded backgrounds floating separately above/below
+   an unrelated-looking box. */
+body.felt-mode.game-crapless #felt-stage .nb-buy{border:var(--box-border);border-bottom:none;border-radius:var(--box-radius) var(--box-radius) 0 0}
+body.felt-mode.game-crapless #felt-stage .nb-place{border:var(--box-border);border-top:none;border-radius:0 0 var(--box-radius) var(--box-radius)}
+body.felt-mode.game-crapless #felt-stage .num-box{border-radius:0}
 /* The "move up 40% chip height" adjustment above was calibrated back when Buy was the TOP
    THIRD of one tall shared #num-zone box -- 6% of that box's height plus a chip-relative
    nudge was a reasonable amount to clear the felt art below it. Buy now has its own small,
@@ -880,7 +904,9 @@ body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;position:r
 body.felt-mode.game-standard #felt-stage #dp-main{flex:1;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main:hover,
 body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{background:rgba(255,255,255,.10)}
-body.felt-mode.game-standard #felt-stage #dp-bar12{display:none!important}
+/* Phase 7 polish: #dp-bar12 (the "BAR 12" callout, Don't Pass loses on 12) was force-hidden
+   here -- backwards, since Don't Pass is a real Standard-only bet (Crapless shows the
+   .dp-stub note instead and never renders #dp-bar at all). Left visible now. */
 /* ===== CHIP STACK BET INDICATORS =====
    One flat chip size for the whole felt, sized to fit the tightest box on it (the
    Buy/Place/Lay number tiles, the shortest bet spots here) at 80-90% of their height --
@@ -983,13 +1009,15 @@ body.felt-mode #felt-stage #info-panel #info-modal-btn{font-size:calc(var(--chip
 body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--chip)*0.34)!important}
 body.felt-mode #felt-stage #info-panel .info-row:nth-child(2) .info-btn{font-size:calc(var(--chip)*0.30)!important;padding:calc(var(--chip)*0.06) calc(var(--chip)*0.11)!important}
 body.felt-mode #felt-stage #info-panel .bullet-icon{width:calc(var(--chip)*0.12)!important}
-body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.34);padding:calc(var(--chip)*0.1) calc(var(--chip)*0.12)}
-body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.26)}
+body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.28);padding:calc(var(--chip)*0.07) calc(var(--chip)*0.1)}
+body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.22)}
 /* Game selector went from one collapsed row to an always-visible 3-row grid (Deck: "make all
    games' game selector work and look like Destroyer's") -- same off-chip scaling as the rest
-   of this header, sized smaller since it now has to fit 3 rows instead of 1 in the same box. */
-body.felt-mode #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--chip)*0.21);padding:calc(var(--chip)*0.035) calc(var(--chip)*0.05);line-height:1.1}
-body.felt-mode #felt-stage #left-col-header .gmode-sub{font-size:calc(var(--chip)*0.15)}
+   of this header, sized smaller since it now has to fit 3 rows instead of 1 in the same box.
+   Phase 7: trimmed further along with the whole header's height (15.50 -> 12.60%, see
+   FELT_LAYOUT) to stop the HARDWAYS/HOP BETS tab buttons from colliding with it below. */
+body.felt-mode #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--chip)*0.18);padding:calc(var(--chip)*0.03) calc(var(--chip)*0.04);line-height:1.1}
+body.felt-mode #felt-stage #left-col-header .gmode-sub{font-size:calc(var(--chip)*0.13)}
 body.felt-mode #felt-stage #left-col-header #game-mode-toggle{gap:calc(var(--chip)*0.03);padding:calc(var(--chip)*0.03)}
 /* On a genuinely cramped felt (short landscape phone, felt-stage width below ~520px -- see the
    felt-compact toggle in sizeFeltStage()), "Cash Out" and "Log Out" don't fit as text no matter
@@ -1016,7 +1044,7 @@ body.felt-compact #felt-stage #left-col-header .gmode-btn{font-size:calc(var(--c
 body.felt-compact #felt-stage #left-col-header .gmode-sub{display:none}
 .gmode-btn-home{font-size:20px!important;padding:10px 6px!important}
 .gmode-btn-home .gmode-sub{font-size:13px!important}
-body.felt-mode #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.45)!important}
+body.felt-mode #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.36)!important}
 body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.45)!important}
 /* Bottom section now sits below the felt (inside #play-area, not reparented into
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
@@ -1042,8 +1070,13 @@ body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
 body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 13px var(--font-heavy);color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.04em;white-space:nowrap}
 body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER'}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
-   the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again. */
+   the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again.
+   #bnums-low/#bnums-high never got the same treatment (Phase 7 bug: grown taller, they now sit
+   mostly under #lr-title-art's own z-index:1, reading as faint/washed-out instead of the bold
+   numbers Deck wants front-and-center). */
 body.felt-mode #felt-stage #lucky-roller .lr-bonus-wrap.felt-lr{z-index:2}
+body.felt-mode #felt-stage #lucky-roller #bnums-low.felt-lr,
+body.felt-mode #felt-stage #lucky-roller #bnums-high.felt-lr{z-index:2}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:var(--box-fill);border:var(--box-border);width:100%;height:100%;border-radius:6px}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{background:rgba(255,255,255,.10)}
 /* Each low/all/high box measures ~55x39px on a full-size felt -- the base view's title+pay text
@@ -1055,12 +1088,21 @@ body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-st
    the numbers below it. Only .lr-title/.lr-note are hidden, not the whole .lr-header container,
    so the real "31 for 1"/"156 for 1" text already in the DOM still renders (no fake content
    needed) for both the low/high boxes and (via its own inline-style override) Roll'em All. */
-body.felt-mode #felt-stage #lucky-roller .lr-title,body.felt-mode #felt-stage #lucky-roller .lr-note{display:none!important}
-body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:2px 2px 0;position:relative}
+/* Phase 7 polish: Deck wants the numbers (and whether they've hit) to read as the MOST
+   important part of each box -- previously they were shrunk to near-illegible 8px pills while
+   the pay odds got the only readable text. Re-balanced: title/explain shown as a tiny caption
+   (the box is real CSS now, no baked-in art title to fall back on), pay odds bumped slightly,
+   numbers (below) made dramatically bigger -- the dominant element in the box. */
+body.felt-mode #felt-stage #lucky-roller .lr-note{display:none!important}
+body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-size:7px!important;font-weight:800;color:rgba(255,255,255,.8);letter-spacing:.02em;line-height:1.1}
+body.felt-mode #felt-stage #lucky-roller .lr-explain{font-size:6px!important;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:1px 2px 0;position:relative;display:flex;flex-direction:column;align-items:center;gap:0}
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:9px!important;font-weight:700;color:var(--color-gold);text-shadow:none}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{position:absolute;top:2px;left:0;right:0;text-align:center}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title{font-size:10px!important}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain{font-size:7px!important;white-space:nowrap}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{position:absolute;top:11px;left:0;right:0;text-align:center;font-size:9px!important}
 body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:1px 2px 0}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{padding-top:11px!important}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{padding-top:19px!important}
 /* #bnums-low/#bnums-high are NOT nested inside their box in felt mode -- enterFeltMode()
    reparents every LR_LAYOUT entry (including these) to be direct children of #lucky-roller,
    each independently absolutely-positioned per its own LR_LAYOUT %-coordinates (a floating
@@ -1069,8 +1111,8 @@ body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{padding-top:11px!import
    position:absolute); only what's laid out INSIDE that strip changes here, via flex instead
    of the old per-digit pixel-scanned nth-child offsets (which were calibrated to match the
    now-deleted baked image and have nothing left to align to). */
-body.felt-mode #felt-stage #lucky-roller .lr-nums{height:auto;padding:0;display:flex;flex-wrap:wrap;align-content:center;gap:1px;justify-content:center}
-body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:11px;height:11px;font-size:8px;line-height:11px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.15);border-radius:2px;padding:0 1px}
+body.felt-mode #felt-stage #lucky-roller .lr-nums{height:auto;padding:0;display:flex;flex-wrap:wrap;align-content:center;gap:2px;justify-content:center}
+body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:20px;height:20px;font-size:15px;line-height:20px;font-weight:800;color:rgba(255,255,255,.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:0 2px}
 body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:9px;min-height:9px}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar #bstk-all{font-size:14px!important}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
@@ -1519,7 +1561,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <!-- Low Rolls -->
         <div class="lr-bonus-wrap">
           <div class="lr-bonus" id="bbonus-low" onclick="bonusBet('low')" oncontextmenu="event.preventDefault();bonusRemove('low')">
-            <div class="lr-header"><span class="lr-title">Low Rolls</span><span class="lr-pay">31 for 1</span></div>
+            <div class="lr-header"><span class="lr-title">Low Rolls</span><span class="lr-explain">5 before a 7</span><span class="lr-pay">31 for 1</span></div>
             <div class="lr-body"><div class="lr-nums" id="bnums-low"></div><div class="lr-stake" id="bstk-low"></div></div>
           </div>
           <div id="bonus-lock-low" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:32px;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,.85)">🔒</div>
@@ -1529,6 +1571,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="lr-bonus-wrap">
           <div class="rollem-all-bar" id="bbonus-all-bar" onclick="bonusBet('all')" oncontextmenu="event.preventDefault();bonusRemove('all')" style="width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 6px">
             <span class="lr-title" style="font-size:30px;text-align:center">Roll'em All</span>
+            <span class="lr-explain" style="text-align:center">All nums before 7</span>
             <span class="lr-pay" style="font-size:28px;text-align:center">156 for 1</span>
             <span class="lr-stake" id="bstk-all" style="font-size:38px"></span>
           </div>
@@ -1539,7 +1582,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <!-- High Rolls -->
         <div class="lr-bonus-wrap">
           <div class="lr-bonus" id="bbonus-high" onclick="bonusBet('high')" oncontextmenu="event.preventDefault();bonusRemove('high')">
-            <div class="lr-header"><span class="lr-title">High Rolls</span><span class="lr-pay">31 for 1</span></div>
+            <div class="lr-header"><span class="lr-title">High Rolls</span><span class="lr-explain">5 before a 7</span><span class="lr-pay">31 for 1</span></div>
             <div class="lr-body"><div class="lr-nums" id="bnums-high"></div><div class="lr-stake" id="bstk-high"></div></div>
           </div>
           <div id="bonus-lock-high" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:32px;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,.85)">🔒</div>
@@ -1596,6 +1639,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     <div id="left-col">
       <!-- HARDWAYS MODE -->
       <div id="panel-hw">
+        <div id="hw-panel-label" class="fm-panel-label">HARD WAYS</div>
         <div class="hw-grid">
           <div class="bwrap"><div class="bb" id="bet-hard4" onclick="placeBet('hard4')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hard4')"><span class="dp"><img class="dice-combo-img" src="marble22.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hard4"></span><span class="pay">8 for 1</span></div></div>
           <div class="bwrap"><div class="bb" id="bet-hard6" onclick="placeBet('hard6')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hard6')"><span class="dp"><img class="dice-combo-img" src="marble33.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hard6"></span><span class="pay">10 for 1</span></div></div>
@@ -1623,6 +1667,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
       <!-- HOP BETS MODE -->
       <div id="panel-hop">
+        <div id="hop-panel-label" class="fm-panel-label">HOPPING HARD WAYS 31:1 &nbsp;·&nbsp; HOP BETS 16:1</div>
         <div style="background:rgba(0,0,0,.2);border-radius:4px;overflow:hidden;flex-shrink:0">
           <div class="hop-section-hdr">31 for 1 · HOPPING HARD WAYS · 31 for 1</div>
           <div class="hop-hard-grid">
@@ -1755,7 +1800,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
             <div id="dp-main" onclick="placeBet('dp')" oncontextmenu="event.preventDefault();event.stopPropagation();removeDpFlat()">
               <div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap">
                 <div class="dp-name" style="font-size:23px">DON'T PASS</div>
-                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:23px;color:rgba(255,130,130,.45)">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px"></div>
+                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:23px;color:rgba(255,150,150,.85)">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px"></div>
               </div>
               <div class="dp-stk" id="stk-dp"></div>
               <div class="dp-note" id="note-dp"></div>
@@ -1821,7 +1866,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.12</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.13</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -1982,7 +2027,12 @@ const FELT_LAYOUT=[
   // Grown from 12.00 -> 15.50 (Deck: "make all games' game selector look like Destroyer's" --
   // a static 3-row button grid instead of a 1-row collapsed dropdown, so the box needs more
   // vertical room for the same content that used to fit collapsed).
-  ['#left-col-header', 0.40, 0.70,12.60,15.50,null],
+  // Phase 7 polish: shrunk from 15.50 -> 12.60 and tab-hw/tab-hop pushed down to 14.60 (were
+  // 13.278, overlapping this box's old bottom edge at 16.2%) -- Deck reported the HARDWAYS/HOP
+  // BETS tab buttons visually colliding with the Focus Settings button. Header's own font
+  // sizes trimmed to match (see felt-mode #left-col-header .mode-btn/.gmode-btn/.gmode-sub
+  // rules) so the two button rows still fit inside the shorter box without clipping.
+  ['#left-col-header', 0.40, 0.70,12.60,12.60,null],
   // Recalibrated for Deck's new cut Lucky Roller art (LuckyRollerTitle.webp + Low/RollEmAll/
   // HighRollsBox.webp), same master template/canvas as the old art -- box is the union bounding
   // box of the title art + the three bet boxes, measured directly off the crop tool's exported
@@ -2011,8 +2061,8 @@ const FELT_LAYOUT=[
   // fixed gap above Hard Ways -- there isn't room for both this turn, see the long FM_ART
   // comment on propbets for the full explanation.
   // Reshaped/repositioned via Deck's own drag-tool calibration pass (narrower, taller).
-  ['#tab-hw',   0.250,13.278,11.438,3.833,null],
-  ['#tab-hop', 24.063,13.278,11.313,3.889,null],
+  ['#tab-hw',   0.250,14.60,11.438,3.833,null],
+  ['#tab-hop', 24.063,14.60,11.313,3.889,null],
   // Crapless-only Line Mode A/B/C toggle. Moved from under Hardways/Hop Bets to directly below
   // the crapless number line instead (Deck's request) -- x/w now match CRAPLESS_LAYOUT's
   // #num-zone exactly (1200,1960px on the 3200x1800 canvas), y sits just under its bottom edge
@@ -2022,6 +2072,12 @@ const FELT_LAYOUT=[
   // expects every mode-agnostic entry to be handled the same regardless of activeGame, doesn't
   // need to change.
   ['#line-mode-toggle', 37.50,49.444,61.25,2.80,null],
+  // Panel labels (Phase 7 polish): sit in the real gap between the hard4/6/8/10-or-hop22/33/
+  // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
+  // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
+  // touching any of Deck's calibrated bet-box coordinates above/below it.
+  ['#hw-panel-label',  0.4375,40.50,35.00,11.00,'hw'],
+  ['#hop-panel-label', 0.4375,40.50,35.00,11.00,'hop'],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
@@ -2092,8 +2148,12 @@ const LR_LAYOUT=[
   // 10 11 12"), converted to %-of-#lucky-roller-container using the title's own stage position
   // (1226,22). Zero-gap by construction: bnums-low's right edge and bnums-high's left edge both
   // land exactly on dice-zone's edges (33.548%/64.0%), no overlap.
-  ['#bnums-low',   1.290,28.857,32.258,18.286],
-  ['#bnums-high', 64.000,29.143,32.258,18.000],
+  // Phase 7 polish: grown from ~18% tall to ~44% (Deck: numbers/hit-state are the most
+  // important part of this box, should be the largest element) -- safe to grow since
+  // #dice-zone occupies the same 0-50.571% vertical band just horizontally beside these, not
+  // stacked with them, and sizeDiceZone() shrinks the dice automatically if margins get tight.
+  ['#bnums-low',   1.290, 4.000,32.258,44.000],
+  ['#bnums-high', 64.000, 4.000,32.258,44.000],
   ['#dice-zone',  33.548, 0.00,30.452,50.571],
   ['low',    1.161,50.571,30.581,48.286],
   ['all',   34.194,50.857,30.323,48.000],
@@ -2310,6 +2370,62 @@ function sizeFeltStage(){
     bs.style.width=w+'px';bs.style.height=bsH+'px';
   }
   sizeDiceZone();
+  alignStandardNumBoxOverlays();
+  alignCraplessNumBoxOverlays();
+}
+// Phase 7 polish: Standard's #nb-buy-N/#nb-lay-N/#nb-place-N are hand-calibrated absolute
+// positions (STANDARD_LAYOUT), independent of #numbox-N's own position (the grid-laid-out
+// bordered box + numeral, sized by #num-zone's single FELT_LAYOUT/STANDARD_LAYOUT entry) --
+// two separately-calibrated systems that have to agree pixel-for-pixel to look right, and had
+// drifted out of sync (Deck: "number box frames are misaligned with the shaded betting
+// areas"). Rather than re-hand-calibrate 18 more numbers, derive Buy/Lay/Place's real
+// position directly from each numbox's own actual rendered rect every time the felt resizes --
+// guarantees they can never drift apart again. Percentages below (21.59%/77.68%/22.32%) match
+// feltSplitStandardNumBox's own measured 4-band split (puck/[DC|Lay]/Number/[Place|Buy]).
+function alignStandardNumBoxOverlays(){
+  if(activeGame!=='standard')return;
+  const st=document.getElementById('felt-stage');if(!st)return;
+  const stRect=st.getBoundingClientRect();if(!stRect.width)return;
+  MODE_CONFIG.standard.allNums.forEach(n=>{
+    const box=document.getElementById('numbox-'+n);
+    const lay=document.getElementById('nb-lay-'+n),buy=document.getElementById('nb-buy-'+n),place=document.getElementById('nb-place-'+n);
+    if(!box||!lay||!buy||!place)return;
+    const r=box.getBoundingClientRect();if(!r.width)return;
+    const leftPct=(r.left-stRect.left)/stRect.width*100;
+    const widthPct=r.width/stRect.width*100;
+    const topPct=(r.top-stRect.top)/stRect.height*100;
+    const heightPct=r.height/stRect.height*100;
+    const halfW=widthPct/2;
+    lay.style.left=(leftPct+halfW)+'%';lay.style.top=topPct+'%';lay.style.width=halfW+'%';lay.style.height=(heightPct*0.2159)+'%';
+    place.style.left=leftPct+'%';place.style.top=(topPct+heightPct*0.7768)+'%';place.style.width=halfW+'%';place.style.height=(heightPct*0.2232)+'%';
+    buy.style.left=(leftPct+halfW)+'%';buy.style.top=(topPct+heightPct*0.7768)+'%';buy.style.width=halfW+'%';buy.style.height=(heightPct*0.2232)+'%';
+  });
+}
+// Same fix as alignStandardNumBoxOverlays, for Crapless: #nb-buy-N/#nb-place-N are also
+// independently hand-calibrated (CRAPLESS_LAYOUT), drifted right and no longer flush against
+// #numbox-N's own top/bottom edges (Deck: "frame around the number box needs to extend up to
+// encompass the shaded bg/BUY text" -- Buy's box was floating detached above/right of the
+// numeral box instead of forming one continuous frame with it). Snaps Buy directly above and
+// Place directly below the numeral box, matching its left/width exactly, so the CSS border
+// continuity below (.nb-buy/.nb-place picking up the numeral box's own border/radius on their
+// outer edges) reads as a single unbroken frame.
+function alignCraplessNumBoxOverlays(){
+  if(activeGame==='standard')return;
+  const st=document.getElementById('felt-stage');if(!st)return;
+  const stRect=st.getBoundingClientRect();if(!stRect.width)return;
+  MODE_CONFIG.crapless.allNums.forEach(n=>{
+    const box=document.getElementById('numbox-'+n);
+    const buy=document.getElementById('nb-buy-'+n),place=document.getElementById('nb-place-'+n);
+    if(!box||!buy||!place)return;
+    const r=box.getBoundingClientRect();if(!r.width)return;
+    const leftPct=(r.left-stRect.left)/stRect.width*100;
+    const widthPct=r.width/stRect.width*100;
+    const topPct=(r.top-stRect.top)/stRect.height*100;
+    const heightPct=r.height/stRect.height*100;
+    const bandH=heightPct*0.30;
+    buy.style.left=leftPct+'%';buy.style.width=widthPct+'%';buy.style.top=(topPct-bandH)+'%';buy.style.height=bandH+'%';
+    place.style.left=leftPct+'%';place.style.width=widthPct+'%';place.style.top=(topPct+heightPct)+'%';place.style.height=bandH+'%';
+  });
 }
 // Shrinks the 3D dice (rendered into #dice-canvas, sitting in #dice-zone between the Low
 // Rolls/Roll'em All/High Rolls props) whenever they'd otherwise get close enough to the
@@ -3661,7 +3777,7 @@ function buildStrip(){
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:23px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
-      +'<span style="font-size:23px;color:rgba(255,130,130,.45)">BAR</span>'
+      +'<span style="font-size:23px;color:rgba(255,150,150,.85)">BAR</span>'
       +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
       +'</span>'
       +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:9px;margin-top:1px"></div>';
