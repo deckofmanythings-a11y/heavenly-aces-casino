@@ -1312,16 +1312,14 @@ body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800
    1px 2px 0 padding vs 4px 6px, no justify-content vs center). Matched exactly. */
 body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:4px 6px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--color-gold);text-shadow:none}
-/* Font sizes now set uniformly per box (Calibrate Mode's font tool -- Deck set Low/High/All to
-   18px/18px/17px uniformly across title+explain+pay, replacing the old differentiated
-   7px/6px/9px split). explain is still sized here even though hidden, in case it's ever
-   unhidden again -- costs nothing while display:none. */
+/* Font sizes set uniformly per box (Calibrate Mode's font tool). Low/High were 18px while All
+   was 17px -- Deck spotted that 1px mismatch as the boxes not being "formatted the same" and
+   recalibrated Low/High down to 17px too, so now all three genuinely share one rule instead of
+   a base 18px + a rollem-all-bar-specific 17px override. explain is still sized here even
+   though hidden, in case it's ever unhidden again -- costs nothing while display:none. */
 body.felt-mode #felt-stage #lucky-roller .lr-title,
 body.felt-mode #felt-stage #lucky-roller .lr-explain,
-body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:18px!important}
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:17px!important}
+body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:17px!important}
 body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:1px 2px 0}
 /* #bnums-low/#bnums-high are NOT nested inside their box in felt mode -- enterFeltMode()
    reparents every LR_LAYOUT entry (including these) to be direct children of #lucky-roller,
@@ -2102,7 +2100,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.50</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.51</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2431,14 +2429,16 @@ const CRAPLESS_LAYOUT=[
   // twin by design (see STANDARD_LAYOUT's matching comment -- "moved by the same amount so
   // tab-switching doesn't jump"), so they're mirrored to the same new coordinates here rather
   // than left pointing at hard's old, now-stale position.
-  ['@hard6',           0.4375,23.556,14.25, 7.89,'hw'],
-  ['@hard10',         21.031,23.500,14.25, 7.89,'hw'],
-  ['@hard8',           0.4375,31.611,14.25, 7.89,'hw'],
-  ['@hard4',          21.031,31.611,14.25, 7.89,'hw'],
-  ['@hop22',           0.4375,23.556,14.25, 7.89,'hop'],
-  ['@hop44',          21.031,23.500,14.25, 7.89,'hop'],
-  ['@hop33',           0.4375,31.611,14.25, 7.89,'hop'],
-  ['@hop55',          21.031,31.611,14.25, 7.89,'hop'],
+  // Moved down ~12.5% (225px) as a group (Deck's drag-tool export) -- same x/w/h as before,
+  // only y changed.
+  ['@hard6',           0.469,36.111,14.25, 7.889,'hw'],
+  ['@hard10',         21.094,36.111,14.25, 7.889,'hw'],
+  ['@hard8',           0.469,43.889,14.25, 7.889,'hw'],
+  ['@hard4',          21.094,43.889,14.25, 7.889,'hw'],
+  ['@hop22',          21.094,43.889,14.25, 7.889,'hop'],
+  ['@hop44',           0.469,43.889,14.25, 7.889,'hop'],
+  ['@hop33',           0.469,36.111,14.25, 7.889,'hop'],
+  ['@hop55',          21.094,36.111,14.25, 7.889,'hop'],
   // x/y match the 'craplessline-*' FM_ART entries' x:1200,y:424 (right edge ~40px off the
   // felt, 100px down, per Deck's live-site feedback). Height re-derived for the art's updated
   // native size (447px, was 344px -- see the matching FM_ART comment): 447/1800*100=24.833.
