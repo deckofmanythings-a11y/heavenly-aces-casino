@@ -2193,7 +2193,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.11</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.12</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2372,10 +2372,12 @@ const FELT_LAYOUT=[
   ['#lucky-roller',   38.594,7.5, 22.656,3.333,null],
   // Roll History (Deck: "Move the Roll History to above Lucky Roller") -- pulled out of
   // #bottom-section (where it normally lives, below the felt) into its own felt-abs spot,
-  // same x/width as #lucky-roller directly above it, with a small gap before LR's top edge.
-  // exitFeltMode() already restores any FELT_LAYOUT element to its original DOM home via the
-  // same feltHomes mechanism used everywhere else, so list mode is unaffected.
-  ['#history-strip',  38.594,2.9, 22.656,4.4,null],
+  // same x/width as #lucky-roller directly above it. exitFeltMode() already restores any
+  // FELT_LAYOUT element to its original DOM home via the same feltHomes mechanism used
+  // everywhere else, so list mode is unaffected.
+  // Deck's drag-tool export (1235,0,725,79 on the 3200x1800 canvas) -- flush against the
+  // felt's top edge, height re-tuned from my own first-pass 4.4% to 4.389% (79/1800*100).
+  ['#history-strip',  38.594,0, 22.656,4.389,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
