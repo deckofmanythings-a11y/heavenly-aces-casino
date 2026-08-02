@@ -289,6 +289,15 @@ body.felt-mode #felt-stage #hw-panel-label{font-size:calc(32px * var(--font-scal
 /* Same wrong-reference correction as #hw-panel-label above: 40px (fit-tested at feltW=1573)
    -> 35px (re-tested at reduced scale, the representative worst case). */
 body.felt-mode #felt-stage #prop-panel-label{font-size:calc(35px * var(--font-scale,1))!important;white-space:nowrap}
+/* Roll History, moved into the felt above Lucky Roller (see FELT_LAYOUT's #history-strip
+   entry) -- scale its fixed px sizes down with the felt like every other felt-abs element. */
+body.felt-mode #felt-stage #history-strip{padding:calc(2px * var(--font-scale,1)) calc(4px * var(--font-scale,1));gap:calc(4px * var(--font-scale,1))}
+body.felt-mode #felt-stage #bets-status-bar{font-size:calc(15px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage #log-btn{width:calc(28px * var(--font-scale,1));height:calc(28px * var(--font-scale,1));font-size:calc(26px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .roll-pip .rp-dice-row img{width:calc(22px * var(--font-scale,1));height:calc(22px * var(--font-scale,1))}
+body.felt-mode #felt-stage .roll-pip .rp-num{font-size:calc(15px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .roll-pip.rp-first .rp-dice-row img{width:calc(26px * var(--font-scale,1));height:calc(26px * var(--font-scale,1))}
+body.felt-mode #felt-stage .roll-pip.rp-first .rp-num{width:calc(34px * var(--font-scale,1));font-size:calc(20px * var(--font-scale,1))!important}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -2184,7 +2193,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.9</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.10</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2361,6 +2370,12 @@ const FELT_LAYOUT=[
   // Re-tuned again -- moved down and shrunk vertically (22.656x6.111% -> 22.656x3.333%, same
   // width, y 4.722->7.5). LR_LAYOUT's low/all/high/#dice-zone recomputed from it again too.
   ['#lucky-roller',   38.594,7.5, 22.656,3.333,null],
+  // Roll History (Deck: "Move the Roll History to above Lucky Roller") -- pulled out of
+  // #bottom-section (where it normally lives, below the felt) into its own felt-abs spot,
+  // same x/width as #lucky-roller directly above it, with a small gap before LR's top edge.
+  // exitFeltMode() already restores any FELT_LAYOUT element to its original DOM home via the
+  // same feltHomes mechanism used everywhere else, so list mode is unaffected.
+  ['#history-strip',  38.594,3.9, 22.656,3.4,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -5602,6 +5617,8 @@ function updateUI(){
     infoEl.title=hasWin?fmtLastWin(G.lastWinBreakdown):'';
     infoEl.style.visibility=hasWin?'visible':'hidden';
   }
+  document.getElementById('undo-btn').style.display=(window.G_undoStack&&window.G_undoStack.length)?'':'none';
+  document.getElementById('load-layout-btn').style.display=(G.phase==='comeout')?'':'none';
   const act=bActive();
   const bsEl=document.getElementById('bets-status-bar');bsEl.textContent=act?'ON':'OFF';bsEl.style.color=act?'rgba(100,255,150,.8)':'rgba(255,200,0,.8)';
   const betonBtn=document.getElementById('beton-btn');
