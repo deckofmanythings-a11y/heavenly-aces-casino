@@ -267,9 +267,28 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:calc(13px * var(--font-scale,1));line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
 /* Font-size override from Calibrate Mode's font tool -- Deck only resized #hw-panel-label
    itself, hop-panel-label-1/2 keep the shared 13px above. */
-body.felt-mode #felt-stage #hw-panel-label{font-size:calc(42px * var(--font-scale,1))!important}
+/* Deck: "HARD WAYS and PROPOSITION BETS are line breaking instead of shrinking." .fm-panel-label
+   is white-space:normal by default (needed for genuinely-2-line labels like "HOPPING HARD WAYS
+   31:1") -- HARD WAYS/PROPOSITION BETS aren't meant to be 2-line, they were just ~5-12px too
+   big for their calibrated box even at full/scale=1 (same pre-existing-shortfall class of bug
+   as SEVEN/ANY CRAPS, confirmed the same way: binary-searched via Range.getClientRects() the
+   largest font-size that fits on one line with zero overflow). white-space:nowrap here on top
+   guarantees it never falls back to wrapping even at the edge case. */
+/* First pass (37px) was binary-searched against fit at feltW=1573 (this test browser's
+   incidental full-size width) -- WRONG reference. Box width scales as percentage*feltW (pure
+   linear through the origin); font scales as calibratedPx*(feltW/1400) below the 1400 cap
+   (also linear through the origin) -- but 1400 != 1573, so font/box is NOT actually a constant
+   ratio like it should be, it's calibratedPx/(percentage*1400) once scaled vs calibratedPx/
+   (percentage*1573) unscaled -- different denominators, so a size that JUST fits at 1573
+   doesn't survive shrinking (confirmed: 37px fit with -1.4px margin at 1573, then overflowed
+   8.2px at 900). Re-binary-searched AT reduced scale instead (900px, representative of every
+   size <=1400 since the ratio is constant down there) and back-solved the true default:
+   37px->32px. */
+body.felt-mode #felt-stage #hw-panel-label{font-size:calc(32px * var(--font-scale,1))!important;white-space:nowrap}
 /* Deck: "Give me a title bar for the Proposition Bets, same font size as Hard Ways." */
-body.felt-mode #felt-stage #prop-panel-label{font-size:calc(42px * var(--font-scale,1))!important}
+/* Same wrong-reference correction as #hw-panel-label above: 40px (fit-tested at feltW=1573)
+   -> 35px (re-tested at reduced scale, the representative worst case). */
+body.felt-mode #felt-stage #prop-panel-label{font-size:calc(35px * var(--font-scale,1))!important;white-space:nowrap}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -2165,7 +2184,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.8</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.9</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
