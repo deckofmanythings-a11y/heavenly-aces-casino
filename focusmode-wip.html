@@ -2054,7 +2054,10 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
             <div id="dp-main" onclick="placeBet('dp')" oncontextmenu="event.preventDefault();event.stopPropagation();removeDpFlat()">
               <div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap">
                 <div class="dp-name" style="font-size:23px">DON'T PASS</div>
-                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:57px;color:rgba(255,150,150,.85)">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:90px;height:45px"></div>
+                <!-- Deck: "these are not the same. The DC box one should match the DP box
+                     one." BAR was a flat rgba(255,150,150,.85) color, not the red-gradient-clip
+                     technique .dp-name (DON'T PASS) and DC's own BAR both use -- matched. -->
+                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:57px;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:90px;height:45px"></div>
               </div>
               <div class="dp-stk" id="stk-dp"></div>
               <div class="dp-note" id="note-dp"></div>
@@ -2123,7 +2126,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.56</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.57</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
