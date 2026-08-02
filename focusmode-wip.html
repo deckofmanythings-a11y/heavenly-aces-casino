@@ -20,13 +20,24 @@
      not the woven-texture BlankFelt.webp this eventually replaces (Phase 5).
      #0a2a14 matches #game-screen's existing background exactly, so swapping
      #felt-img for this later is a checkable no-visual-jump comparison. */
-  --felt-bg: radial-gradient(ellipse at center, #0f3a1e 0%, #0a2a14 55%, #071f0f 100%);
+  /* Deck: "the felt green doesn't look like it's gradient, and it needs to be like a couple
+     shades of green lighter" -- the old 3 stops (#0f3a1e/#0a2a14/#071f0f) were all close enough
+     in lightness to read as flat at table scale. Brightened every stop by roughly two shades
+     and widened the spread between them so the lighter-center-to-darker-edge falloff is
+     actually visible, not just technically present in the gradient definition. */
+  --felt-bg: radial-gradient(ellipse at center, #1d6636 0%, #144d29 55%, #0a2f18 100%);
 
   /* Bet-box cell treatment: thin lighter-green border over a darker-green fill
      with a subtle top-to-bottom inner gradient (not flat) -- e.g. the
      Place/Buy number cells' lighter "BUY" strip vs. darker numeral body. */
   --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
   --box-border: 4px solid rgba(255,255,255,.4);
+  /* Same color/opacity as --box-border, just 2px instead of 4px -- on the small prop-bet cells
+     (Horn Bet, Seven, Any Craps, Aces/Ace2/Midnight/Yo) a 4px border eats a much bigger share
+     of the box's own small footprint than it does on Pass Line/Come/Field/number boxes, which
+     read as visibly thicker there even though the token value is identical everywhere (Deck:
+     "the borders on the Horn bets, Seven, Any Craps seem extra thick"). */
+  --box-border-thin: 2px solid rgba(255,255,255,.4);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -185,7 +196,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* One roll props */
 #prop-block{flex:9;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.prop-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;cursor:pointer;transition:background .12s;flex-shrink:0;background:var(--box-fill-flat);border:var(--box-border);border-radius:var(--box-radius);position:relative}
+.prop-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;cursor:pointer;transition:background .12s;flex-shrink:0;background:var(--box-fill-flat);border:var(--box-border-thin);border-radius:var(--box-radius);position:relative}
 /* Oversized calibrated text (SEVEN/ANY CRAPS via the font-size tool) can overflow past this
    box's own edges and paint over its border, since text is normal in-flow content and paints
    above the box's own border by default (Deck: "top edge of Seven and Any Craps is cut off").
@@ -203,7 +214,7 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
 .horn-row.horn-mid-row{flex:1}
-.horn-cell{padding:3px 2px;text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border);background:var(--box-fill-lightest);position:relative;flex:1;min-height:0;overflow:hidden}
+.horn-cell{padding:3px 2px;text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border-thin);background:var(--box-fill-lightest);position:relative;flex:1;min-height:0;overflow:hidden}
 .horn-cell:hover{background:rgba(255,255,255,.1)}
 .hc-dice{font-size:min(36px,3vh);line-height:1}
 .hc-pay{font-size:14px;color:rgba(255,255,255,.5);margin-top:1px}
@@ -307,14 +318,15 @@ body.felt-mode #felt-stage .come-half{position:static;left:auto;transform:none;w
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
 body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
 body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
-body.felt-mode #felt-stage .come-slot,body.felt-mode #felt-stage .dc-chip-box{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);width:auto;margin:0;z-index:3}
-/* Same number can carry a Come AND a Don't Come bet at once (different players, or one player
-   doing both) -- sharing one anchor point made them collide into an unreadable pile (Deck: "I
-   did both a Come and Don't come at the same time, and they landed on the 8. This is completely
-   unusable."). When both slots are actually populated, split them into two non-overlapping rows;
-   the single-occupant case (the common one) keeps the original shared centered anchor above. */
-body.felt-mode #felt-stage .nb-mid:has(.come-slot:not(:empty)):has(.dc-chip-box:not(:empty)) .come-slot{top:47%}
-body.felt-mode #felt-stage .nb-mid:has(.come-slot:not(:empty)):has(.dc-chip-box:not(:empty)) .dc-chip-box{top:77%}
+/* #come-slot-N/#dc-slot-N are now real calibratable landing zones (STANDARD_LAYOUT, one pair
+   per number) instead of one hardcoded CSS anchor shared by every number -- Deck: "do you need
+   to create landing zones for the DC and Come bets and odds for each box that I need to tune?
+   I think that would be easiest." Positioning now comes entirely from .felt-abs's inline
+   left/top/width/height (set by enterFeltMode()'s STANDARD_LAYOUT loop, same as nb-lay-N/
+   nb-place-N/nb-buy-N), so the old shared-anchor rule and the automatic same-number-collision
+   split are gone -- each number's Come/DC zone can be dragged independently to wherever it
+   needs to be, collision included, same as every other calibrated box. */
+body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{height:100%}
 .come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:#ff9a9a;font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
 
 /* Come / Field / Pass */
@@ -2045,7 +2057,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.42</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.43</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2537,7 +2549,25 @@ const STANDARD_LAYOUT=[
   ['#nb-buy-9',       78.125,42.222, 4.219,5.833,null],
   ['#nb-lay-10',      86.719,23.889, 4.219,5.833,null],
   ['#nb-place-10',    82.344,42.222, 4.375,5.833,null],
-  ['#nb-buy-10',      86.719,42.222, 4.219,5.833,null]
+  ['#nb-buy-10',      86.719,42.222, 4.219,5.833,null],
+  // Come/DC bet+odds chip landing zones, one pair per number -- real calibratable boxes now
+  // (Deck: "do you need to create landing zones for the DC and Come bets and odds for each box
+  // that I need to tune? I think that would be easiest") instead of one hardcoded CSS anchor
+  // shared by every number regardless of what else is calibrated around it. Seeded here at a
+  // reasonable starting spot (mirrors the old default: Come centered ~47% down the box, DC
+  // ~77% down) -- ready for Deck to drag each one individually, collisions included.
+  ['#come-slot-4',    41.172,33.097, 5,5,null],
+  ['#dc-slot-4',      41.172,36.847, 5,5,null],
+  ['#come-slot-5',    49.766,33.097, 5,5,null],
+  ['#dc-slot-5',      49.766,36.847, 5,5,null],
+  ['#come-slot-6',    58.360,33.097, 5,5,null],
+  ['#dc-slot-6',      58.360,36.847, 5,5,null],
+  ['#come-slot-8',    66.953,33.097, 5,5,null],
+  ['#dc-slot-8',      66.953,36.847, 5,5,null],
+  ['#come-slot-9',    75.547,33.097, 5,5,null],
+  ['#dc-slot-9',      75.547,36.847, 5,5,null],
+  ['#come-slot-10',   84.141,33.097, 5,5,null],
+  ['#dc-slot-10',     84.141,36.847, 5,5,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 // id -> tab ('hw'/'hop'/null) for every '@name' entry, derived from the layout arrays
@@ -3942,7 +3972,7 @@ function buildStrip(){
     // Spelled-out labels (Six/Nine, to avoid upside-down 6/9 confusion) get the script font
     // token; plain digits get the heavy one -- see .nb-num-word/.nb-num-digit CSS.
     const nl=document.createElement('span');nl.className=/^\d+$/.test(def.label)?'nb-num-digit':'nb-num-word';nl.style.cssText='font-size:40px;font-weight:700';nl.textContent=def.label;
-    const cs=document.createElement('div');cs.id='come-slot-'+n;cs.className='come-slot';cs.style.cssText='width:100%;margin-top:1px';
+    const cs=document.createElement('div');cs.id='come-slot-'+n;cs.className='come-slot';
     const dcs=document.createElement('div');dcs.id='dc-slot-'+n;dcs.className='dc-chip-box';
     md.appendChild(nl);md.appendChild(cs);md.appendChild(dcs);
     const pd=document.createElement('div');pd.className='nb-place';pd.id='nb-place-'+n;pd.dataset.betKey='place'+n;pd.onclick=()=>placeBet('place'+n);pd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('place'+n);};
