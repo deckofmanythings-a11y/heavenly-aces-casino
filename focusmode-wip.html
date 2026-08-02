@@ -1235,7 +1235,12 @@ body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
 /* #lr-title-art measures ~174x50px on a full-size felt -- far too small for the base (non-felt)
    view's 34px/30px title+pay type scale, which is why that text stays hidden here (see below)
    and this gets its own small single-line label instead. */
-body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 13px var(--font-heavy);color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.04em;white-space:nowrap}
+/* Deck: "put the words Lucky Roller into a cursive script and make it bigger." Swapped the
+   heavy sans stack for a cursive/script one (same generic-family-fallback pattern as
+   --font-script for Six/Nine, just an actually-cursive stack instead of a plain serif) and
+   bumped 13px -> 22px. Letter-spacing dropped too -- connected script letterforms read wrong
+   spaced apart the way the old bold sans title was. */
+body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 22px 'Brush Script MT','Segoe Script','Lucida Handwriting',cursive;color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.01em;white-space:nowrap}
 body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER';background:var(--text-grad-metallic-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
    the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again.
@@ -2057,7 +2062,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.43</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.44</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2228,11 +2233,10 @@ const FELT_LAYOUT=[
   // HighRollsBox.webp), same master template/canvas as the old art -- box is the union bounding
   // box of the title art + the three bet boxes, measured directly off the crop tool's exported
   // stage coordinates (x:1220,y:15,w:775,h:350 on the 3200x1800 canvas).
-  // Grown substantially (Deck's drag-tool export) -- was 17.344x5.278%, now 29.219x10.278%,
-  // roughly doubling in each dimension and shifting left/up. Since the box itself moved,
-  // LR_LAYOUT's low/all/high/#dice-zone entries (all stored as %-of-THIS-box) were recomputed
-  // from the export too -- see their own comments in LR_LAYOUT.
-  ['#lucky-roller',   35.313,0.556, 29.219,10.278,null],
+  // Re-tuned again (Deck's drag-tool export) -- now 22.656x6.111%, shrunk back down and moved
+  // right/down from the previous pass. LR_LAYOUT's low/all/high/#dice-zone entries (all stored
+  // as %-of-THIS-box) were recomputed from the export again too -- see their own comments.
+  ['#lucky-roller',   38.594,4.722, 22.656,6.111,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -2361,10 +2365,10 @@ const LR_LAYOUT=[
   // moved to a totally different physical spot (up and to the left, into the previously-empty
   // area above Hard Ways), which is why its x/y go negative/>100 -- that's still valid CSS
   // (positioned outside the parent's own box), not a mistake.
-  ['#dice-zone',  -80.749,164.865,41.711,97.297],
-  ['low',    11.230,100.000,22.995,78.378],
-  ['all',    38.503,100.000,22.995,78.378],
-  ['high',   65.775,100.000,22.995,78.378]
+  ['#dice-zone',  -118.622,209.098,53.796,163.639],
+  ['low',      0.000,100.000,29.657,131.828],
+  ['all',     35.174,100.000,29.657,131.828],
+  ['high',    70.343,100.000,29.657,131.828]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
@@ -2550,24 +2554,23 @@ const STANDARD_LAYOUT=[
   ['#nb-lay-10',      86.719,23.889, 4.219,5.833,null],
   ['#nb-place-10',    82.344,42.222, 4.375,5.833,null],
   ['#nb-buy-10',      86.719,42.222, 4.219,5.833,null],
-  // Come/DC bet+odds chip landing zones, one pair per number -- real calibratable boxes now
+  // Come/DC bet+odds chip landing zones, one pair per number -- real calibratable boxes
   // (Deck: "do you need to create landing zones for the DC and Come bets and odds for each box
   // that I need to tune? I think that would be easiest") instead of one hardcoded CSS anchor
-  // shared by every number regardless of what else is calibrated around it. Seeded here at a
-  // reasonable starting spot (mirrors the old default: Come centered ~47% down the box, DC
-  // ~77% down) -- ready for Deck to drag each one individually, collisions included.
-  ['#come-slot-4',    41.172,33.097, 5,5,null],
-  ['#dc-slot-4',      41.172,36.847, 5,5,null],
-  ['#come-slot-5',    49.766,33.097, 5,5,null],
-  ['#dc-slot-5',      49.766,36.847, 5,5,null],
-  ['#come-slot-6',    58.360,33.097, 5,5,null],
-  ['#dc-slot-6',      58.360,36.847, 5,5,null],
-  ['#come-slot-8',    66.953,33.097, 5,5,null],
-  ['#dc-slot-8',      66.953,36.847, 5,5,null],
-  ['#come-slot-9',    75.547,33.097, 5,5,null],
-  ['#dc-slot-9',      75.547,36.847, 5,5,null],
-  ['#come-slot-10',   84.141,33.097, 5,5,null],
-  ['#dc-slot-10',     84.141,36.847, 5,5,null]
+  // shared by every number. Tuned via Deck's drag-tool export (Come sits lower/wider, DC just
+  // above it) -- was the initial seeded 5x5% guess, now real measured values.
+  ['#come-slot-4',    39.531,35.833, 8.438,5.833,null],
+  ['#dc-slot-4',      39.531,29.722, 8.438,6.111,null],
+  ['#come-slot-5',    48.125,35.833, 8.438,5.833,null],
+  ['#dc-slot-5',      48.125,29.722, 8.438,6.111,null],
+  ['#come-slot-6',    56.719,35.833, 8.438,5.833,null],
+  ['#dc-slot-6',      56.719,29.722, 8.438,6.111,null],
+  ['#come-slot-8',    65.313,35.833, 8.438,5.833,null],
+  ['#dc-slot-8',      65.313,29.722, 8.438,6.111,null],
+  ['#come-slot-9',    73.906,35.833, 8.438,5.833,null],
+  ['#dc-slot-9',      73.906,29.722, 8.438,6.111,null],
+  ['#come-slot-10',   82.5,  35.833, 8.438,5.833,null],
+  ['#dc-slot-10',     82.5,  29.722, 8.438,6.111,null]
 ];
 function feltLayoutFor(mode){ return FELT_LAYOUT.concat(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT); }
 // id -> tab ('hw'/'hop'/null) for every '@name' entry, derived from the layout arrays
@@ -3936,7 +3939,13 @@ function buildStrip(){
     });
   });
   MODE_CONFIG.standard.allNums.forEach(n=>{
-    ['nb-lay-'+n,'nb-puckbox-'+n].forEach(id=>{
+    // come-slot-N/dc-slot-N joined this list once they became real STANDARD_LAYOUT-driven
+    // .felt-abs boxes -- same reason as nb-lay/nb-puckbox: once reparented into #felt-stage
+    // by enterFeltMode(), they're no longer inside `strip` for the innerHTML reset below to
+    // clear, so a second buildStrip() call (switching modes and back, etc.) left the OLD
+    // reparented element orphaned in #felt-stage while a fresh duplicate-id one got created
+    // inside the new nb-mid-N -- two elements sharing one id, only one of them positioned.
+    ['nb-lay-'+n,'nb-puckbox-'+n,'come-slot-'+n,'dc-slot-'+n].forEach(id=>{
       const stale=document.getElementById(id);if(stale)stale.remove();
     });
   });
