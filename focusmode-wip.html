@@ -31,13 +31,23 @@
      with a subtle top-to-bottom inner gradient (not flat) -- e.g. the
      Place/Buy number cells' lighter "BUY" strip vs. darker numeral body. */
   --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
-  --box-border: 4px solid rgba(255,255,255,.4);
+  /* calc(*var(--font-scale,1)) here (and on every other fixed-px padding/border in this file
+     that sits inside a box whose TEXT now scales with the felt): a border/padding that stays a
+     constant px while its box shrinks eats a proportionally LARGER share of a small box than a
+     big one, squeezing the actual usable content area faster than the (correctly, linearly
+     scaled) font shrinks -- text that fit at full size can wrap at a smaller one even though
+     both the box and the font individually scaled by the exact right ratio (Deck: "some boxes
+     are still line breaking parts of them, like the odds preceding and proceeding SEVEN and
+     ANY CRAPS" -- confirmed live via Range.getClientRects(): "5 for 1" was genuinely splitting
+     into two line boxes at reduced scale). Falls back to 1 outside #felt-stage (var's default),
+     so nothing changes anywhere --font-scale isn't set. */
+  --box-border: calc(4px * var(--font-scale,1)) solid rgba(255,255,255,.4);
   /* Same color/opacity as --box-border, just 2px instead of 4px -- on the small prop-bet cells
      (Horn Bet, Seven, Any Craps, Aces/Ace2/Midnight/Yo) a 4px border eats a much bigger share
      of the box's own small footprint than it does on Pass Line/Come/Field/number boxes, which
      read as visibly thicker there even though the token value is identical everywhere (Deck:
      "the borders on the Horn bets, Seven, Any Craps seem extra thick"). */
-  --box-border-thin: 2px solid rgba(255,255,255,.4);
+  --box-border-thin: calc(2px * var(--font-scale,1)) solid rgba(255,255,255,.4);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -183,12 +193,16 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Hard Ways grid */
 .hw-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex:4;min-height:0}
-.bb{background:var(--box-fill-lightest);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:calc(19px * var(--font-scale,1));padding:3px 2px 2px;cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bb{background:var(--box-fill-lightest);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:calc(19px * var(--font-scale,1));padding:calc(3px * var(--font-scale,1)) calc(2px * var(--font-scale,1)) calc(2px * var(--font-scale,1));cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .bb:hover{background:rgba(255,255,255,.15)}
 .bb.active{}
 .bb .pay{font-size:15px;color:rgba(255,255,255,.4);display:block;margin-top:1px}
 .bb .stk{font-size:17px;color:#ffd700;display:block;min-height:1.2em;line-height:1.2}
-.dp{font-size:min(36px,4vh);line-height:1;display:block}
+/* Was min(36px,4vh) -- a viewport-HEIGHT-relative clamp, entirely decoupled from the felt's own
+   WIDTH-driven --font-scale, so it didn't track the felt shrinking (Deck: "The dice images need
+   to shrink as well"). calc(*scale) makes it track the same felt-width-driven factor as every
+   other calibrated size, capped at exactly today's 36px like everything else. */
+.dp{font-size:calc(36px * var(--font-scale,1));line-height:1;display:block}
 .bwrap{position:relative;width:100%;min-height:0;min-width:0}
 .bwrap:hover .mbtn.vis{display:block}
 .mbtn{display:none;position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.5);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:19px;line-height:12px;text-align:center;cursor:pointer;z-index:3;padding:0}
@@ -196,7 +210,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* One roll props */
 #prop-block{flex:9;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.prop-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;cursor:pointer;transition:background .12s;flex-shrink:0;background:var(--box-fill-flat);border:var(--box-border-thin);border-radius:var(--box-radius);position:relative}
+.prop-bar{display:flex;align-items:center;justify-content:space-between;padding:calc(4px * var(--font-scale,1)) calc(6px * var(--font-scale,1));cursor:pointer;transition:background .12s;flex-shrink:0;background:var(--box-fill-flat);border:var(--box-border-thin);border-radius:var(--box-radius);position:relative}
 /* Oversized calibrated text (SEVEN/ANY CRAPS via the font-size tool) can overflow past this
    box's own edges and paint over its border, since text is normal in-flow content and paints
    above the box's own border by default (Deck: "top edge of Seven and Any Craps is cut off").
@@ -204,8 +218,16 @@ input,textarea{-webkit-user-select:text;user-select:text}
    paints above static in-flow children regardless of how far their text overflows. */
 .prop-bar::after,.horn-cell::after{content:'';position:absolute;inset:0;border:inherit;border-radius:inherit;pointer-events:none;z-index:3}
 .prop-bar:hover{background:rgba(255,255,255,.08)}
-.prop-bar-name{font-size:21px;font-weight:900;letter-spacing:.08em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
-.prop-bar-odds{font-size:17px;font-weight:600}
+/* white-space:nowrap on both -- "5 for 1" x2 plus "SEVEN"/"ANY CRAPS" genuinely don't fit
+   #bet-any7/#bet-anyCraps's calibrated width at their calibrated font size, confirmed via
+   Range.getClientRects() at EVERY window size including full/scale=1 (not a --font-scale
+   proportional-math bug, a pre-existing ~9px real shortfall that was just subtle enough at
+   full size to go unnoticed until reduced scale made it obvious -- Deck: "some boxes are still
+   line breaking parts of them, like the odds preceding and proceeding the SEVEN and ANY
+   CRAPS"). Letting the ~9px bleed past the box edge (overflow:visible, the flex default) reads
+   far better than a mid-word 2-line wrap. */
+.prop-bar-name{font-size:21px;font-weight:900;letter-spacing:.08em;white-space:nowrap;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
+.prop-bar-odds{font-size:17px;font-weight:600;white-space:nowrap}
 /* Font-size overrides from Calibrate Mode's font tool -- Any 7 and Any Craps got different
    sizes, both scoped to their own bar so they don't leak onto each other. */
 body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(48px * var(--font-scale,1))!important}
@@ -214,9 +236,9 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
 .horn-row.horn-mid-row{flex:1}
-.horn-cell{padding:3px 2px;text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border-thin);background:var(--box-fill-lightest);position:relative;flex:1;min-height:0;overflow:hidden}
+.horn-cell{padding:calc(3px * var(--font-scale,1)) calc(2px * var(--font-scale,1));text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border-thin);background:var(--box-fill-lightest);position:relative;flex:1;min-height:0;overflow:hidden}
 .horn-cell:hover{background:rgba(255,255,255,.1)}
-.hc-dice{font-size:min(36px,3vh);line-height:1}
+.hc-dice{font-size:calc(36px * var(--font-scale,1));line-height:1}
 .hc-pay{font-size:14px;color:rgba(255,255,255,.5);margin-top:1px}
 /* Font-size override from Calibrate Mode's font tool -- Aces/Ace2/Midnight/Yo (the four
    non-center Horn Bet cells) all got the same size. */
@@ -1318,7 +1340,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800
 /* Deck: "can you format Low and High rolls exactly like Roll'em All?" -- .lr-header's own
    gap/padding/justify-content didn't match .rollem-all-bar's container style (0 gap vs 2px,
    1px 2px 0 padding vs 4px 6px, no justify-content vs center). Matched exactly. */
-body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:4px 6px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:calc(4px * var(--font-scale,1)) calc(6px * var(--font-scale,1));position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(2px * var(--font-scale,1))}
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--color-gold);text-shadow:none}
 /* Font sizes set per box (Calibrate Mode's font tool). Was briefly unified at 17px for all
    three (Deck had spotted an 18px-vs-17px mismatch as boxes not being "formatted the same") --
@@ -1828,7 +1850,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <!-- Roll'em All -->
         <div class="lr-bonus-wrap">
-          <div class="rollem-all-bar" id="bbonus-all-bar" onclick="bonusBet('all')" oncontextmenu="event.preventDefault();bonusRemove('all')" style="width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 6px">
+          <div class="rollem-all-bar" id="bbonus-all-bar" onclick="bonusBet('all')" oncontextmenu="event.preventDefault();bonusRemove('all')" style="width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:calc(2px * var(--font-scale,1));padding:calc(4px * var(--font-scale,1)) calc(6px * var(--font-scale,1))">
             <span class="lr-title" style="font-size:30px;text-align:center">Roll'em All</span>
             <span class="lr-explain" style="text-align:center">All nums before 7</span>
             <span class="lr-pay" style="font-size:28px;text-align:center">156 for 1</span>
@@ -1932,33 +1954,33 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div style="background:rgba(0,0,0,.2);border-radius:4px;overflow:hidden;flex-shrink:0">
           <div class="hop-section-hdr">31 for 1 · HOPPING HARD WAYS · 31 for 1</div>
           <div class="hop-hard-grid">
-            <div class="bwrap"><div class="bb" id="bet-hop22" onclick="placeBet('hop22')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop22')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble22.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop22"></span></div></div>
-            <div class="bwrap"><div class="bb" id="bet-hop44" onclick="placeBet('hop44')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop44')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble44.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop44"></span></div></div>
-            <div class="bwrap"><div class="bb" id="bet-hop33" onclick="placeBet('hop33')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop33')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble33.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop33"></span></div></div>
-            <div class="bwrap"><div class="bb" id="bet-hop55" onclick="placeBet('hop55')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop55')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble55.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop55"></span></div></div>
+            <div class="bwrap"><div class="bb" id="bet-hop22" onclick="placeBet('hop22')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop22')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble22.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop22"></span></div></div>
+            <div class="bwrap"><div class="bb" id="bet-hop44" onclick="placeBet('hop44')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop44')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble44.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop44"></span></div></div>
+            <div class="bwrap"><div class="bb" id="bet-hop33" onclick="placeBet('hop33')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop33')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble33.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop33"></span></div></div>
+            <div class="bwrap"><div class="bb" id="bet-hop55" onclick="placeBet('hop55')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop55')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble55.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop55"></span></div></div>
           </div>
         </div>
         <div style="background:rgba(0,0,0,.2);border-radius:4px;overflow:hidden;flex:1;display:flex;flex-direction:column">
           <div class="hop-section-hdr">16 for 1 · HOP BETS · 16 for 1</div>
           <div class="hop-easy-grid">
             <div class="hop-col">
-              <div class="bwrap"><div class="bb" id="bet-hop13" onclick="placeBet('hop13')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop13')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble31.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop13"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop14" onclick="placeBet('hop14')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop14')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble41.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop14"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop23" onclick="placeBet('hop23')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop23')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble32.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop23"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop24" onclick="placeBet('hop24')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop24')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble42.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop24"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop15" onclick="placeBet('hop15')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop15')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble51.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop15"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop13" onclick="placeBet('hop13')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop13')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble31.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop13"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop14" onclick="placeBet('hop14')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop14')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble41.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop14"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop23" onclick="placeBet('hop23')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop23')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble32.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop23"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop24" onclick="placeBet('hop24')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop24')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble42.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop24"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop15" onclick="placeBet('hop15')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop15')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble51.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop15"></span></div></div>
             </div>
             <div class="hop-col">
-              <div class="bwrap"><div class="bb" id="bet-hop16" onclick="placeBet('hop16')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop16')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble61.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop16"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop25" onclick="placeBet('hop25')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop25')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble52.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop25"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop34" onclick="placeBet('hop34')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop34')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble43.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop34"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop16" onclick="placeBet('hop16')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop16')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble61.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop16"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop25" onclick="placeBet('hop25')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop25')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble52.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop25"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop34" onclick="placeBet('hop34')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop34')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble43.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop34"></span></div></div>
             </div>
             <div class="hop-col">
-              <div class="bwrap"><div class="bb" id="bet-hop26" onclick="placeBet('hop26')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop26')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble62.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop26"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop35" onclick="placeBet('hop35')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop35')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble53.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop35"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop36" onclick="placeBet('hop36')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop36')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble63.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop36"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop45" onclick="placeBet('hop45')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop45')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble54.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop45"></span></div></div>
-              <div class="bwrap"><div class="bb" id="bet-hop46" onclick="placeBet('hop46')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop46')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble64.png" style="width:min(72px,6vh);height:min(36px,3vh);vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop46"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop26" onclick="placeBet('hop26')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop26')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble62.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop26"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop35" onclick="placeBet('hop35')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop35')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble53.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop35"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop36" onclick="placeBet('hop36')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop36')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble63.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop36"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop45" onclick="placeBet('hop45')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop45')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble54.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop45"></span></div></div>
+              <div class="bwrap"><div class="bb" id="bet-hop46" onclick="placeBet('hop46')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hop46')"><span style="display:inline-flex;gap:1px"><img class="dice-combo-img" src="marble64.png" style="width:calc(72px * var(--font-scale,1));height:calc(36px * var(--font-scale,1));vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hop46"></span></div></div>
             </div>
           </div>
         </div>
@@ -2133,7 +2155,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.7</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.8</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
