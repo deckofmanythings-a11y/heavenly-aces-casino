@@ -32,10 +32,14 @@
   // together or landing right on top of each other for short amounts. Each spot's own twinkle
   // timing (duration + negative delay) IS randomized, so they still pop independently.
   function buildSparklesHTML() {
+    // The panel is sized tight to the text (see sizeWinnerGlass) so the glyphs occupy roughly
+    // the middle 60-80% of the box both ways -- the old spots (several within y:18-82%) landed
+    // squarely on top of digits instead of around them. These sit in the actual margin: the four
+    // corners plus top-center, all outside that occupied band, and smaller so they read as
+    // accents instead of blobs.
     const spots = [
-      { x: 4, y: 22, s: 18 }, { x: 94, y: 18, s: 22 }, { x: 50, y: 4, s: 15 },
-      { x: 14, y: 82, s: 24 }, { x: 86, y: 80, s: 18 }, { x: 40, y: 92, s: 13 },
-      { x: 66, y: 10, s: 20 }
+      { x: 6, y: 10, s: 12 }, { x: 94, y: 10, s: 14 }, { x: 50, y: 5, s: 11 },
+      { x: 6, y: 90, s: 12 }, { x: 94, y: 90, s: 14 }
     ];
     let html = '';
     spots.forEach(function (p) {
@@ -76,10 +80,17 @@
       // override it per call via show(amount,{glassRgb:'r,g,b'}) so the panel can match its own
       // board instead of clashing (e.g. sic-bo's light cream/gold felt wants a warm dark tone,
       // not navy).
+      // ellipse closest-side (not the default farthest-corner) matters here: on a wide-but-short
+      // box, farthest-corner measures every stop against the long diagonal, so the fade hadn't
+      // actually finished by the time it hit the top/bottom edges -- a visible hard line right
+      // at the box boundary. closest-side scales each axis to its OWN edge, so the fade
+      // completes on all four sides. Opacity also bumped up (was reading as a washed-out grey
+      // smudge against light boards, not a solid card) -- the color is what should read as the
+      // panel's identity, transparency is only for the taper at the rim.
       '.wm-winner-glass{',
       '  position:absolute;top:50%;left:50%;width:440px;height:180px;z-index:1;pointer-events:none;',
       '  transform:translate(-50%,-50%);--wm-glass-rgb:12,16,34;',
-      '  background:radial-gradient(ellipse at center,rgba(var(--wm-glass-rgb),.82) 0%,rgba(var(--wm-glass-rgb),.68) 42%,rgba(var(--wm-glass-rgb),.32) 68%,rgba(var(--wm-glass-rgb),0) 90%);',
+      '  background:radial-gradient(ellipse closest-side at center,rgba(var(--wm-glass-rgb),.92) 0%,rgba(var(--wm-glass-rgb),.85) 38%,rgba(var(--wm-glass-rgb),.55) 62%,rgba(var(--wm-glass-rgb),0) 92%);',
       '}',
       '.wm-winner-coins{position:absolute;top:50%;left:50%;width:0;height:0;z-index:1;pointer-events:none;}',
       // Sparkles: small 4-point glint stars (radial glow core + a thin cross of light through
@@ -274,8 +285,8 @@
     document.body.appendChild(clone);
     const r = clone.getBoundingClientRect();
     clone.remove();
-    glassEl.style.width = Math.max(280, r.width * 1.25) + 'px';
-    glassEl.style.height = Math.max(140, r.height * 1.7) + 'px';
+    glassEl.style.width = Math.max(300, r.width * 1.35) + 'px';
+    glassEl.style.height = Math.max(160, r.height * 2) + 'px';
   }
 
   function defaultFmt(n) {
