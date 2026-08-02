@@ -307,7 +307,14 @@ body.felt-mode #felt-stage .come-half{position:static;left:auto;transform:none;w
    width directly off --chip instead, same source Pass Line's own stack size comes from. */
 body.felt-mode #felt-stage .come-half .chip-stack{width:var(--chip)}
 body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px;font-size:9px;padding:0 3px;z-index:8}
-body.felt-mode #felt-stage [id^="come-slot-"],body.felt-mode #felt-stage .dc-chip-box{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);width:auto;margin:0;z-index:3}
+body.felt-mode #felt-stage .come-slot,body.felt-mode #felt-stage .dc-chip-box{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);width:auto;margin:0;z-index:3}
+/* Same number can carry a Come AND a Don't Come bet at once (different players, or one player
+   doing both) -- sharing one anchor point made them collide into an unreadable pile (Deck: "I
+   did both a Come and Don't come at the same time, and they landed on the 8. This is completely
+   unusable."). When both slots are actually populated, split them into two non-overlapping rows;
+   the single-occupant case (the common one) keeps the original shared centered anchor above. */
+body.felt-mode #felt-stage .nb-mid:has(.come-slot:not(:empty)):has(.dc-chip-box:not(:empty)) .come-slot{top:47%}
+body.felt-mode #felt-stage .nb-mid:has(.come-slot:not(:empty)):has(.dc-chip-box:not(:empty)) .dc-chip-box{top:77%}
 .come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:#ff9a9a;font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
 
 /* Come / Field / Pass */
@@ -2005,7 +2012,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.37</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.38</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3891,7 +3898,7 @@ function buildStrip(){
     // Spelled-out labels (Six/Nine, to avoid upside-down 6/9 confusion) get the script font
     // token; plain digits get the heavy one -- see .nb-num-word/.nb-num-digit CSS.
     const nl=document.createElement('span');nl.className=/^\d+$/.test(def.label)?'nb-num-digit':'nb-num-word';nl.style.cssText='font-size:40px;font-weight:700';nl.textContent=def.label;
-    const cs=document.createElement('div');cs.id='come-slot-'+n;cs.style.cssText='width:100%;margin-top:1px';
+    const cs=document.createElement('div');cs.id='come-slot-'+n;cs.className='come-slot';cs.style.cssText='width:100%;margin-top:1px';
     const dcs=document.createElement('div');dcs.id='dc-slot-'+n;dcs.className='dc-chip-box';
     md.appendChild(nl);md.appendChild(cs);md.appendChild(dcs);
     const pd=document.createElement('div');pd.className='nb-place';pd.id='nb-place-'+n;pd.dataset.betKey='place'+n;pd.onclick=()=>placeBet('place'+n);pd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('place'+n);};
