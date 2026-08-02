@@ -1985,7 +1985,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.33</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.34</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5877,6 +5877,13 @@ let calibFontSizes={}; // selector -> px, only entries the font tool has actuall
 function calibTextLeaves(el){
   const out=[];
   (function walk(node){
+    // Don't descend into nested .felt-lr boxes (Low/All/High etc.) unless `el` itself
+    // is one of them -- LR_LAYOUT reparents those as real DOM children of #lucky-roller,
+    // so a walk started at #lucky-roller would otherwise sweep up their text too and the
+    // Lucky Roller font control would resize Low/All/High along with it (Deck: "Low, High,
+    // and All do not have the capability to adjust their own font size, because its
+    // attached to Lucky Roller").
+    if(node!==el&&node.classList&&node.classList.contains('felt-lr'))return;
     // A node counts as a leaf if it has no element children (the old check -- still needed
     // for plain text-only spans) OR if it has its OWN direct text node(s), even alongside
     // element children -- e.g. "DON'T<br>COME" is a <span> whose real text is two text nodes
