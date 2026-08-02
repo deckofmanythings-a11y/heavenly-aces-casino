@@ -26,7 +26,7 @@
      with a subtle top-to-bottom inner gradient (not flat) -- e.g. the
      Place/Buy number cells' lighter "BUY" strip vs. darker numeral body. */
   --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
-  --box-border: 2px solid rgba(255,255,255,.15);
+  --box-border: 4px solid rgba(255,255,255,.4);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -1556,6 +1556,11 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <button class="calib-nudge-btn" onclick="calibNudge(-1,0)" title="Left 5px">◀</button><div></div><button class="calib-nudge-btn" onclick="calibNudge(1,0)" title="Right 5px">▶</button>
       <div></div><button class="calib-nudge-btn" onclick="calibNudge(0,1)" title="Down 5px">▼</button><div></div>
     </div>
+    <div id="calib-font" style="display:flex;flex-direction:column;align-items:center;gap:1px">
+      <button class="calib-nudge-btn" onclick="calibFontNudge(1)" title="Font size up 1px">▲</button>
+      <span id="calib-font-size" style="font-size:11px;color:rgba(255,255,255,.7);min-width:34px;text-align:center">--px</span>
+      <button class="calib-nudge-btn" onclick="calibFontNudge(-1)" title="Font size down 1px">▼</button>
+    </div>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibReset()">Reset</button>
     <button class="modal-btn" style="font-size:12px;padding:4px 8px" onclick="calibExport()">Export</button>
     <button class="modal-btn cancel" style="font-size:12px;padding:4px 8px" onclick="toggleCalibMode()">Exit</button>
@@ -1937,7 +1942,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.28</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.29</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5808,6 +5813,49 @@ function calibSelect(sel){
   calibSelectedSel=sel;
   document.getElementById('calib-selected').textContent=sel?calibStatusText(sel):'Click a box to select it, drag to move, corner handle to resize';
   document.querySelectorAll('#calib-layer .calib-box').forEach(b=>b.classList.toggle('selected',b.dataset.sel===sel));
+  calibUpdateFontReadout();
+}
+// ── FONT SIZE CONTROL (Deck: "an up and down arrow in the Calibrate window that increase/
+// decrease the font size in that box in real time") ─────────────────────────────────────────
+// Every bet-box type has its text sitting on completely different sub-elements (a numeral
+// span, a .prop-bar-name div, an .hc-pay span alongside a dice <img>, etc.) with no shared
+// class to hook -- rather than hand-map every box type, this walks the box's REAL element
+// (not the calib-box ghost outline) for every leaf node that actually has text, and drives
+// font-size on all of them together. Elements whose only content is an image (dice icons)
+// naturally have empty textContent and are skipped.
+let calibFontSizes={}; // selector -> px, only entries the font tool has actually touched
+function calibTextLeaves(el){
+  const out=[];
+  (function walk(node){
+    if(node.children.length===0){
+      if(node.textContent&&node.textContent.trim())out.push(node);
+      return;
+    }
+    for(const c of node.children)walk(c);
+  })(el);
+  return out;
+}
+function calibUpdateFontReadout(){
+  const readout=document.getElementById('calib-font-size');
+  if(!calibSelectedSel){readout.textContent='--px';return;}
+  if(calibFontSizes[calibSelectedSel]){readout.textContent=calibFontSizes[calibSelectedSel]+'px';return;}
+  const el=feltEl(calibSelectedSel);
+  const leaves=el?calibTextLeaves(el):[];
+  if(!leaves.length){readout.textContent='--px';return;}
+  readout.textContent=Math.round(parseFloat(getComputedStyle(leaves[0]).fontSize))+'px';
+}
+function calibFontNudge(delta){
+  if(!calibSelectedSel)return;
+  const el=feltEl(calibSelectedSel);
+  if(!el)return;
+  const leaves=calibTextLeaves(el);
+  if(!leaves.length)return;
+  let cur=calibFontSizes[calibSelectedSel];
+  if(!cur)cur=Math.round(parseFloat(getComputedStyle(leaves[0]).fontSize));
+  const next=Math.max(6,Math.min(200,cur+delta));
+  calibFontSizes[calibSelectedSel]=next;
+  leaves.forEach(l=>l.style.setProperty('font-size',next+'px','important'));
+  document.getElementById('calib-font-size').textContent=next+'px';
 }
 // Movement handles (Deck: "give me some movement handles") -- nudges the selected box by exactly
 // one SNAP_PX step per press, via the toolbar's arrow buttons or the arrow keys (see the
@@ -5880,6 +5928,7 @@ function toggleCalibMode(){
     closeFocusPanel();
     if(!calibState)calibState=calibInitState();
     calibBuildLayer();
+    calibUpdateFontReadout();
   }else{
     const layer=document.getElementById('calib-layer');
     if(layer)layer.remove();
@@ -5888,7 +5937,15 @@ function toggleCalibMode(){
 }
 function calibReset(){
   calibState=calibInitState();
+  // Also undo any live font-size overrides the font tool applied, so Reset genuinely puts the
+  // felt back the way it started rather than just resetting position/size.
+  Object.keys(calibFontSizes).forEach(sel=>{
+    const el=feltEl(sel);
+    if(el)calibTextLeaves(el).forEach(l=>l.style.removeProperty('font-size'));
+  });
+  calibFontSizes={};
   calibBuildLayer();
+  calibUpdateFontReadout();
 }
 function calibExport(){
   const order=calibBaseEntries().map(e=>e[0]);
@@ -5900,6 +5957,14 @@ function calibExport(){
     const pw=Math.round(s.w/100*FM_CANVAS_W),ph=Math.round(s.h/100*FM_CANVAS_H);
     out+="  ['"+sel+"', "+px+","+py+","+pw+","+ph+","+tabStr+"],\n";
   });
+  const fontSels=Object.keys(calibFontSizes);
+  if(fontSels.length){
+    out+='\n// Font-size overrides (Calibrate Mode font tool) -- px, applied to every text leaf\n';
+    out+='// inside each box. Add these into the matching CSS rule/inline style by hand.\n';
+    out+='const FM_FONT_SIZES = {\n';
+    fontSels.forEach(sel=>{ out+="  '"+sel+"': "+calibFontSizes[sel]+",\n"; });
+    out+='};\n';
+  }
   document.getElementById('calib-export-text').value=out;
   document.getElementById('modal-calib-export').classList.remove('hidden');
 }
