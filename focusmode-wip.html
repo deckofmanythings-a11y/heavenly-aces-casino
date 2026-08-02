@@ -1880,7 +1880,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.18</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.19</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2097,7 +2097,7 @@ const FELT_LAYOUT=[
   // hard4/6/8/10), label-2 sits in the ~70px gap between that cluster's bottom (925px) and
   // the hop13-46 grid's top (995px).
   ['#hop-panel-label-1', 9.688,32.5, 16.25,3.611,'hop'],
-  ['#hop-panel-label-2', 4.844,51.667, 26.875,3.333,'hop'],
+  ['#hop-panel-label-2', 4.531,51.667, 26.875,3.333,'hop'],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
@@ -2128,19 +2128,19 @@ const FELT_LAYOUT=[
   ['@yo',             24.531,74.722, 7.187,10.278,'hw'],
   ['@anyCraps',        3.906,85.278, 27.812,6.667,'hw'],
   // HOP view: hop bet pills (3 cols x 5 rows, middle col rows 1-3) -- calibrated via drag tool.
-  ['@hop13',          4.844,55.278, 8.75,6.111,'hop'],
-  ['@hop16',         13.906,55.278, 8.75,6.111,'hop'],
-  ['@hop26',         22.969,55.278, 8.75,6.111,'hop'],
-  ['@hop14',          4.844,61.667, 8.75,6.111,'hop'],
-  ['@hop25',         13.906,61.667, 8.75,6.111,'hop'],
-  ['@hop35',         22.969,61.667, 8.75,6.111,'hop'],
-  ['@hop23',          4.844,68.056, 8.75,6.111,'hop'],
-  ['@hop34',         13.906,68.056, 8.75,6.111,'hop'],
-  ['@hop36',         22.969,68.056, 8.75,6.111,'hop'],
-  ['@hop24',          4.844,74.444, 8.75,6.111,'hop'],
-  ['@hop45',         22.969,74.444, 8.75,6.111,'hop'],
-  ['@hop15',          4.844,80.833, 8.75,6.111,'hop'],
-  ['@hop46',         22.969,80.833, 8.75,6.111,'hop']
+  ['@hop13',          4.531,55.278, 8.75,6.111,'hop'],
+  ['@hop16',         13.594,55.278, 8.75,6.111,'hop'],
+  ['@hop26',         22.656,55.278, 8.75,6.111,'hop'],
+  ['@hop14',          4.531,61.667, 8.75,6.111,'hop'],
+  ['@hop25',         13.594,61.667, 8.75,6.111,'hop'],
+  ['@hop35',         22.656,61.667, 8.75,6.111,'hop'],
+  ['@hop23',          4.531,68.056, 8.75,6.111,'hop'],
+  ['@hop34',         13.594,68.056, 8.75,6.111,'hop'],
+  ['@hop36',         22.656,68.056, 8.75,6.111,'hop'],
+  ['@hop24',          4.531,74.444, 8.75,6.111,'hop'],
+  ['@hop45',         22.656,74.444, 8.75,6.111,'hop'],
+  ['@hop15',          4.531,80.833, 8.75,6.111,'hop'],
+  ['@hop46',         22.656,80.833, 8.75,6.111,'hop']
 ];
 // Lucky Roller art interior (percent of the art box)
 // Recalibrated for Deck's new cut Lucky Roller art -- computed directly from the crop tool's
