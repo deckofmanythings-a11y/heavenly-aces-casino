@@ -1937,7 +1937,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.27</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.28</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2108,7 +2108,7 @@ const FELT_LAYOUT=[
   // HighRollsBox.webp), same master template/canvas as the old art -- box is the union bounding
   // box of the title art + the three bet boxes, measured directly off the crop tool's exported
   // stage coordinates (x:1220,y:15,w:775,h:350 on the 3200x1800 canvas).
-  ['#lucky-roller',   38.125,0.833, 24.219,19.444,null],
+  ['#lucky-roller',   43.281,8.611, 14.062,5.278,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -2232,9 +2232,9 @@ const LR_LAYOUT=[
   ['#bnums-low',   1.290, 4.000,32.258,44.000],
   ['#bnums-high', 64.000, 4.000,32.258,44.000],
   ['#dice-zone',  33.548, 0.00,30.452,50.571],
-  ['low',    1.161,50.571,30.581,48.286],
-  ['all',   34.194,50.857,30.323,48.000],
-  ['high',  65.548,50.571,33.548,48.286]
+  ['low',    0,100,33.333,121.053],
+  ['all',   33.333,100,33.333,121.053],
+  ['high',  66.667,100,33.333,121.053]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
@@ -2361,7 +2361,7 @@ const STANDARD_LAYOUT=[
   ['#num-zone',      35.13,22.22,52.03,25.00,null],
   // Adjacent to the number line's new right edge (see NUMLINE_ART, moved up 10px) with no gap --
   // Deck: "The DC waiting box should be adjacent to the number line with no space in-between."
-  ['#dc-wait-wrap',   90.938,23.889, 8.281,24.444,null],
+  ['#dc-wait-wrap',   90.938,23.889, 8.281,24.167,null],
   // Come/Field/Don't Pass/Pass Line stacked with zero gap between rows (Deck: "should all be
   // perfectly stacked with no space between them") -- matches the FM_ART bar images exactly
   // (same x/w/h/seams as pass/dp/come/field above, now corrected to their real 1368-wide
@@ -2372,8 +2372,8 @@ const STANDARD_LAYOUT=[
   // felt's bottom edge.
   ['#come-bar',       56.719,57.222, 42.812,9.167,null],
   ['#field-bar',      56.719,66.389, 42.812,12.5,null],
-  ['#dp-bar',         56.719,88.333, 42.812,9.444,null],
-  ['#pass-bar',       56.719,78.889, 42.812,9.444,null],
+  ['#dp-bar',         56.719,78.889, 42.812,9.444,null],
+  ['#pass-bar',       56.719,88.333, 42.812,9.444,null],
   // Same placement/derivation as the crapless copy above -- see that comment.
   ['#light-spot',     51.406,88.333, 5.312,9.444,null],
   // Buy/Place/Lay per number -- now individually calibrated real positions (Deck's drag-tool
