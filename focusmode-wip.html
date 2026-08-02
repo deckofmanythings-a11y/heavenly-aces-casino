@@ -640,8 +640,17 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
    below), stacking chips+layout controls above status+bet-management controls -- landscape is
    untouched either way. */
 .bb-row{display:contents}
-body.felt-portrait #bottom-bar{flex-direction:column;padding:1px 4px}
-body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;flex:1;min-height:0;width:100%}
+/* flex:1 on each row (the first cut) made every row STRETCH to fill an equal third of
+   #bottom-bar's height, and since none of the rows' actual content (chips, buttons) comes
+   anywhere close to needing that much height, align-items:center just centered each row's
+   content inside a mostly-empty band -- reading as three rows "way too far apart" (Deck).
+   flex:0 0 auto sizes each row to its own content instead, #bottom-bar's own gap packs them
+   tightly, and justify-content:center centers the whole compact stack in whatever height
+   BOTTOM_SECTION_RATIO_PORTRAIT provides. Measured live after this fix: the packed stack
+   already fills 236 of 238px (chip size itself scales with felt height, same as everywhere
+   else on the felt) -- essentially zero leftover gap, so the ratio didn't need trimming too. */
+body.felt-portrait #bottom-bar{flex-direction:column;justify-content:center;gap:2px;padding:1px 4px}
+body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;flex:0 0 auto;width:100%}
 .chip{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp');}
@@ -2331,7 +2340,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.9</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.10</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
