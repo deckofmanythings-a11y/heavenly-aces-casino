@@ -1680,7 +1680,8 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
       <!-- HOP BETS MODE -->
       <div id="panel-hop">
-        <div id="hop-panel-label" class="fm-panel-label">HOPPING HARD WAYS 31:1 &nbsp;·&nbsp; HOP BETS 16:1</div>
+        <div id="hop-panel-label-1" class="fm-panel-label">HOPPING HARD WAYS 31:1</div>
+        <div id="hop-panel-label-2" class="fm-panel-label">HOP BETS 16:1</div>
         <div style="background:rgba(0,0,0,.2);border-radius:4px;overflow:hidden;flex-shrink:0">
           <div class="hop-section-hdr">31 for 1 · HOPPING HARD WAYS · 31 for 1</div>
           <div class="hop-hard-grid">
@@ -1879,7 +1880,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.17</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.18</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2090,7 +2091,13 @@ const FELT_LAYOUT=[
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
   // touching any of Deck's calibrated bet-box coordinates above/below it.
   ['#hw-panel-label',  9.688,32.5, 16.25,3.611,'hw'],
-  ['#hop-panel-label', 1.406,11.111, 35,11,'hop'],
+  // Split from one combined "HOPPING HARD WAYS 31:1 / HOP BETS 16:1" label into two, each
+  // sitting in the real gap directly above the bet cluster it names -- label-1 shares
+  // hw-panel-label's exact slot (hop22/33/44/55 occupies the same physical 2x2 spot as
+  // hard4/6/8/10), label-2 sits in the ~70px gap between that cluster's bottom (925px) and
+  // the hop13-46 grid's top (995px).
+  ['#hop-panel-label-1', 9.688,32.5, 16.25,3.611,'hop'],
+  ['#hop-panel-label-2', 4.844,51.667, 26.875,3.333,'hop'],
   // HARDWAYS view: one roll pills
   // Calibrated directly on the felt via Focus Mode's drag tool (calibExport()) -- Deck dragged
   // each box to its correct spot and exported the exact coordinates. Do not re-derive these
