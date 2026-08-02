@@ -7190,18 +7190,17 @@ function pfRender(){
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="cloche-dice.js?v=0.7.1"></script>
+<script src="cloche-dice.js?v=0.7.2"></script>
 <script src="winner-modal.js?v=0.5.4"></script>
 <script src="dailies-popup.js?v=4"></script>
 <script>
-// Cloche dice overlay: shared module, configured for craps (2 dice, 2.0 scale)
-// using the table's own DIE_B64 face art.
+// Cloche dice overlay: shared module, configured for craps (2 dice, 2.0 scale).
+// Procedural (canvas-drawn) pips, not the table's DIE_B64 photo art -- the real-image path
+// routes rotation through a GPU UV Texture.rotation, a different mechanism than the
+// normal-map's own baked-in-pixels rotation; the procedural path uses the same canvas-rotation
+// approach for both, so color and dimple can't drift apart the way they did on 2/3's real art.
 (function(){
-  const faces={};for(const k in DIE_B64)faces[k]='data:image/png;base64,'+DIE_B64[k];
-  // DIE_B64[2]'s art draws its two dots on the opposite diagonal from every other face's art
-  // (verified against the actual PNG pixels) -- pipBaseRotation corrects for that one baked-in
-  // 90-degree offset so the toward-6 rotation logic lands correctly on the real image.
-  ClocheDice.init({diceCount:2,dieSize:2.0,faceImages:faces,pipBaseRotation:{2:90}});
+  ClocheDice.init({diceCount:2,dieSize:2.0});
   ClocheDice.setMuted(soundMuted);
   ClocheDice.setVolume(window.AudioSettings?AudioSettings.effectiveVolume():1);
 })();

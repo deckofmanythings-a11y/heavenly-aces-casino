@@ -633,7 +633,7 @@
     const height = new Float32Array(S * S);
     const cosR = Math.cos(-rotation), sinR = Math.sin(-rotation);
     const cx0 = S / 2, cy0 = S / 2;
-    const pipR = S * 0.085, depth = 0.55;
+    const pipR = S * 0.085, depth = 2.75;
     const pos = PIP_POS[value];
     for (let py = 0; py < S; py++) {
       for (let px = 0; px < S; px++) {
