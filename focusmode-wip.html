@@ -2061,7 +2061,10 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
               
             </div>
             <div id="dp-odds-cell" data-odds-type="dp" onclick="addOddsAmt('dp',G.chip)" oncontextmenu="event.preventDefault();event.stopPropagation();removeOddsAmt('dp',G.chip)">
-              <span class="dp-odds-lbl">Lay Odds</span>
+              <!-- Deck: "remove the Lay Odds label to stay in the same style as the Pass Bar"
+                   -- #pass-odds-cell's own label (.odds-lbl-new) is present but left empty,
+                   same approach here rather than deleting the element outright. -->
+              <span class="dp-odds-lbl"></span>
               <span class="dp-odds-stk" id="stk-dpodds"></span>
               <span class="dp-odds-pay" id="dp-odds-pay">—</span>
             </div>
@@ -2120,7 +2123,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.55</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.56</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
