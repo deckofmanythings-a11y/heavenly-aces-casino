@@ -2137,7 +2137,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.1</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.1.2</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2534,6 +2534,23 @@ const CRAPLESS_LAYOUT=[
   ['#nb-place-11', 87.344,43.333,5.938,5.556,null],
   ['#nb-buy-12',   93.281,23.333,5.938,5.556,null],
   ['#nb-place-12', 93.281,43.333,5.938,5.556,null],
+  // #come-slot-N landing zones -- Crapless has real Come bets (just no Don't Come/dark side),
+  // so #come-slot-N gets created here too (buildStrip() makes one for every number regardless
+  // of mode), but it was never given a CRAPLESS_LAYOUT entry, only STANDARD_LAYOUT's. Left
+  // in default in-flow position inside .nb-mid-N, a placed Come bet shoved the numeral/other
+  // text around -- the exact bug already fixed for Standard (Deck: "Come bets are moving the
+  // text inside the number box in Crapless"). Positioned at the same relative fraction of the
+  // numberbox that Standard's own come-slot-N entries use.
+  ['#come-slot-2',  39.897,35.952,5.831,6.745,null],
+  ['#come-slot-3',  45.834,35.952,5.831,6.745,null],
+  ['#come-slot-4',  51.772,35.952,5.831,6.745,null],
+  ['#come-slot-5',  57.709,35.952,5.831,6.745,null],
+  ['#come-slot-6',  63.647,35.952,5.831,6.745,null],
+  ['#come-slot-8',  69.584,35.952,5.831,6.745,null],
+  ['#come-slot-9',  75.522,35.952,5.831,6.745,null],
+  ['#come-slot-10', 81.459,35.952,5.831,6.745,null],
+  ['#come-slot-11', 87.397,35.952,5.831,6.745,null],
+  ['#come-slot-12', 93.334,35.952,5.831,6.745,null],
   // Come/Field/Pass share Pass Line's x/w and stay zero-gapped, same as standard, but with no
   // Don't Pass/Don't Come row: Field drops into Don't Pass's old slot (bottom flush against
   // Pass Line's top) and Come drops onto Field's new top. Pass Line itself doesn't move --
@@ -3999,18 +4016,23 @@ function buildStrip(){
   // covers Crapless's full number set (a superset of Standard's) since Buy/Place/numberbox
   // exist in both modes. Lay/puckbox are Standard-only, cleaned separately.
   MODE_CONFIG.crapless.allNums.forEach(n=>{
-    ['nb-buy-'+n,'nb-place-'+n,'nb-numberbox-'+n].forEach(id=>{
+    // come-slot-N joined this list once Crapless got its own CRAPLESS_LAYOUT entries for it
+    // (it wasn't in either mode's stale-cleanup for numbers 2/3/11/12 -- Standard's allNums
+    // doesn't include them, so a Crapless-only come-slot-N could get silently duplicated the
+    // same way nb-lay/puckbox/come-slot/dc-slot already were for Standard's numbers, see below).
+    ['nb-buy-'+n,'nb-place-'+n,'nb-numberbox-'+n,'come-slot-'+n].forEach(id=>{
       const stale=document.getElementById(id);if(stale)stale.remove();
     });
   });
   MODE_CONFIG.standard.allNums.forEach(n=>{
-    // come-slot-N/dc-slot-N joined this list once they became real STANDARD_LAYOUT-driven
-    // .felt-abs boxes -- same reason as nb-lay/nb-puckbox: once reparented into #felt-stage
-    // by enterFeltMode(), they're no longer inside `strip` for the innerHTML reset below to
-    // clear, so a second buildStrip() call (switching modes and back, etc.) left the OLD
-    // reparented element orphaned in #felt-stage while a fresh duplicate-id one got created
-    // inside the new nb-mid-N -- two elements sharing one id, only one of them positioned.
-    ['nb-lay-'+n,'nb-puckbox-'+n,'come-slot-'+n,'dc-slot-'+n].forEach(id=>{
+    // dc-slot-N joined this list once it became a real STANDARD_LAYOUT-driven .felt-abs box --
+    // same reason as nb-lay/nb-puckbox: once reparented into #felt-stage by enterFeltMode(),
+    // they're no longer inside `strip` for the innerHTML reset below to clear, so a second
+    // buildStrip() call (switching modes and back, etc.) left the OLD reparented element
+    // orphaned in #felt-stage while a fresh duplicate-id one got created inside the new
+    // nb-mid-N -- two elements sharing one id, only one of them positioned. Don't Come only
+    // exists in Standard, so dc-slot-N stays scoped to Standard's number set here.
+    ['nb-lay-'+n,'nb-puckbox-'+n,'dc-slot-'+n].forEach(id=>{
       const stale=document.getElementById(id);if(stale)stale.remove();
     });
   });
