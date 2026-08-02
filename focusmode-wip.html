@@ -126,7 +126,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .lr-num{position:relative;width:32px;height:32px;border-radius:3px;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:rgba(255,255,255,.4);border:0.5px solid rgba(255,255,255,.15)}
 .lr-explain{font-size:11px;color:rgba(255,255,255,.45);display:block}
 .lr-num.hit{background:transparent;color:#7ee87e;border-color:#7ee87e}
-.lr-stake{font-size:38px;font-weight:600;color:#ffd700;min-height:12px}
+.lr-stake{font-size:38px;font-weight:600;color:#ffd700;min-height:1.2em;line-height:1.2}
 .lr-note{font-size:15px;color:rgba(255,255,255,.4)}
 /* Removed site-wide (Sic-Bo/Roulette/Craps): right-click and drag-off already remove
    a bet, these corner buttons were redundant. display:none!important on each rather
@@ -176,7 +176,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bb:hover{background:rgba(255,255,255,.15)}
 .bb.active{}
 .bb .pay{font-size:15px;color:rgba(255,255,255,.4);display:block;margin-top:1px}
-.bb .stk{font-size:17px;color:#ffd700;display:block;min-height:10px}
+.bb .stk{font-size:17px;color:#ffd700;display:block;min-height:1.2em;line-height:1.2}
 .dp{font-size:min(36px,4vh);line-height:1;display:block}
 .bwrap{position:relative;width:100%;min-height:0;min-width:0}
 .bwrap:hover .mbtn.vis{display:block}
@@ -185,15 +185,21 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* One roll props */
 #prop-block{flex:9;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.prop-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;cursor:pointer;transition:background .12s;flex-shrink:0;background:var(--box-fill-flat);border:var(--box-border);border-radius:var(--box-radius)}
+.prop-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;cursor:pointer;transition:background .12s;flex-shrink:0;background:var(--box-fill-flat);border:var(--box-border);border-radius:var(--box-radius);position:relative}
+/* Oversized calibrated text (SEVEN/ANY CRAPS via the font-size tool) can overflow past this
+   box's own edges and paint over its border, since text is normal in-flow content and paints
+   above the box's own border by default (Deck: "top edge of Seven and Any Craps is cut off").
+   A ::after redraws just the border in its own positioned+z-indexed layer, which always
+   paints above static in-flow children regardless of how far their text overflows. */
+.prop-bar::after,.horn-cell::after{content:'';position:absolute;inset:0;border:inherit;border-radius:inherit;pointer-events:none;z-index:3}
 .prop-bar:hover{background:rgba(255,255,255,.08)}
 .prop-bar-name{font-size:21px;font-weight:900;letter-spacing:.08em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
 .prop-bar-odds{font-size:17px;font-weight:600}
 /* Font-size overrides from Calibrate Mode's font tool -- Any 7 and Any Craps got different
    sizes, both scoped to their own bar so they don't leak onto each other. */
-body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:48px!important}
-body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:41px!important}
-.prop-bar-stk{font-size:17px;color:#ffd700;min-height:11px;text-align:center}
+body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(48px * var(--felt-scale, 1))!important}
+body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:calc(41px * var(--felt-scale, 1))!important}
+.prop-bar-stk{font-size:17px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
 .horn-row.horn-mid-row{flex:1}
@@ -203,13 +209,13 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 .hc-pay{font-size:14px;color:rgba(255,255,255,.5);margin-top:1px}
 /* Font-size override from Calibrate Mode's font tool -- Aces/Ace2/Midnight/Yo (the four
    non-center Horn Bet cells) all got the same size. */
-#bet-aces .hc-pay,#bet-ace2 .hc-pay,#bet-midnight .hc-pay,#bet-yo .hc-pay{font-size:24px!important}
-.hc-stk{font-size:15px;color:var(--color-gold);min-height:10px}
+#bet-aces .hc-pay,#bet-ace2 .hc-pay,#bet-midnight .hc-pay,#bet-yo .hc-pay{font-size:calc(24px * var(--felt-scale, 1))!important}
+.hc-stk{font-size:15px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
 .horn-center{background:var(--box-fill-lightest);flex:1;flex-direction:row;gap:6px}
 .horn-center:hover{background:rgba(255,255,255,.18)}
 .horn-center-name{font-size:21px;font-weight:900;letter-spacing:.05em;font-family:var(--font-heavy);background:var(--text-grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size override from Calibrate Mode's font tool. */
-#bet-horn .horn-center-name{font-size:39px!important}
+#bet-horn .horn-center-name{font-size:calc(39px * var(--felt-scale, 1))!important}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:15px;font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
@@ -218,7 +224,7 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:13px;line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
 /* Font-size override from Calibrate Mode's font tool -- Deck only resized #hw-panel-label
    itself, hop-panel-label-1/2 keep the shared 13px above. */
-body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
+body.felt-mode #felt-stage #hw-panel-label{font-size:calc(42px * var(--felt-scale, 1))!important}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -234,7 +240,7 @@ body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
 .prop-circle:hover{background:rgba(255,255,255,.15)}
 .prop-circle.active{}
 .circle-wrap{position:relative;display:flex;flex-direction:column;align-items:center}
-.circle-stk{font-size:14px;color:#ffd700;min-height:9px;text-align:center}
+.circle-stk{font-size:14px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
 .mbtn-circle{display:none!important}
 .sc-stack{display:flex;flex-direction:column;gap:3px;flex:1}
 .sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:#fff;font-size:15px;padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
@@ -273,7 +279,7 @@ body.felt-mode #felt-stage #hw-panel-label{font-size:42px!important}
 .nb-place:hover{background:rgba(255,255,255,.1)}
 .nb-place.active{}
 .nb-lbl{font-size:11px;display:block;letter-spacing:.04em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important;opacity:.6}
-.nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:9px}
+.nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
 .nb-pay{font-size:11px;color:rgba(255,255,255,.4);display:block}
 .off-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;background:rgba(0,0,0,.5)}
 .off-ov span{font-size:15px;font-weight:700;color:rgba(255,200,0,.95)}
@@ -310,9 +316,9 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 .zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size overrides from Calibrate Mode's font tool -- Come/Pass Line share one size,
    Field gets its own smaller one (Don't Pass isn't a .zone-name, see .dp-name below). */
-#come-bar .zone-name,#pass-bar .zone-name{font-size:76px!important}
-#field-bar .zone-name{font-size:36px!important}
-.zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
+#come-bar .zone-name,#pass-bar .zone-name{font-size:calc(76px * var(--felt-scale, 1))!important}
+#field-bar .zone-name{font-size:calc(36px * var(--felt-scale, 1))!important}
+.zone-stk{font-size:19px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px}
 .zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
 .progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
@@ -345,7 +351,7 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 #pass-odds-cell:hover{background:rgba(255,255,255,.12)}
 #pass-odds-cell.active{background:transparent}
 .odds-lbl{font-size:14px;color:rgba(255,255,255,.5);display:block}
-.odds-stk{font-size:17px;color:var(--color-gold);display:block;min-height:11px}
+.odds-stk{font-size:17px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
 .odds-pay{font-size:14px;color:rgba(255,255,255,.4);display:block}
 #pass-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;background:var(--box-fill-flat)}
 #pass-main:hover{background:rgba(255,255,255,.1)}
@@ -384,14 +390,14 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-main.active-bar{background:transparent}
 .dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size override from Calibrate Mode's font tool. */
-#dp-bar .dp-name{font-size:57px!important}
-.dp-stk{font-size:13px;color:var(--color-gold);min-height:10px}
+#dp-bar .dp-name{font-size:calc(57px * var(--felt-scale, 1))!important}
+.dp-stk{font-size:13px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
 .dp-note{font-size:9px;color:rgba(255,255,255,.35)}
 #dp-odds-cell{background:var(--box-fill-flat);border-top:0.5px solid rgba(255,255,255,.15);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none}
 #dp-odds-cell:hover{background:rgba(255,255,255,.12)}
 #dp-odds-cell.active{background:transparent}
 .dp-odds-lbl{font-size:9px;color:rgba(255,130,130,.5);display:block}
-.dp-odds-stk{font-size:11px;color:#ffd700;display:block;min-height:9px}
+.dp-odds-stk{font-size:11px;color:#ffd700;display:block;min-height:1.2em;line-height:1.2}
 .dp-odds-pay{font-size:8px;color:rgba(255,130,130,.4);display:block}
 /* DC chip in number box */
 .dc-chip-box{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px}
@@ -830,8 +836,8 @@ body.felt-mode #felt-stage .nb-mid>span{font-weight:900!important;background:var
 /* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) -- digit
    numbers (4/5/8/10) and spelled-out word numbers (Six/Nine, narrower script glyphs) were
    sized differently, so this replaces the old single shared 26px rule with two. */
-body.felt-mode #felt-stage .nb-num-digit{font-size:72px!important}
-body.felt-mode #felt-stage .nb-num-word{font-size:48px!important}
+body.felt-mode #felt-stage .nb-num-digit{font-size:calc(72px * var(--felt-scale, 1))!important}
+body.felt-mode #felt-stage .nb-num-word{font-size:calc(48px * var(--felt-scale, 1))!important}
 body.felt-mode #felt-stage .nb-num-word{transform:rotate(-30deg)}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:21px}
@@ -845,8 +851,8 @@ body.felt-mode #felt-stage .nb-lay .nb-lbl{background:var(--text-grad-red)!impor
 /* Font-size overrides from Calibrate Mode's font tool (Deck's FM_FONT_SIZES export) --
    Buy/Lay share one size, Place gets its own smaller one. */
 body.felt-mode #felt-stage .nb-buy .nb-lbl,body.felt-mode #felt-stage .nb-buy-left .nb-lbl,
-body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:30px!important}
-body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:21px!important}
+body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:calc(30px * var(--felt-scale, 1))!important}
+body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:calc(21px * var(--felt-scale, 1))!important}
 body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
 body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:16px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
@@ -1215,7 +1221,7 @@ body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{padding-top:19px!import
    now-deleted baked image and have nothing left to align to). */
 body.felt-mode #felt-stage #lucky-roller .lr-nums{height:auto;padding:0;display:flex;flex-wrap:wrap;align-content:center;gap:2px;justify-content:center}
 body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:20px;height:20px;font-size:15px;line-height:20px;font-weight:800;color:rgba(255,255,255,.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:0 2px}
-body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:9px;min-height:9px}
+body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:9px;min-height:1.2em;line-height:1.2}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar #bstk-all{font-size:14px!important}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
 /* Felt art bakes the numbers themselves into the box image (base .lr-num above is
@@ -1308,7 +1314,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   .lr-pay{font-size:16px}
   .lr-num{width:18px;height:18px;font-size:15px}
   .lr-nums{gap:2px}
-  .lr-stake{font-size:20px;min-height:9px}
+  .lr-stake{font-size:20px;min-height:1.2em;line-height:1.2}
   .lr-note{font-size:11px}
   #lucky-roller{gap:2px;padding:2px 3px}
   #dice-zone{min-width:50px}
@@ -1979,7 +1985,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.31</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.32</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2490,6 +2496,9 @@ function feltEl(sel){
 // on-felt sizing (FELT_LAYOUT used to give it 13.00% of felt height) so it reads the
 // same size as before, just relocated below the art instead of overlaid on it.
 const BOTTOM_SECTION_RATIO=0.13;
+// Reference felt-stage width (px) Calibrate Mode's font tool was used at -- see the
+// --felt-scale comment in sizeFeltStage() below.
+const FELT_REF_W=741;
 function sizeFeltStage(){
   const pa=document.getElementById('play-area'),st=document.getElementById('felt-stage');
   const bs=document.getElementById('bottom-section');
@@ -2512,6 +2521,15 @@ function sizeFeltStage(){
   st.style.width=w+'px';st.style.height=h+'px';
   const chipPx=Math.max(16,Math.round(h*0.0424));
   st.style.setProperty('--chip',chipPx+'px');
+  // Font-size overrides from Calibrate Mode's font tool (see FM_FONT_SIZES in the CSS) are
+  // hand-measured at Deck's own browser width -- FELT_REF_W is that same reference width
+  // (measured directly off this session's own felt-stage). Every one of those px values is
+  // wrapped in calc(Npx * var(--felt-scale)) rather than used as a bare px, so shrinking the
+  // window scales them down proportionally with the box they're meant to fit inside instead
+  // of staying a fixed px and overflowing/wrapping once the felt itself is smaller than
+  // Deck's own screen (Deck: "should reduce the font size proportionally/mathematically so it
+  // always appears completely within its designated box, without line-breaking").
+  st.style.setProperty('--felt-scale', w/FELT_REF_W);
   // Chip Row (#bottom-bar .chip) lives in #bottom-section, a SIBLING of #felt-stage, not a
   // descendant -- so setting --chip only on #felt-stage (above) never reaches it, and it was
   // stuck at its CSS-authored fixed 30px/24px(narrow) forever while the felt's own chip
@@ -3882,12 +3900,12 @@ function buildStrip(){
     const dcOffPuck=document.createElement('div');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-anchor';dcOffPuck.style.cssText='position:absolute;left:50%;bottom:100%;margin-bottom:6px;width:90px;height:90px;visibility:hidden;pointer-events:none;transform:translate(-50%,-15%)';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
-    dcMid.innerHTML='<span style="font-size:45px;font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
+    dcMid.innerHTML='<span style="font-size:calc(45px * var(--felt-scale, 1));font-weight:900;color:rgba(255,130,130,.9);letter-spacing:.03em;line-height:1.1">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
-      +'<span style="font-size:45px;color:rgba(255,150,150,.85)">BAR</span>'
+      +'<span style="font-size:calc(45px * var(--felt-scale, 1));color:rgba(255,150,150,.85)">BAR</span>'
       +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
       +'</span>'
-      +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:9px;margin-top:1px"></div>';
+      +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px"></div>';
     dcBox.appendChild(dcMid);
     dcWrap.appendChild(dcBox);strip.appendChild(dcWrap);
   }
@@ -5879,6 +5897,15 @@ function calibTextLeaves(el){
   })(el);
   return out;
 }
+// Font sizes are stored/exported normalized to FELT_REF_W (Deck: "these font sizes are for
+// when the window is being displayed at max width... reducing the width should reduce the
+// size proportionally") -- calibFontSizes holds the REFERENCE-width number, live-applied at
+// current-width * --felt-scale so it always previews correctly regardless of the window size
+// the calibration session itself happens to be running at.
+function calibCurrentScale(){
+  const v=parseFloat(getComputedStyle(document.getElementById('felt-stage')).getPropertyValue('--felt-scale'));
+  return v&&isFinite(v)&&v>0?v:1;
+}
 function calibUpdateFontReadout(){
   const readout=document.getElementById('calib-font-size');
   if(!calibSelectedSel){readout.textContent='--px';return;}
@@ -5886,7 +5913,7 @@ function calibUpdateFontReadout(){
   const el=feltEl(calibSelectedSel);
   const leaves=el?calibTextLeaves(el):[];
   if(!leaves.length){readout.textContent='--px';return;}
-  readout.textContent=Math.round(parseFloat(getComputedStyle(leaves[0]).fontSize))+'px';
+  readout.textContent=Math.round(parseFloat(getComputedStyle(leaves[0]).fontSize)/calibCurrentScale())+'px';
 }
 function calibFontNudge(delta){
   if(!calibSelectedSel)return;
@@ -5894,11 +5921,12 @@ function calibFontNudge(delta){
   if(!el)return;
   const leaves=calibTextLeaves(el);
   if(!leaves.length)return;
+  const scale=calibCurrentScale();
   let cur=calibFontSizes[calibSelectedSel];
-  if(!cur)cur=Math.round(parseFloat(getComputedStyle(leaves[0]).fontSize));
+  if(!cur)cur=Math.round(parseFloat(getComputedStyle(leaves[0]).fontSize)/scale);
   const next=Math.max(6,Math.min(200,cur+delta));
   calibFontSizes[calibSelectedSel]=next;
-  leaves.forEach(l=>l.style.setProperty('font-size',next+'px','important'));
+  leaves.forEach(l=>l.style.setProperty('font-size',(next*scale)+'px','important'));
   document.getElementById('calib-font-size').textContent=next+'px';
 }
 // Movement handles (Deck: "give me some movement handles") -- nudges the selected box by exactly
@@ -6003,8 +6031,10 @@ function calibExport(){
   });
   const fontSels=Object.keys(calibFontSizes);
   if(fontSels.length){
-    out+='\n// Font-size overrides (Calibrate Mode font tool) -- px, applied to every text leaf\n';
-    out+='// inside each box. Add these into the matching CSS rule/inline style by hand.\n';
+    out+='\n// Font-size overrides (Calibrate Mode font tool) -- px at FELT_REF_W ('+FELT_REF_W+'px)\n';
+    out+='// reference width, applied to every text leaf inside each box. Wrap each in\n';
+    out+='// calc(Npx * var(--felt-scale, 1)) when adding into the matching CSS rule/inline\n';
+    out+='// style by hand, so it scales down at narrower windows instead of overflowing/wrapping.\n';
     out+='const FM_FONT_SIZES = {\n';
     fontSels.forEach(sel=>{ out+="  '"+sel+"': "+calibFontSizes[sel]+",\n"; });
     out+='};\n';
