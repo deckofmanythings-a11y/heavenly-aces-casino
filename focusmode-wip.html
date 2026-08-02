@@ -1066,6 +1066,27 @@ body.felt-mode #bottom-bar .chip{width:var(--chip)!important;height:var(--chip)!
 body.felt-mode #felt-stage .prop-bar,body.felt-mode #felt-stage #pass-main{position:relative}
 body.felt-mode #felt-stage .num-box,body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{overflow:visible}
 body.felt-mode #felt-stage .has-stack{position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block;text-shadow:none}
+/* Deck: "the text in a bet box shifts when a chip graphic is present ... looks unpolished."
+   Root cause: a stake-text span only became position:absolute (via .has-stack, added above)
+   once a bet actually existed -- while empty it sat in normal flow reserving its own
+   min-height, so surrounding label/payout text visibly recentered the instant a chip
+   appeared. Making every stake span ALWAYS absolute (not gated on .has-stack) removes it from
+   flow permanently, in both states, so there's no flow-state change left to shift around. The
+   more specific .has-stack-scoped overrides below (per-box custom anchors for Pass/DP/Field/
+   crapless Buy+Place) still win via specificity once a chip is actually placed. */
+body.felt-mode #felt-stage .stk,body.felt-mode #felt-stage .nb-stk,body.felt-mode #felt-stage .hc-stk,
+body.felt-mode #felt-stage .prop-bar-stk,body.felt-mode #felt-stage .circle-stk,body.felt-mode #felt-stage .zone-stk,
+body.felt-mode #felt-stage .dp-stk,body.felt-mode #felt-stage .dp-odds-stk,
+body.felt-mode #felt-stage #stk-pass,body.felt-mode #felt-stage #stk-passodds,body.felt-mode #felt-stage #stk-come,
+body.felt-mode #felt-stage #stk-field,body.felt-mode #felt-stage #stk-dc-wait,body.felt-mode #felt-stage .lr-stake,
+body.felt-mode #felt-stage #stk-light{
+  position:absolute;inset:auto;left:50%;bottom:6%;transform:translateX(-50%);width:var(--chip);min-height:0;pointer-events:none;
+}
+/* nb-place had 3 flex-column children (label/stake/payout) with justify-content:center; with
+   the stake permanently out of flow now, only label+payout remain -- center them as a tight
+   pair would look wrong (that gap was previously held open by the stake's own reserved
+   height), so pin them to the box's top/bottom edges instead, same visual spread as before. */
+body.felt-mode #felt-stage .nb-place{justify-content:space-between}
 /* Come's own "COME" label is hidden in felt mode since the art draws it directly, so this is
    an estimate of where that painted text sits vertically within the box, not a measured value.
    Every other zone (Pass, Field, DP) keeps the default 6% anchor -- only Come is overridden. */
@@ -2012,7 +2033,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.38</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.39</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
