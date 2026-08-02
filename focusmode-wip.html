@@ -30,6 +30,13 @@
   --box-border: 1px solid rgba(255,255,255,.15);
   --box-radius: 4px;
 
+  /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
+     Hopping Hardways, Hop Bets) -> Mid (--felt-bg, the background itself) -> Dark
+     (--box-fill-flat above -- Seven, Any Craps, Come, Pass Line, Number Boxes, already this
+     shade by default) -> Darkest (Title Bars: panel labels, section headers). */
+  --box-fill-lightest: rgba(46,145,80,.55);
+  --box-fill-darkest: rgba(2,16,9,.8);
+
   /* Typography: heavy bold sans for numerals/most labels; a script/italic face
      specifically for spelled-out "Six"/"Nine" (NUM_DEFS already emits these as
      text, not digits, to avoid upside-down 6/9 confusion at the table). */
@@ -148,7 +155,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Hard Ways grid */
 .hw-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex:4;min-height:0}
-.bb{background:var(--box-fill-flat);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:19px;padding:3px 2px 2px;cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bb{background:var(--box-fill-lightest);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:19px;padding:3px 2px 2px;cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .bb:hover{background:rgba(255,255,255,.15)}
 .bb.active{}
 .bb .pay{font-size:15px;color:rgba(255,255,255,.4);display:block;margin-top:1px}
@@ -169,19 +176,20 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
 .horn-row.horn-mid-row{flex:1}
-.horn-cell{padding:3px 2px;text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border);background:var(--box-fill-flat);position:relative;flex:1;min-height:0;overflow:hidden}
+.horn-cell{padding:3px 2px;text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border);background:var(--box-fill-lightest);position:relative;flex:1;min-height:0;overflow:hidden}
 .horn-cell:hover{background:rgba(255,255,255,.1)}
 .hc-dice{font-size:min(36px,3vh);line-height:1}
 .hc-pay{font-size:14px;color:rgba(255,255,255,.5);margin-top:1px}
 .hc-stk{font-size:15px;color:var(--color-gold);min-height:10px}
-.horn-center{background:rgba(255,255,255,.1);flex:1;flex-direction:row;gap:6px}
+.horn-center{background:var(--box-fill-lightest);flex:1;flex-direction:row;gap:6px}
 .horn-center:hover{background:rgba(255,255,255,.18)}
 .horn-center-name{font-size:21px;font-weight:900;color:var(--color-gold);letter-spacing:.05em;font-family:var(--font-heavy)}
 
 /* Hop bets */
-.hop-section-hdr{text-align:center;padding:2px;font-size:15px;font-weight:700;color:rgba(255,255,255,.55);background:rgba(0,0,0,.3);letter-spacing:.05em;flex-shrink:0}
+.hop-section-hdr{text-align:center;padding:2px;font-size:15px;font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
 .fm-panel-label{display:none}
-body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:13px;line-height:1.25;white-space:normal}
+/* Deck's 4-tier green system: title/label bars (this + .hop-section-hdr above) are Darkest. */
+body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:13px;line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
 .hop-hard-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0}
 .hop-easy-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;flex:1;min-height:0;overflow:hidden}
 .hop-col{display:flex;flex-direction:column;gap:2px;min-height:0}
@@ -227,12 +235,12 @@ body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justi
    script vs heavy face. */
 .num-box{border:var(--box-border);border-radius:var(--box-radius);overflow:hidden;background:var(--box-fill-flat);display:flex;flex-direction:column;height:100%}
 .num-box.is-point{border:2px solid #fff;box-shadow:0 0 5px rgba(255,255,255,.4)}
-.nb-buy{background:rgba(255,255,255,.07);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-buy{background:var(--box-fill-lightest);border-bottom:0.5px solid rgba(255,255,255,.1);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-buy:hover{background:rgba(255,255,255,.15)}
 .nb-buy.active{background:transparent}
 .nb-mid{background:transparent;border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:40px;font-weight:700;font-family:var(--font-heavy);color:var(--color-text);flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
 .nb-num-word{font-family:var(--font-script);font-style:italic}
-.nb-place{background:rgba(0,0,0,.2);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
+.nb-place{background:var(--box-fill-lightest);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
 .nb-place:hover{background:rgba(255,255,255,.1)}
 .nb-place.active{}
 .nb-lbl{font-size:11px;color:rgba(255,255,255,.5);display:block;letter-spacing:.04em}
@@ -266,6 +274,9 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 #cfp-zone{flex:9;display:flex;flex-direction:column;min-height:0;padding:0 3px 3px 3px}
 .zone-bar{cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;position:relative;flex-shrink:0}
 .zone-bar:hover{background:rgba(255,255,255,.06)}
+/* Deck's 4-tier green system: Field is Lightest, Come/Pass Line are Dark -- see the real
+   #come-bar/#field-bar/#pass-main rules below (they already set a background, just the
+   generic --box-fill gradient) for the actual token swap, not here. */
 .zone-bar.active-bar{}
 .zone-name{font-size:40px;font-weight:900;letter-spacing:.1em;color:#fff}
 .zone-stk{font-size:19px;color:#ffd700;min-height:12px;margin-top:1px}
@@ -293,8 +304,8 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 /* Phase 5b (CSS-only re-skin): Come/Field/Pass Line/Don't Pass bands. Swapped the app's blue/
    yellow/red accent palette for the shared design tokens -- these bands are functionally just
    bigger .zone-bar-style cells, same treatment as everything else on the felt now. */
-#come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);background:var(--box-fill);border:var(--box-border)}
-#field-bar{flex:2;min-height:0;background:var(--box-fill);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);border:var(--box-border)}
+#come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);background:var(--box-fill-flat);border:var(--box-border)}
+#field-bar{flex:2;min-height:0;background:var(--box-fill-lightest);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);border:var(--box-border)}
 .field-info{font-size:15px;color:rgba(255,255,255,.5);margin-top:1px}
 #pass-bar{display:flex;align-items:stretch;flex:2;min-height:0;border-radius:var(--box-radius);overflow:hidden;border:var(--box-border)}
 #pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
@@ -303,7 +314,7 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
 .odds-lbl{font-size:14px;color:rgba(255,255,255,.5);display:block}
 .odds-stk{font-size:17px;color:var(--color-gold);display:block;min-height:11px}
 .odds-pay{font-size:14px;color:rgba(255,255,255,.4);display:block}
-#pass-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;background:var(--box-fill)}
+#pass-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;background:var(--box-fill-flat)}
 #pass-main:hover{background:rgba(255,255,255,.1)}
 #pass-main.active-bar{}
 
@@ -359,7 +370,7 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
 .dc-rm{font-size:9px;background:rgba(120,0,0,.6);border:none;color:#ff9999;cursor:pointer;padding:0 2px;border-radius:1px;line-height:1.3}
 /* Lay cell in number box (right half of buy) */
 .nb-buy-wrap{display:flex;flex:1;border-bottom:0.5px solid rgba(255,255,255,.1)}
-.nb-buy-left{flex:1;background:rgba(255,255,255,.07);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s;border-right:0.5px solid rgba(255,255,255,.08)}
+.nb-buy-left{flex:1;background:var(--box-fill-lightest);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s;border-right:0.5px solid rgba(255,255,255,.08)}
 .nb-buy-left:hover{background:rgba(255,255,255,.15)}
 .nb-buy-left.active{background:transparent}
 .nb-lay{flex:1;background:rgba(255,255,255,.07);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
@@ -1678,7 +1689,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           <div class="bwrap"><div class="bb" id="bet-hard8" onclick="placeBet('hard8')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hard8')"><span class="dp"><img class="dice-combo-img" src="marble44.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hard8"></span><span class="pay">10 for 1</span></div></div>
         </div>
         <div id="prop-block">
-          <div class="bwrap"><div id="bet-any7" onclick="placeBet('any7')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('any7')" class="prop-bar" style="background:rgba(0,60,20,.7);border-top:1px solid rgba(255,255,255,.1)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">SEVEN</div><div class="prop-bar-stk" id="stk-any7"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span></div></div>
+          <div class="bwrap"><div id="bet-any7" onclick="placeBet('any7')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('any7')" class="prop-bar" style="background:var(--box-fill-flat);border-top:1px solid rgba(255,255,255,.1)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">SEVEN</div><div class="prop-bar-stk" id="stk-any7"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span></div></div>
           <div class="horn-stack">
             <div class="horn-row" style="border-bottom:0.5px solid rgba(255,255,255,.1)">
               <div class="horn-cell" id="bet-aces" onclick="placeBet('aces')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('aces')"><span class="hc-dice"><img class="dice-combo-img" src="marble11.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><div class="hc-pay">31 for 1</div><div class="hc-stk" id="stk-aces"></div></div>
@@ -1692,7 +1703,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
               <div class="horn-cell" style="border-left:0.5px solid rgba(255,255,255,.08)" id="bet-yo" onclick="placeBet('yo')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('yo')"><span class="hc-dice"><img class="dice-combo-img" src="marble65.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><div class="hc-pay">16 for 1</div><div class="hc-stk" id="stk-yo"></div></div>
             </div>
           </div>
-          <div class="bwrap"><div id="bet-anyCraps" onclick="placeBet('anyCraps','bar')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('anyCraps','bar')" class="prop-bar" style="background:rgba(0,60,20,.7);border-top:1px solid rgba(255,255,255,.1)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">ANY CRAPS</div><div class="prop-bar-stk" id="stk-anyCraps"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span></div></div>
+          <div class="bwrap"><div id="bet-anyCraps" onclick="placeBet('anyCraps','bar')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('anyCraps','bar')" class="prop-bar" style="background:var(--box-fill-flat);border-top:1px solid rgba(255,255,255,.1)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">ANY CRAPS</div><div class="prop-bar-stk" id="stk-anyCraps"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span></div></div>
         </div>
       </div>
 
@@ -1898,7 +1909,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.20</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.21</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
