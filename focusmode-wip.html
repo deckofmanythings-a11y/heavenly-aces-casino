@@ -1279,7 +1279,10 @@ body.felt-mode #felt-stage #lucky-roller .lr-note{display:none!important}
    absolute-positioning hack (and the padding-top:19px that compensated for it) is gone too. */
 body.felt-mode #felt-stage #lucky-roller .lr-explain{display:none!important}
 body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800;color:rgba(255,255,255,.8);letter-spacing:.02em;line-height:1.1}
-body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:1px 2px 0;position:relative;display:flex;flex-direction:column;align-items:center;gap:0}
+/* Deck: "can you format Low and High rolls exactly like Roll'em All?" -- .lr-header's own
+   gap/padding/justify-content didn't match .rollem-all-bar's container style (0 gap vs 2px,
+   1px 2px 0 padding vs 4px 6px, no justify-content vs center). Matched exactly. */
+body.felt-mode #felt-stage #lucky-roller .lr-header{background:transparent;padding:4px 6px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--color-gold);text-shadow:none}
 /* Font sizes now set uniformly per box (Calibrate Mode's font tool -- Deck set Low/High/All to
    18px/18px/17px uniformly across title+explain+pay, replacing the old differentiated
@@ -2071,7 +2074,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.45</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.46</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
