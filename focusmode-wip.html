@@ -900,7 +900,10 @@ body.felt-mode #felt-stage .nb-buy .nb-lbl,body.felt-mode #felt-stage .nb-buy-le
 body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:30px!important}
 body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:21px!important}
 body.felt-mode #felt-stage .pay{display:block!important;font-size:16px!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
-body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:16px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+/* Deck: "Make the font used for the numbers in the field box (2-3...11-12) be the same font
+   size as the word Field." FIELD itself (.zone-name) is forced to 36px below (was only 16px
+   here, much smaller). */
+body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:36px!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
 body.felt-mode #felt-stage .prop-bar-name{font-size:27px!important}
 body.felt-mode #felt-stage .prop-circle{font-size:26px!important}
 body.felt-mode.game-crapless #felt-stage .circle-wrap .has-stack{bottom:22%}
@@ -2117,7 +2120,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.54</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.55</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4056,7 +4059,7 @@ function buildStrip(){
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
     dcMid.innerHTML='<span style="font-size:45px;font-weight:900;letter-spacing:.03em;line-height:1.1;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
-      +'<span style="font-size:45px;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
+      +'<span style="font-size:57px;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
       +'<img class="dice-combo-img" src="marble66.png" style="width:36px;height:18px">'
       +'</span>'
       +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px"></div>';
