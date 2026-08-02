@@ -1062,7 +1062,9 @@ async function rollDice(){
     updateUI();checkBroke();
     if(data.returned>0){
       const bigWin=G.lastBetDisplay>0&&(data.returned/G.lastBetDisplay)>=7;
-      WinnerModal.show(data.returned,{big:bigWin});
+      // glassRgb: matches the dark "ink" tone (#2b1806) already used for every other bit of
+      // text on the cream/gold angel panel -- the modal's default navy glass clashed against it.
+      WinnerModal.show(data.returned,{big:bigWin,glassRgb:'43,24,6'});
     }
     if(data.capped)setTimeout(openCapModal,data.returned>0?4200:300);
   }
@@ -1934,7 +1936,7 @@ async function redeemVoucher(code){
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
 <script src="cloche-dice.js?v=0.7.1"></script>
-<script src="winner-modal.js?v=0.5.2"></script>
+<script src="winner-modal.js?v=0.5.3"></script>
 <script src="dailies-popup.js?v=4"></script>
 <script>
 // Cloche dice overlay: shared module, configured for sic-bo (3 dice, 1.8 scale)

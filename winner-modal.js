@@ -71,11 +71,15 @@
       // clip were camera glare off a real cabinet's glass screen, not an app effect. What's
       // actually there is a wide, soft-edged dark band behind the number -- feathered edges via
       // radial-gradient (no hard border/stroke), sized to the payout text by sizeWinnerGlass()
-      // below, static (no animation, matching the reference).
+      // below, static (no animation, matching the reference). The tint is a --wm-glass-rgb
+      // custom property (default cold navy) rather than a hardcoded color -- a host page can
+      // override it per call via show(amount,{glassRgb:'r,g,b'}) so the panel can match its own
+      // board instead of clashing (e.g. sic-bo's light cream/gold felt wants a warm dark tone,
+      // not navy).
       '.wm-winner-glass{',
       '  position:absolute;top:50%;left:50%;width:440px;height:180px;z-index:1;pointer-events:none;',
-      '  transform:translate(-50%,-50%);',
-      '  background:radial-gradient(ellipse at center,rgba(12,16,34,.82) 0%,rgba(12,16,34,.68) 42%,rgba(12,16,34,.32) 68%,rgba(12,16,34,0) 90%);',
+      '  transform:translate(-50%,-50%);--wm-glass-rgb:12,16,34;',
+      '  background:radial-gradient(ellipse at center,rgba(var(--wm-glass-rgb),.82) 0%,rgba(var(--wm-glass-rgb),.68) 42%,rgba(var(--wm-glass-rgb),.32) 68%,rgba(var(--wm-glass-rgb),0) 90%);',
       '}',
       '.wm-winner-coins{position:absolute;top:50%;left:50%;width:0;height:0;z-index:1;pointer-events:none;}',
       // Sparkles: small 4-point glint stars (radial glow core + a thin cross of light through
@@ -286,6 +290,14 @@
     amtEl.dataset.value = text;
   }
 
+  // options.glassRgb (e.g. '43,24,6') lets a host page tint the glass panel to match its own
+  // board instead of the default navy -- inline style beats the class rule's --wm-glass-rgb
+  // fallback when set, and removeProperty() drops back to it when a call doesn't pass one.
+  function setGlassTint(glassRgb) {
+    if (glassRgb) glassEl.style.setProperty('--wm-glass-rgb', glassRgb);
+    else glassEl.style.removeProperty('--wm-glass-rgb');
+  }
+
   // ---------- public API ----------
   const WinnerModal = {
     // amount<=0 is a no-op -- every host page's existing behavior is to just skip the modal
@@ -302,6 +314,7 @@
       overlayEl.classList.remove('hidden');
       titleEl.textContent = options.title || '🎉 Congratulations, you win 🎉';
       setAmtText('$0.00');
+      setGlassTint(options.glassRgb);
       sizeWinnerGlass(amount, fmt);
       spawnCoinWaterfall(options.big ? 56 : 34);
       const start = performance.now();
@@ -331,6 +344,7 @@
       overlayEl.classList.remove('hidden');
       titleEl.textContent = options.title || 'Push! Bets returned!';
       setAmtText('$0.00');
+      setGlassTint(options.glassRgb);
       sizeWinnerGlass(amount, fmt);
       const start = performance.now();
       function tick(now) {
