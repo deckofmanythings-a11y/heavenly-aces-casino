@@ -27,7 +27,7 @@
      Place/Buy number cells' lighter "BUY" strip vs. darker numeral body. */
   --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
   --box-fill-flat: rgba(10,50,28,.6);
-  --box-border: 1px solid rgba(255,255,255,.15);
+  --box-border: 2px solid rgba(255,255,255,.15);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -1919,7 +1919,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.24</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.25</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2499,30 +2499,19 @@ function feltApplyTab(t){
     el.style.display=(tab===t)?'':'none';
   });
 }
-function feltSplitStandardNumBox(n){
-  // Standard felt art: top row is [blank (Don't Come travel slot) | LAY], bottom row is [PLACE | BUY].
-  // buildStrip() always creates the legacy layout fresh (top [Buy|Lay], DC chip buried in the middle,
-  // bottom [Place] alone) so every felt entry re-splits it -- there is nothing to restore on exit
-  // because applyGameMode() always calls buildStrip() again before enterFeltMode() runs.
-  const buy=document.getElementById('nb-buy-'+n),lay=document.getElementById('nb-lay-'+n);
-  const place=document.getElementById('nb-place-'+n),dcSlot=document.getElementById('dc-slot-'+n);
-  const mb=document.getElementById('mb-buy'+n),mp=document.getElementById('mb-place'+n);
-  if(!buy||!lay||!place)return;
-  const topWrap=buy.parentNode; // .nb-buy-wrap, already holds [buy,lay]
-  if(dcSlot)topWrap.insertBefore(dcSlot,buy); // dcSlot takes Buy's old visual slot
-  topWrap.removeChild(buy);
-  const wrap=place.closest('.num-box-wrap');
-  const botWrap=document.createElement('div');botWrap.className='nb-buy-wrap nb-place-wrap';
-  place.parentNode.insertBefore(botWrap,place);
-  botWrap.appendChild(place);botWrap.appendChild(buy);
-  if(mb)wrap.appendChild(mb); // keep minus buttons in the wrap so they still overlay correctly
-  if(mp)wrap.appendChild(mp);
-}
 function enterFeltMode(){
   const mode=activeGame==='standard'?'standard':'crapless';
   document.body.classList.remove('game-crapless','game-standard');
   document.body.classList.add('game-'+mode);
-  if(mode==='standard')ALL_NUMS.forEach(feltSplitStandardNumBox);
+  // Phase 8 cleanup: feltSplitStandardNumBox() used to exist here, reshuffling Buy/Lay/Place
+  // into new wrapper divs for the old shared-box layout -- now that all three (plus the
+  // numeral box and puckbox) are independently reparented into #felt-stage by the
+  // FELT_LAYOUT/STANDARD_LAYOUT loop below regardless of their current parent, that reshuffle
+  // is dead weight. Worse than dead: it left the ORIGINAL .nb-buy-wrap (and a freshly-created
+  // .nb-place-wrap) behind inside #nb-numberbox-N as empty shells, each still carrying its own
+  // border-bottom -- exactly the stray horizontal lines Deck kept finding inside the numeral
+  // box. buildStrip() no longer creates that wrapper at all (Buy/Lay append straight to the
+  // box), so there's nothing left to split.
   // NOTE: this used to return early whenever felt mode was already active, which made sense
   // back when only crapless had a felt sheet (enter once, never re-enter with different data).
   // Now that both games use felt mode, switching games while felt mode is already on needs to
@@ -3790,12 +3779,16 @@ function buildStrip(){
       // alongside Buy/Lay so it gets pulled into #felt-stage the same way by enterFeltMode().
       const pkb=document.createElement('div');pkb.className='nb-puckbox';pkb.id='nb-puckbox-'+n;
       box.appendChild(pkb);
-      const bwrap=document.createElement('div');bwrap.className='nb-buy-wrap';
+      // Phase 8 cleanup: no more .nb-buy-wrap around Buy+Lay -- that wrapper existed to lay
+      // them out side-by-side in the OLD shared-box layout, but Buy/Lay/Place/Puckbox are all
+      // individually reparented into #felt-stage now (feltEl() finds them by id regardless of
+      // parent), so wrapping them here just leaves an empty, still-bordered shell behind inside
+      // #nb-numberbox-N once they're pulled out. Appended straight to box instead.
       const bd=document.createElement('div');bd.className='nb-buy-left';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBetWithCommissionCheck(()=>placeBet('buy'+n));bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
       bd.innerHTML='<span class="nb-lbl">BUY</span><span class="nb-stk" id="stk-buy'+n+'"></span><div class="off-ov" id="off-buy-'+n+'" style="display:none"><span>OFF</span></div>';
       const ld=document.createElement('div');ld.className='nb-lay';ld.id='nb-lay-'+n;ld.dataset.betLay=n;ld.onclick=()=>placeBetWithCommissionCheck(()=>placeLay(n));ld.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeLay(n);};
       ld.innerHTML='<span class="nb-lbl">LAY</span><span class="nb-stk" id="stk-lay'+n+'"></span>';
-      bwrap.appendChild(bd);bwrap.appendChild(ld);box.appendChild(bwrap);
+      box.appendChild(bd);box.appendChild(ld);
     }else{
       const bd=document.createElement('div');bd.className='nb-buy';bd.id='nb-buy-'+n;bd.dataset.betKey='buy'+n;bd.onclick=()=>placeBetWithCommissionCheck(()=>placeBet('buy'+n));bd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('buy'+n);};
       bd.innerHTML='<span class="nb-lbl">BUY</span><span class="nb-stk" id="stk-buy'+n+'"></span><div class="off-ov" id="off-buy-'+n+'" style="display:none"><span>OFF</span></div>';
