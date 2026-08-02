@@ -2306,15 +2306,16 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       </div>
       <!-- Chips row (1 unit) -->
       <div id="bottom-bar">
-        <!-- Portrait-only two-row split (Deck: "make the bottom bar be two rows so the chips
-             and buttons aren't fighting for space with the Roll button") -- .bb-row is
-             display:contents everywhere by default, so these two wrapper divs are invisible to
+        <!-- Portrait-only three-row split (Deck: "might need three rows. The chip row should
+             live alone and nothing should go into/over/under the Roll button") -- .bb-row is
+             display:contents everywhere by default, so these wrapper divs are invisible to
              layout and every child flattens directly into #bottom-bar's own row, byte-identical
-             to the old single-row markup. body.felt-portrait turns them into two real stacked
-             rows instead (see the .bb-row CSS). Landscape untouched either way. -->
+             to the old single-row markup. body.felt-portrait turns them into three real stacked
+             rows instead (see the .bb-row CSS): chips alone, Load Layout/Clear Last Bet, then
+             version/pnl/Clear/Double/Repeat. #roll-btn is a SIBLING of #bottom-bar (not nested
+             inside it), spanning all rows via align-self:stretch, in its own column that no row
+             content ever shares -- landscape untouched either way. -->
         <div class="bb-row">
-          <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
-          <button class="bar-btn" id="undo-btn" onclick="clearLastBet()" title="Undo last bet action">Clear Last Bet</button>
           <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
           <div class="chip" data-val="2" onclick="selectChip(2)">$2</div>
           <div class="chip" data-val="3" onclick="selectChip(3)">$3</div>
@@ -2325,8 +2326,12 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         </div>
         <div class="bb-row">
+          <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
+          <button class="bar-btn" id="undo-btn" onclick="clearLastBet()" title="Undo last bet action">Clear Last Bet</button>
+        </div>
+        <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.7</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.8</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3038,12 +3043,12 @@ function feltEl(sel){
 // on-felt sizing (FELT_LAYOUT used to give it 13.00% of felt height) so it reads the
 // same size as before, just relocated below the art instead of overlaid on it.
 const BOTTOM_SECTION_RATIO=0.13;
-// Portrait's #bottom-bar splits into two stacked rows (see the .bb-row CSS -- Deck: "make the
-// bottom bar be two rows so the chips and buttons aren't fighting for space with the Roll
-// button") instead of landscape's one wide row, so it needs roughly double the height budget
-// to avoid squeezing each row back down to the same cramped size split had. Landscape is
-// untouched (still 0.13, one row).
-const BOTTOM_SECTION_RATIO_PORTRAIT=0.24;
+// Portrait's #bottom-bar splits into three stacked rows (see the .bb-row CSS -- Deck: "might
+// need three rows. The chip row should live alone and nothing should go into/over/under the
+// Roll button") instead of landscape's one wide row, so it needs roughly 3x the height budget
+// to avoid squeezing each row back down to the same cramped size the split was meant to fix.
+// Landscape is untouched (still 0.13, one row).
+const BOTTOM_SECTION_RATIO_PORTRAIT=0.36;
 function curBottomSectionRatio(){ return feltPortrait?BOTTOM_SECTION_RATIO_PORTRAIT:BOTTOM_SECTION_RATIO; }
 // ── RESPONSIVE FONT SCALE ─────────────────────────────────────────────────────
 // Deck: "All current font sizes are the default/maximum... if the window shrinks, shrink the
