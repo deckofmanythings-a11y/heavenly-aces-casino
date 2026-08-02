@@ -1323,7 +1323,18 @@ body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:17px!important}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:18px!important}
-body.felt-mode #felt-stage #lucky-roller .lr-body{position:relative;height:100%;padding:1px 2px 0}
+/* THE actual Low/High-vs-Roll'em-All formatting difference (Deck kept flagging it; every
+   style-level check came back identical because it's structural, not cosmetic): Roll'em All's
+   title/pay are DIRECT children of a justify-content:center flex box, so its text block is
+   vertically centered -- Low/High's text sits inside the nested .lr-header, with .lr-body
+   (the old numbers/stake container) still occupying the bottom of the box as an in-flow
+   sibling, pinning the header to the top. In felt mode .lr-body has no in-flow content left
+   anyway (#bnums-low/high are reparented out to #lucky-roller, .lr-stake is permanently
+   absolute) -- so pull it out of flow entirely (inset:0 keeps it as the stake chip's anchor,
+   now spanning the full box exactly like Roll'em All's own bar does for #bstk-all) and center
+   the header in the freed-up full-height box. */
+body.felt-mode #felt-stage #lucky-roller .lr-bonus{justify-content:center}
+body.felt-mode #felt-stage #lucky-roller .lr-body{position:absolute;inset:0;height:auto;padding:0}
 /* #bnums-low/#bnums-high are NOT nested inside their box in felt mode -- enterFeltMode()
    reparents every LR_LAYOUT entry (including these) to be direct children of #lucky-roller,
    each independently absolutely-positioned per its own LR_LAYOUT %-coordinates (a floating
@@ -2103,7 +2114,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.52</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.0.53</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
