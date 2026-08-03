@@ -1036,6 +1036,15 @@ body.felt-mode #felt-stage .nb-mid>span{font-weight:900!important;background:var
 body.felt-mode #felt-stage .nb-num-digit{font-size:calc(72px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .nb-num-word{font-size:calc(48px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .nb-num-word{transform:rotate(-30deg)}
+/* Crapless-only overflow fixes: two-digit numbers (10/11/12) don't fit the shared 72px digit
+   size, and both spelled-out words (Six/Nine) don't fit the shared 48px word size either --
+   live-measured overflow at full scale was +6px (10/11/12), +3px (Six), +22px (Nine). Sized
+   per-box via binary search against real getClientRects() overflow, not guessed. */
+body.felt-mode #felt-stage #nb-numberbox-10 .nb-num-digit,
+body.felt-mode #felt-stage #nb-numberbox-11 .nb-num-digit,
+body.felt-mode #felt-stage #nb-numberbox-12 .nb-num-digit{font-size:calc(58px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage #nb-numberbox-6 .nb-num-word{font-size:calc(40px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage #nb-numberbox-9 .nb-num-word{font-size:calc(30px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:calc(21px * var(--font-scale,1))}
 /* Phase 7 polish: BUY/PLACE/LAY labels barely read against the felt at their original 11px/
@@ -2389,7 +2398,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.17</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.18</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
