@@ -1483,7 +1483,14 @@ body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
    --font-script for Six/Nine, just an actually-cursive stack instead of a plain serif) and
    bumped 13px -> 22px. Letter-spacing dropped too -- connected script letterforms read wrong
    spaced apart the way the old bold sans title was. */
-body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:flex-end;justify-content:center;padding-bottom:4%;z-index:1;pointer-events:none;font:700 22px 'Brush Script MT','Segoe Script','Lucida Handwriting',cursive;font-size:calc(22px * var(--font-scale,1));color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.01em;white-space:nowrap}
+/* Deck: "Put the words Lucky Roller in-line with the number tick boxes" -- now sitting in the
+   real gap between the two pill clusters (see the LR_LAYOUT entry's own comment) instead of as
+   a full-width backdrop, so it's centered on both axes within its own now much narrower box
+   instead of bottom-anchored across a nearly-full-width one. */
+/* 22px (the old full-width-backdrop calibration) measured 154px wide via canvas.measureText
+   against the real "bold 22px [cursive stack]" font -- real overflow, 18px past the new
+   136px-wide gap box. Trimmed to 18px (measures 126px, comfortable margin). */
+body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:center;justify-content:center;z-index:1;pointer-events:none;font:700 18px 'Brush Script MT','Segoe Script','Lucida Handwriting',cursive;font-size:calc(18px * var(--font-scale,1));color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.01em;white-space:nowrap}
 body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER';background:var(--text-grad-metallic-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
    the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again.
@@ -1586,7 +1593,16 @@ body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
    mistake while chasing an unrelated shading complaint) -- a soft glow behind/around the digit,
    not a filled box, so it doesn't read as "shading" the way the old rgba fill + heavy box-shadow
    combo did. */
-body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:transparent;box-shadow:0 0 8px 3px rgba(60,255,140,.85),0 0 16px 6px rgba(60,255,140,.4)}
+body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:transparent;box-shadow:0 0 8px 3px rgba(60,255,140,.85),0 0 16px 6px rgba(60,255,140,.4);overflow:visible}
+/* Deck: "Put some sparkles and sheens on the tick boxes once they are lit up." ::before is a
+   diagonal light sweep clipped to the pill's own rounded corners (mix-blend-mode:overlay so it
+   brightens the existing green glow instead of flattening it to white); ::after is a single
+   twinkling glint anchored just outside the corner, since the pill itself is only ~20px --
+   more than one sparkle glyph at this size reads as clutter, not sparkle. */
+body.felt-mode #felt-stage #lucky-roller .lr-num.hit::before{content:'';position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.9) 48%,rgba(255,255,255,.9) 52%,transparent 70%);background-size:250% 250%;background-position:-40% -40%;mix-blend-mode:overlay;pointer-events:none;animation:lrNumSheen 2.4s ease-in-out infinite}
+body.felt-mode #felt-stage #lucky-roller .lr-num.hit::after{content:'\2726';position:absolute;top:-0.4em;right:-0.4em;font-size:calc(10px * var(--font-scale,1));line-height:1;color:#fff;text-shadow:0 0 4px #fff,0 0 8px rgba(120,255,180,.9);pointer-events:none;animation:lrNumTwinkle 1.7s ease-in-out infinite}
+@keyframes lrNumSheen{0%{background-position:-40% -40%}55%,100%{background-position:140% 140%}}
+@keyframes lrNumTwinkle{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(25deg)}}
 
 /* ===== CLEAN UI: no hover or placed-bet shading anywhere on the felt =====
    Deck wants no visual highlighting of legal betting areas, on hover or once a bet is placed.
@@ -2373,7 +2389,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.16</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.17</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2528,7 +2544,10 @@ const FELT_LAYOUT=[
   ['@anyCraps-circle', 33.125,65.833, 3.906,6.667,null],
   ['@cande',           33.125,73.056, 3.906,6.667,null],
   ['@eleven',          33.125,80.278, 3.906,6.667,null],
-  ['.sc-stack',      42.60,60.00, 9.40,18.00,null],
+  // Deck's first real drag-tool export for this box (just un-skipped from Calibrate Mode --
+  // see calibBaseEntries()'s own comment) -- 1275,1120,301,324 on the 3200x1800 canvas.
+  // Landscape only; portrait's own copy below is untouched (not exported here).
+  ['.sc-stack',      39.844,62.222, 9.406,18.00,null],
   // fullscreen bands: top UI and bottom UI live in the felt's blank areas
   // Shrunk from 17.00 -> 12.00 now that the game selector is a single-button dropdown instead
   // of a 5-button grid (Deck: "move the game selector... so Hard Ways can move up").
@@ -2697,7 +2716,15 @@ const FELT_LAYOUT=[
 // the edges miss" -- the title art was stacking on top of the bet boxes' overlapping region and
 // eating clicks there even with pointer-events:none set).
 const LR_LAYOUT=[
-  ['#lr-title-art', 0.774, 2.000,97.032,61.429],
+  // Deck: "Put the words 'Lucky Roller' in-line with the number tick boxes." Was a full-width
+  // (97.032%) backdrop spanning nearly the whole box, listed first specifically so it renders
+  // BEHIND #bnums-low/#bnums-high (see the stacking-order comment above) -- meaning the text
+  // was directly underneath the number pills the entire time, invisible under their opaque
+  // backgrounds. Re-homed into the real empty gap between the two pill clusters instead (the
+  // same 33.548%/64.0% zero-gap boundary the pills themselves already use, see their own
+  // comment below), same y/height as the pills so it sits genuinely inline/on-row with them
+  // rather than overlapping.
+  ['#lr-title-art', 33.548, 4.000,30.452,44.000],
   // #bnums-low/#bnums-high and #dice-zone were APPROXIMATED off the old art's fractions rather
   // than measured (flagged at the time as low-risk/cosmetic-only) -- turned out to overlap
   // #dice-zone by several px, which sizeDiceZone()'s gap-detection reads as "no margin left" and
@@ -3061,7 +3088,10 @@ const PORTRAIT_CRAPLESS_LAYOUT=CRAPLESS_LAYOUT.map(e=>e.slice());
 // #lucky-roller's own now-much-shorter height) -- same "still valid CSS, not a mistake" case
 // as landscape's own #dice-zone, just a more extreme number since the parent box shrank.
 const PORTRAIT_LR_LAYOUT=[
-  ['#lr-title-art', 0.774, 2.000,97.032,61.429],
+  // Same re-homing as landscape's own #lr-title-art (see that entry's comment) -- portrait's
+  // #bnums-low/#bnums-high are literally copied from landscape's values (never separately
+  // calibrated), so the same 33.548%/64.0% gap boundary applies identically here.
+  ['#lr-title-art', 33.548, 4.000,30.452,44.000],
   ['#bnums-low',   1.290, 4.000,32.258,44.000],
   ['#bnums-high', 64.000, 4.000,32.258,44.000],
   ['#dice-zone', 80.816,1043.333, 29.796,130.000],
