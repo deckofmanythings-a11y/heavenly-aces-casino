@@ -73,35 +73,18 @@
     '00', 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2].map(String);
   const N = WHEEL_ORDER.length; // 38
   const SLOT_ANGLE = (Math.PI * 2) / N;
-  // Fret dividers must sit at the BOUNDARY between two pockets, not at a pocket's own center.
-  // drawWheelTexture() draws the photo with pocket '0' (and every other pocket) CENTERED at
-  // canvas angle i*SLOT_ANGLE (that's the whole point of "pocket '0' centered at the top" --
-  // see buildWheelTexture's comment), so i*SLOT_ANGLE is a pocket's LABEL angle, and the
+  // Fret dividers must sit at the BOUNDARY between two pockets, not at a pocket's own center --
+  // pocket i is CENTERED at canvas/world angle i*SLOT_ANGLE (see drawWheelTexture), so the
   // boundary it shares with its neighbor is a half-slot off from that, at (i+0.5)*SLOT_ANGLE.
-  // Every fret-angle use (real physics shapes, debug markers, the live calibrator's rebuild)
-  // MUST go through this one function -- an earlier version used the bare i*SLOT_ANGLE directly
-  // in all four places, which put every fret exactly on a pocket's printed number instead of its
-  // edge (Deck caught this by eye: "the yellow line, practically down the middle, of 5... or 7...
-  // or single 0"). Confirmed empirically after the fix with the debug overlay, not just reasoned
-  // through -- see the physics memory file.
-  // Per-fret correction (degrees) on top of the uniform (i+0.5)*SLOT_ANGLE formula -- measured
-  // 2026-07-27 with a temporary in-browser calibrator (sampled real rendered pixel colors at
-  // each fret's exact projected screen position via camera.project(), found the true color-
-  // transition angle, since built to shipped screenshots ---see the physics memory file).
-  // 35 of 38 got a real, verified measurement; indices 18, 19, 37 stayed at 0 (the uniform
-  // fallback) because pockets 1, 00-adjacent 27, and 2 are genuinely compressed to a sliver
-  // (<2deg) in the real photo right next to the two greens -- a simple two-color transition
-  // search reliably lands mid-pocket instead of on-edge whenever a third, very thin pocket is
-  // squeezed into the search window, confirmed by tracing raw pixel colors directly. Re-running
-  // the calibration for those 3 would need a search that explicitly accounts for a thin third
-  // pocket in between, not just attempted harder with the same two-color method.
-  const FRET_ANGLE_OFFSET_DEG = [
-    -0.05, 1.45, 1.4, 1.15, 1.35, 1.3, 1.3, 1.25, 0.85, 0.15,
-    0.65, 1.05, 0.95, 0.9, 0.8, 0.75, 0.75, 0.65, 0, 0,
-    0, 1.25, 1.4, 1.55, 1.7, 2, 2.35, 2.5, 2.4, 2.55,
-    2.45, 2.4, 2.25, 2.05, 1.85, 1.7, 1.45, 0
-  ];
-  function fretAngleAt(i) { return (i + 0.5) * SLOT_ANGLE + FRET_ANGLE_OFFSET_DEG[i] * Math.PI / 180; }
+  // Every fret-angle use (real physics shapes, debug markers, drawWheelTexture's own wedges)
+  // goes through this one function, so the printed pocket boundary and the real physics divider
+  // are mathematically identical by construction -- no separate calibration is possible to drift
+  // out of sync, unlike the earlier real-photo texture this file used to have (see the physics
+  // memory file: that needed a whole per-pocket calibration pass, measuring actual rendered
+  // pixels, and still left 3 of 38 frets on an uncorrectable fallback because the photo's real
+  // pocket spacing wasn't perfectly even -- Deck's call to drop the photo for a procedural
+  // texture removed that whole problem, not just patched it further).
+  function fretAngleAt(i) { return (i + 0.5) * SLOT_ANGLE; }
   const RED = new Set(['1','3','5','7','9','12','14','16','18','19','21','23','25','27','30','32','34','36']);
   function colorOf(pocket) { return (pocket === '0' || pocket === '00') ? 'green' : (RED.has(pocket) ? 'red' : 'black'); }
 
@@ -110,7 +93,6 @@
   let scene, camera, renderer, canvasEl, rafId, lastTime = 0;
   let wheelMesh, wheelCanvas, wheelCtx, wheelTexture, ballMesh, pointerMesh;
   let fretDebugGroup = null; // see buildFretDebugGroup / RouletteWheel.debugFrets -- dev-only alignment aid
-  let pocketsPhotoImg; // real-photo pocket ring, drawn (and rotated for relabeling) onto wheelCanvas -- see drawWheelTexture
   let labelOffset = 0; // which WHEEL_ORDER index is drawn at texture-slot 0 (the relabel knob)
 
   // ---------- audio (ticks only; reuses site-wide AudioSettings like every other module) ----------
@@ -134,10 +116,12 @@
   }
 
   // ---------- wheel number-ring texture (the "relabel" surface) ----------
-  // wheel-pockets-photo.jpg is a real photo of the pocket ring, cropped square (center on the
-  // wheel, radius out to just past the last pocket, no gold trim/rim in frame) with pocket '0'
-  // centered at the top -- i.e. it already matches this file's own labelOffset=0 layout exactly,
-  // since WHEEL_ORDER is the real American wheel sequence the photo itself was shot in.
+  // Procedurally drawn (canvas 2D arcs/text), not a real photo -- Deck's explicit call after the
+  // real photo's own uneven pocket spacing needed a whole per-pocket calibration pass (see the
+  // physics memory file) and still left 3 of 38 frets uncorrectable. Drawing each wedge directly
+  // from fretAngleAt(i) -- the EXACT SAME calibrated angles the physics fret body itself uses --
+  // makes the printed boundary and the real divider mathematically identical by construction,
+  // for all 38, with no separate alignment step needed ever again.
   function buildWheelTexture() {
     const size = 1536; // higher-res than an earlier 1024 -- the wheel renders large enough on
                         // screen (see #wheel-wrap in roulette.html) that labels need more source
@@ -146,28 +130,67 @@
     wheelCanvas.width = size; wheelCanvas.height = size;
     wheelCtx = wheelCanvas.getContext('2d');
     wheelTexture = new THREE_.CanvasTexture(wheelCanvas);
-    pocketsPhotoImg = new Image();
-    pocketsPhotoImg.onload = drawWheelTexture; // first draw is likely still loading synchronously here
-    pocketsPhotoImg.src = 'wheel-pockets-photo.jpg';
-    drawWheelTexture();
+    drawWheelTexture(); // fully synchronous now -- no photo to wait on
   }
-  // Relabeling used to redraw each pocket's color+number individually (the "which number is
-  // physically where" trick); with a real photo standing in for the whole ring at once, the same
-  // trick becomes ONE rigid rotation of that single image -- every pocket needs the identical
-  // angular shift (labelOffset slots), since the photo's native layout already matches
-  // WHEEL_ORDER's slot 0..37 positions one-for-one. Verified algebraically: the old per-slot rule
-  // "slot s shows WHEEL_ORDER[(s-labelOffset)%N]" means a pocket native to slot i is drawn at slot
-  // i+labelOffset for every i -- a uniform rotation, not a per-slot remap.
+  // Angle convention (matches fretAngleAt/the whole physics side exactly, confirmed empirically
+  // during the fret calibration work, not re-derived here): angle 0 = canvas "up", increasing
+  // angle = clockwise. A point at "local up" (0,-1), after `ctx.rotate(a)`, lands at canvas
+  // offset (sin(a), -cos(a)) -- the identical (sin,cos) pairing used everywhere else in this
+  // file for world positions. canvas's native arc() measures from the +X axis instead of "up",
+  // so any angle in THIS convention needs a -PI/2 shift before being passed to arc().
+  const WHEEL_COLOR_HEX = { red: '#a01818', black: '#181818', green: '#0a6b30' };
+  // Relabeling: unlike the old rigid-photo-rotation trick, this redraws each of the N physical
+  // slots independently -- slot s (a FIXED physical position, from fretAngleAt) shows pocket
+  // WHEEL_ORDER[(s-labelOffset)%N], the exact same rule offsetForSlot()/beginResolve() already
+  // assume (this file's public contract for labelOffset is unchanged, only drawWheelTexture's
+  // own internals are -- verified the two are consistent: offsetForSlot solves this same
+  // equation for labelOffset given a wanted (pocket, drawnSlot) pair).
   function drawWheelTexture() {
     const ctx = wheelCtx, size = wheelCanvas.width, cx = size / 2, cy = size / 2;
+    const scale = (size / 2) / CFG.wheelRadius; // canvas px per world unit
+    const innerR = FRET_INNER_R * scale, outerR = FRET_OUTER_R * scale;
+    const numR = (FRET_INNER_R + FRET_OUTER_R) / 2 * scale;
+    const fontPx = Math.round((FRET_OUTER_R - FRET_INNER_R) * scale * 0.6);
     ctx.clearRect(0, 0, size, size);
-    if (pocketsPhotoImg && pocketsPhotoImg.complete && pocketsPhotoImg.naturalWidth) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.font = '700 ' + fontPx + 'px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let s = 0; s < N; s++) {
+      const pocket = WHEEL_ORDER[(s - labelOffset + N * 4) % N];
+      const a0 = fretAngleAt((s - 1 + N) % N);
+      const a1raw = fretAngleAt(s);
+      const a1 = a1raw > a0 ? a1raw : a1raw + Math.PI * 2; // unwrap the s=0 seam
+      ctx.beginPath();
+      ctx.arc(0, 0, outerR, a0 - Math.PI / 2, a1 - Math.PI / 2);
+      ctx.arc(0, 0, innerR, a1 - Math.PI / 2, a0 - Math.PI / 2, true);
+      ctx.closePath();
+      ctx.fillStyle = WHEEL_COLOR_HEX[colorOf(pocket)];
+      ctx.fill();
+      const centerA = (a0 + a1) / 2;
       ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(labelOffset * SLOT_ANGLE);
-      ctx.drawImage(pocketsPhotoImg, -cx, -cy, size, size);
+      ctx.rotate(centerA);
+      ctx.fillStyle = '#f2ead8';
+      ctx.fillText(pocket, 0, -numR);
       ctx.restore();
     }
+    // Gold divider lines exactly at each fret's own calibrated angle -- purely cosmetic (the
+    // real divider is the physics fretBody), but reinforces visually that every pocket boundary
+    // is precisely where the fret is, since both numbers come from the identical fretAngleAt(i).
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = Math.max(1, size * 0.0016);
+    for (let i = 0; i < N; i++) {
+      const a = fretAngleAt(i);
+      ctx.save();
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(0, -innerR);
+      ctx.lineTo(0, -outerR);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
     if (wheelTexture) wheelTexture.needsUpdate = true;
   }
   // pocket -> its fixed index in WHEEL_ORDER (physical fret position, never changes)
@@ -517,15 +540,13 @@
   }
 
   // ---------- real rigid-body physics world (cannon.js) ----------
-  // POCKET_R targets the real photo's actual pocket floor, NOT the number -- the pocket art has
-  // TWO concentric rings inside the numbered band (confirmed by radial pixel scans through both
-  // a green '0' and a red '9', so it's the pockets' actual shape, not an artifact of one cell):
-  // a plain-color inner ring with no text (photo r 304-380, center ~342) is the true pocket floor,
-  // separated by a thin gold trim line (~382-388) from the outer ring where the number itself is
-  // printed (text centered ~r 410-416). wheel-pockets-photo.jpg is cropped so photo r=480 = this
-  // constant's own 1.0 (i.e. CFG.wheelRadius) with no other scaling, so 342/480 = 0.7125 converts
-  // directly. (Superseded the old 0.87 -- that value intentionally put the ball OUTSIDE the label
-  // radius, tuned back when pockets were flat procedural fills with no separate pocket art at all.)
+  // POCKET_R targets the pocket floor, NOT the number -- originally derived from a real photo's
+  // two concentric rings (a plain-color inner floor separated by a gold trim line from the outer
+  // ring carrying the printed number), back when the numbered ring itself was a real photo
+  // texture. The photo is gone now (see drawWheelTexture -- procedurally drawn from
+  // FRET_INNER_R/FRET_OUTER_R instead, so printed pockets and physics frets can never drift
+  // apart), but this constant's VALUE (0.7125 of wheelRadius) is unrelated to that and stays --
+  // it's just where the ball's rest target sits within the fret band, still correct.
   const ORBIT_R = CFG.wheelRadius * 0.92, POCKET_R = CFG.wheelRadius * 0.7125;
   const ORBIT_Y = 0.16, POCKET_Y = 0.09;
   // Fret ring radial span. Deck: the ball had to slide "over halfway into the well" (in practice
@@ -702,13 +723,12 @@
 
     // Dev-only alignment aid (see RouletteWheel.debugFrets in the public API) -- renders the
     // REAL physics fret positions (identical fretAngleAt(i) angle + FRET_CENTER_R/FRET_HALF_DEPTH
-    // the CANNON shapes above use, just as visible THREE meshes) so we can visually check whether
-    // the printed photo's pocket boundaries actually line up with where the physics dividers
-    // really are, instead of guessing from how "sus" a ball's resting spot looks. Deliberately
-    // does NOT re-derive the angle from any of restingSlot()'s reflection/phase math -- it reuses
-    // the exact same fretAngleAt(i) value the fret body itself is built from, so any mismatch
-    // this reveals is a real photo/texture registration issue, not a re-derivation error.
-    // Hidden by default; toggle from the browser console with RouletteWheel.debugFrets(true).
+    // the CANNON shapes above use, just as visible THREE meshes) so alignment against the drawn
+    // wheel texture can be checked visually. Now that drawWheelTexture() draws every wedge from
+    // this exact same fretAngleAt(i), a mismatch here would mean a real bug in one of the two
+    // draw paths, not a registration/calibration issue (there's nothing left to calibrate against
+    // -- kept mainly as a sanity check after any future change to either). Hidden by default;
+    // toggle from the browser console with RouletteWheel.debugFrets(true).
     fretDebugGroup = new THREE_.Group();
     fretDebugGroup.visible = false;
     for (let i = 0; i < N; i++) {
