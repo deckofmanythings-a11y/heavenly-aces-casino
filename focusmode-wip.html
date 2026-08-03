@@ -2340,7 +2340,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.12</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.13</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2517,12 +2517,16 @@ const FELT_LAYOUT=[
   // as %-of-THIS-box) were recomputed from the export again too -- see their own comments.
   // Re-tuned again -- moved down and shrunk vertically (22.656x6.111% -> 22.656x3.333%, same
   // width, y 4.722->7.5). LR_LAYOUT's low/all/high/#dice-zone recomputed from it again too.
-  // Deck's Crapless/Landscape drag-tool export -- moved down again and grown taller (1230,180,
-  // 725,85 on the 3200x1800 canvas) to make room for #history-strip's new much-wider banner
-  // above it (see that entry's own comment). LR_LAYOUT's low/all/high/#dice-zone recomputed
-  // from this new box too -- their old %-of-#lucky-roller values no longer mean anything once
-  // the box itself moved/grew.
-  ['#lucky-roller',   38.438,10, 22.656,4.722,null],
+  // Deck's Crapless/Landscape drag-tool export -- moved down and grown taller (1230,180,725,85
+  // on the 3200x1800 canvas) to make room for #history-strip's new much-wider banner above it
+  // (see that entry's own comment). LR_LAYOUT's low/all/high/#dice-zone recomputed from this
+  // new box too -- their old %-of-#lucky-roller values no longer mean anything once the box
+  // itself moved/grew.
+  // Widened further and shifted left (Deck's follow-up export, 1085,180,1010,85) -- low/all/
+  // high/#dice-zone's absolute px on the felt DIDN'T move at all in this export (confirmed:
+  // byte-identical to the prior pass), but their %-of-#lucky-roller values still had to be
+  // recomputed anyway since the box they're relative to changed shape underneath them.
+  ['#lucky-roller',   33.906,10, 31.5625,4.722,null],
   // Roll History (Deck: "Move the Roll History to above Lucky Roller") -- pulled out of
   // #bottom-section (where it normally lives, below the felt) into its own felt-abs spot.
   // exitFeltMode() already restores any FELT_LAYOUT element to its original DOM home via the
@@ -2687,10 +2691,15 @@ const LR_LAYOUT=[
   // again (see FELT_LAYOUT's own comment), so these had to be recomputed a second time against
   // its newest box (1230,180,725,85 on the 3200x1800 canvas): relX=(px_x-1230)/725*100,
   // relY=(px_y-180)/85*100, relW=px_w/725*100, relH=px_h/85*100.
-  ['#dice-zone',  -117.931,158.824,53.793,211.765],
-  ['low',      0,105.882,29.655,170.588],
-  ['all',     35.172,105.882,29.655,170.588],
-  ['high',    70.345,105.882,29.655,170.588]
+  // Re-derived a THIRD time (Deck's follow-up export) -- low/all/high/dice's own absolute px on
+  // the felt didn't move at all this round, only #lucky-roller's box did (widened, shifted
+  // left, 1085,180,1010,85), so every %-of-#lucky-roller value below still had to change even
+  // though nothing visibly moved on screen: relX=(px_x-1085)/1010*100, relY=(px_y-180)/85*100,
+  // relW=px_w/1010*100, relH=px_h/85*100.
+  ['#dice-zone',  -70.297,158.824,38.614,211.765],
+  ['low',      14.356,105.882,21.287,170.588],
+  ['all',     39.604,105.882,21.287,170.588],
+  ['high',    64.851,105.882,21.287,170.588]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
