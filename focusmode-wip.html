@@ -1068,12 +1068,20 @@ body.felt-mode #felt-stage .pay{display:block!important;font-size:calc(16px * va
 /* Deck: "Make the font used for the numbers in the field box (2-3...11-12) be the same font
    size as the word Field." FIELD itself (.zone-name) is forced to 36px below (was only 16px
    here, much smaller). */
-body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:calc(44px * var(--font-scale,1))!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+/* Deck: "Field is busting out of its box vertically" -- the 4 stacked lines (numbers/FIELD/
+   stake/pays-double) measured 137px tall live against a 100px box, a real 19px overflow top
+   AND bottom (vertically centered content spills symmetrically). Binary-searched the real fit
+   at felt-width 900 (a representative sub-1400 test point): 28px for numbers-list+FIELD (was
+   44) and 10px for field-info (was 15) leaves a -4px margin there; confirmed -9px margin at
+   full scale (1600px window) too. Landscape only -- portrait's own separately-tuned values
+   below are untouched. */
+body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:calc(28px * var(--font-scale,1))!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+body.felt-mode #felt-stage #field-bar .zone-name{font-size:calc(28px * var(--font-scale,1))!important}
 /* .field-info ("pays double" + dice icons below FIELD) had no felt-mode override at all --
    the icons were already scaled (see comboImg's calc() width/height), but the wrapping text
    was stuck at the base unscaled 15px, overflowing the box at small felt sizes instead of
    shrinking with everything else around it. */
-body.felt-mode #felt-stage .field-info{font-size:calc(15px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .field-info{font-size:calc(10px * var(--font-scale,1))!important}
 /* Portrait-only -- #field-bar's portrait box is a different shape than landscape's, so it
    needed its own size for the "FIELD" text/numbers-list/pays-double line together. Scoped to
    body.felt-portrait so landscape's own separately-tuned 44px/15px above are untouched.
@@ -1381,7 +1389,14 @@ body.felt-mode #top-row{display:none!important}
    matter how high the popover's own z-index was set -- a descendant can't out-stack a sibling
    of its ancestor unless the ancestor itself is elevated too). Comfortably under the tutorial
    overlay's 8999+ range and chip-ghost's 10000. */
-body.felt-mode #felt-stage #left-col-header{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;flex-direction:column;gap:0;display:flex;z-index:700}
+/* Deck: "Move the game buttons down so they dont overlap other elements" -- base .justify-
+   content:center (line ~143) centers a column flex container's children vertically, and
+   #game-mode-toggle+#focus-settings-row's combined height (measured live: 116px) exceeds this
+   box's own 100px, so centering spilled the overflow symmetrically both up AND down -- 8px of
+   #game-mode-toggle rendered above #left-col-header's own top edge (poking above the felt
+   entirely). flex-start keeps the top edge pinned in bounds; the same 16px of overflow now
+   only spills out the bottom instead, where there's nothing above it to overlap. */
+body.felt-mode #felt-stage #left-col-header{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;flex-direction:column;justify-content:flex-start;gap:0;display:flex;z-index:700}
 body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;gap:1px}
 /* #left-col-header and #info-panel are both pinned to a FIXED PERCENTAGE of felt-stage's own
    size (see FELT_LAYOUT), not the viewport -- on a short landscape phone felt-stage itself can
@@ -2358,7 +2373,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.14</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.15</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
