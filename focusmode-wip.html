@@ -2373,7 +2373,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.15</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.16</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -6512,7 +6512,12 @@ function calibBaseEntries(){
   // value, so they always look self-consistent even if the container itself is off (Deck: "the
   // ATS bet areas are off, they seem too high and too small") -- un-skipping it so it's
   // actually draggable/resizable instead of just an invisible input to those rulers.
-  const skip=new Set(['.circle-stack','.sc-stack','#left-col-header','#info-panel','#bottom-section','#num-zone']);
+  // .sc-stack (Bets On/Off, Press, Across, Inside, Outside, Make Bullets, Reset Point) un-
+  // skipped (Deck: "give me a widget to reposition the game buttons... only one widget needed
+  // for the top button") -- it's already a single FELT_LAYOUT entry covering the whole button
+  // column, same "one shared stack, not per-button" shape as the C/C&E/E circles used to be,
+  // just never exposed to the drag tool.
+  const skip=new Set(['.circle-stack','#left-col-header','#info-panel','#bottom-section','#num-zone']);
   return feltLayoutFor(activeGame==='standard'?'standard':'crapless').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
 }
 function calibInitState(){
