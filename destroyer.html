@@ -1813,7 +1813,17 @@ async function fireMissile(){
   // are unaffected -- those already point at the correct cell.
   const displayNumber=GRID_SIZE+1-roll.number;
   if(feedValues)feedValues([LETTER_TO_NUM[roll.letter]||1,displayNumber]);
-  try{await clochePromise;}catch(e){}
+  // Race against a timeout, not a bare await (Deck: "still soft locked on the first missile
+  // purchase" even after the missile-flight backstop) -- cloche-dice.js's own tumble animation
+  // is ALSO driven entirely by its own internal requestAnimationFrame loop (see loop() in
+  // cloche-dice.js), completely separate from playMissileFlight. A bare `await clochePromise`
+  // hangs forever if THAT loop stalls (same backgrounded-Discord-iframe rAF pausing as before),
+  // and this is a real blocking await -- unlike the missile-flight promise, nothing past this
+  // line in fireMissile() (including the code that re-enables the Fire button) can run until
+  // it settles one way or another. The actual roll result is already known server-side by this
+  // point (roll/hit/etc. above), so giving up on the pretty tumble animation after a generous
+  // timeout and moving straight to showing the result costs nothing functionally.
+  try{await Promise.race([clochePromise,new Promise(res=>setTimeout(res,6000))]);}catch(e){}
   landDestDice(roll.letter,displayNumber);
   document.getElementById('last-result-text').textContent=(hit?'💥 HIT!':'💧 Miss')+' '+roll.letter+displayNumber;
   // Track free missiles: decrement one for the fired missile, add back if free earned. Moved
