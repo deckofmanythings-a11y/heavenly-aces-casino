@@ -1103,12 +1103,28 @@
       drawWheelTexture();
     }
     // Hand off the wheel's rotation to the persistent idle tracker exactly where the resolve
-    // left it -- and remember the ball's settled offset from it -- so the wheel keeps turning
-    // seamlessly (no jump) and the ball visibly rides along in its pocket until the next spin
-    // picks it back up, instead of floating motionless while the wheel turns under it.
+    // left it, so the wheel keeps turning seamlessly (no jump) and the ball visibly rides along
+    // in its pocket until the next spin picks it back up, instead of floating motionless while
+    // the wheel turns under it.
     idleWheelAngle = wheelAngle;
-    const ballAngle = Math.atan2(ballBody.position.x, ballBody.position.z);
-    restBallOffset = ballAngle - wheelAngle;
+    // restBallOffset drives ONLY the idle/reveal placeholder render (see the ballMesh.position
+    // branch below in loop()) -- it deliberately does NOT use the ball's raw settled angle.
+    // The real physics ball can (correctly, physically) come to rest anywhere within its pocket,
+    // including right up against a fret -- Deck: that's genuinely hard to read at a glance. Since
+    // the DISPLAYED NUMBER is already forced by construction (the relabel above), the ball's own
+    // exact rest angle carries no game-state meaning once resolve is done -- only readability. So
+    // snap the reveal render to the pocket's true geometric center instead: solving restingSlot's
+    // own formula in reverse for the ballAngle that makes rel land exactly on finalSlot*SLOT_ANGLE
+    // (the center of that slot's +/-half-slot window, not just anywhere inside it) gives
+    // ballAngle = PI + wheelAngle - finalSlot*SLOT_ANGLE, so the offset from wheelAngle is just
+    // PI - finalSlot*SLOT_ANGLE -- a pure function of which slot won, not of physics at all. This
+    // reuses restingSlot's own tested mapping instead of re-deriving the wheelMesh/world angle
+    // relationship by hand. The real ballBody (and everything driven by it -- presimulate,
+    // determinism, HARD_STEP_CAP, drop/bounce physics during 'resolving') is completely untouched;
+    // this only changes where the already-decoupled reveal placeholder (see the existing
+    // POCKET_R/POCKET_Y hard-set below, which already ignores the ball's raw settled radius the
+    // same way) draws the ball once the spin is done.
+    restBallOffset = Math.PI - finalSlot * SLOT_ANGLE;
 
     const payload = { pocket: serverPocket, color: colorOf(serverPocket), forced: true };
     phase = 'reveal';
