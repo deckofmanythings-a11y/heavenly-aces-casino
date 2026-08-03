@@ -1050,9 +1050,20 @@ body.felt-mode #felt-stage .nb-lay .nb-lbl{background:var(--text-grad-red)!impor
 /* Re-measured live at font-scale=0.421 (BUY/PLACE were overflowing their cells by 5-6px even
    at the correct ratio -- the calibrated base was just too big for the box) -- trimmed both,
    same fit-at-representative-sub-1400-scale method as every other correction this session. */
+/* Deck: "BUY should shrink to completely fit in the box" -- still overflowing at 24px (re-
+   measured live at felt-width 900: +4px real overflow for BUY, +2px for LAY, same shared rule/
+   box width). Binary-searched the real max: 13px fits at that width's 0.643 scale ->
+   13/0.643=20.22, rounded down to 20 for margin -- fixes LAY too since it shares this rule and
+   had even less margin to spare. */
 body.felt-mode #felt-stage .nb-buy .nb-lbl,body.felt-mode #felt-stage .nb-buy-left .nb-lbl,
-body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:calc(24px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage .nb-lay .nb-lbl{font-size:calc(20px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:calc(14px * var(--font-scale,1))!important}
+/* Deck: "Odds below the word PLACE should be in the same format as the word PLACE" -- .nb-pay
+   was plain dim white text (color:rgba(255,255,255,.4)) while .nb-lbl gets the bold gradient-
+   clipped-text treatment above. Mirrors that exact treatment onto .nb-place's own .nb-pay
+   (font-size deliberately left smaller -- "format" read as style, not size, matching the
+   existing label/odds size hierarchy everywhere else on the felt). */
+body.felt-mode #felt-stage .nb-place .nb-pay{background:var(--text-grad-white)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important;font-weight:800!important}
 body.felt-mode #felt-stage .pay{display:block!important;font-size:calc(16px * var(--font-scale,1))!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
 /* Deck: "Make the font used for the numbers in the field box (2-3...11-12) be the same font
    size as the word Field." FIELD itself (.zone-name) is forced to 36px below (was only 16px
@@ -1317,10 +1328,12 @@ body.felt-mode #felt-stage #stk-light{
   position:absolute;inset:auto;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);margin:0;width:var(--chip);min-height:0;pointer-events:none;
 }
 /* nb-place had 3 flex-column children (label/stake/payout) with justify-content:center; with
-   the stake permanently out of flow now, only label+payout remain -- center them as a tight
-   pair would look wrong (that gap was previously held open by the stake's own reserved
-   height), so pin them to the box's top/bottom edges instead, same visual spread as before. */
-body.felt-mode #felt-stage .nb-place{justify-content:space-between}
+   the stake permanently out of flow now, only label+payout remain -- previously pinned to the
+   box's top/bottom edges (space-between) to preserve the old visual spread the stake's reserved
+   height used to hold open. Deck: "the vertical spacing between the two [PLACE and its odds]
+   should be as minimal as legible" -- reversed that call: center the pair as a tight block with
+   a small explicit gap instead. */
+body.felt-mode #felt-stage .nb-place{justify-content:center;gap:calc(1px * var(--font-scale,1))}
 /* Pass/DP horizontal re-centers (see the big comment on the base .has-stack rule above):
    #pass-main/#dp-main only span the ~82.6% of their bar left after the 17.4%-wide odds cell,
    so their own 50% midpoint misses the full bar's true center by half the odds cell's width.
@@ -1507,9 +1520,14 @@ body.felt-mode #felt-stage #lucky-roller .lr-pay{font-weight:700;color:var(--col
 body.felt-mode #felt-stage #lucky-roller .lr-title,
 body.felt-mode #felt-stage #lucky-roller .lr-explain,
 body.felt-mode #felt-stage #lucky-roller .lr-pay{font-size:calc(17px * var(--font-scale,1))!important}
+/* Deck: "Roll'em All is word wrapping not shrinking to fit the text" -- 18px was too wide for
+   the box even at the correct ratio (binary-searched the real max at felt-width 900, a
+   representative sub-1400 test point: 10px fits there -> 10/0.643=15.56, rounded down to 15
+   for margin; confirmed live at both that width and full scale). Trimmed + nowrap as a safety
+   net, same pattern as every other "shrinking instead of wrapping" fix this session. */
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-title,
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
-body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:calc(18px * var(--font-scale,1))!important}
+body.felt-mode #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:calc(15px * var(--font-scale,1))!important;white-space:nowrap}
 /* THE actual Low/High-vs-Roll'em-All formatting difference (Deck kept flagging it; every
    style-level check came back identical because it's structural, not cosmetic): Roll'em All's
    title/pay are DIRECT children of a justify-content:center flex box, so its text block is
@@ -2340,7 +2358,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.13</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.14</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
