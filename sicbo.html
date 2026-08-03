@@ -1935,14 +1935,14 @@ async function redeemVoucher(code){
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="cloche-dice.js?v=0.7.2"></script>
+<script src="cloche-dice.js?v=0.7.3"></script>
 <script src="winner-modal.js?v=0.5.4"></script>
 <script src="dailies-popup.js?v=4"></script>
 <script>
 // Cloche dice overlay: shared module, configured for sic-bo (3 dice, 1.8 scale)
 // using DIE3D_CLOCHE's real 3D-cube face art (not the flat DIE3D table-cell art).
 (function(){
-  ClocheDice.init({diceCount:3,dieSize:1.8,faceImages:DIE3D_CLOCHE});
+  ClocheDice.init({diceCount:3,dieSize:1.8,faceImages:DIE3D_CLOCHE,pipDepressions:false});
   // This page has no per-page mute button of its own -- just follow the site-wide
   // AudioSettings level/mute set from the lobby's Options gear.
   if(window.AudioSettings){ClocheDice.setMuted(AudioSettings.isMuted());ClocheDice.setVolume(AudioSettings.effectiveVolume());}

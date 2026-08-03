@@ -83,6 +83,7 @@
     // rotated 90 degrees from the procedural baseline", so the computed toward-6 rotation gets
     // that offset folded in (via applyPipBaseRotation) before it's applied to the real texture.
     pipBaseRotation: null,  // optional {2: 90, 3: 90, ...} per-value baseline correction (degrees)
+    pipDepressions: true,   // false skips the carved-dimple normal map, flat printed pips instead
     wallSegments: 14,
     zIndex: 9999,
     soundTheme: 'bell'      // 'bell' (default jovial chime) or 'action' (dramatic low drums +
@@ -896,7 +897,8 @@
       // opaque white. Those discarded corner pixels then show whatever's behind the die
       // (the dark backdrop), instead of a stray white bleed on the curved/beveled edges.
       const mats = faceValues.map((v, i) => new THREE.MeshStandardMaterial({
-        map: faceTexture(v, imgMap, initRot.tex[i]), normalMap: faceNormalMap(v, initRot.geo[i]),
+        map: faceTexture(v, imgMap, initRot.tex[i]),
+        normalMap: CFG.pipDepressions ? faceNormalMap(v, initRot.geo[i]) : null,
         normalScale: new THREE.Vector2(1, 1), alphaTest: 0.5, roughness: 0.4, metalness: 0.05
       }));
       // seg bumped 4 -> 10: the flat-face region only spans size-2*radius out of the full
@@ -966,7 +968,7 @@
     const rot = pipRotationsForValues(values);
     for (let i = 0; i < 6; i++) {
       d.mesh.material[i].map = faceTexture(values[i], d.imgMap, rot.tex[i]);
-      d.mesh.material[i].normalMap = faceNormalMap(values[i], rot.geo[i]);
+      d.mesh.material[i].normalMap = CFG.pipDepressions ? faceNormalMap(values[i], rot.geo[i]) : null;
       d.mesh.material[i].needsUpdate = true;
     }
   }

@@ -3197,7 +3197,7 @@ async function redeemVoucher(code){
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="cloche-dice.js?v=0.7.2"></script>
+<script src="cloche-dice.js?v=0.7.3"></script>
 <script src="winner-modal.js?v=0.5.4"></script>
 <script src="dailies-popup.js?v=4"></script>
 <script>
@@ -3222,7 +3222,7 @@ function playHitSound(){ const a=HIT_SOUND.cloneNode(); a.volume=0.5*(window.Aud
 function playMissSound(){ const a=MISS_SOUND.cloneNode(); a.volume=window.AudioSettings?AudioSettings.effectiveVolume():1; releaseAudioClone(a); a.play().catch(()=>{}); }
 // Cloche dice overlay: shared module, configured for destroyer (letter die A-F + number
 // die 1-6, driven through ClocheDice's 1-6 physics via faceImagesPerDie).
-ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM_3D,DIE_NUMBER_IMG_3D],soundTheme:'action'});
+ClocheDice.init({diceCount:2,dieSize:2.0,faceImagesPerDie:[DIE_LETTER_IMG_NUM_3D,DIE_NUMBER_IMG_3D],soundTheme:'action',pipDepressions:false});
 // This page has no per-page mute button of its own (unlike the craps games) -- just follow
 // the site-wide AudioSettings level/mute set from the lobby's Options gear.
 if(window.AudioSettings){ClocheDice.setMuted(AudioSettings.isMuted());ClocheDice.setVolume(AudioSettings.effectiveVolume());}
