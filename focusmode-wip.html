@@ -2340,7 +2340,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.11</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.12</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2517,15 +2517,22 @@ const FELT_LAYOUT=[
   // as %-of-THIS-box) were recomputed from the export again too -- see their own comments.
   // Re-tuned again -- moved down and shrunk vertically (22.656x6.111% -> 22.656x3.333%, same
   // width, y 4.722->7.5). LR_LAYOUT's low/all/high/#dice-zone recomputed from it again too.
-  ['#lucky-roller',   38.594,7.5, 22.656,3.333,null],
+  // Deck's Crapless/Landscape drag-tool export -- moved down again and grown taller (1230,180,
+  // 725,85 on the 3200x1800 canvas) to make room for #history-strip's new much-wider banner
+  // above it (see that entry's own comment). LR_LAYOUT's low/all/high/#dice-zone recomputed
+  // from this new box too -- their old %-of-#lucky-roller values no longer mean anything once
+  // the box itself moved/grew.
+  ['#lucky-roller',   38.438,10, 22.656,4.722,null],
   // Roll History (Deck: "Move the Roll History to above Lucky Roller") -- pulled out of
-  // #bottom-section (where it normally lives, below the felt) into its own felt-abs spot,
-  // same x/width as #lucky-roller directly above it. exitFeltMode() already restores any
-  // FELT_LAYOUT element to its original DOM home via the same feltHomes mechanism used
-  // everywhere else, so list mode is unaffected.
+  // #bottom-section (where it normally lives, below the felt) into its own felt-abs spot.
+  // exitFeltMode() already restores any FELT_LAYOUT element to its original DOM home via the
+  // same feltHomes mechanism used everywhere else, so list mode is unaffected.
   // Deck's drag-tool export (1235,0,725,79 on the 3200x1800 canvas) -- flush against the
   // felt's top edge, height re-tuned from my own first-pass 4.4% to 4.389% (79/1800*100).
-  ['#history-strip',  38.594,0, 22.656,4.389,null],
+  // Re-tuned again (Crapless/Landscape export) -- no longer "same x/width as #lucky-roller":
+  // Deck widened it into its own much bigger banner spanning most of the felt's top edge
+  // (415,0,2230,85 on the 3200x1800 canvas), with #lucky-roller now sitting below/right of it.
+  ['#history-strip',  12.969,0, 69.688,4.722,null],
   // Widened from 12.60 -> 17.00 (Deck: "the entire #info-panel needs to just be wider") to fit
   // the new verbose Last Win formula line and the Finances dropdown without clipping; x pulled
   // in from 87.00 -> 82.50 to keep the right edge inside the felt (82.50+17.00=99.50%).
@@ -2562,7 +2569,9 @@ const FELT_LAYOUT=[
   // Shifted down 120 canvas px with the crapless number strip it sits under (one puck height,
   // see CRAPLESS_LAYOUT's numberbox comment). Crapless-only visually (display:none otherwise),
   // so this shared FELT_LAYOUT entry moving doesn't affect Standard.
-  ['#line-mode-toggle', 39.844,55.556, 59.375,3.056,null],
+  // Widened/grown slightly (Crapless/Landscape export, 1275,1000,1905,100 on the 3200x1800
+  // canvas) -- crapless-only visually either way, still no effect on Standard.
+  ['#line-mode-toggle', 39.844,55.556, 59.531,5.556,null],
   // Panel labels (Phase 7 polish): sit in the real gap between the hard4/6/8/10-or-hop22/33/
   // 44/55 cluster (bottom ~39.5%) and the any7/aces/horn/etc-or-hop13..46 cluster (top
   // ~52.667%) -- unused vertical space on both tabs, wide enough for a compact label without
@@ -2674,10 +2683,14 @@ const LR_LAYOUT=[
   // moved to a totally different physical spot (up and to the left, into the previously-empty
   // area above Hard Ways), which is why its x/y go negative/>100 -- that's still valid CSS
   // (positioned outside the parent's own box), not a mistake.
-  ['#dice-zone',  -118.622,300.030,53.796,300.030],
-  ['low',      0.000,100.000,29.657,241.704],
-  ['all',     35.174,100.000,29.657,241.704],
-  ['high',    70.343,100.000,29.657,241.704]
+  // Re-derived again (Crapless/Landscape export) -- #lucky-roller moved down and grew taller
+  // again (see FELT_LAYOUT's own comment), so these had to be recomputed a second time against
+  // its newest box (1230,180,725,85 on the 3200x1800 canvas): relX=(px_x-1230)/725*100,
+  // relY=(px_y-180)/85*100, relW=px_w/725*100, relH=px_h/85*100.
+  ['#dice-zone',  -117.931,158.824,53.793,211.765],
+  ['low',      0,105.882,29.655,170.588],
+  ['all',     35.172,105.882,29.655,170.588],
+  ['high',    70.345,105.882,29.655,170.588]
 ];
 function lrEl(sel){
   if(sel==='low'){const e=document.getElementById('bbonus-low');return e?e.closest('.lr-bonus-wrap'):null;}
@@ -2786,13 +2799,16 @@ const CRAPLESS_LAYOUT=[
   // see the 'come-crapless'/'field-crapless'/'pass-crapless' FM_ART comments) -- these three
   // were left at their OLD pixel positions after the art swap, so the clickable area and the
   // visible bar stopped agreeing (same class of bug as Lucky Roller's edge-click miss).
-  ['#come-bar',      56.719,58.889,42.656,10.833,null],
-  ['#field-bar',     56.719,69.722,42.656,15.278,null],
-  ['#pass-bar',      56.719,85.000,42.656,12.500,null],
+  // Nudged down 45 canvas px as a group (Crapless/Landscape export) -- same x/w, zero-gap
+  // stacking preserved.
+  ['#come-bar',      56.719,61.389,42.656,10.833,null],
+  ['#field-bar',     56.719,72.222,42.656,15.278,null],
+  ['#pass-bar',      56.719,87.5,  42.656,12.500,null],
   // Immediately left of the Pass Line (Deck's placement request), same y/h so it sits
   // flush against pass-bar's row. Width derived from height to keep the light art square:
   // 12.556% of 1800px=226px tall -> 226/3200=7.0625% wide.
-  ['#light-spot',     49.8438,85.222, 7.0625,12.5556,null]
+  // y nudged down 40 canvas px with pass-bar above (Crapless/Landscape export).
+  ['#light-spot',     49.8438,87.444, 7.0625,12.5556,null]
 ];
 // Standard-specific positions, measured directly on the standard felt art -- this sheet has
 // an extra Don't Pass Bar row (and only 6 numbers plus a Don't Come Bar column), so none of
