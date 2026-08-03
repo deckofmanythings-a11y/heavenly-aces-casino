@@ -1186,16 +1186,39 @@ function playMissileFlight(serverRow,serverCol,missileType,onHitCross){
     img.style.transform='translate(-50%,-50%) rotate('+(MISSILE_ROTATE_DEG[axis]||0)+'deg)';
     layer.appendChild(img);
     const DURATION=2000; // ms -- "slowly fly over"
-    let hitFired=false;
+    let hitFired=false,done=false;
     const start=performance.now();
+    // Hard wall-clock backstop, independent of requestAnimationFrame -- this was the actual
+    // cause of Deck's reported soft-lock ("Buy Missile... UI goes away as if it was firing...
+    // never fires... Fire button locked out"). Discord Activities run inside an iframe that
+    // browsers can background/throttle, and a backgrounded tab PAUSES rAF entirely -- since
+    // the hit/miss reveal (onHitCross, which clears _fpPendingReveal), the sound, and the
+    // row/column flash cleanup all only ever fired from inside that rAF loop, a stalled loop
+    // meant the target cell stayed suppressed and the sprite/flash never cleared -- forever,
+    // even though fireMissile() itself (not gated on this promise) had already completed and
+    // moved on server-side. setTimeout callbacks fire even in backgrounded tabs (throttled to
+    // once/sec at worst, never fully paused the way rAF is), so this guarantees onHitCross and
+    // resolve() both fire within bounded real time no matter what the render loop is doing.
+    const backstop=setTimeout(()=>finish(),DURATION+500);
+    function finish(){
+      if(done)return;
+      done=true;
+      clearTimeout(backstop);
+      if(!hitFired){hitFired=true;if(onHitCross)onHitCross();}
+      img.style.left=fpPct(p1.x,FP_W)+'%';
+      img.style.top=fpPct(p1.y,FP_H)+'%';
+      img.remove();
+      resolve();
+    }
     function frame(now){
+      if(done)return;
       const t=Math.min(1,(now-start)/DURATION);
       const x=p0.x+(p1.x-p0.x)*t,y=p0.y+(p1.y-p0.y)*t;
       img.style.left=fpPct(x,FP_W)+'%';
       img.style.top=fpPct(y,FP_H)+'%';
       if(!hitFired&&t>=tHit){hitFired=true;if(onHitCross)onHitCross();}
       if(t<1)requestAnimationFrame(frame);
-      else{img.remove();resolve();}
+      else finish();
     }
     requestAnimationFrame(frame);
   });
