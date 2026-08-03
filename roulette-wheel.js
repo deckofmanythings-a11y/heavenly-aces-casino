@@ -138,7 +138,15 @@
   // offset (sin(a), -cos(a)) -- the identical (sin,cos) pairing used everywhere else in this
   // file for world positions. canvas's native arc() measures from the +X axis instead of "up",
   // so any angle in THIS convention needs a -PI/2 shift before being passed to arc().
-  const WHEEL_COLOR_HEX = { red: '#a01818', black: '#181818', green: '#0a6b30' };
+  // [light, dark] stops for a radial gloss -- light end sits at FRET_OUTER_R (catches the
+  // "light" near the rim), dark end at FRET_INNER_R (the pocket well), giving each wedge a
+  // subtle domed look instead of a flat fill.
+  const WHEEL_COLOR_STOPS = {
+    red:   ['#c9302c', '#5c0f0f'],
+    black: ['#333333', '#050505'],
+    green: ['#149a52', '#04301a'],
+  };
+  const NUMBER_FONT_FAMILY = 'Georgia, "Times New Roman", Times, serif';
   // Relabeling: unlike the old rigid-photo-rotation trick, this redraws each of the N physical
   // slots independently -- slot s (a FIXED physical position, from fretAngleAt) shows pocket
   // WHEEL_ORDER[(s-labelOffset)%N], the exact same rule offsetForSlot()/beginResolve() already
@@ -149,12 +157,15 @@
     const ctx = wheelCtx, size = wheelCanvas.width, cx = size / 2, cy = size / 2;
     const scale = (size / 2) / CFG.wheelRadius; // canvas px per world unit
     const innerR = FRET_INNER_R * scale, outerR = FRET_OUTER_R * scale;
-    const numR = (FRET_INNER_R + FRET_OUTER_R) / 2 * scale;
-    const fontPx = Math.round((FRET_OUTER_R - FRET_INNER_R) * scale * 0.6);
+    // 0.72 of the way from inner to outer (was the 0.5 midpoint) -- pushed toward the rim per
+    // Deck's request; still leaves enough margin below outerR for the glyph's half-height so
+    // tall/rotated corners don't clip past the gold outer divider line.
+    const numR = (FRET_INNER_R + (FRET_OUTER_R - FRET_INNER_R) * 0.72) * scale;
+    const fontPx = Math.round((FRET_OUTER_R - FRET_INNER_R) * scale * 0.55);
+    const baseFont = '700 ' + fontPx + 'px ' + NUMBER_FONT_FAMILY;
     ctx.clearRect(0, 0, size, size);
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.font = '700 ' + fontPx + 'px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (let s = 0; s < N; s++) {
@@ -162,17 +173,42 @@
       const a0 = fretAngleAt((s - 1 + N) % N);
       const a1raw = fretAngleAt(s);
       const a1 = a1raw > a0 ? a1raw : a1raw + Math.PI * 2; // unwrap the s=0 seam
+      const centerA = (a0 + a1) / 2;
       ctx.beginPath();
       ctx.arc(0, 0, outerR, a0 - Math.PI / 2, a1 - Math.PI / 2);
       ctx.arc(0, 0, innerR, a1 - Math.PI / 2, a0 - Math.PI / 2, true);
       ctx.closePath();
-      ctx.fillStyle = WHEEL_COLOR_HEX[colorOf(pocket)];
+      // Gradient endpoints computed directly in this angle convention (sin, -cos) rather than
+      // via a context rotate -- sidesteps any question of whether a CanvasGradient re-samples
+      // the transform in effect at fill() time vs. at createLinearGradient() time.
+      const [lightHex, darkHex] = WHEEL_COLOR_STOPS[colorOf(pocket)];
+      const grad = ctx.createLinearGradient(
+        Math.sin(centerA) * outerR, -Math.cos(centerA) * outerR,
+        Math.sin(centerA) * innerR, -Math.cos(centerA) * innerR
+      );
+      grad.addColorStop(0, lightHex);
+      grad.addColorStop(1, darkHex);
+      ctx.fillStyle = grad;
       ctx.fill();
-      const centerA = (a0 + a1) / 2;
+      // Shrink-to-fit: measure at the base (single-digit-tuned) size and scale down only if the
+      // label is actually wider than the pocket's own chord at numR -- double digits (10-36) and
+      // "00" are the ones that ever trip this; single digits/​'0' naturally clamp to fitScale=1.
+      ctx.font = baseFont;
+      const chordW = 2 * numR * Math.sin(SLOT_ANGLE / 2) * 0.8; // 0.8 = margin from the gold dividers
+      const textW = ctx.measureText(pocket).width;
+      const fitScale = Math.min(1, chordW / textW);
+      const drawPx = Math.max(1, Math.round(fontPx * fitScale));
+      ctx.font = '700 ' + drawPx + 'px ' + NUMBER_FONT_FAMILY;
+      // Positioned via the established (sin,-cos) rotate, then flipped an extra half-turn IN
+      // PLACE (rotate after translate, so the point doesn't move) so each glyph's top points
+      // toward the wheel's center -- readable standing outside the rim looking in, like text
+      // painted on pavement reads correctly to someone walking toward it, not away from it.
       ctx.save();
       ctx.rotate(centerA);
+      ctx.translate(0, -numR);
+      ctx.rotate(Math.PI);
       ctx.fillStyle = '#f2ead8';
-      ctx.fillText(pocket, 0, -numR);
+      ctx.fillText(pocket, 0, 0);
       ctx.restore();
     }
     // Gold divider lines exactly at each fret's own calibrated angle -- purely cosmetic (the
