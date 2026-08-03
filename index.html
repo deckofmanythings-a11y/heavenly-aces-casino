@@ -9,6 +9,7 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="weekly-events.js?v=2"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
+<script src="instructions.js?v=1"></script>
 <style>
 /* Matches the tier cards' own engraved-serif title font -- see dailies.html for the same
    pattern (this is where the "print the username on the card" idea started). */
@@ -177,12 +178,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
   </div>
   <div id="lobby-grid">
     <div class="lobby-tile" onclick="dNav('focusmode.html?mode=crapless')">
+      <button class="info-circle-btn" onclick="showInstr(event,'craps-crapless')" title="How to play">i</button>
       <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
       <div class="lt-icon">🎲</div>
       <div class="lt-label">CRAPLESS</div>
       <div class="lt-sub">No naturals</div>
     </div>
     <div class="lobby-tile" onclick="dNav('focusmode.html?mode=standard')">
+      <button class="info-circle-btn" onclick="showInstr(event,'craps-standard')" title="How to play">i</button>
       <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
       <div class="lt-icon">🎲</div>
       <div class="lt-label">STANDARD</div>
@@ -201,42 +204,49 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub">7 &amp; 11 win</div>
     </div>
     <div class="lobby-tile" onclick="dNav('sicbo.html')">
+      <button class="info-circle-btn" onclick="showInstr(event,'sicbo')" title="How to play">i</button>
       <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
       <div class="lt-icon">🎰</div>
       <div class="lt-label">SIC-BO</div>
       <div class="lt-sub">Bet on 3 dice</div>
     </div>
     <div class="lobby-tile" onclick="dNav('roulette.html')">
+      <button class="info-circle-btn" onclick="showInstr(event,'roulette')" title="How to play">i</button>
       <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
       <div class="lt-icon">🎡</div>
       <div class="lt-label">ROULETTE</div>
       <div class="lt-sub">Double Zero wheel</div>
     </div>
     <div class="lobby-tile" onclick="dNav('destroyer.html')">
+      <button class="info-circle-btn" onclick="showInstr(event,'destroyer')" title="How to play">i</button>
       <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
       <div class="lt-icon">🚢</div>
       <div class="lt-label">BATTLESHIPS</div>
       <div class="lt-sub">Destroyer - Naval Strike</div>
     </div>
     <div class="lobby-tile" onclick="dNav('uth.html')">
+      <button class="info-circle-btn" onclick="showInstr(event,'uth')" title="How to play">i</button>
       <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
       <div class="lt-icon">🃏</div>
       <div class="lt-label">UTH</div>
       <div class="lt-sub">Ultimate Texas Hold'em</div>
     </div>
     <div class="lobby-tile" onclick="dNav('iluvsuits.html')">
+      <button class="info-circle-btn" onclick="showInstr(event,'iluvsuits')" title="How to play">i</button>
       <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
       <div class="lt-icon">♠️</div>
       <div class="lt-label">I ❤️ SUITS</div>
       <div class="lt-sub">Best Flush Wins</div>
     </div>
     <div class="lobby-tile" onclick="dNav('breakout.html')">
+      <button class="info-circle-btn" onclick="showInstr(event,'breakout')" title="How to play">i</button>
       <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
       <div class="lt-icon">🃏</div>
       <div class="lt-label">BLACKJACK</div>
       <div class="lt-sub">Breakout Variant</div>
     </div>
     <div class="lobby-tile" onclick="dNav('paigow.html')">
+      <button class="info-circle-btn" onclick="showInstr(event,'paigow')" title="How to play">i</button>
       <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
       <div class="lt-icon">🀄</div>
       <div class="lt-label">PAI GOW</div>
@@ -248,7 +258,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.18</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.19</div>
 </div>
 
 <script>
@@ -444,6 +454,10 @@ function toggleBadgeTip(e,el){
   const wasOpen=el.classList.contains('show-tip');
   document.querySelectorAll('.status-badge.show-tip').forEach(b=>b.classList.remove('show-tip'));
   if(!wasOpen)el.classList.add('show-tip');
+}
+function showInstr(e,gameId){
+  e.stopPropagation();
+  GameInstructions.open(gameId);
 }
 document.addEventListener('click',e=>{
   if(!e.target.closest('.status-badge'))document.querySelectorAll('.status-badge.show-tip').forEach(b=>b.classList.remove('show-tip'));

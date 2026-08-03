@@ -7,6 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
+<script src="instructions.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a12;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -611,6 +612,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
            style="left:4.127%;top:3.085%;width:10.048%;height:8.83%">
         🏠 HOME
       </div>
+      <button class="info-circle-btn" onclick="GameInstructions.open('destroyer')" title="How to play"
+              style="position:absolute;left:15.3%;top:3.3%;width:2.4em;height:2.4em;min-width:2.4em;font-size:1.1em;z-index:6">i</button>
       <div class="fp-region" id="fp-dice-result" style="left:44.557%;top:3.298%;width:9.809%;height:7.766%">
         <div id="fp-last-result-text"></div>
       </div>
@@ -664,6 +667,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
            style="left:4.127%;top:3.085%;width:10.048%;height:8.83%">
         🏠 HOME
       </div>
+      <button class="info-circle-btn" onclick="GameInstructions.open('destroyer')" title="How to play"
+              style="position:absolute;left:15.3%;top:3.3%;width:2.4em;height:2.4em;min-width:2.4em;font-size:1.1em;z-index:6">i</button>
       <!-- Positions below are Deck's own calibrated export from the drag/resize tool
            (fpCalibExport(), whole pixels on the 1672x940 canvas), converted to %. -->
       <div class="fp-region" id="pp-instructions" style="left:29.964%;top:83.511%;width:33.612%;height:13.723%">Select your bet size by dragging chips to, or tapping, the bet area.
@@ -796,9 +801,10 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.9</div>
-      <div style="width:100%">
-        <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="width:100%">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.10</div>
+      <div style="width:100%;display:flex;align-items:center;gap:4px">
+        <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
+        <button class="info-circle-btn" onclick="GameInstructions.open('destroyer')" title="How to play">i</button>
       </div>
     </div>
     <div id="top-center">
