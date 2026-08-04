@@ -177,13 +177,6 @@ input,textarea{-webkit-user-select:text;user-select:text}
     <span id="weekly-event-desc"></span>
   </div>
   <div id="lobby-grid">
-    <div class="lobby-tile" onclick="dNav('focusmode.html?mode=crapless')">
-      <button class="info-circle-btn" onclick="showInstr(event,'craps-crapless')" title="How to play">i</button>
-      <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
-      <div class="lt-icon">🎲</div>
-      <div class="lt-label">CRAPLESS</div>
-      <div class="lt-sub">No naturals</div>
-    </div>
     <div class="lobby-tile" onclick="dNav('focusmode.html?mode=standard')">
       <button class="info-circle-btn" onclick="showInstr(event,'craps-standard')" title="How to play">i</button>
       <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
@@ -191,17 +184,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-label">STANDARD</div>
       <div class="lt-sub">7 &amp; 11 win</div>
     </div>
-    <div class="lobby-tile" onclick="dNav('focusmode-wip.html?mode=crapless')">
-      <div class="status-badge status-wip" onclick="toggleBadgeTip(event,this)">WIP<span class="sb-tip">Work in progress — forked from the live game for a big refactor, may be broken or change without warning</span></div>
+    <div class="lobby-tile" onclick="dNav('focusmode.html?mode=crapless')">
+      <button class="info-circle-btn" onclick="showInstr(event,'craps-crapless')" title="How to play">i</button>
+      <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
       <div class="lt-icon">🎲</div>
-      <div class="lt-label">WIP CRAPLESS</div>
+      <div class="lt-label">CRAPLESS</div>
       <div class="lt-sub">No naturals</div>
-    </div>
-    <div class="lobby-tile" onclick="dNav('focusmode-wip.html?mode=standard')">
-      <div class="status-badge status-wip" onclick="toggleBadgeTip(event,this)">WIP<span class="sb-tip">Work in progress — forked from the live game for a big refactor, may be broken or change without warning</span></div>
-      <div class="lt-icon">🎲</div>
-      <div class="lt-label">WIP STANDARD</div>
-      <div class="lt-sub">7 &amp; 11 win</div>
     </div>
     <div class="lobby-tile" onclick="dNav('sicbo.html')">
       <button class="info-circle-btn" onclick="showInstr(event,'sicbo')" title="How to play">i</button>
