@@ -2403,7 +2403,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.9</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.10</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3003,7 +3003,7 @@ const PORTRAIT_FELT_LAYOUT=[
   // real position for this now that it's un-skipped from calibBaseEntries() -- wasn't in the
   // export when this array was first built, so it fell through to landscape's own value ever
   // since. Own portrait position now (767,1920,169,576 px on the 1800x3200 canvas).
-  ['.sc-stack',        42.611,60.00, 9.389,18.00,null],
+  ['.sc-stack',        45.278,68.125, 9.389,18.00,null],
   ['#left-col-header', 0.40, 0.70,12.60,12.60,null],
   ['#lucky-roller',    14.167,12.969, 68.056,4.688,null],
   ['#history-strip',   14.167,8.281, 68.056,4.688,null],
@@ -3123,30 +3123,28 @@ const PORTRAIT_CRAPLESS_LAYOUT=[
   ['#nb-numberbox-10', 70,32.031,10,14.375,null],
   ['#nb-numberbox-11', 80,32.031,10,14.375,null],
   ['#nb-numberbox-12', 90,32.031,10,14.375,null],
-  // Deck's 5th export resolves both anomalies flagged at Ver. 1.0.8: every Buy is now a uniform
-  // h=3.75% (the old #nb-buy-8 double-height became the norm, not an outlier), and every Place
-  // is now a uniform y=46.25% (the old #nb-place-2/3-only value is now applied to 4-12 as well).
-  // Buy also moved down slightly (y=26.563%->29.375%). #nb-place-3's x (10.278% vs every other
-  // entry's clean 0/10/20.../90%) is still a ~5px nudge, kept as exported same as before.
-  ['#nb-buy-2',   0,29.375,10,3.75,null],
+  // Deck's 6th export: Buy nudged up again (29.375%->28.281%), Place unchanged. #nb-place-3's x
+  // (10.278% vs every other entry's clean 0/10/20.../90%) is still a ~5px nudge, kept as
+  // exported same as before.
+  ['#nb-buy-2',   0,28.281,10,3.75,null],
   ['#nb-place-2', 0,46.25,10,3.75,null],
-  ['#nb-buy-3',   10,29.375,10,3.75,null],
+  ['#nb-buy-3',   10,28.281,10,3.75,null],
   ['#nb-place-3', 10.278,46.25,10,3.75,null],
-  ['#nb-buy-4',   20,29.375,10,3.75,null],
+  ['#nb-buy-4',   20,28.281,10,3.75,null],
   ['#nb-place-4', 20,46.25,10,3.75,null],
-  ['#nb-buy-5',   30,29.375,10,3.75,null],
+  ['#nb-buy-5',   30,28.281,10,3.75,null],
   ['#nb-place-5', 30,46.25,10,3.75,null],
-  ['#nb-buy-6',   40,29.375,10,3.75,null],
+  ['#nb-buy-6',   40,28.281,10,3.75,null],
   ['#nb-place-6', 40,46.25,10,3.75,null],
-  ['#nb-buy-8',   50,29.375,10,3.75,null],
+  ['#nb-buy-8',   50,28.281,10,3.75,null],
   ['#nb-place-8', 50,46.25,10,3.75,null],
-  ['#nb-buy-9',   60,29.375,10,3.75,null],
+  ['#nb-buy-9',   60,28.281,10,3.75,null],
   ['#nb-place-9', 60,46.25,10,3.75,null],
-  ['#nb-buy-10',   70,29.375,10,3.75,null],
+  ['#nb-buy-10',   70,28.281,10,3.75,null],
   ['#nb-place-10', 70,46.25,10,3.75,null],
-  ['#nb-buy-11',   80,29.375,10,3.75,null],
+  ['#nb-buy-11',   80,28.281,10,3.75,null],
   ['#nb-place-11', 80,46.25,10,3.75,null],
-  ['#nb-buy-12',   90,29.375,10,3.75,null],
+  ['#nb-buy-12',   90,28.281,10,3.75,null],
   ['#nb-place-12', 90,46.25,10,3.75,null],
   // Deck's third export moved these to sit under the now-widened number strip (see the
   // #nb-numberbox-N comment above) -- 3/4/5/6/8/9/10/11/12 all share the same y/h (39.219%,
@@ -3166,7 +3164,7 @@ const PORTRAIT_CRAPLESS_LAYOUT=[
   ['#come-bar',      56.722,61.375,42.667,10.844,null],
   ['#field-bar',     56.722,72.219,42.667,15.281,null],
   ['#pass-bar',      56.722,87.5,  42.667,12.5,null],
-  ['#light-spot',    49.833,87.438,7.056,12.562,null]
+  ['#light-spot',    44.722,93.281,11.667,6.719,null]
 ];
 // PORTRAIT_LR_LAYOUT: #lr-title-art/#bnums-low/#bnums-high aren't calibration-tool-tracked at
 // all (same as landscape, see LR_LAYOUT's own comment) -- kept as landscape's own values.
@@ -3185,7 +3183,11 @@ const PORTRAIT_LR_LAYOUT=[
   ['#lr-title-art', 33.548, 4.000,30.452,44.000],
   ['#bnums-low',   1.290, 4.000,32.258,44.000],
   ['#bnums-high', 64.000, 4.000,32.258,44.000],
-  ['#dice-zone', 80.816,1043.333, 29.796,130.000],
+  // relY re-derived again from Deck's follow-up export (883.234%, was 1043.333%) -- moved up,
+  // same "still valid, dice-zone sits way outside #lucky-roller's own now-tiny box" situation.
+  // low/all/high came back within 0.02% of their stored values (drag-tool noise, not a real
+  // change) -- left untouched.
+  ['#dice-zone', 80.407,883.234, 29.796,129.986],
   ['low',      18.776,100, 20.816,136.667],
   ['all',     39.592,100, 20.816,136.667],
   ['high',    60.408,100, 20.816,136.667]
