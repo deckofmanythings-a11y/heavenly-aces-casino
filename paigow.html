@@ -337,7 +337,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.14</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.15</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="GameInstructions.open('paigow')" title="How to play">i</button>
@@ -1056,7 +1056,11 @@ async function dealHand(){
   // sweep) BEFORE updateUI()/renderChipStacks() blanks #stk-light's text out from
   // under it -- same convention as uth.html/breakout.html.
   if(data.light)spawnChipGhost(document.getElementById('stk-light'),{noDim:true});
-  renderDealtCardsAnimated();
+  // Dealer Ace-High: the server already settled the whole round (push the Ante, pay
+  // any Fortune/Light win) right in this same response -- don't make the player go
+  // through picking a Low hand only to have it push regardless. Skip straight to the
+  // showdown once the cards finish dealing, same as a normal resolve.
+  renderDealtCardsAnimated(data.autoResolved?(()=>finishHand(data)):undefined);
   updateUI();
   if(data.light){
     const img=document.getElementById('light-on-img');
@@ -1064,7 +1068,7 @@ async function dealHand(){
   }
 }
 const DEAL_STAGGER_MS=90;
-function renderDealtCardsAnimated(){
+function renderDealtCardsAnimated(onSettled){
   clearTags(G.cardEls.dealer);clearTags(G.cardEls.player);
   // The dealer's split is already known (always the house way), so its slots deal
   // directly into their final Low/High rows -- no flat "undecided" row needed for it.
@@ -1082,7 +1086,7 @@ function renderDealtCardsAnimated(){
   setTimeout(()=>{
     document.getElementById('dealer-low-label').textContent=describeScore(evaluateLow(G.hand.dealerLow));
     document.getElementById('dealer-high-label').textContent=describeScore(evaluate5(G.hand.dealerHigh));
-    activateSelectionMode();
+    (onSettled||activateSelectionMode)();
   },settleMs);
 }
 function renderDealtCardsStatic(){
