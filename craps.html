@@ -2403,7 +2403,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.2</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.3</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2495,7 +2495,10 @@ const HOP_MAP={hop11:[1,1],hop12:[1,2],hop13:[1,3],hop14:[1,4],hop15:[1,5],hop16
 const MODE_CONFIG={
   crapless:{
     oddsPay:{2:6,3:3,4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2,11:3,12:6},
-    oddsMult:{2:3,3:3,4:3,5:4,6:5,8:5,9:4,10:3,11:3,12:3},
+    // Max Pass/Come Odds multiple, per number (Deck: "2x on the 2, 3, 11, 12, 3x on the 4, 10,
+    // 4x on the 5, 9 and 5x on the 6, 8" -- was a flat 3x/3x/3x/4x/5x/5x/4x/3x/3x/3x before,
+    // 2/3/11/12 now correctly get less multiple than 4/10 to match).
+    oddsMult:{2:2,3:2,4:3,5:4,6:5,8:5,9:4,10:3,11:2,12:2},
     oddsLabel:{2:'6:1',3:'3:1',4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1',11:'3:1',12:'6:1'},
     numDefs:{2:{label:'2',place:[11,2],buyRatio:119/20/0.95},3:{label:'3',place:[11,4],buyRatio:59/20/0.95},4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2},11:{label:'11',place:[11,4],buyRatio:59/20/0.95},12:{label:'12',place:[11,2],buyRatio:119/20/0.95}},
     allNums:[2,3,4,5,6,8,9,10,11,12]
