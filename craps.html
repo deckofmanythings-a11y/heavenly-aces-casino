@@ -2403,7 +2403,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.5</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.6</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3145,12 +3145,10 @@ const PORTRAIT_CRAPLESS_LAYOUT=[
   ['#nb-place-12', 93.278,50,5.944,5.563,null],
   // Deck's third export moved these to sit under the now-widened number strip (see the
   // #nb-numberbox-N comment above) -- 3/4/5/6/8/9/10/11/12 all share the same y/h (39.219%,
-  // 7.187% tall). #come-slot-2's export entry was an exact byte-for-byte duplicate of
-  // #nb-numberbox-2's own box (0,1025,180,460 px), not the 180x230 half-height box every other
-  // slot got -- almost certainly a drag-tool miss (the come-slot never got resized off of the
-  // numberbox it started from), not an intentional 4x-taller slot. Applied as exported since
-  // that's what came back, but flagged to Deck -- worth a follow-up drag on #come-slot-2 alone.
-  ['#come-slot-2',  0,32.031,10,14.375,null],
+  // 7.187% tall). #come-slot-2 was flagged as an exported duplicate of #nb-numberbox-2's own
+  // box instead of that same half-height slot -- Deck confirmed it's a miss, corrected to match
+  // the other 9 (same y/h, keeps its own x/w).
+  ['#come-slot-2',  0,39.219,10,7.187,null],
   ['#come-slot-3',  10,39.219,10,7.187,null],
   ['#come-slot-4',  20,39.219,10,7.187,null],
   ['#come-slot-5',  30,39.219,10,7.187,null],
