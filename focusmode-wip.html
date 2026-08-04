@@ -47,13 +47,13 @@
      thicker than intended relative to the shrunk box. round(down,...,1px) floors to a whole
      px instead, so it visibly thins out faster than the font does; max(1px,...) keeps it from
      disappearing to 0 at extreme scale. */
-  --box-border: max(1px, round(down, calc(4px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
   /* Same color/opacity as --box-border, just 2px instead of 4px -- on the small prop-bet cells
      (Horn Bet, Seven, Any Craps, Aces/Ace2/Midnight/Yo) a 4px border eats a much bigger share
      of the box's own small footprint than it does on Pass Line/Come/Field/number boxes, which
      read as visibly thicker there even though the token value is identical everywhere (Deck:
      "the borders on the Horn bets, Seven, Any Craps seem extra thick"). */
-  --box-border-thin: max(1px, round(down, calc(2px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -110,8 +110,8 @@
    same formula here, at #felt-stage (where --font-scale actually lives), makes the var()
    resolve against the real local value instead of the root fallback. */
 #felt-stage{
-  --box-border: max(1px, round(down, calc(4px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
-  --box-border-thin: max(1px, round(down, calc(2px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -553,8 +553,11 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-main:hover{background:rgba(255,255,255,.1)}
 #dp-main.active-bar{background:transparent}
 .dp-name{font-size:13px;font-weight:900;letter-spacing:.06em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-/* Font-size override from Calibrate Mode's font tool. */
-#dp-bar .dp-name{font-size:calc(57px * var(--font-scale,1))!important}
+/* Font-size override from Calibrate Mode's font tool. Was 57px, matching #dp-bar12's BAR span --
+   together they overflowed the bar's fixed height at every scale (measured live: row wanted
+   156px vs the box's 67px at full scale), wrapping to 2 lines. Binary-searched down to 42px/66px
+   (dp-name/BAR+dice) so the row fits on one line with margin. */
+#dp-bar .dp-name{font-size:calc(42px * var(--font-scale,1))!important}
 .dp-stk{font-size:13px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
 .dp-note{font-size:9px;color:rgba(255,255,255,.35)}
 /* display was 'none' (JS toggled it to 'block' once shown), never 'flex' -- unlike
@@ -2315,7 +2318,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
                 <!-- Deck: "these are not the same. The DC box one should match the DP box
                      one." BAR was a flat rgba(255,150,150,.85) color, not the red-gradient-clip
                      technique .dp-name (DON'T PASS) and DC's own BAR both use -- matched. -->
-                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:calc(57px * var(--font-scale,1));background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:calc(90px * var(--font-scale,1));height:calc(45px * var(--font-scale,1))"></div>
+                <div id="dp-bar12" style="display:flex;align-items:center;gap:6px"><span style="font-size:calc(42px * var(--font-scale,1));background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span><img class="dice-combo-img" src="marble66.png" style="width:calc(66px * var(--font-scale,1));height:calc(33px * var(--font-scale,1))"></div>
               </div>
               <div class="dp-stk" id="stk-dp"></div>
               <div class="dp-note" id="note-dp"></div>
@@ -2398,7 +2401,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.18</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">WIP Ver. 0.2.19</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4602,7 +4605,7 @@ function buildStrip(){
     const dcOffPuck=document.createElement('div');dcOffPuck.id='puck-off-dc';dcOffPuck.className='puck-anchor';dcOffPuck.style.cssText='position:absolute;left:50%;bottom:100%;margin-bottom:6px;width:90px;height:90px;visibility:hidden;pointer-events:none;transform:translate(-50%,-15%)';dcBox.appendChild(dcOffPuck);
     dcBox.dataset.betKey='dc';dcBox.onclick=()=>placeBet('dc');dcBox.oncontextmenu=(e)=>{e.preventDefault();removeBet('dc');};
     const dcMid=document.createElement('div');dcMid.className='nb-mid';dcMid.style.cssText='flex:1;justify-content:center;gap:2px';
-    dcMid.innerHTML='<span style="font-size:calc(45px * var(--font-scale,1));font-weight:900;letter-spacing:.03em;line-height:1.1;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">DON\'T<br>COME</span>'
+    dcMid.innerHTML='<span style="font-size:calc(24px * var(--font-scale,1));font-weight:900;letter-spacing:.03em;line-height:1.1;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">DON\'T<br>COME</span>'
       +'<span style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1px">'
       // font-weight:400 alone wasn't enough (Deck: "I am looking at 0.0.58 and the Dont Come
       // one is very obviously not thin") -- this span is a direct child of .nb-mid, which sets
@@ -4612,8 +4615,8 @@ function buildStrip(){
       // isn't inside .nb-mid at all and renders in the page's plain system-ui default, which
       // actually has a real normal weight. Overriding font-family here too, to that same
       // default stack, not just font-weight.
-      +'<span style="font-size:calc(57px * var(--font-scale,1));font-weight:400;font-family:system-ui,sans-serif;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
-      +'<img class="dice-combo-img" src="marble66.png" style="width:calc(36px * var(--font-scale,1));height:calc(18px * var(--font-scale,1))">'
+      +'<span style="font-size:calc(30px * var(--font-scale,1));font-weight:400;font-family:system-ui,sans-serif;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">BAR</span>'
+      +'<img class="dice-combo-img" src="marble66.png" style="width:calc(20px * var(--font-scale,1));height:calc(10px * var(--font-scale,1))">'
       +'</span>'
       // No margin-top here: as an inline style it beats the felt-mode stake rule's margin:0,
       // and on the now-absolutely-centered chip anchor it read as a 1px off-center error.
