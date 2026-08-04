@@ -2403,7 +2403,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.0</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.1</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -6014,10 +6014,20 @@ function updateUI(){
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
   const hudBrEl=document.getElementById('hud-bankroll');
   if(G.bulletActive){
-    hudBrEl.textContent=fmt(Math.max(0,bulletRemaining()));
+    // Was Math.max(0,...) -- clamped a recovering-but-still-negative meter to a flat "$0.00"
+    // no matter how much it climbed, which hid every win that happened while still underwater
+    // (Deck: "wins are not going into Playable... stuck at $0 no matter what I win"). Soft
+    // Bullets explicitly allow dipping below the bullet's face value already (that's the whole
+    // point of the Hard/Soft distinction), so a negative meter isn't an invalid state to show --
+    // it's real information the clamp was throwing away. Sign has to be added manually since
+    // fmt() itself takes Math.abs().
+    const rem=bulletRemaining();
+    hudBrEl.textContent=(rem<0?'-':'')+fmt(rem);
+    hudBrEl.style.color=rem<0?'#f08080':'#ffe066';
     hudBrEl.title='Bullet '+(G.bulletIndex+1)+' of '+G.bulletCount+' ('+(G.bulletHard?'Hard':'Soft')+') -- full bankroll: '+fmt(G.bankroll);
   }else{
     hudBrEl.textContent=fmt(Math.max(0,G.bankroll));
+    hudBrEl.style.color='#ffe066';
     hudBrEl.title='';
   }
   renderBullets();
