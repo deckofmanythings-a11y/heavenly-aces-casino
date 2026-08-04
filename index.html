@@ -177,14 +177,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
     <span id="weekly-event-desc"></span>
   </div>
   <div id="lobby-grid">
-    <div class="lobby-tile" onclick="dNav('focusmode.html?mode=standard')">
+    <div class="lobby-tile" onclick="dNav('craps.html?mode=standard')">
       <button class="info-circle-btn" onclick="showInstr(event,'craps-standard')" title="How to play">i</button>
       <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
       <div class="lt-icon">🎲</div>
       <div class="lt-label">STANDARD</div>
       <div class="lt-sub">7 &amp; 11 win</div>
     </div>
-    <div class="lobby-tile" onclick="dNav('focusmode.html?mode=crapless')">
+    <div class="lobby-tile" onclick="dNav('craps.html?mode=crapless')">
       <button class="info-circle-btn" onclick="showInstr(event,'craps-crapless')" title="How to play">i</button>
       <div class="status-badge status-playable" onclick="toggleBadgeTip(event,this)">Playable<span class="sb-tip">Fully playable — stable and ready to play</span></div>
       <div class="lt-icon">🎲</div>
@@ -396,7 +396,7 @@ function logout(){
 }
 
 // ── OPTIONS (audio-settings.js is the site-wide store, shared with every game's own
-// sound playback -- see the AudioSettings-wiring comments in uth.html/focusmode.html/etc) ──
+// sound playback -- see the AudioSettings-wiring comments in uth.html/craps.html/etc) ──
 function refreshOptionsUI(){
   const muted=window.AudioSettings?AudioSettings.isMuted():false;
   const vol=window.AudioSettings?AudioSettings.getVolume():1;

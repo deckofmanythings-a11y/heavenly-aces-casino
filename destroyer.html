@@ -209,7 +209,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #fp-missile-fx{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible}
 .fp-missile-sprite{position:absolute;width:7.5%;height:auto;transform:translate(-50%,-50%);filter:drop-shadow(10px 16px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(0,0,0,.25));}
 
-/* ── PANEL CALIBRATION MODE -- same drag/resize-box pattern as Focus Mode Craps's calibrator
+/* ── PANEL CALIBRATION MODE -- same drag/resize-box pattern as Craps's calibrator
    (calibExport() there), adapted to each baked-art panel's fixed 1672x940 canvas instead of
    the felt stage. Shared between the firing panel and placement panel (toggleCalibMode('firing'
    |'placement')) via one toolbar/export modal -- only one panel's calibrator is ever active at
@@ -2476,7 +2476,7 @@ function buildFiringAxisLabels(){
 }
 
 // ── PANEL CALIBRATION MODE ──────────────────────────────────────────────────
-// Same drag/resize-box pattern as Focus Mode Craps's calibrator, adapted to the baked-art
+// Same drag/resize-box pattern as Craps's calibrator, adapted to the baked-art
 // panels' fixed 1672x940 canvas. Generalized to work on EITHER the firing panel or the
 // placement panel (toggleCalibMode('firing'|'placement')) since both are now the same CRT
 // panel art -- only one panel's calibrator is active at a time, sharing one toolbar/export
@@ -3240,7 +3240,7 @@ initDestDice();
 // clamps that overflow, but width is left exactly where it was -- the box stops being 1672:940
 // shaped, and background-size:100% 100% happily stretches the art to fill that wrong shape
 // (Deck: "Destroyer's art is stretching when the window is wide"). Same class of bug
-// sizeFeltStage() in focusmode.html already solves for its own felt-stage, ported here:
+// sizeFeltStage() in craps.html already solves for its own felt-stage, ported here:
 // explicit inline px width/height computed from whichever of width/height is actually the
 // tighter constraint, so the box can never end up off-ratio regardless of window shape.
 function sizeDestroyerPanel(){

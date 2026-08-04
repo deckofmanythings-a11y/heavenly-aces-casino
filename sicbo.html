@@ -1770,7 +1770,7 @@ function initDice(){
   // async, the browser can move on to loading the later script tags while that request is in
   // flight -- on a cold cache the session-restore response can return before three.min.js has
   // finished downloading, leaving THREE undefined here. Retry instead of giving up forever (same
-  // fix as focusmode.html's initDice — see its comment for the Crapless race-condition report).
+  // fix as craps.html's initDice — see its comment for the Crapless race-condition report).
   if(!THREE){setTimeout(initDice,100);return;}
   const W=720,H=168,cvs=document.getElementById('dice-canvas');
   renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
