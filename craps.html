@@ -2403,7 +2403,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.8</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.9</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3123,35 +3123,31 @@ const PORTRAIT_CRAPLESS_LAYOUT=[
   ['#nb-numberbox-10', 70,32.031,10,14.375,null],
   ['#nb-numberbox-11', 80,32.031,10,14.375,null],
   ['#nb-numberbox-12', 90,32.031,10,14.375,null],
-  // Real Buy/Place recalibration from Deck's 4th export (Ver. 1.0.7 had only re-aligned x to
-  // the widened strip; this replaces y/w/h too with Deck's own drag positions). Buy sits right
-  // above the number strip (y=26.563%, w=10% same as its numberbox, h=2.813%); Place mostly
-  // sits at y=50% except 2/3 which came back at y=46.25% (3.75% = 120 canvas px higher than
-  // 4-12) -- and #nb-buy-8 came back h=5.625% (double every other Buy's 2.813%). Both flagged to
-  // Deck as likely drag-tool misses (same class as the earlier #come-slot-2 one, which turned
-  // out to be a real miss) rather than silently "corrected" to match the majority pattern here.
-  // #nb-place-3's x (10.278% vs every other entry's clean 0/10/20.../90%) is a ~5px nudge, kept
-  // as exported.
-  ['#nb-buy-2',   0,26.563,10,2.813,null],
-  ['#nb-place-2', 0,46.25,10,2.813,null],
-  ['#nb-buy-3',   10,26.563,10,2.813,null],
-  ['#nb-place-3', 10.278,46.25,10,2.813,null],
-  ['#nb-buy-4',   20,26.563,10,2.813,null],
-  ['#nb-place-4', 20,50,10,2.813,null],
-  ['#nb-buy-5',   30,26.563,10,2.813,null],
-  ['#nb-place-5', 30,50,10,2.813,null],
-  ['#nb-buy-6',   40,26.563,10,2.813,null],
-  ['#nb-place-6', 40,50,10,2.813,null],
-  ['#nb-buy-8',   50,26.563,10,5.625,null],
-  ['#nb-place-8', 50,50,10,2.813,null],
-  ['#nb-buy-9',   60,26.563,10,2.813,null],
-  ['#nb-place-9', 60,50,10,2.813,null],
-  ['#nb-buy-10',   70,26.563,10,2.813,null],
-  ['#nb-place-10', 70,50,10,2.813,null],
-  ['#nb-buy-11',   80,26.563,10,2.813,null],
-  ['#nb-place-11', 80,50,10,2.813,null],
-  ['#nb-buy-12',   90,26.563,10,2.813,null],
-  ['#nb-place-12', 90,50,10,2.813,null],
+  // Deck's 5th export resolves both anomalies flagged at Ver. 1.0.8: every Buy is now a uniform
+  // h=3.75% (the old #nb-buy-8 double-height became the norm, not an outlier), and every Place
+  // is now a uniform y=46.25% (the old #nb-place-2/3-only value is now applied to 4-12 as well).
+  // Buy also moved down slightly (y=26.563%->29.375%). #nb-place-3's x (10.278% vs every other
+  // entry's clean 0/10/20.../90%) is still a ~5px nudge, kept as exported same as before.
+  ['#nb-buy-2',   0,29.375,10,3.75,null],
+  ['#nb-place-2', 0,46.25,10,3.75,null],
+  ['#nb-buy-3',   10,29.375,10,3.75,null],
+  ['#nb-place-3', 10.278,46.25,10,3.75,null],
+  ['#nb-buy-4',   20,29.375,10,3.75,null],
+  ['#nb-place-4', 20,46.25,10,3.75,null],
+  ['#nb-buy-5',   30,29.375,10,3.75,null],
+  ['#nb-place-5', 30,46.25,10,3.75,null],
+  ['#nb-buy-6',   40,29.375,10,3.75,null],
+  ['#nb-place-6', 40,46.25,10,3.75,null],
+  ['#nb-buy-8',   50,29.375,10,3.75,null],
+  ['#nb-place-8', 50,46.25,10,3.75,null],
+  ['#nb-buy-9',   60,29.375,10,3.75,null],
+  ['#nb-place-9', 60,46.25,10,3.75,null],
+  ['#nb-buy-10',   70,29.375,10,3.75,null],
+  ['#nb-place-10', 70,46.25,10,3.75,null],
+  ['#nb-buy-11',   80,29.375,10,3.75,null],
+  ['#nb-place-11', 80,46.25,10,3.75,null],
+  ['#nb-buy-12',   90,29.375,10,3.75,null],
+  ['#nb-place-12', 90,46.25,10,3.75,null],
   // Deck's third export moved these to sit under the now-widened number strip (see the
   // #nb-numberbox-N comment above) -- 3/4/5/6/8/9/10/11/12 all share the same y/h (39.219%,
   // 7.187% tall). #come-slot-2 was flagged as an exported duplicate of #nb-numberbox-2's own
