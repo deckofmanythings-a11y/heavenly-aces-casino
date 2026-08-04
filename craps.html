@@ -2403,7 +2403,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.4</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.5</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3143,16 +3143,23 @@ const PORTRAIT_CRAPLESS_LAYOUT=[
   ['#nb-place-11', 87.333,50,5.944,5.563,null],
   ['#nb-buy-12',   93.278,30,5.944,5.563,null],
   ['#nb-place-12', 93.278,50,5.944,5.563,null],
-  ['#come-slot-2',  39.889,42.625,5.833,6.719,null],
-  ['#come-slot-3',  45.833,42.625,5.833,6.719,null],
-  ['#come-slot-4',  51.778,42.625,5.833,6.719,null],
-  ['#come-slot-5',  57.722,42.625,5.833,6.719,null],
-  ['#come-slot-6',  63.667,42.625,5.833,6.719,null],
-  ['#come-slot-8',  69.611,42.625,5.833,6.719,null],
-  ['#come-slot-9',  75.556,42.625,5.833,6.719,null],
-  ['#come-slot-10', 81.444,42.625,5.833,6.719,null],
-  ['#come-slot-11', 87.389,42.625,5.833,6.719,null],
-  ['#come-slot-12', 93.333,42.625,5.833,6.719,null],
+  // Deck's third export moved these to sit under the now-widened number strip (see the
+  // #nb-numberbox-N comment above) -- 3/4/5/6/8/9/10/11/12 all share the same y/h (39.219%,
+  // 7.187% tall). #come-slot-2's export entry was an exact byte-for-byte duplicate of
+  // #nb-numberbox-2's own box (0,1025,180,460 px), not the 180x230 half-height box every other
+  // slot got -- almost certainly a drag-tool miss (the come-slot never got resized off of the
+  // numberbox it started from), not an intentional 4x-taller slot. Applied as exported since
+  // that's what came back, but flagged to Deck -- worth a follow-up drag on #come-slot-2 alone.
+  ['#come-slot-2',  0,32.031,10,14.375,null],
+  ['#come-slot-3',  10,39.219,10,7.187,null],
+  ['#come-slot-4',  20,39.219,10,7.187,null],
+  ['#come-slot-5',  30,39.219,10,7.187,null],
+  ['#come-slot-6',  40,39.219,10,7.187,null],
+  ['#come-slot-8',  50,39.219,10,7.187,null],
+  ['#come-slot-9',  60,39.219,10,7.187,null],
+  ['#come-slot-10', 70,39.219,10,7.187,null],
+  ['#come-slot-11', 80,39.219,10,7.187,null],
+  ['#come-slot-12', 90,39.219,10,7.187,null],
   ['#come-bar',      56.722,61.375,42.667,10.844,null],
   ['#field-bar',     56.722,72.219,42.667,15.281,null],
   ['#pass-bar',      56.722,87.5,  42.667,12.5,null],
