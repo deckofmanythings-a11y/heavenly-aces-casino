@@ -2403,7 +2403,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.3</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.4</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3109,16 +3109,20 @@ const PORTRAIT_STANDARD_LAYOUT=[
 // container either way, see landscape CRAPLESS_LAYOUT's own #num-zone comment).
 const PORTRAIT_CRAPLESS_LAYOUT=[
   ['#num-zone',      37.50,30.222,61.25,24.83,null],
-  ['#nb-numberbox-2',  39.833,35.469,10,14.375,null],
-  ['#nb-numberbox-3',  45.778,35.469,10,14.375,null],
-  ['#nb-numberbox-4',  51.722,35.469,10,14.375,null],
-  ['#nb-numberbox-5',  57.667,35.469,10,14.375,null],
-  ['#nb-numberbox-6',  63.611,35.469,10,14.375,null],
-  ['#nb-numberbox-8',  69.556,35.469,10,14.375,null],
-  ['#nb-numberbox-9',  75.444,35.469,10,14.375,null],
-  ['#nb-numberbox-10', 81.389,35.469,10,14.375,null],
-  ['#nb-numberbox-11', 87.333,35.469,10,14.375,null],
-  ['#nb-numberbox-12', 93.278,35.469,10,14.375,null],
+  // Widened to run edge-to-edge (0-100% instead of centered ~40-93%) and nudged up 110 canvas
+  // px in Deck's follow-up export -- Buy/Place/come-slot below did NOT move in that same
+  // export, so they're still centered under the OLD (narrower) number strip position. Flagged
+  // to Deck; applying only the genuine delta here rather than guessing new Buy/Place spots.
+  ['#nb-numberbox-2',  0,32.031,10,14.375,null],
+  ['#nb-numberbox-3',  10,32.031,10,14.375,null],
+  ['#nb-numberbox-4',  20,32.031,10,14.375,null],
+  ['#nb-numberbox-5',  30,32.031,10,14.375,null],
+  ['#nb-numberbox-6',  40,32.031,10,14.375,null],
+  ['#nb-numberbox-8',  50,32.031,10,14.375,null],
+  ['#nb-numberbox-9',  60,32.031,10,14.375,null],
+  ['#nb-numberbox-10', 70,32.031,10,14.375,null],
+  ['#nb-numberbox-11', 80,32.031,10,14.375,null],
+  ['#nb-numberbox-12', 90,32.031,10,14.375,null],
   ['#nb-buy-2',   39.833,30,5.944,5.563,null],
   ['#nb-place-2', 39.833,50,5.944,5.563,null],
   ['#nb-buy-3',   45.778,30,5.944,5.563,null],
