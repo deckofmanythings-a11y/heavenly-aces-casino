@@ -2601,7 +2601,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.22</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.23</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3388,9 +3388,15 @@ const PORTRAIT_LR_LAYOUT=[
   // Same re-homing as landscape's own #lr-title-art (see that entry's comment) -- portrait's
   // #bnums-low/#bnums-high are literally copied from landscape's values (never separately
   // calibrated), so the same 33.548%/64.0% gap boundary applies identically here.
-  ['#lr-title-art', 33.548, 4.000,30.452,44.000],
-  ['#bnums-low',   1.290, 4.000,32.258,44.000],
-  ['#bnums-high', 64.000, 4.000,32.258,44.000],
+  // Deck: "Drop Lucky Roller and the numbers to just above the bet boxes for it." Was y=4%
+  // (hugging the TOP of #lucky-roller's own 34px-tall box, live-measured), leaving an ~18px gap
+  // of empty space below them before the actual Low/Roll'em All/High bet boxes started right at
+  // #lucky-roller's bottom edge. y=56% (=100-44, height unchanged) puts their bottom edge
+  // exactly flush with #lucky-roller's own bottom -- i.e. exactly where the bet boxes begin --
+  // instead of floating at the top with dead space underneath.
+  ['#lr-title-art', 33.548, 56.000,30.452,44.000],
+  ['#bnums-low',   1.290, 56.000,32.258,44.000],
+  ['#bnums-high', 64.000, 56.000,32.258,44.000],
   // relY re-derived again from Deck's follow-up export (883.234%, was 1043.333%) -- moved up,
   // same "still valid, dice-zone sits way outside #lucky-roller's own now-tiny box" situation.
   // low/all/high came back within 0.02% of their stored values (drag-tool noise, not a real
