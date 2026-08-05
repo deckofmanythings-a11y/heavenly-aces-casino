@@ -335,10 +335,27 @@ body.felt-portrait #felt-stage .hc-dice{font-size:22px!important}
    tall) before this. Hop Bets' own cells are the tighter constraint post-Ver.1.0.15's resize
    (14.445%x3.813% each) -- binary-searched live against #bet-hop13: 96px hit 0 overflow, 94px
    left a real -1/-2px margin. Hopping Hard Ways' cells (21.667%x7.187%, much bigger) have huge
-   room to spare at that same 94px (checked #bet-hop33: -17/-12px margin) -- applied uniformly
-   per Deck's request rather than independently maximizing each group to a different size.
-   [id^="bet-hop"] covers all 17 in one rule since they all target the same value now. */
-body.felt-portrait #felt-stage [id^="bet-hop"] .dice-combo-img{width:calc(188px * var(--font-scale,1))!important;height:calc(94px * var(--font-scale,1))!important}
+   room to spare at that same 94px (checked #bet-hop33: -17/-12px margin).
+   Deck's follow-up: "Leaving the Hopping Hard Ways size alone. Reduce the Hop Bets dice by 15%."
+   Split back into two rules -- Hopping Hard Ways (#bet-hop22/33/44/55) stays at 94px, Hop Bets
+   (#bet-hop13..46) drops to 94*0.85=79.9 -> 80px (width scales with it, 160px). */
+body.felt-portrait #felt-stage #bet-hop22 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop33 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop44 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop55 .dice-combo-img{width:calc(188px * var(--font-scale,1))!important;height:calc(94px * var(--font-scale,1))!important}
+body.felt-portrait #felt-stage #bet-hop13 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop16 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop26 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop14 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop25 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop35 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop23 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop34 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop36 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop24 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop45 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop15 .dice-combo-img,
+body.felt-portrait #felt-stage #bet-hop46 .dice-combo-img{width:calc(160px * var(--font-scale,1))!important;height:calc(80px * var(--font-scale,1))!important}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:calc(15px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
@@ -2521,7 +2538,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.16</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.17</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
