@@ -1558,6 +1558,16 @@ body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)
    sat top-aligned instead of vertically centered). Added justify-content:center too (Deck:
    "Change #line-mode-toggle text to vertically center justified"). */
 body.felt-mode #felt-stage #line-mode-toggle .mode-btn{font-size:calc(27px * var(--font-scale,1))!important;justify-content:center}
+/* Deck: "The Mode Select in Crapless Portrait mode doesn't seem clickable for Limited or Easy."
+   Root cause: #line-mode-toggle and #num-zone (which wraps the whole number strip in Crapless)
+   both inherit the same base .felt-abs{z-index:2}, an exact tie -- ties resolve by DOM order,
+   and #num-zone comes later, so it silently wins and eats the click on whichever part of
+   #line-mode-toggle its bounding box happens to overlap. Only actually overlaps in Portrait's
+   compact layout (confirmed live: elementFromPoint on Limited/Easy's own center returned
+   .num-box-wrap, not the button); "Full"/line-mode-a happened to sit outside #num-zone's box so
+   it alone still worked, which is why only 2 of the 3 looked broken. Bumped above #num-zone's 2
+   (and Standard's own #num-box.felt-abs boost at 5, so it can never lose either way). */
+body.felt-portrait #felt-stage #line-mode-toggle{z-index:6}
 body.felt-mode #felt-stage #left-col-header .mode-btn-amt{font-size:calc(var(--chip)*0.22)}
 /* Game selector went from one collapsed row to an always-visible 3-row grid (Deck: "make all
    games' game selector work and look like Destroyer's") -- same off-chip scaling as the rest
@@ -2538,7 +2548,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.17</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.18</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
