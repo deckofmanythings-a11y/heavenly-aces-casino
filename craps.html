@@ -299,16 +299,36 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 /* Portrait-only (Deck's Calibrate Mode font tool export, FM_FONT_SIZES): Hard Ways' "N for 1"
    text and Aces/Ace2/Midnight/Yo/Horn Bet's pay text all got their own smaller portrait sizes,
    distinct from the shared landscape values above (.pay 16px base, .hc-pay 24px, horn 28px).
-   Scoped to body.felt-portrait so landscape is untouched. */
+   Scoped to body.felt-portrait so landscape is untouched. Literal px, not calc(*scale) -- same
+   reasoning as every other FM_FONT_SIZES-sourced rule this session (the calibrate tool's font-
+   nudge sets a flat, non-scaling px, so calc() rendered smaller than what Deck actually approved
+   by eye). Hard Ways' value (18) came back unchanged from before; Aces/Horn's follow-up export
+   trimmed them further (16->14, 16->13). */
 body.felt-portrait #felt-stage #bet-hard6 .pay,
 body.felt-portrait #felt-stage #bet-hard10 .pay,
 body.felt-portrait #felt-stage #bet-hard8 .pay,
-body.felt-portrait #felt-stage #bet-hard4 .pay{font-size:calc(18px * var(--font-scale,1))!important}
+body.felt-portrait #felt-stage #bet-hard4 .pay{font-size:18px!important}
 body.felt-portrait #felt-stage #bet-aces .hc-pay,
 body.felt-portrait #felt-stage #bet-ace2 .hc-pay,
 body.felt-portrait #felt-stage #bet-midnight .hc-pay,
-body.felt-portrait #felt-stage #bet-yo .hc-pay{font-size:calc(16px * var(--font-scale,1))!important}
-body.felt-portrait #felt-stage #bet-horn .horn-center-name{font-size:calc(16px * var(--font-scale,1))!important}
+body.felt-portrait #felt-stage #bet-yo .hc-pay{font-size:14px!important}
+body.felt-portrait #felt-stage #bet-horn .horn-center-name{font-size:13px!important}
+/* Deck: "increase the size of the dice in the Hardways and the Horn Bets" -- the dice icon is
+   sized in em (width:2em;height:1em) off .dp/.hc-dice's own font-size (36px base), so bumping
+   that up scales the icon directly. Portrait-only per this conversation's context; landscape's
+   36px is untouched.
+   Hard Ways' box (80px wide) has real room -- binary-searched the max clean increase: 40px hits
+   0 overflow exactly, 38px leaves a -2px margin.
+   Horn's cell (#bet-aces/#bet-ace2/#bet-midnight/#bet-yo, only 48px wide) was ALREADY
+   overflowing by 12px at the original 36px, discovered while testing this -- every increase
+   makes it worse, not better, so "bigger" and "no overflow" are directly in conflict there.
+   Deck's call: shrink Horn to actually fit first (22px, -2px margin) rather than grow an
+   already-broken overflow further; revisit sizing again once it's not silently broken. */
+body.felt-portrait #felt-stage #bet-hard6 .dp,
+body.felt-portrait #felt-stage #bet-hard10 .dp,
+body.felt-portrait #felt-stage #bet-hard8 .dp,
+body.felt-portrait #felt-stage #bet-hard4 .dp{font-size:38px!important}
+body.felt-portrait #felt-stage .hc-dice{font-size:22px!important}
 
 /* Hop bets */
 .hop-section-hdr{text-align:center;padding:2px;font-size:calc(15px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
@@ -1066,10 +1086,13 @@ body.felt-mode #felt-stage #nb-numberbox-9 .nb-num-word{font-size:calc(30px * va
    about what window he calibrated on. */
 body.felt-portrait.game-standard #felt-stage #nb-numberbox-4 .nb-num-digit,
 body.felt-portrait.game-standard #felt-stage #nb-numberbox-5 .nb-num-digit,
-body.felt-portrait.game-standard #felt-stage #nb-numberbox-6 .nb-num-word,
-body.felt-portrait.game-standard #felt-stage #nb-numberbox-8 .nb-num-digit,
-body.felt-portrait.game-standard #felt-stage #nb-numberbox-9 .nb-num-word,
-body.felt-portrait.game-standard #felt-stage #nb-numberbox-10 .nb-num-digit{font-size:61px!important}
+body.felt-portrait.game-standard #felt-stage #nb-numberbox-8 .nb-num-digit{font-size:61px!important}
+/* Deck's follow-up export refined 6/9/10 away from the uniform 61px above -- Six/Nine (script
+   word glyphs) and the two-digit "10" needed their own sizes, same reasoning digit-vs-word
+   splits always need on this felt. Literal px, same reasoning as above. */
+body.felt-portrait.game-standard #felt-stage #nb-numberbox-6 .nb-num-word{font-size:42px!important}
+body.felt-portrait.game-standard #felt-stage #nb-numberbox-9 .nb-num-word{font-size:30px!important}
+body.felt-portrait.game-standard #felt-stage #nb-numberbox-10 .nb-num-digit{font-size:54px!important}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:calc(21px * var(--font-scale,1))}
 /* Phase 7 polish: BUY/PLACE/LAY labels barely read against the felt at their original 11px/
@@ -1109,6 +1132,25 @@ body.felt-portrait.game-standard #felt-stage #nb-place-6 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-8 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-9 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-10 .nb-lbl{font-size:10px!important}
+/* Lay is Standard-only (Crapless has no Lay bets) -- same literal-px reasoning as Buy/Place
+   above. */
+body.felt-portrait.game-standard #felt-stage #nb-lay-4 .nb-lbl,
+body.felt-portrait.game-standard #felt-stage #nb-lay-5 .nb-lbl,
+body.felt-portrait.game-standard #felt-stage #nb-lay-6 .nb-lbl,
+body.felt-portrait.game-standard #felt-stage #nb-lay-8 .nb-lbl,
+body.felt-portrait.game-standard #felt-stage #nb-lay-9 .nb-lbl,
+body.felt-portrait.game-standard #felt-stage #nb-lay-10 .nb-lbl{font-size:16px!important}
+/* #dc-wait-bar's "DON'T COME"/"BAR" spans are inline-styled by buildStrip() (24px/30px,
+   calc(*scale), landscape-tuned -- see that comment for the overflow fix history), no class hook
+   of their own. Deck's Standard/Portrait export wants one uniform 20px for both -- external
+   !important beats the inline styles' lack of !important regardless of specificity, so this
+   safely overrides just in portrait/standard without touching the landscape inline values. */
+body.felt-portrait.game-standard #felt-stage #dc-wait-bar .nb-mid>span:first-child,
+body.felt-portrait.game-standard #felt-stage #dc-wait-bar .nb-mid>span:nth-child(2)>span{font-size:20px!important}
+/* #come-bar's "COME" zone-name shares a rule with #pass-bar's "PASS LINE" at a landscape-tuned
+   76px (line ~493) -- Standard/Portrait needs its own smaller size; #pass-bar wasn't in Deck's
+   export so it's left on the shared value. */
+body.felt-portrait.game-standard #felt-stage #come-bar .zone-name{font-size:45px!important}
 /* Deck: "Odds below the word PLACE should be in the same format as the word PLACE" -- .nb-pay
    was plain dim white text (color:rgba(255,255,255,.4)) while .nb-lbl gets the bold gradient-
    clipped-text treatment above. Mirrors that exact treatment onto .nb-place's own .nb-pay
@@ -1635,6 +1677,17 @@ body.felt-portrait #felt-stage #lucky-roller .lr-pay,
 body.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-title,
 body.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
 body.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:calc(26px * var(--font-scale,1))!important}
+/* Lucky Roller's Low Rolls box only -- the shared rule directly above covers Low/All/High/
+   Roll'em All uniformly at 26px; Deck's export only touched Low (14px, literal not calc(*scale)
+   per the usual FM_FONT_SIZES reasoning), so only #bbonus-low gets its own override, All/High/
+   Roll'em All stay on the shared 26px until their own export comes back. Lucky Roller itself is
+   a shared cross-mode feature (not Standard-only), so this isn't .game-standard-scoped, matching
+   the shared rule's own scoping. MUST come after the shared rule above -- equal specificity,
+   so source order is the only tie-break (learned the hard way: placed earlier in the file
+   first, got silently outranked by this later shared rule and never took effect). */
+body.felt-portrait #felt-stage #bbonus-low .lr-title,
+body.felt-portrait #felt-stage #bbonus-low .lr-explain,
+body.felt-portrait #felt-stage #bbonus-low .lr-pay{font-size:14px!important}
 body.felt-portrait #felt-stage #lucky-roller .lr-num{min-width:calc(30px * var(--font-scale,1));height:calc(30px * var(--font-scale,1));font-size:calc(22px * var(--font-scale,1));line-height:calc(30px * var(--font-scale,1))}
 body.felt-mode #felt-stage #lucky-roller .rollem-all-bar #bstk-all{font-size:calc(14px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage #lucky-roller #dice-zone{pointer-events:none}
@@ -2441,7 +2494,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.12</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.13</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
