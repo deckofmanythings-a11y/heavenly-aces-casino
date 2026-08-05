@@ -1132,6 +1132,14 @@ body.felt-portrait.game-standard #felt-stage #nb-place-6 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-8 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-9 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-10 .nb-lbl{font-size:10px!important}
+/* Deck: "The odds below Place needs to be the same size as Place." .nb-place .nb-pay (the odds
+   text, e.g. "9:5") had no font-size override at all -- it fell back to the unscoped base
+   .nb-pay{font-size:calc(11px*scale)}, while .nb-lbl (the word PLACE) is the literal 10px above.
+   In landscape both are calc()-scaled so they at least stay proportionally close; in portrait
+   the literal-vs-calc mismatch was much more dramatic (10px literal vs ~3px calc'd at this
+   window's scale), which is what actually prompted the report. Matched to the same literal 10px,
+   landscape untouched (not scoped/reported). */
+body.felt-portrait.game-standard #felt-stage .nb-place .nb-pay{font-size:10px!important}
 /* Lay is Standard-only (Crapless has no Lay bets) -- same literal-px reasoning as Buy/Place
    above. */
 body.felt-portrait.game-standard #felt-stage #nb-lay-4 .nb-lbl,
@@ -2494,7 +2502,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.13</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.14</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
