@@ -1191,6 +1191,15 @@ body.felt-portrait.game-standard #felt-stage #nb-lay-10 .nb-lbl{font-size:16px!i
    safely overrides just in portrait/standard without touching the landscape inline values. */
 body.felt-portrait.game-standard #felt-stage #dc-wait-bar .nb-mid>span:first-child,
 body.felt-portrait.game-standard #felt-stage #dc-wait-bar .nb-mid>span:nth-child(2)>span{font-size:20px!important}
+/* Deck: "Move the puck in Standard Portrait to the top portion of the Don't Come box when it is
+   OFF." #puck-off-dc is inline-styled (bottom:100%;margin-bottom:6px;transform:translate(-50%,
+   -15%)) to float just ABOVE the box, same treatment landscape still uses -- portrait moves it
+   INSIDE instead, anchored near the box's own top edge. Inline styles beat external rules of the
+   same importance regardless of specificity (got this backwards on the first pass -- verified
+   live the transform/margin-bottom were still silently coming from the inline attribute, only
+   `top` took because the inline never declared a `top` at all so there was nothing to lose to).
+   !important on every property that has an inline counterpart to actually beat this time. */
+body.felt-portrait.game-standard #felt-stage #puck-off-dc{bottom:auto!important;top:4%;margin-bottom:0!important;transform:translate(-50%,0)!important}
 /* #come-bar's "COME" zone-name shares a rule with #pass-bar's "PASS LINE" at a landscape-tuned
    76px (line ~493) -- Standard/Portrait needs its own smaller size; #pass-bar wasn't in Deck's
    export so it's left on the shared value. */
@@ -2548,7 +2557,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.19</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.20</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3393,8 +3402,16 @@ const BOTTOM_SECTION_RATIO=0.13;
 // Roll button") instead of landscape's one wide row, so it needs roughly 3x the height budget
 // to avoid squeezing each row back down to the same cramped size the split was meant to fix.
 // Landscape is untouched (still 0.13, one row).
-const BOTTOM_SECTION_RATIO_PORTRAIT=0.36;
+// Deck: "Reduce the size of the lower area (with ROLL and the Chips) by 1/3rd and add that much
+// as a border on the top of the play area." Was 0.36 -- cut to 2/3 of that (0.24), with the
+// freed 1/3 (0.12) moved into PORTRAIT_TOP_BORDER_RATIO below rather than just discarded, so the
+// group's total footprint (and therefore its centered position in #play-area) is unchanged --
+// only the internal split between empty space above the felt and #bottom-section's own height
+// moves. Landscape untouched (no top border, matches this whole feature's portrait-only scope).
+const BOTTOM_SECTION_RATIO_PORTRAIT=0.24;
+const PORTRAIT_TOP_BORDER_RATIO=0.12;
 function curBottomSectionRatio(){ return feltPortrait?BOTTOM_SECTION_RATIO_PORTRAIT:BOTTOM_SECTION_RATIO; }
+function curTopBorderRatio(){ return feltPortrait?PORTRAIT_TOP_BORDER_RATIO:0; }
 // ── RESPONSIVE FONT SCALE ─────────────────────────────────────────────────────
 // Deck: "All current font sizes are the default/maximum... if the window shrinks, shrink the
 // text in those boxes to continue to fit inside the newly shrunken boxes without needing any
@@ -3425,12 +3442,17 @@ function sizeFeltStage(){
   // stacked immediately beneath it), then the whole group is centered in #play-area --
   // same math as the old single-box contain-fit, just with bottom-section's height
   // folded into the budget so there's always room for it below the felt with zero gap.
-  const bsRatio=curBottomSectionRatio();
-  let w=W,h=w*FM_CANVAS_H/FM_CANVAS_W,groupH=h*(1+bsRatio);
-  if(groupH>H){h=H/(1+bsRatio);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=H;}
-  const bsH=h*bsRatio;
+  // topBorderRatio (portrait only, see PORTRAIT_TOP_BORDER_RATIO) is empty space ABOVE the felt,
+  // budgeted into the SAME group-height total as before (topBorderRatio+bsRatio together equal
+  // portrait's old single bsRatio) so the group's overall footprint -- and therefore its
+  // centered "top" position in #play-area -- doesn't change, only the internal split between
+  // "blank space above the felt" and "#bottom-section's own height" does.
+  const bsRatio=curBottomSectionRatio(), topBorderRatio=curTopBorderRatio();
+  let w=W,h=w*FM_CANVAS_H/FM_CANVAS_W,groupH=h*(1+topBorderRatio+bsRatio);
+  if(groupH>H){h=H/(1+topBorderRatio+bsRatio);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=H;}
+  const bsH=h*bsRatio, topBorderH=h*topBorderRatio;
   const left=(W-w)/2,top=(H-groupH)/2;
-  st.style.left=left+'px';st.style.top=top+'px';st.style.transform='none';
+  st.style.left=left+'px';st.style.top=(top+topBorderH)+'px';st.style.transform='none';
   // 0.0424 sized so a staked chip stack lands at ~85% of the Buy/Place/Lay number tiles'
   // own height -- those are the shortest bet spots on this felt (see the CHIP STACK BET
   // INDICATORS CSS comment above), and every other bet type deliberately shares this same
@@ -3453,7 +3475,7 @@ function sizeFeltStage(){
   // "Cash Out"/"Log Out" as text at any readable size -- see the body.felt-compact CSS rules.
   document.body.classList.toggle('felt-compact',w<520);
   if(bs){
-    bs.style.left=left+'px';bs.style.top=(top+h)+'px';
+    bs.style.left=left+'px';bs.style.top=(top+topBorderH+h)+'px';
     bs.style.width=w+'px';bs.style.height=bsH+'px';
   }
   sizeDiceZone();
