@@ -2502,7 +2502,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.14</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.15</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3112,16 +3112,26 @@ const PORTRAIT_FELT_LAYOUT=[
   ['#tab-hop',        26.389,54.531, 11.667,3.75,null],
   ['#line-mode-toggle', 0,50.469, 100,3.125,null],
   ['#hw-panel-label',  0,59.062, 43.056,3.75,'hw'],
-  ['#hop-panel-label-1', 9.667,32.5, 16.278,3.625,'hop'],
-  ['#hop-panel-label-2', 4.556,51.656, 26.889,3.344,'hop'],
+  // Deck: "fitting in all the Hopping Hard Ways and Hop Bets in the same space that Hardways
+  // and Proposition Bets take up" -- the 'hop' group used to occupy a totally different, mostly
+  // non-overlapping box (measured live: x 3.889-31.444%, y 32.5-86.969%, extending up into the
+  // number-strip/tab-toggle area) from the 'hw' group's own box (x -0.278-43.056%, y
+  // 59.062-100%). Rebuilt the whole 'hop' group from scratch to fit exactly inside 'hw''s real
+  // footprint -- same internal structure as before (label + 2x2 Hopping Hard Ways grid + label +
+  // a 3-column/13-cell grid with 2 short rows, unchanged from the original arrangement), just
+  // rescaled: label height matches #hw-panel-label/#prop-panel-label's own 3.75%, the 2x2 grid
+  // literally reuses Hard Ways' own per-cell geometry (identical shape, same box), and the
+  // 13-cell grid divides the remaining height into 5 even rows.
+  ['#hop-panel-label-1', -0.278,59.062, 43.334,3.75,'hop'],
+  ['@hop33',            -0.278,62.812, 21.667,7.187,'hop'],
+  ['@hop55',            21.389,62.812, 21.667,7.187,'hop'],
+  ['@hop44',            -0.278,69.999, 21.667,7.187,'hop'],
+  ['@hop22',            21.389,69.999, 21.667,7.187,'hop'],
+  ['#hop-panel-label-2', -0.278,77.186, 43.334,3.75,'hop'],
   ['@hard6',           0,62.656, 21.389,7.187,'hw'],
   ['@hard10',         21.389,62.656, 21.389,7.187,'hw'],
   ['@hard8',           0,69.688, 21.389,7.187,'hw'],
   ['@hard4',          21.389,69.688, 21.389,7.187,'hw'],
-  ['@hop22',          17.833,43.875, 13.889,7.5,'hop'],
-  ['@hop44',           3.889,43.875, 13.889,7.5,'hop'],
-  ['@hop33',           3.889,36.375, 13.889,7.5,'hop'],
-  ['@hop55',          17.833,36.375, 13.889,7.5,'hop'],
   ['#prop-panel-label', -0.278,77.188, 43.056,3.75,'hw'],
   ['@any7',           12.778,81.094, 17.5,6.25,'hw'],
   ['@aces',            0,81.25, 12.778,9.375,'hw'],
@@ -3130,19 +3140,19 @@ const PORTRAIT_FELT_LAYOUT=[
   ['@midnight',        0,90.469, 12.778,9.375,'hw'],
   ['@yo',             30.278,90.625, 12.778,9.375,'hw'],
   ['@anyCraps',       12.778,93.75, 17.5,6.25,'hw'],
-  ['@hop13',           4.556,55.281, 8.778,6.125,'hop'],
-  ['@hop16',          13.611,55.281, 8.778,6.125,'hop'],
-  ['@hop26',          22.667,55.281, 8.778,6.125,'hop'],
-  ['@hop14',           4.556,61.656, 8.778,6.125,'hop'],
-  ['@hop25',          13.611,61.656, 8.778,6.125,'hop'],
-  ['@hop35',          22.667,61.656, 8.778,6.125,'hop'],
-  ['@hop23',           4.556,68.063, 8.778,6.125,'hop'],
-  ['@hop34',          13.611,68.063, 8.778,6.125,'hop'],
-  ['@hop36',          22.667,68.063, 8.778,6.125,'hop'],
-  ['@hop24',           4.556,74.438, 8.778,6.125,'hop'],
-  ['@hop45',          22.667,74.438, 8.778,6.125,'hop'],
-  ['@hop15',           4.556,80.844, 8.778,6.125,'hop'],
-  ['@hop46',          22.667,80.844, 8.778,6.125,'hop']
+  ['@hop13',  -0.278,80.936, 14.445,3.813,'hop'],
+  ['@hop16',  14.167,80.936, 14.445,3.813,'hop'],
+  ['@hop26',  28.611,80.936, 14.445,3.813,'hop'],
+  ['@hop14',  -0.278,84.749, 14.445,3.813,'hop'],
+  ['@hop25',  14.167,84.749, 14.445,3.813,'hop'],
+  ['@hop35',  28.611,84.749, 14.445,3.813,'hop'],
+  ['@hop23',  -0.278,88.561, 14.445,3.813,'hop'],
+  ['@hop34',  14.167,88.561, 14.445,3.813,'hop'],
+  ['@hop36',  28.611,88.561, 14.445,3.813,'hop'],
+  ['@hop24',  -0.278,92.374, 14.445,3.813,'hop'],
+  ['@hop45',  28.611,92.374, 14.445,3.813,'hop'],
+  ['@hop15',  -0.278,96.187, 14.445,3.813,'hop'],
+  ['@hop46',  28.611,96.187, 14.445,3.813,'hop']
 ];
 // PORTRAIT_STANDARD_LAYOUT: same export/conversion, the Standard-only entries. #num-zone isn't
 // in the export (skipped, same as landscape) -- kept as landscape's own value.
