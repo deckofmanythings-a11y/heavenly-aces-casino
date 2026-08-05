@@ -1055,13 +1055,21 @@ body.felt-mode #felt-stage #nb-numberbox-9 .nb-num-word{font-size:calc(30px * va
    landscape-tuned 58/40/30px overrides above (those two rules are ID-scoped only, no mode/
    orientation qualifier, so without this more-specific override Standard/Portrait's #nb-
    numberbox-6/9/10 would silently pick up Crapless's landscape numbers instead of its own).
-   Deck's FM_FONT_SIZES export: one uniform 61px for all six digit AND word labels. */
+   Deck's FM_FONT_SIZES export: one uniform 61px for all six digit AND word labels.
+   Literal px, NOT wrapped in calc(*var(--font-scale)) -- Deck's Calibrate Mode font tool sets a
+   flat, non-scaling px value while nudging ("I watch the number get bigger and when it's the
+   size I want it, I send you that output"), so the number he approved IS the real screen size at
+   his calibration window, not a 1400px-reference base meant to shrink further on narrower
+   windows. Wrapping it in calc(*scale) as originally done rendered smaller than what he'd
+   actually tuned it to look like (confirmed live: 61px calibrated, calc() rendered only 24px at
+   his device's ~0.39 scale) -- literal px fixes that by matching 1:1 everywhere, no assumptions
+   about what window he calibrated on. */
 body.felt-portrait.game-standard #felt-stage #nb-numberbox-4 .nb-num-digit,
 body.felt-portrait.game-standard #felt-stage #nb-numberbox-5 .nb-num-digit,
 body.felt-portrait.game-standard #felt-stage #nb-numberbox-6 .nb-num-word,
 body.felt-portrait.game-standard #felt-stage #nb-numberbox-8 .nb-num-digit,
 body.felt-portrait.game-standard #felt-stage #nb-numberbox-9 .nb-num-word,
-body.felt-portrait.game-standard #felt-stage #nb-numberbox-10 .nb-num-digit{font-size:calc(61px * var(--font-scale,1))!important}
+body.felt-portrait.game-standard #felt-stage #nb-numberbox-10 .nb-num-digit{font-size:61px!important}
 body.felt-mode #felt-stage .prop-circle{width:100%;height:100%}
 body.felt-mode #felt-stage .circle-stk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:calc(21px * var(--font-scale,1))}
 /* Phase 7 polish: BUY/PLACE/LAY labels barely read against the felt at their original 11px/
@@ -1087,19 +1095,20 @@ body.felt-mode #felt-stage .nb-place .nb-lbl{font-size:calc(14px * var(--font-sc
 /* Standard/Portrait's own Buy/Place sizes -- Deck's FM_FONT_SIZES export came back smaller than
    the shared 20px/14px (16px/10px), same reasoning as the number-strip override above: Crapless/
    Portrait already confirmed matching the shared rule exactly, so this is a real Standard-only
-   difference, not a duplicate/no-op. */
+   difference, not a duplicate/no-op. Literal px, not calc(*scale) -- same reasoning as the
+   number-strip override above (the calibrate tool's font-nudge sets a flat, non-scaling px). */
 body.felt-portrait.game-standard #felt-stage #nb-buy-4 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-buy-5 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-buy-6 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-buy-8 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-buy-9 .nb-lbl,
-body.felt-portrait.game-standard #felt-stage #nb-buy-10 .nb-lbl{font-size:calc(16px * var(--font-scale,1))!important}
+body.felt-portrait.game-standard #felt-stage #nb-buy-10 .nb-lbl{font-size:16px!important}
 body.felt-portrait.game-standard #felt-stage #nb-place-4 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-5 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-6 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-8 .nb-lbl,
 body.felt-portrait.game-standard #felt-stage #nb-place-9 .nb-lbl,
-body.felt-portrait.game-standard #felt-stage #nb-place-10 .nb-lbl{font-size:calc(10px * var(--font-scale,1))!important}
+body.felt-portrait.game-standard #felt-stage #nb-place-10 .nb-lbl{font-size:10px!important}
 /* Deck: "Odds below the word PLACE should be in the same format as the word PLACE" -- .nb-pay
    was plain dim white text (color:rgba(255,255,255,.4)) while .nb-lbl gets the bold gradient-
    clipped-text treatment above. Mirrors that exact treatment onto .nb-place's own .nb-pay
@@ -2432,7 +2441,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.11</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.12</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
