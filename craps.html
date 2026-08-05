@@ -2131,11 +2131,6 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <button class="modal-btn" onclick="saveLayout()" title="Saves whatever's on the felt right now as your Load Layout starting bets">Save Current as Layout</button>
         <button class="modal-btn cancel" onclick="clearSavedLayout()" title="Deletes the saved layout">Clear Saved Layout</button>
       </div>
-      <div style="margin-top:8px;text-align:right;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-        <button class="modal-btn" id="portrait-mode-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="togglePortraitMode()">📱 Enter Portrait Mode</button>
-        <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleCalibMode()">🎯 Calibrate Positions (Debug)</button>
-        <button class="modal-btn" style="font-size:13px;padding:5px 10px;opacity:.6" onclick="toggleTutorialDebug()">🎓 Tutorial (Debug)</button>
-      </div>
     </div>
   </div>
 
@@ -2221,7 +2216,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px;position:relative;z-index:9998">
         <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="GameInstructions.open(activeGame==='standard'?'craps-standard':'craps-crapless')" title="How to play">i</button>
-        <div id="fibo-wrap" onclick="toggleFiboHint(event)">
+        <div id="fibo-wrap" onclick="toggleFiboHint(event)" ondblclick="toggleCalibMode()" title="Double-click for Calibrate Positions">
           <img src="fibo.webp" id="fibo-icon" alt="Fibonacci press guide">
           <div id="fibo-hint">
             <div>6/8 (9-18-36-42-90...)</div>
@@ -2601,7 +2596,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.23</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.24</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3406,7 +3401,14 @@ const PORTRAIT_LR_LAYOUT=[
   ['all',     39.592,100, 20.816,136.667],
   ['high',    60.408,100, 20.816,136.667]
 ];
-let feltPortrait=localStorage.getItem('rh_focus_portrait')==='1';
+// Deck: "Make it so the game switches to portrait mode when the resolution or phone orientation
+// demands it." Removed the manual Enter/Exit Portrait Mode button, so this is no longer a sticky
+// user preference (was localStorage.getItem('rh_focus_portrait')) -- it's a pure function of the
+// viewport's own aspect ratio now, re-evaluated on load and on every resize/rotation (see
+// syncPortraitToViewport() below). window.innerWidth/innerHeight are valid immediately at parse
+// time (no DOM dependency), so the initial value already matches whatever the page opened at.
+function desiredPortrait(){ return window.innerHeight>window.innerWidth; }
+let feltPortrait=desiredPortrait();
 function feltLayoutFor(mode){
   const felt=feltPortrait?PORTRAIT_FELT_LAYOUT:FELT_LAYOUT;
   const spec=feltPortrait?(mode==='standard'?PORTRAIT_STANDARD_LAYOUT:PORTRAIT_CRAPLESS_LAYOUT):(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT);
@@ -3669,22 +3671,31 @@ function exitFeltMode(){
 // CSS, but the puck's cached position would not follow, leaving it visually stranded at its old
 // coordinates outside the felt. updateUI() re-derives the puck's target from current game state
 // every time, so re-running it here keeps the puck in sync with wherever the felt actually is.
-function handleWindowResize(){sizeFeltStage();updateUI();}
+// Deck: "Make it so the game switches to portrait mode when the resolution or phone orientation
+// demands it." Re-checked on every resize/rotation (window 'resize' below, and the #play-area
+// ResizeObserver right after -- e.g. a sidebar toggling without the window itself resizing),
+// not just at page load. togglePortraitMode() already calls sizeFeltStage() itself at the end,
+// so only call it directly (skipping the toggle) when orientation genuinely didn't change --
+// calling both would be redundant, not wrong, but this avoids the double layout pass on every
+// plain resize.
+function syncPortraitToViewport(){
+  if(desiredPortrait()!==feltPortrait)togglePortraitMode();
+  else sizeFeltStage();
+}
+function handleWindowResize(){syncPortraitToViewport();updateUI();}
 window.addEventListener('resize',handleWindowResize);
 if(window.ResizeObserver){
   document.addEventListener('DOMContentLoaded',()=>{
     const pa=document.getElementById('play-area');
-    if(pa)new ResizeObserver(sizeFeltStage).observe(pa);
+    if(pa)new ResizeObserver(syncPortraitToViewport).observe(pa);
   });
 }
-// Reflect a portrait-mode choice that carried over from localStorage (feltPortrait itself is
-// already read at script-parse time, well before this fires -- FM_CANVAS_W/H are already
-// correct -- this just syncs the button label/body class once the DOM exists to hold them).
+// Reflect the auto-detected orientation once the DOM exists to hold the class (feltPortrait
+// itself is already read at script-parse time, well before this fires -- FM_CANVAS_W/H are
+// already correct).
 document.addEventListener('DOMContentLoaded',()=>{
   if(!feltPortrait)return;
   document.body.classList.add('felt-portrait');
-  const btn=document.getElementById('portrait-mode-btn');
-  if(btn)btn.textContent='📱 Exit Portrait Mode';
 });
 
 // Deck: "Make the field 'Pays Double (or Triple)' have lines of their own, and the dice images
@@ -6720,11 +6731,8 @@ const FOCUS_ONEROLL_IDS={seven:['bet-any7'],anycraps:['bet-anyCraps','bet-anyCra
 let FM_CANVAS_W=feltPortrait?1800:3200,FM_CANVAS_H=feltPortrait?3200:1800;
 function togglePortraitMode(){
   feltPortrait=!feltPortrait;
-  localStorage.setItem('rh_focus_portrait',feltPortrait?'1':'0');
   FM_CANVAS_W=feltPortrait?1800:3200;FM_CANVAS_H=feltPortrait?3200:1800;
   document.body.classList.toggle('felt-portrait',feltPortrait);
-  const btn=document.getElementById('portrait-mode-btn');
-  if(btn)btn.textContent=feltPortrait?'📱 Exit Portrait Mode':'📱 Enter Portrait Mode';
   // Re-run the felt/Lucky Roller reparenting loops against the newly-active layout arrays
   // (feltLayoutFor()/curLrLayout() both check feltPortrait already) so the real bet boxes
   // actually move, not just the stage's own aspect ratio.
