@@ -2548,7 +2548,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.18</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.19</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -6635,7 +6635,19 @@ function togglePortraitMode(){
   // Re-run the felt/Lucky Roller reparenting loops against the newly-active layout arrays
   // (feltLayoutFor()/curLrLayout() both check feltPortrait already) so the real bet boxes
   // actually move, not just the stage's own aspect ratio.
-  if(feltActive){exitFeltMode();enterFeltMode();}
+  if(feltActive){
+    exitFeltMode();enterFeltMode();
+    // exitFeltMode() wipes left/top/width/height/display to '' on every FELT_LAYOUT element
+    // (including #line-mode-toggle, shared/null-tagged so it's in the list for both modes) so
+    // it can move back to its original non-felt DOM home; enterFeltMode() only ever re-applies
+    // left/top/width/height, never display -- that's applyGameMode()'s job, and nothing calls
+    // applyGameMode() in this toggle. Left #line-mode-toggle stuck visible (default display:
+    // block) with a real position in Standard mode after any portrait/landscape flip (Deck:
+    // "The Mode Select... what is this?" screenshot showed exactly this -- Full/Limited/Easy
+    // fully visible and positioned inside Standard's Hard Ways panel). Re-apply the same
+    // mode-gate applyGameMode() uses so it actually goes back to hidden outside Crapless.
+    const lm=document.getElementById('line-mode-toggle');if(lm)lm.style.display=activeGame==='crapless'?'flex':'none';
+  }
   sizeFeltStage();
   // Calibrate Mode's ghost rulers are seeded from calibBaseEntries() (itself built off
   // feltLayoutFor()/curLrLayout()) at the moment it's turned on -- if it's already open when
