@@ -93,12 +93,6 @@
      smooth 2-stop fade like --text-grad-gold) is what actually reads as "metallic" rather
      than just "gold-colored". */
   --text-grad-metallic-gold: linear-gradient(180deg, #fff9df 0%, #ffe066 18%, #b8860b 38%, #ffd700 52%, #8a6205 68%, #ffe884 84%, #fff3c4 100%);
-  /* Deck: "Make the word Lucky Roller be more vibrant gold." --text-grad-metallic-gold's dark
-     bronze bands (#b8860b/#8a6205) are what makes it read as "metallic" rather than flat --
-     great for a small title, but Deck wants punchier/brighter here specifically. Same shine-band
-     shape (light-dark-light gives the sheen), swapped the dark bronze bands for a mid-bright gold
-     instead of a near-brown one. Only used by #lr-title-art below, not shared. */
-  --text-grad-vibrant-gold: linear-gradient(180deg, #fff9df 0%, #ffe066 18%, #ffd700 38%, #fff4b8 52%, #ffd700 68%, #ffe884 84%, #fff3c4 100%);
 
   /* Spacing scale matched to the existing box metrics already in use on this
      felt (.nb-buy's padding:1px 2px, etc.) -- deliberately tight, not a fresh
@@ -1666,14 +1660,21 @@ body.felt-mode #felt-stage .felt-lr{position:absolute;margin:0}
    against the real "bold 22px [cursive stack]" font -- real overflow, 18px past the new
    136px-wide gap box. Trimmed to 18px (measures 126px, comfortable margin). */
 body.felt-mode #felt-stage #lr-title-art.felt-lr{display:flex;align-items:center;justify-content:center;z-index:1;pointer-events:none;font:700 18px 'Brush Script MT','Segoe Script','Lucida Handwriting',cursive;font-size:calc(18px * var(--font-scale,1));color:var(--color-gold);text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.01em;white-space:nowrap}
-body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER';background:var(--text-grad-metallic-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-/* Deck: "Make the word Lucky Roller be more vibrant gold and larger." Portrait's box is a much
+/* Deck: "Lucky Roller is fuzzy and unreadable. Remove that ugly background and just use a
+   goldenrod color for the font on it." The gradient-clipped-text technique (background +
+   -webkit-background-clip:text + transparent fill) every multi-stop gold gradient on this felt
+   uses reads fine at the sizes those other elements sit at, but at #lr-title-art's small
+   cursive-script size the multiple gradient stops crossing each thin stroke made the letterforms
+   look muddy/fuzzy rather than crisp. Dropped the whole technique here -- plain solid
+   `goldenrod` color instead, no background/clip/fill-color to fight with the cursive glyphs.
+   Kept the text-shadow (that's contrast against the felt, not what Deck called ugly). */
+body.felt-mode #felt-stage #lr-title-art.felt-lr::after{content:'LUCKY ROLLER';color:goldenrod;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+/* Deck: "Make the word Lucky Roller... larger." (previous request) -- Portrait's box is a much
    wider 30.452%-of-#lucky-roller gap (vs the cramped one landscape's 18px was tuned for) --
    canvas.measureText() against the real cursive font (pseudo-element text, Range can't measure
    it) binary-searched the true max: 40px base leaves a real margin (measures ~12px shy of the
    86px-wide box at a representative narrow-window scale). */
 body.felt-portrait #felt-stage #lr-title-art.felt-lr{font-size:calc(40px * var(--font-scale,1))!important}
-body.felt-portrait #felt-stage #lr-title-art.felt-lr::after{background:var(--text-grad-vibrant-gold)!important}
 /* Backstop for the click-stealing bug above -- explicit z-index in addition to DOM order, so
    the bet boxes stay clickable across their full area even if LR_LAYOUT's order changes again.
    #bnums-low/#bnums-high never got the same treatment (Phase 7 bug: grown taller, they now sit
@@ -2600,7 +2601,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.21</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.22</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
