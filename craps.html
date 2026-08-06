@@ -2596,7 +2596,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.25</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.26</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -6458,8 +6458,18 @@ function updateUI(){
         html+='<div class="come-on-box">';
         maybeTriggerChipSound('come-flat-'+cb.num,cb.flat);
         maybeTriggerChipSound('come-odds-'+cb.num,cur);
+        // Come Odds' OFF badge used to carry an extra `G.phase==='comeout'||` term, which pinned
+        // it to OFF for the whole come-out no matter what the player did (Deck: "Bets On/Off
+        // button is not turning on the Odds bets that get turned off on a Come-out roll"). Come
+        // odds ARE off by default during come-out, but the toggle is allowed to turn them back
+        // on, and the server already honours that -- roll-crapless resolves them with
+        // `ow = act` (betsOn && !betsOffThisRoll), no phase term. So the badge was contradicting
+        // the money: odds toggled on during come-out were genuinely at risk and genuinely paid,
+        // while the felt still read OFF. Now the same formula as the server, and as the DC odds
+        // cell twenty lines below, which never had the bug.
+        const comeOff=!G.betsOn||G.betsOffThisRoll;
         html+='<div class="come-half flat-half" id="combox-flat-'+n+'">'+chipStackHTML(cb.flat,false,true)+'</div>';
-        html+='<div class="come-half odds-half" id="combox-odds-'+n+'" onclick="event.stopPropagation();addComeOddsAmt('+cbIdx+',G.chip)" oncontextmenu="event.preventDefault();event.stopPropagation();removeComeOdds('+cbIdx+')">'+(cur>0?chipStackHTML(cur,G.phase==='comeout'||!G.betsOn||G.betsOffThisRoll):'')+'</div>';
+        html+='<div class="come-half odds-half" id="combox-odds-'+n+'" onclick="event.stopPropagation();addComeOddsAmt('+cbIdx+',G.chip)" oncontextmenu="event.preventDefault();event.stopPropagation();removeComeOdds('+cbIdx+')">'+(cur>0?chipStackHTML(cur,comeOff):'')+'</div>';
         if(canOdds)html+='<button class="come-odds-btn" onclick="openComeOddsModal('+cbIdx+')">+O</button>';
         }else{
         html+='<div class="come-on-box">';
@@ -7339,7 +7349,11 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
     });});
   }
   function focusLoseComesBetsSeven(){
-    const ow=s.betsOn;
+    // `act`, not `s.betsOn` -- the server resolves come odds with act (betsOn &&
+    // !betsOffThisRoll) at all three of these sites. Using betsOn alone ignored a
+    // bets-off-this-roll toggle, so Practice Mode would pay (or risk) come odds the real
+    // table would have returned. Same drift the FOCUS_PRACTICE_NOTE above warns about.
+    const ow=act;
     s.comeBets.forEach(cb=>{
       log.push('Come ('+cb.num+'): lost '+cb.flat.toFixed(2)+'.');
       if(cb.odds>0){
@@ -7357,7 +7371,7 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
     const rem=[];
     s.comeBets.forEach((cb,i)=>{
       if(cb.num!==sum)return;
-      const ow=s.betsOn;
+      const ow=act; // see focusLoseComesBetsSeven -- server parity, act not betsOn
       const op=r2((cb.odds||0)*(FOCUS_ODDS_PAY[cb.num]||0));
       if(wc>0&&wc===cb.flat){
         const pr=r2(cb.flat+op);
@@ -7404,7 +7418,7 @@ function focusLocalResolve(s,bankroll,d1,d2,log){
       const hasPass=!!s.bets['pass'];const hasCome=s.comeBets.length>0;
       pR('pass',1,'Pass Line');
       lose('dp',"Don't Pass");
-      const ow=s.betsOn;
+      const ow=act; // see focusLoseComesBetsSeven -- server parity, act not betsOn
       if(hasCome){
         if(hasPass)log.push('Front line winner — Pass Line wins.');
         if(ow)log.push('Come bets lose — odds were working and also lost.');
