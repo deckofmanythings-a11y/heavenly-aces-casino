@@ -679,7 +679,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.6</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.7</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -977,32 +977,6 @@ function showFinalDice(v1,v2,v3){
   tumbling=false;animating=false;
   if(renderer){die1.quaternion.copy(tQ(v1));die2.quaternion.copy(tQ(v2));die3.quaternion.copy(tQ(v3));}
 }
-// Winning-combination voice announcement: "the winning combination is" + each die value
-// low-to-high, stitched from separate recorded clips by chaining playback off each clip's
-// 'ended' event, with a beat of silence held between clips so it doesn't run together.
-// Each die value is voiced differently depending on its position in the read (first/second/
-// last), so the dealer bark matches its place in the sentence rather than reusing one clip.
-const SICBO_NUM_WORD={1:'one',2:'two',3:'three',4:'four',5:'five',6:'six'};
-const SICBO_POSITION_PREFIX=['firstposition','secondposition','lastposition'];
-const ANNOUNCEMENT_GAP_MS=180;
-function playAnnouncementSequence(urls){
-  const audio=new Audio();
-  let i=0;
-  audio.addEventListener('ended',()=>setTimeout(playNext,ANNOUNCEMENT_GAP_MS));
-  playNext();
-  function playNext(){
-    if(i>=urls.length)return;
-    audio.src=urls[i++];
-    audio.volume=window.AudioSettings?AudioSettings.effectiveVolume():1;
-    audio.play().catch(()=>{});
-  }
-}
-function announceSicboResult(d1,d2,d3){
-  // Read in the same left-to-right order the three dice display in at the top of the
-  // screen (die1,die2,die3 = d1,d2,d3 raw from the server), not sorted ascending.
-  const dice=[d1,d2,d3].map((n,idx)=>SICBO_POSITION_PREFIX[idx]+SICBO_NUM_WORD[n]+'.ogg');
-  playAnnouncementSequence(['thewinningcombinationis.ogg',...dice]);
-}
 async function rollDice(){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
   if(tBets()===0){addLog('Place at least one bet before rolling.','info');return;}
@@ -1036,7 +1010,6 @@ async function rollDice(){
   feedValues([d1,d2,d3]);         // cloche now pre-simulates and lands on d1,d2,d3
   try{await clochePromise;}catch(e){}
   showFinalDice(d1,d2,d3);
-  announceSicboResult(d1,d2,d3);
   {
     document.getElementById('dice-sum-overlay').textContent=sum;
     document.getElementById('dice-sum-overlay').style.opacity='1';
