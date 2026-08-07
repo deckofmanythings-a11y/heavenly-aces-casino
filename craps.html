@@ -2596,7 +2596,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.28</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.29</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5258,19 +5258,40 @@ function playSfx(bucket,pitchJitter){
 // lobby's Options gear -- this page's own speaker button stays as a convenient in-game
 // shortcut but reads/writes through it instead of keeping a separate, disconnected state.
 // One-time migration: an existing 'voicesMuted' preference from before AudioSettings
-// existed still carries forward instead of silently resetting everyone to unmuted.
+// existed still carries forward instead of silently resetting everyone to unmuted. It is
+// read once and then deleted -- see the comment on the migration itself for why that
+// deletion is load-bearing rather than tidiness.
 let soundMuted;
 if(window.AudioSettings){
   soundMuted=AudioSettings.isMuted();
-  if(!soundMuted&&localStorage.getItem('voicesMuted')==='1'){soundMuted=true;AudioSettings.setMuted(true);}
+  // The migration has to CONSUME the legacy key, not just read it. Leaving it in place
+  // made this re-run on every single page load, so a player who unmuted anywhere else
+  // (the lobby's Options gear, or this page on an earlier visit) got silently re-muted
+  // the moment they opened Craps -- and permanently, since nothing ever cleared the key.
+  const legacyMuted=localStorage.getItem('voicesMuted');
+  if(legacyMuted!==null){
+    // Only honour the legacy value if AudioSettings has never stored anything of its own.
+    // audio-settings.js writes that key exclusively from setVolume/setMuted, so its
+    // presence means the player has since made a real choice -- and that choice wins.
+    // This also means everyone currently stuck muted (whose rh_audio_settings entry was
+    // written by the buggy migration itself) is freed on their next load, rather than
+    // eating one final unwanted mute before the key clears.
+    if(localStorage.getItem('rh_audio_settings')===null&&legacyMuted==='1'){
+      soundMuted=true;AudioSettings.setMuted(true);
+    }
+    localStorage.removeItem('voicesMuted');
+  }
 }else{
   soundMuted=localStorage.getItem('voicesMuted')==='1';
 }
 function playVoiceSfx(bucket){playSfx(bucket);}
 function toggleMuteVoices(){
   soundMuted=!soundMuted;
-  localStorage.setItem('voicesMuted',soundMuted?'1':'0');
+  // AudioSettings is the source of truth. Only touch the legacy key if audio-settings.js
+  // somehow didn't load -- writing it unconditionally would recreate the very key the
+  // migration above exists to clear, putting the permanent-mute bug straight back.
   if(window.AudioSettings)AudioSettings.setMuted(soundMuted);
+  else localStorage.setItem('voicesMuted',soundMuted?'1':'0');
   if(typeof ClocheDice!=='undefined'){ClocheDice.setMuted(soundMuted);ClocheDice.setVolume(window.AudioSettings?AudioSettings.effectiveVolume():1);}
   updateMuteVoicesBtn();
 }
