@@ -46,7 +46,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #lobby-screen{display:none;flex-direction:column;height:100vh;height:100dvh;overflow-y:auto;padding:24px 16px 40px}
 #lobby-header{display:flex;align-items:center;justify-content:space-between;max-width:720px;width:100%;margin:0 auto 28px;flex-wrap:wrap;gap:10px}
 #lobby-title{font-size:26px;font-weight:800;color:#ffd700}
-#lobby-account{display:flex;align-items:center;gap:14px}
+/* wrap + flex-end so the buttons drop to a second line rather than running off the
+   right edge on anything narrower than the tightening below already covers. */
+#lobby-account{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+/* The DoorDash mini button added ~40px to this row, which clipped Log Out at 375px wide.
+   Tightening the gaps reclaims 24px of that and leaves the tier card's tuned 220px alone. */
+@media (max-width:420px){#lobby-account{gap:6px}}
 #lobby-player-info{text-align:right;line-height:1.3}
 #lobby-tier-card-wrap{position:relative;width:220px;margin-left:auto;container-type:inline-size}
 #lobby-tier-card-img{display:block;width:100%;border-radius:7px;box-shadow:0 3px 12px rgba(0,0,0,.5)}
@@ -60,6 +65,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #logout-btn:hover{background:rgba(255,255,255,.15);color:#fff}
 #options-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;width:34px;height:34px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #options-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+/* ── DOORDASH LAUNCHER ── (see launchDoorDash() for how the app-vs-browser handoff works) */
+#dd-mini{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:6px;width:26px;height:26px;padding:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#dd-mini:hover{background:rgba(255,255,255,.15);border-color:rgba(235,23,0,.65)}
+#dd-mini img{width:100%;height:100%;display:block}
+#dd-launch{max-width:720px;width:100%;margin:0 auto 14px;padding:10px 16px;border-radius:10px;background:linear-gradient(135deg,rgba(235,23,0,.18),rgba(235,23,0,.06));border:1px solid rgba(235,23,0,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-sizing:border-box;color:#fff;font-family:inherit;font-size:15px;font-weight:700}
+#dd-launch:hover{background:linear-gradient(135deg,rgba(235,23,0,.3),rgba(235,23,0,.1))}
+#dd-launch img{width:28px;height:28px;display:block;flex-shrink:0}
 
 /* ── OPTIONS MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
@@ -144,6 +156,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
         </div>
         <div id="lobby-bankroll"></div>
       </div>
+      <button id="dd-mini" onclick="launchDoorDash()" title="Launch DoorDash"><img src="doordash-mark.svg?v=1" alt="DoorDash"></button>
       <button id="options-btn" onclick="openOptionsModal()" title="Options">⚙️</button>
       <button id="logout-btn" onclick="logout()">Log Out</button>
     </div>
@@ -176,6 +189,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
     <span id="weekly-event-label"></span>
     <span id="weekly-event-desc"></span>
   </div>
+  <button id="dd-launch" onclick="launchDoorDash()"><img src="doordash-mark.svg?v=1" alt=""><span>Launch DoorDash</span></button>
   <div id="lobby-grid">
     <div class="lobby-tile" onclick="dNav('craps.html?mode=standard')">
       <button class="info-circle-btn" onclick="showInstr(event,'craps-standard')" title="How to play">i</button>
@@ -246,7 +260,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.20</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.21</div>
 </div>
 
 <script>
@@ -527,6 +541,28 @@ function isDiscordDM(){
   const loc=new URLSearchParams(location.search).get('location_id');
   return !!loc&&loc.startsWith('pc-');
 }
+// Assigned by runDiscordEntry() below, and read afterwards by launchDoorDash() -- the
+// SDK instance used to be a local const inside that function, which left nothing for a
+// later button click to reach.
+let discordSdk=null;
+
+// A plain https://www.doordash.com URL is the whole trick on the open web: DoorDash
+// registers iOS Universal Links / Android App Links for that domain, so the OS hands it
+// to the installed native app and silently falls back to the browser when there isn't
+// one. (The doordash:// custom scheme is deliberately NOT used -- it dead-ends with no
+// fallback for anyone who doesn't have the app.) Inside a Discord Activity the iframe is
+// sandboxed and window.open to another origin is blocked, so the URL goes through the
+// SDK instead; Discord shows its own "leaving Discord" confirmation and then hands off to
+// the OS, which does the same app-link resolution from there.
+function launchDoorDash(){
+  const url='https://www.doordash.com';
+  if(isDiscordActivity()&&discordSdk&&discordSdk.commands&&discordSdk.commands.openExternalLink){
+    discordSdk.commands.openExternalLink({url}).catch(e=>{console.error('DoorDash launch failed:',e);});
+    return;
+  }
+  window.open(url,'_blank','noopener');
+}
+
 function withTimeout(promise,ms,label){
   return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out')),ms))]);
 }
@@ -539,7 +575,7 @@ async function runDiscordEntry(){
   statusEl.classList.add('show');
   try{
     const {DiscordSDK}=window.DiscordSDKLib;
-    const discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
+    discordSdk=new DiscordSDK(DISCORD_CLIENT_ID);
     await withTimeout(discordSdk.ready(),20000,'Discord SDK ready()');
     // prompt:'none' only succeeds if this exact client already has a cached consent
     // grant -- e.g. the player authorized on mobile before, but this is their first

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DoorDash">
+  <title>DoorDash</title>
+  <rect width="64" height="64" rx="15" fill="#EB1700"/>
+  <path d="M9 22 H38 Q56 32 38 42 H9 L19 32 Z" fill="#fff"/>
+</svg>
