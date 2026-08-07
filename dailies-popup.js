@@ -50,7 +50,10 @@
     overlayEl.addEventListener('click', advance);
   }
 
-  const TITLE = { task: 'Daily Task Complete', bonus: 'All Dailies Complete!', quest: 'Quest Complete!' };
+  const TITLE = { task: 'Daily Task Complete', bonus: 'All Dailies Complete!', quest: 'Quest Complete!', grant: 'Daily Bonus' };
+  // Everything except a tag grant pays in Free Play; a grant is real bankroll (see
+  // _shared/tagGrants.ts), so it must not be labelled "Free Play" here.
+  const SUFFIX = { grant: '' };
 
   function advance() {
     overlayEl.classList.add('hidden');
@@ -71,7 +74,7 @@
     const ev = queue[0];
     titleEl.textContent = TITLE[ev.type] || 'Complete!';
     labelEl.textContent = ev.label || '';
-    amtEl.textContent = '+$' + ev.amount.toFixed(2) + ' Free Play';
+    amtEl.textContent = '+$' + ev.amount.toFixed(2) + (SUFFIX[ev.type] !== undefined ? SUFFIX[ev.type] : ' Free Play');
     overlayEl.classList.remove('hidden');
     showing = true;
   }
@@ -188,7 +191,15 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + anonKey, 'apikey': anonKey },
       body: JSON.stringify({ session_token: token, action: 'state' }),
-    }).then(res => res.json()).then(data => { if (data && data.ok) FreePlayBadge.setBalance(data.free_play_balance); }).catch(() => {});
+    }).then(res => res.json()).then(data => {
+      if (!data || !data.ok) return;
+      FreePlayBadge.setBalance(data.free_play_balance);
+      // This call deliberately uses origFetch (it runs before any game code, and must
+      // not be re-entrant), so the hook above never sees it -- announce its events by
+      // hand. Matters for the daily tag stipend, which lands on whichever page the
+      // player opens first, game page included.
+      DailiesPopup.handle(data);
+    }).catch(() => {});
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', primeFpBadge);
   else primeFpBadge();

@@ -246,7 +246,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-sub" id="dailies-sub">Daily Tasks &amp; Quest</div>
     </div>
   </div>
-  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.19</div>
+  <div id="lobby-footer">Heavenly Aces Casino — play-money only, no real-world value.<br>Ver. 0.8.20</div>
 </div>
 
 <script>
@@ -368,6 +368,13 @@ async function loadDailiesBadge(){
     });
     const data=await res.json();
     if(!data.ok)return;
+    // A daily tag stipend (tags.daily_grant, credited server-side by dailies-action)
+    // lands AFTER the lobby already painted the bankroll it read at login, so repaint
+    // from the authoritative figure this response carries.
+    if(typeof data.bankroll==='number'&&currentPlayer){
+      currentPlayer.bankroll=data.bankroll;
+      document.getElementById('lobby-bankroll').textContent='$'+data.bankroll.toFixed(2)+' bankroll';
+    }
     const d=data.dailies;
     const remaining=Object.values(d.tasks).filter(v=>!v).length + (d.bonus_claimed?0:0) + (d.quest_completed?0:1);
     const badge=document.getElementById('dailies-badge');
@@ -559,6 +566,10 @@ async function runDiscordEntry(){
     if(!data.ok||!data.player)throw new Error(data.message||'Discord sign-in failed.');
     localStorage.setItem('craps_session',data.player.session_token);
     showLobby(data.player);
+    // discord-auth applies the daily tag stipend itself (so data.player.bankroll is
+    // already correct above) and isn't matched by dailies-popup.js's fetch hook, so
+    // announce its events explicitly rather than relying on that hook.
+    if(window.DailiesPopup)DailiesPopup.handle(data);
   }catch(e){
     console.error('Discord entry failed:',e);
     await tryRestoreSession();
@@ -600,6 +611,6 @@ if(isDiscordActivity()){
   tryRestoreSession();
 }
 </script>
-<script src="dailies-popup.js?v=4"></script>
+<script src="dailies-popup.js?v=5"></script>
 </body>
 </html>
