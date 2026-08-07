@@ -92,7 +92,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .row-label.high-label{color:#7ee87e}
 .card-row{display:flex;flex-direction:row;align-items:flex-start;justify-content:center;gap:0.5cqh;flex-wrap:nowrap}
 .pc-slot-wrap{display:flex;flex-direction:column;align-items:center}
-.pc-slot-wrap .pc-card{--pc-w:13cqh}
+.pc-slot-wrap .pc-card{--pc-w:16.25cqh}
 .pc-slot-wrap.low-tag .pc-card .pc-face{box-shadow:0 0 0 2px rgba(255,138,128,.65),0 2px 6px rgba(0,0,0,.45)}
 .pc-slot-wrap.high-tag .pc-card .pc-face{box-shadow:0 0 0 2px rgba(126,232,126,.55),0 2px 6px rgba(0,0,0,.45)}
 .pc-slot-wrap.selectable{cursor:pointer}
@@ -251,7 +251,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 @media (orientation:portrait){
   #left-col-header{width:20vw;min-width:110px}
   #info-panel{width:34vw}
-  .pc-slot-wrap .pc-card{--pc-w:8.4cqh}
+  .pc-slot-wrap .pc-card{--pc-w:10.5cqh}
   .row-label{width:11cqh;font-size:1.3cqh}
   #bet-sidebar{gap:1.4vh}
   :root{--chip:39px}
@@ -337,7 +337,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.15</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.16</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="GameInstructions.open('paigow')" title="How to play">i</button>
@@ -1289,6 +1289,9 @@ function updateUI(){
   const locked=G.phase!=='betting';
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
   const fortuneAmt=locked?G.locked.fortune:(G.bets.fortune||0);
+  // Reset the per-render Free Play allowance before the first spot claims any of it --
+  // see _fpRemainingForRender's own comment below for why this is an estimate.
+  _fpRemainingForRender=(window.FreePlayBadge&&FreePlayBadge.getBalance())||0;
   applyChipStackVisual('stk-ante',anteAmt,locked);
   applyChipStackVisual('stk-fortune',fortuneAmt,locked);
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
@@ -1308,12 +1311,12 @@ function updateUI(){
 // ── CHIP STACKS ON BET SPOTS -- ported wholesale from uth.html/craps ─────────
 const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
-function chipLabel(amt){return '$'+(Number.isInteger(amt)?amt:amt.toFixed(2));}
-function chipStackHTML(amt,locked){
+function chipLabel(amt,isFP){return (isFP?'FP$':'$')+(Number.isInteger(amt)?amt:amt.toFixed(2));}
+function chipStackHTML(amt,locked,isFP){
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.webp" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
-  const label=chipLabel(amt);
+  const label=chipLabel(amt,isFP);
   const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
   if(locked)h+='<span class="chip-lock" style="bottom:0">🔒</span>';
@@ -1330,11 +1333,21 @@ function maybeTriggerChipSound(key,amt){
     _chipSoundState.set(key,newAmt);
   }
 }
+// Free Play eligibility per spot is a client-side estimate, not the server's real
+// accounting (that only happens at deal time, inside roll-paigow's drawFreePlay) --
+// each spot is checked in call order against a running balance that depletes as
+// earlier spots claim it, so the total labeled FP$ across the felt can never
+// overstate the player's actual FP balance, even though WHICH spot gets the label
+// is purely a function of the call order in updateUI(). Same algorithm every other
+// game on the site uses.
+let _fpRemainingForRender=0;
 function applyChipStackVisual(id,amt,locked){
   const el=document.getElementById(id);
   maybeTriggerChipSound(id,amt);
   if(!(amt>0)){el.innerHTML='';el.classList.remove('has-stack');return;}
-  el.innerHTML=chipStackHTML(amt,locked);
+  const isFP=amt<=_fpRemainingForRender;
+  if(isFP)_fpRemainingForRender=r2(_fpRemainingForRender-amt);
+  el.innerHTML=chipStackHTML(amt,locked,isFP);
   el.classList.add('has-stack');
 }
 document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
