@@ -106,7 +106,7 @@
   // a hot throw can't leave the playfield. Sized so the camera (0,8.5,12.5 looking at 0,2.6,0)
   // frames the wall behind the landing zone without moving the camera at all -- the cloche and
   // the alley share one view, which keeps every other game's framing untouched.
-  const ARENA = { halfW: 6.5, height: 9.5, wallZ: -5.5, frontZ: 7.5 };
+  const ARENA = { halfW: 6.5, height: 9.5, wallZ: -5.5, frontZ: 7.5, handY: 4.6 };
   const isWall = () => CFG.arena === 'wall';
 
   // Seamless running-bond brick, drawn rather than shipped as an image: it tiles by construction
@@ -1089,7 +1089,11 @@
       for (let i = 0; i < n; i++) {
         const d = dice[i];
         const spread = n > 1 ? (i / (n - 1) - 0.5) * s * 1.6 : 0;
-        d.body.position.set(spread, PLATFORM_Y + s / 2 + 0.6 + i * 0.05, ARENA.frontZ - s);
+        // Hand height, not resting on the ground. The dice are held and thrown, so they have to
+        // start high enough that a flat throw reaches the brick before gravity drops them onto
+        // the asphalt -- see the trajectory note on the launch impulse.
+        d.holdPos = { x: spread, y: ARENA.handY + i * 0.05, z: ARENA.frontZ - s };
+        d.body.position.set(d.holdPos.x, d.holdPos.y, d.holdPos.z);
         d.body.velocity.set(0, 0, 0);
         d.body.angularVelocity.set(0, 0, 0);
         d.body.quaternion.setFromEuler(
@@ -1211,10 +1215,16 @@
           // brick and rebound rather than dying on the floor halfway there. All randomness
           // still comes from ctx.rng, so the pre-simulation and the live replay stay identical
           // -- the same determinism contract the cloche has.
+          // The brick must be the FIRST thing they hit, not a floor bounce on the way there.
+          // Trajectory, checked rather than eyeballed: released at y=4.6, z=5.5, wall face at
+          // z=-5.5, so 11 units to cover. At vz=-24 that's t=0.46s; with vy=+4 and gravity -34,
+          // y(0.46) = 4.6 + 1.84 - 3.57 = 2.87, and a die's half-height is 1.0, so its underside
+          // is still ~1.5 above the asphalt when it reaches the wall. Flat and fast, i.e. thrown
+          // rather than lobbed. The rebound plus the drop is then the second collision.
           d.body.velocity.set(
-            (rng() - 0.5) * 3,
-            4 + rng() * 2,
-            -(12 + rng() * 3));
+            (rng() - 0.5) * 2.5,
+            3 + rng() * 2,
+            -(22 + rng() * 4));
           // Heavy tumble about the throw axis, which is what a real thrown die does.
           d.body.angularVelocity.set(
             (rng() - 0.5) * 22, (rng() - 0.5) * 16, (rng() - 0.5) * 22);
@@ -1377,6 +1387,28 @@
       // free-running agitation, wall clock driven, outcome irrelevant
       const t = (now - prerollT0) / 1000;
       const inBuzz = (now - prerollT0) < CFG.buzzMs;
+
+      // The alley has no agitation phase at all. The cloche shakes its platform and pops the
+      // dice around on it while waiting for the server -- that IS the bell jar, and doing it
+      // here made the asphalt visibly vibrate and the dice skitter on the ground, i.e. exactly
+      // the "wall-shaped bubble craps" this arena exists to not be. Instead the dice are simply
+      // held at hand height, turning over in the shooter's fist, and thrown when the server
+      // answers. The ground never moves: it's the ground.
+      if (isWall()) {
+        for (const d of dice) {
+          if (!d.holdPos) continue;
+          d.body.position.set(d.holdPos.x, d.holdPos.y, d.holdPos.z);
+          d.body.velocity.set(0, 0, 0);
+          // Slow turn-over in the hand, so the dice read as held rather than frozen.
+          d.body.angularVelocity.set(2.2, 3.0, 1.6);
+        }
+        world.step(STEP, dt, 6);
+        const minDoneW = now - prerollT0 >= CFG.minAgitateMs;
+        if (minDoneW && serverValues) beginResolve();
+        renderIfOpen();
+        return;
+      }
+
       platformMesh.position.y =
         Math.sin(t * 55) * 0.04 + Math.sin(t * 23 + 1.3) * 0.025;
 
@@ -1428,7 +1460,9 @@
       // just during a correction. Now vibrates continuously the entire time the dice aren't
       // settled -- full amplitude while actively correcting, a smaller-but-still-present ambient
       // shake otherwise -- so there's always a visible "cause" on screen for whatever a die does.
-      {
+      // Cloche only. The felt platform shaking under a still-settling die gives it a visible
+      // "cause"; asphalt doing the same thing just looks like the street is having a seizure.
+      if (!isWall()) {
         const amp = resolveCtx.correcting ? 1 : 0.35;
         platformMesh.position.y = (Math.sin(now / 1000 * 48) * 0.025 + Math.sin(now / 1000 * 19 + 0.7) * 0.015) * amp;
       }
@@ -1436,7 +1470,9 @@
       if (resolveCtx.done || resolveCtx.step >= CFG.maxResolveSteps * 2) {
         finishResolve(now);
       }
-    } else {
+    } else if (!isWall()) {
+      // Settle the cloche platform back to rest. The asphalt was never displaced, so there is
+      // nothing to decay -- and running this would drift it off its built position.
       platformMesh.position.y *= 0.85;
     }
 

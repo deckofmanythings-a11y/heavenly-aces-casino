@@ -676,9 +676,8 @@ body.game-street .horn-cell,
 body.game-street .prop-circle,
 body.game-street .prop-bar,
 body.game-street .lowhigh-field-row{display:none!important}
-.street-sub{font-family:'Permanent Marker','Caveat',cursive;font-size:calc(var(--chip)*0.19);
-  color:rgba(255,255,255,.42);margin-top:3px;line-height:1.15}
-body.felt-compact .street-sub{display:none}
+/* .street-sub (the hint line under LINE/FADE) removed at Deck's request -- the chalk boxes now
+   carry just the word, which is what a real street board looks like. */
 #pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
 #pass-odds-cell:hover{background:rgba(255,255,255,.12)}
 #pass-odds-cell.active{background:transparent}
@@ -2650,7 +2649,6 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
                applyGameMode('street') shows them. -->
           <div id="street-line-bar" class="chalk-box" onclick="placeBet('line')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('line')">
             <div class="chalk-label">LINE</div>
-            <div class="street-sub">7 · 11 win &nbsp;·&nbsp; 2 · 3 · 12 lose</div>
             <div class="zone-stk" id="stk-line"></div>
             <div class="zone-note" id="lk-line"></div>
             <span class="street-house-tag" id="house-tag-line"></span>
@@ -2658,7 +2656,6 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           </div>
           <div id="street-fade-bar" class="chalk-box" onclick="placeBet('fade')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fade')">
             <div class="chalk-label">FADE</div>
-            <div class="street-sub">Against the shooter &nbsp;·&nbsp; no bar</div>
             <div class="zone-stk" id="stk-fade"></div>
             <div class="zone-note" id="lk-fade"></div>
             <span class="street-house-tag" id="house-tag-fade"></span>
@@ -2728,7 +2725,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.41</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.42</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3353,8 +3350,8 @@ const STREET_LAYOUT=[
   ['#street-pt-8',      50.75,21.0, 11.0,13.0,null],
   ['#street-pt-9',      63.25,21.0, 11.0,13.0,null],
   ['#street-pt-10',     75.75,21.0, 11.0,13.0,null],
-  ['#street-line-bar',  32.0, 46.0, 36.0,17.0,null],
-  ['#street-fade-bar',  32.0, 67.0, 36.0,17.0,null],
+  ['#street-line-bar',  38.0, 46.0, 24.0,17.0,null],
+  ['#street-fade-bar',  38.0, 67.0, 24.0,17.0,null],
 ];
 // PORTRAIT_FELT_LAYOUT: Deck's export, whole px on the 1800x3200 portrait canvas -> %-of-felt
 // (x/1800*100, y/3200*100). #left-col-header/#info-panel aren't in the export (calibBaseEntries()
@@ -3564,8 +3561,8 @@ const PORTRAIT_STREET_LAYOUT=[
   ['#street-pt-8',       10.0,28.5, 24.0,8.5,null],
   ['#street-pt-9',       38.0,28.5, 24.0,8.5,null],
   ['#street-pt-10',      66.0,28.5, 24.0,8.5,null],
-  ['#street-line-bar',   22.0,47.0, 56.0,13.0,null],
-  ['#street-fade-bar',   22.0,64.0, 56.0,13.0,null],
+  ['#street-line-bar',   33.0,47.0, 34.0,13.0,null],
+  ['#street-fade-bar',   33.0,64.0, 34.0,13.0,null],
 ];
 const PORTRAIT_LR_LAYOUT=[
   // Same re-homing as landscape's own #lr-title-art (see that entry's comment) -- portrait's
@@ -9073,7 +9070,7 @@ applyFocusVisibility();
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="cloche-dice.js?v=0.7.4"></script>
+<script src="cloche-dice.js?v=0.7.5"></script>
 <script src="winner-modal.js?v=0.5.4"></script>
 <script src="dailies-popup.js?v=5"></script>
 <script>
