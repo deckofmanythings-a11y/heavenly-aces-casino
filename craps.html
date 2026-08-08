@@ -2728,7 +2728,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.37</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.38</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -6440,6 +6440,32 @@ function streetHouseSweep(side){
     getBoundingClientRect(){return this;}};
   streetFly(from,box,fmt(streetHouseIn(side)),20);
 }
+// A point DECISION: the combined stack leaves the number box and travels to whoever took it.
+//
+// Direction follows the PLAYER, not the abstract winning side (Deck: "Flies down to LINE on
+// Point Hit, and flies off the top on seven-out IS IF the player bet LINE. If the player bet
+// FADE, the behavior is inverted"). So the one rule that covers every case is: if the player
+// had money on the side that won, the pot comes down into that box; otherwise it goes up off
+// the top edge, back the way the house's match arrived. Betting both sides resolves naturally
+// under the same rule -- the winning side is one the player holds, so it comes down.
+//
+// The two events are distinct: "established" is a come-out roll with no point yet landing on
+// 4/5/6/8/9/10; "hit" is that same number repeating before a seven, point already standing.
+function streetPointSweep(pointNum,winningSide,playerHeldWinner,amount){
+  const from=document.getElementById('street-pt-'+pointNum);
+  if(!from||!(amount>0))return;
+  if(playerHeldWinner){
+    const box=document.getElementById('street-'+winningSide+'-bar');
+    if(box)streetFly(from,box,fmt(amount),20);
+    return;
+  }
+  const stage=document.getElementById('felt-stage');
+  if(!stage)return;
+  const s=stage.getBoundingClientRect(),f=from.getBoundingClientRect();
+  const off={left:f.left,top:s.top-f.height*1.4,width:f.width,height:f.height,
+    getBoundingClientRect(){return this;}};
+  streetFly(from,off,fmt(amount),20);
+}
 // Transition trackers -- animations fire on CHANGE, not on every updateUI() pass (which runs
 // on a timer as well as on input, so re-firing per render would strobe).
 let streetLastHouse={line:0,fade:0},streetLastPoint=null;
@@ -6703,7 +6729,18 @@ async function rollDice(isRetry){
     // as a win-side sweep) BEFORE restoreFromServerState() clears G.progressiveArmPending and
     // the next updateUI() blanks #stk-light's text out from under it.
     if(lightJustArmed)spawnChipGhost(document.getElementById('stk-light'),{noDim:true});
+    // Street: snapshot the point and the pot BEFORE the server's state overwrites them --
+    // restoreFromServerState() clears both the moment a decision lands, and the sweep needs to
+    // know which number the stack was sitting on and how much was in it.
+    const streetPre=(activeGame==='street'&&G.phase==='point'&&G.point)
+      ? {point:G.point,pot:streetPot(),line:G.bets['line']||0,fade:G.bets['fade']||0} : null;
     restoreFromServerState(data.newState);
+    // Fire only on an actual decision -- the point being gone from the new state is what marks
+    // one. A non-decision roll during the point phase leaves the stack where it is.
+    if(streetPre&&!data.newState.point){
+      const winner=(sum===streetPre.point)?'line':(sum===7?'fade':null);
+      if(winner)streetPointSweep(streetPre.point,winner,streetPre[winner]>0,streetPre.pot);
+    }
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     if(lightJustArmed){
       const img=document.getElementById('light-on-img');
@@ -7086,18 +7123,23 @@ function updateUI(){
     // rollHistory entries don't currently carry a "point-established" tag.
     const chron=G.rollHistory.slice().reverse();
     let phase='comeout',pt=null;const tagFor=[];
-    const isStd=activeGame==='standard';
+    // Crapless is the odd one out here, not Standard: it's the only mode where a come-out total
+    // other than 7 always sets the point. Standard AND Street share the same come-out shape
+    // (7/11 win, 2/3/12 craps out, everything else sets the point), so this has to test for
+    // crapless rather than for standard. As `activeGame==='standard'` it silently handed Street
+    // crapless's rules and mis-coloured every 11 and every craps number in the strip.
+    const craplessComeOut=activeGame==='crapless';
     chron.forEach(r=>{
       let t=null;
       if(phase==='comeout'){
-        if(isStd){
-          // Standard: 7 or 11 wins outright, 2/3/12 craps out, anything else sets the point.
-          // 11 can never become a point number.
+        if(craplessComeOut){
+          if(r.sum===7){t='win';}else{t='est';pt=r.sum;phase='point';}
+        }else{
+          // Standard/Street: 7 or 11 wins outright, 2/3/12 craps out, anything else sets the
+          // point. 11 can never become a point number.
           if(r.sum===7||r.sum===11){t='win';}
           else if(r.sum===2||r.sum===3||r.sum===12){t='out';}
           else{t='est';pt=r.sum;phase='point';}
-        }else{
-          if(r.sum===7){t='win';}else{t='est';pt=r.sum;phase='point';}
         }
       }else{
         if(r.sum===pt){t='made';phase='comeout';pt=null;}
