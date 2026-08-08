@@ -9,19 +9,52 @@
    button and on the lobby tiles, and the paytable ones out on the felt. Exported straight
    out of the drag tool (instr-calib.js; open any page with ?icalib=1).
 
-   Key -> { anchor, x, y, unit, w, h }
-     anchor  which corner x/y are measured from: t/b + l/r, e.g. 'tr'
-     x, y    always % of the button's container. Negative is fine and sometimes intended --
-             paigow's sit just outside their bet spot, on its rim.
-     unit    'px' for a fixed size, 'pct' for a size that scales with the felt art
-     w, h    the size, in that unit (h is only meaningful for 'pct', where the container
-             isn't square and equal pixels need unequal percentages)
+   Portrait and landscape are calibrated separately -- the felts lay out differently enough
+   that one set of numbers can't serve both -- so every key holds up to two placements:
+
+   Key -> { landscape: PLACEMENT, portrait: PLACEMENT }   (either may be absent)
+
+   PLACEMENT = { anchor, x, y, [unit, w, h] }
+     anchor    which corner x/y are measured from: t/b + l/r, e.g. 'tr'
+     x, y      always % of the button's container. Negative is fine and often intended --
+               most of these sit just outside their module, off the edge of the art.
+     unit/w/h  OPTIONAL size override: 'px' for fixed, 'pct' to scale with the felt art.
+               Leave them off to keep whatever the stylesheet already gives the button,
+               which is usually what you want -- uth and breakout both resize these in a
+               portrait media query, and baking a landscape size would defeat that.
+
+   An orientation with no placement is left completely alone: the button keeps whatever the
+   stylesheet gives it there, and rotating the device restores that cleanly. So calibrating
+   landscape never disturbs portrait, and vice versa.
 
    The container is whatever data-icalib-box names, or the button's own offsetParent when it
    doesn't -- which for the felt buttons is already the module their authored %s were written
-   against. A button with no entry here keeps exactly the position it has always had, so
-   anything uncalibrated is left completely alone. */
-var INSTR_POS = {};
+   against.
+
+   Positions below are Deck's own calibrated export from the drag tool. Sizes are deliberately
+   not carried over: the export's w/h came back identical to the CSS, so there was nothing to
+   bake and leaving them out keeps the portrait size rules intact. */
+var INSTR_POS = {
+  'uth:trips':  { landscape:{ anchor:'tl', x:-13, y:19 } },
+  'uth:ante':   { landscape:{ anchor:'tl', x:-13, y:52 } },
+  'uth:blind':  { landscape:{ anchor:'tl', x:85,  y:52 } },
+  'uth:play':   { landscape:{ anchor:'tl', x:-13, y:83 } },
+  'uth:light':  { landscape:{ anchor:'tl', x:-13, y:-30 } },
+
+  'breakout:bonus':            { landscape:{ anchor:'tl', x:-10, y:22 } },
+  'breakout:supertie':         { landscape:{ anchor:'tl', x:-10, y:74 } },
+  'breakout:pairplus-player':  { landscape:{ anchor:'tl', x:-10, y:21 } },
+  'breakout:sweet17-player':   { landscape:{ anchor:'tl', x:-10, y:71 } },
+  'breakout:trilux9':          { landscape:{ anchor:'tl', x:-15, y:21 } },
+  'breakout:fortunebonus':     { landscape:{ anchor:'tl', x:-15, y:78 } },
+  'breakout:light':            { landscape:{ anchor:'tl', x:-26, y:36 } },
+
+  'paigow:light':   { landscape:{ anchor:'tl', x:140, y:30 } },
+  'paigow:fortune': { landscape:{ anchor:'tl', x:140, y:30 } },
+  'paigow:ante':    { landscape:{ anchor:'tl', x:140, y:36 } },
+
+  'iluvsuits:light': { landscape:{ anchor:'tl', x:78.977, y:39.606 } }
+};
 
 var INSTRUCTIONS_DATA = {
   'craps-standard': { title: '🎲 Craps — Standard', pages: [
@@ -402,6 +435,29 @@ function boxFor(btn){
   return btn.offsetParent || document.documentElement;
 }
 
+/* Remember exactly how the page authored this button before we touch it, so an orientation
+   with no placement can be put back byte-for-byte. destroyer's two carry real inline
+   left/top/width in the markup, and the header ones have to go back into the flex row they
+   were reparented out of -- neither survives a naive style wipe. */
+function snapshot(btn){
+  if(btn._icalibOrig) return;
+  btn._icalibOrig = {
+    style: btn.getAttribute('style'),
+    parent: btn.parentElement,
+    next: btn.nextElementSibling
+  };
+}
+
+function clearPos(btn){
+  var o = btn._icalibOrig;
+  if(!o) return;
+  if(o.style == null) btn.removeAttribute('style'); else btn.setAttribute('style', o.style);
+  if(o.parent && btn.parentElement !== o.parent){
+    if(o.next && o.next.parentElement === o.parent) o.parent.insertBefore(btn, o.next);
+    else o.parent.appendChild(btn);
+  }
+}
+
 function applyPos(btn, p){
   var box = boxFor(btn);
   if(box !== document.documentElement && getComputedStyle(box).position === 'static') box.style.position = 'relative';
@@ -418,28 +474,38 @@ function applyPos(btn, p){
   btn.style.left = btn.style.right = btn.style.top = btn.style.bottom = 'auto';
   if(a.charAt(1) === 'l') btn.style.left = p.x + '%'; else btn.style.right = p.x + '%';
   if(a.charAt(0) === 't') btn.style.top  = p.y + '%'; else btn.style.bottom = p.y + '%';
+  /* Size is optional and usually absent: the stylesheet already sizes these, including per
+     orientation, so only touch it when a calibration actually asked for something different. */
   var w = p.w != null ? p.w : p.size;   // p.size is the older px-only spelling
-  if(p.unit === 'pct'){
-    /* Percent-sized buttons scale with the felt art they sit on, which is the whole point
-       of how they were authored -- pinning them to px would break them on a resize. w/h are
-       separate because the module isn't square, and equal pixel sizes need unequal %s. */
-    btn.style.width = w + '%';
-    btn.style.height = (p.h != null ? p.h : w) + '%';
-    btn.style.minWidth = '0';
-  } else if(w){
-    btn.style.width = btn.style.height = btn.style.minWidth = w + 'px';
-    btn.style.fontSize = Math.round(w * 0.54) + 'px';
+  if(w != null){
+    if(p.unit === 'pct'){
+      /* Percent-sized buttons scale with the felt art they sit on. w/h are separate because
+         the module isn't square, and equal pixel sizes need unequal percentages. */
+      btn.style.width = w + '%';
+      btn.style.height = (p.h != null ? p.h : w) + '%';
+      btn.style.minWidth = '0';
+    } else {
+      btn.style.width = btn.style.height = btn.style.minWidth = w + 'px';
+      btn.style.fontSize = Math.round(w * 0.54) + 'px';
+    }
   }
   if(!btn.style.zIndex) btn.style.zIndex = '20';
 }
 
+function orientation(){
+  return (window.matchMedia && window.matchMedia('(orientation:portrait)').matches) ? 'portrait' : 'landscape';
+}
+
 function applyPositions(){
-  var over = loadOverrides();
+  var over = loadOverrides(), mode = orientation();
   var btns = document.querySelectorAll('[data-icalib]');
   for(var i=0;i<btns.length;i++){
-    var b = btns[i];
-    var p = over[b.getAttribute('data-icalib')] || INSTR_POS[b.getAttribute('data-icalib')];
-    if(p) applyPos(b, p);
+    var b = btns[i], key = b.getAttribute('data-icalib');
+    var entry = over[key] || INSTR_POS[key];
+    var p = entry && entry[mode];
+    snapshot(b);
+    // no placement for this orientation -> hand the button back to the stylesheet
+    if(p) applyPos(b, p); else clearPos(b);
   }
 }
 
@@ -451,11 +517,20 @@ function maybeLoadCalib(){
   if(!on || document.getElementById('icalib-script')) return;
   var s = document.createElement('script');
   s.id = 'icalib-script';
-  s.src = 'instr-calib.js?v=2';
+  s.src = 'instr-calib.js?v=3';
   document.head.appendChild(s);
 }
 
-function init(){ applyPositions(); maybeLoadCalib(); }
+function init(){
+  applyPositions();
+  // portrait/landscape swaps change which placement applies, so re-run on rotate
+  if(window.matchMedia){
+    var mq = window.matchMedia('(orientation:portrait)');
+    if(mq.addEventListener) mq.addEventListener('change', applyPositions);
+    else if(mq.addListener) mq.addListener(applyPositions);
+  }
+  maybeLoadCalib();
+}
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
 

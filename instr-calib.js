@@ -15,6 +15,13 @@
 var LS_KEY = 'instrPosOverride';
 var active = false, selected = null, layer = null, bar = null;
 
+/* Everything moves on a whole-pixel grid this coarse. Positions are still stored as % (that's
+   what keeps a button glued to felt art that scales), but the drag snaps to whole 5px steps
+   measured from the container's own origin, so what gets saved always lands on the grid at
+   the size you calibrated at -- no more 18.99%-style drift from a hand-placed pixel. */
+var GRID = 5;
+function snap(v){ return Math.round(v / GRID) * GRID; }
+
 /* ---- shared position math (kept in sync with applyPos() in instructions.js) ---- */
 
 function boxOf(btn){
@@ -45,11 +52,34 @@ function boxRect(btn){
   };
 }
 
-function load(){
+/* Placements are stored per orientation -- {key:{landscape:{...},portrait:{...}}} -- because
+   the felts lay out differently enough that one set of numbers can't serve both. The tool
+   always reads and writes the slot for whichever way the screen is currently turned, so
+   calibrating one orientation can never disturb the other. */
+function mode(){
+  return (window.matchMedia && window.matchMedia('(orientation:portrait)').matches) ? 'portrait' : 'landscape';
+}
+
+function loadAll(){
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e){ return {}; }
 }
-function save(all){
+function saveAll(all){
   try { localStorage.setItem(LS_KEY, JSON.stringify(all)); } catch(e){}
+}
+
+// the current orientation's slice, flattened to key -> placement
+function load(){
+  var all = loadAll(), m = mode(), out = {};
+  for(var k in all){ if(all[k] && all[k][m]) out[k] = all[k][m]; }
+  return out;
+}
+function save(flat){
+  var all = loadAll(), m = mode();
+  for(var k in flat){
+    if(!all[k]) all[k] = {};
+    all[k][m] = flat[k];
+  }
+  saveAll(all);
 }
 
 /* Current on-screen geometry of a button as {anchor,x,y,size}, read back from the live DOM.
@@ -61,7 +91,7 @@ function readGeom(btn, anchor, unit){
   var a = anchor || 'tl';
   if(!br.width || !br.height){
     var fb = u === 'pct' ? 8 : (Math.round(r.width) || 26);
-    return { anchor:a, x:0, y:0, unit:u, w:fb, h:fb };
+    return { anchor:a, x:0, y:0, unit:u, w:fb, h:fb, keepSize:true };
   }
   var x = a.charAt(1) === 'l' ? (r.left - br.left) : (br.left + br.width  - r.right);
   var y = a.charAt(0) === 't' ? (r.top  - br.top)  : (br.top  + br.height - r.bottom);
@@ -69,7 +99,8 @@ function readGeom(btn, anchor, unit){
     anchor: a,
     x: +( x / br.width  * 100 ).toFixed(3),
     y: +( y / br.height * 100 ).toFixed(3),
-    unit: u, w: 0, h: 0
+    // measured straight off the page, so it still matches CSS until something resizes it
+    unit: u, w: 0, h: 0, keepSize: true
   };
   if(u === 'pct'){
     g.w = +( r.width  / br.width  * 100 ).toFixed(3);
@@ -90,10 +121,15 @@ function pxSize(btn){
 function buttons(){
   return Array.prototype.slice.call(document.querySelectorAll('[data-icalib]'));
 }
+/* visibility:hidden elements still have a layout box, so a size check alone would put halos
+   over buttons nobody can see -- breakout's #side-bets-module is hidden that way until its
+   game mode is picked. Check the computed visibility too, so what's grabbable matches what's
+   on screen; switch to that mode with calibrate still on and they show up. */
 function visible(){
   return buttons().filter(function(b){
     var r = b.getBoundingClientRect();
-    return r.width > 0 && r.height > 0;
+    if(!(r.width > 0 && r.height > 0)) return false;
+    return getComputedStyle(b).visibility !== 'hidden';
   });
 }
 /* One representative button per key -- the lobby's nine tiles all answer to 'index:tile'. */
@@ -189,6 +225,7 @@ function onGrab(e){
     key: selected, btn: btn, br: br,
     pxW: r.width, pxH: r.height,          // clamp/anchor math is all in on-screen pixels
     unit: cur.unit, w: cur.w, h: cur.h,   // size rides along untouched; dragging only moves
+    keepSize: cur.keepSize !== false,
     anchor: cur.anchor || 'tl',
     // grab offset within the button, so it doesn't jump to the cursor on pickup
     dx: e.clientX - r.left, dy: e.clientY - r.top
@@ -211,7 +248,8 @@ function onMove(e){
      Negative percentages are legitimate here; going off-screen never is. */
   var vl = Math.max(0, Math.min(e.clientX - drag.dx, (window.innerWidth  || 0) - drag.pxW));
   var vt = Math.max(0, Math.min(e.clientY - drag.dy, (window.innerHeight || 0) - drag.pxH));
-  var left = vl - br.left, top = vt - br.top;
+  // snap against the container's origin, not the viewport's, so the saved offset is on-grid
+  var left = snap(vl - br.left), top = snap(vt - br.top);
   var a = drag.anchor;
   var x = a.charAt(1) === 'l' ? left : (br.width  - left - drag.pxW);
   var y = a.charAt(0) === 't' ? top  : (br.height - top  - drag.pxH);
@@ -219,7 +257,7 @@ function onMove(e){
     anchor: a,
     x: +( x / br.width  * 100 ).toFixed(3),
     y: +( y / br.height * 100 ).toFixed(3),
-    unit: drag.unit, w: drag.w, h: drag.h
+    unit: drag.unit, w: drag.w, h: drag.h, keepSize: drag.keepSize
   });
 }
 
@@ -253,11 +291,16 @@ function nudge(ddx, ddy){
   // arrows are screen-direction; flip them for right/bottom anchors so up is always up
   var sx = cur.anchor.charAt(1) === 'l' ? 1 : -1;
   var sy = cur.anchor.charAt(0) === 't' ? 1 : -1;
+  /* Work in pixels and snap the result, rather than adding a step to whatever fraction is
+     already stored -- that way a nudge also pulls an off-grid value (an old hand-tuned one,
+     say) back onto the grid instead of carrying the drift along forever. */
+  var nx = snap(cur.x / 100 * br.width  + ddx * sx);
+  var ny = snap(cur.y / 100 * br.height + ddy * sy);
   commit(selected, {
     anchor: cur.anchor,
-    x: +( cur.x + ddx * sx / br.width  * 100 ).toFixed(3),
-    y: +( cur.y + ddy * sy / br.height * 100 ).toFixed(3),
-    unit: cur.unit, w: cur.w, h: cur.h
+    x: +( nx / br.width  * 100 ).toFixed(3),
+    y: +( ny / br.height * 100 ).toFixed(3),
+    unit: cur.unit, w: cur.w, h: cur.h, keepSize: cur.keepSize
   });
 }
 
@@ -272,7 +315,7 @@ function resize(delta){
   var all = load(), cur = all[selected] || readGeom(btn);
   var br = boxRect(btn), now = pxSize(btn);
   // grow/shrink by on-screen pixels, then push it back into whichever unit this button uses
-  var px = Math.max(14, Math.min(96, now.w + delta));
+  var px = Math.max(GRID * 3, Math.min(GRID * 20, snap(now.w + delta)));
   if(cur.unit === 'pct'){
     if(!br.width || !br.height) return;
     cur.w = +( px / br.width  * 100 ).toFixed(3);
@@ -280,6 +323,7 @@ function resize(delta){
   } else {
     cur.w = cur.h = px;
   }
+  cur.keepSize = false;   // an explicit resize is worth baking; a measured one isn't
   commit(selected, cur);
 }
 
@@ -289,7 +333,9 @@ function setAnchor(a){
   if(!btn) return;
   // re-measure against the new corner so the button doesn't move, only its reference does
   var all = load(), cur = all[selected];
-  commit(selected, readGeom(btn, a, cur && cur.unit));
+  var g = readGeom(btn, a, cur && cur.unit);
+  if(cur) g.keepSize = cur.keepSize;   // changing the reference corner isn't a resize
+  commit(selected, g);
 }
 
 /* Flipping the unit re-reads the button where it currently sits, so it stays exactly put and
@@ -299,20 +345,25 @@ function toggleUnit(){
   var btn = sel();
   if(!btn) return;
   var all = load(), cur = all[selected] || readGeom(btn);
-  commit(selected, readGeom(btn, cur.anchor, cur.unit === 'pct' ? 'px' : 'pct'));
+  var g = readGeom(btn, cur.anchor, cur.unit === 'pct' ? 'px' : 'pct');
+  g.keepSize = false;   // asking for a different unit means you want the size baked
+  commit(selected, g);
 }
 
 function resetOne(){
   if(!selected) return;
-  var all = load();
-  delete all[selected];
-  save(all);
+  var all = loadAll();
+  if(all[selected]){
+    delete all[selected][mode()];   // only this orientation; the other one stays calibrated
+    if(!all[selected].landscape && !all[selected].portrait) delete all[selected];
+  }
+  saveAll(all);
   location.reload(); // simplest honest way to restore the original in-flow layout
 }
 
 function resetAll(){
-  if(!confirm('Clear every calibrated circle-i position and reload?')) return;
-  save({});
+  if(!confirm('Clear every calibrated circle-i position, in BOTH orientations, and reload?')) return;
+  saveAll({});
   location.reload();
 }
 
@@ -326,10 +377,10 @@ function buildBar(){
     +'<span class="icalib-sep"></span>'
     +'<span id="icalib-readout">tap a button to select</span>'
     +'<span class="icalib-sep"></span>'
-    +'<button data-n="-1,0">←</button><button data-n="1,0">→</button>'
-    +'<button data-n="0,-1">↑</button><button data-n="0,1">↓</button>'
+    +'<button data-n="-5,0">←</button><button data-n="5,0">→</button>'
+    +'<button data-n="0,-5">↑</button><button data-n="0,5">↓</button>'
     +'<span class="icalib-sep"></span>'
-    +'<button data-s="-2">size −</button><button data-s="2">size +</button>'
+    +'<button data-s="-5">size −</button><button data-s="5">size +</button>'
     +'<button id="icalib-unit" title="fixed px, or % of the module so it scales with the felt art">px/%</button>'
     +'<span class="icalib-sep"></span>'
     +'<button data-a="tl" title="anchor top-left">TL</button>'
@@ -363,7 +414,7 @@ function buildBar(){
 function onKey(e){
   if(!active || !selected) return;
   if(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
-  var step = e.shiftKey ? 10 : 1, hit = true;
+  var step = e.shiftKey ? GRID * 5 : GRID, hit = true;
   if(e.key === 'ArrowLeft') nudge(-step, 0);
   else if(e.key === 'ArrowRight') nudge(step, 0);
   else if(e.key === 'ArrowUp') nudge(0, -step);
@@ -379,12 +430,21 @@ function refresh(){
   var all = load();
   if(selected && all[selected]){
     var p = all[selected];
-    var sz = p.unit === 'pct' ? (p.w + '%×' + p.h + '%') : (p.w + 'px');
+    var btn = sel();
+    // show the whole-pixel offset that's actually being snapped, with the stored % after it
+    var px = '';
+    if(btn){
+      var br = boxRect(btn);
+      if(br.width && br.height){
+        px = Math.round(p.x / 100 * br.width) + ',' + Math.round(p.y / 100 * br.height) + 'px  ';
+      }
+    }
+    var sz = p.keepSize === false ? ('  ' + (p.unit === 'pct' ? p.w + '%×' + p.h + '%' : p.w + 'px')) : '';
     /* Percentages are relative to a button's own container, and some of those are tiny (a
        paigow bet spot is ~43px). Dragged far enough out the numbers get big and brittle --
        a small change to the container then throws the button a long way -- so say so. */
     var far = Math.abs(p.x) > 150 || Math.abs(p.y) > 150;
-    out.textContent = selected + '  ' + p.anchor + ' x:' + p.x + '% y:' + p.y + '%  ' + sz
+    out.textContent = selected + '  ' + p.anchor + ' ' + px + '(' + p.x + '%, ' + p.y + '%)' + sz
       + (far ? '  ⚠ far outside its container' : '');
     out.style.color = far ? '#ffb454' : 'rgba(255,255,255,.75)';
   } else if(selected){
@@ -400,25 +460,38 @@ function refresh(){
 function updateNote(){
   var note = document.getElementById('icalib-note');
   if(!note) return;
-  var all = load(), n = Object.keys(all).length;
+  var allNested = loadAll(), m = mode();
+  var n = 0, other = 0;
+  for(var k in allNested){
+    if(allNested[k][m]) n++;
+    if(allNested[k][m === 'portrait' ? 'landscape' : 'portrait']) other++;
+  }
   var here = targets().map(function(b){ return b.getAttribute('data-icalib'); });
-  note.textContent = 'on this screen: ' + (here.join(', ') || 'none') +
-    '  •  ' + n + ' saved total (all pages)  •  drag or use arrows (shift = 10px). ' +
-    'Calibrate mode follows you between games until you Exit.';
+  note.textContent = 'editing ' + m.toUpperCase() + ' (rotate to do the other one separately)'
+    + '  •  on this screen: ' + (here.join(', ') || 'none')
+    + '  •  saved: ' + n + ' ' + m + ', ' + other + ' ' + (m === 'portrait' ? 'landscape' : 'portrait')
+    + '  •  ' + GRID + 'px grid; arrows step ' + GRID + 'px, shift ' + (GRID * 5) + 'px. '
+    + 'Calibrate mode follows you between games until you Exit.';
 }
 
 /* ---- export ---- */
 
 function showExport(){
-  var all = load();
+  var all = loadAll();
   var keys = Object.keys(all).sort();
+  function place(p){
+    // size is only worth emitting when it differs from what the stylesheet already gives --
+    // baking a size that matches CSS just freezes out the portrait size rules for no gain
+    var sz = p.keepSize ? ''
+      : (p.unit === 'pct' ? ", unit:'pct', w:" + p.w + ", h:" + p.h : ", unit:'px', w:" + p.w);
+    return "{ anchor:'" + p.anchor + "', x:" + p.x + ", y:" + p.y + sz + " }";
+  }
   var lines = keys.map(function(k){
-    var p = all[k];
-    var sz = p.unit === 'pct'
-      ? "unit:'pct', w:" + p.w + ", h:" + p.h
-      : "unit:'px', w:" + p.w;
-    return "  '" + k + "': { anchor:'" + p.anchor + "', x:" + p.x + ", y:" + p.y + ", " + sz + " }";
-  });
+    var parts = [];
+    if(all[k].landscape) parts.push('landscape:' + place(all[k].landscape));
+    if(all[k].portrait)  parts.push('portrait:'  + place(all[k].portrait));
+    return "  '" + k + "': { " + parts.join(', ') + " }";
+  }).filter(function(l){ return l.indexOf(': {  }') === -1; });
   var text = 'var INSTR_POS = {\n' + lines.join(',\n') + (lines.length ? '\n' : '') + '};';
 
   var ov = document.createElement('div');
@@ -459,6 +532,13 @@ function enter(){
   // halos are fixed-position overlays, so they have to chase the page as it moves
   window.addEventListener('resize', syncHalos);
   window.addEventListener('scroll', syncHalos, true);
+  // rotating swaps which orientation's slot is being edited, so redraw the whole toolbar
+  if(window.matchMedia){
+    var mq = window.matchMedia('(orientation:portrait)');
+    var onRotate = function(){ selected = null; refresh(); };
+    if(mq.addEventListener) mq.addEventListener('change', onRotate);
+    else if(mq.addListener) mq.addListener(onRotate);
+  }
   setInterval(syncHalos, 400); // cheap catch-all for screen swaps and async layout
 }
 
