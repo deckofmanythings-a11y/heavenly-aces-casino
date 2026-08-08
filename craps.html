@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Heavenly Aces Craps</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- Webfonts must be <link>ed here, NOT @imported from the stylesheet below. CSS ignores any
+     @import that doesn't precede every other rule, and <style> opens at the very next line --
+     so the two @imports that used to sit ~1000 rules deep were silently dead. That's why the
+     Libre Barcode voucher never actually rendered as a barcode, and why Street Craps' chalk
+     lettering fell through to generic cursive. Permanent Marker is the chalk face (thick,
+     reads at small sizes) with Caveat as the lighter fallback; display=swap so the board
+     never blocks on the request. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&family=Permanent+Marker&family=Caveat:wght@600&display=swap">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
@@ -581,16 +591,60 @@ body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{he
 #field-bar{flex:2;min-height:0;background:var(--box-fill-lightest);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);border:var(--box-border)}
 .field-info{font-size:15px;color:rgba(255,255,255,.5);margin-top:1px}
 #pass-bar{display:flex;align-items:stretch;flex:2;min-height:0;border-radius:var(--box-radius);overflow:hidden;border:var(--box-border)}
-/* Street Craps' two bet bands. Same token set as every other bet box so the felt reads as one
-   table, but no odds cell and no split -- each band is a single flat spot, which is the whole
-   point of the variant. display:none by default; applyGameMode('street') is the only thing that
-   shows them, so they can never appear on the standard/crapless felts. */
-#street-line-bar,#street-fade-bar{display:none;flex-direction:column;align-items:center;justify-content:center;
-  background:var(--box-fill-flat);border:var(--box-border);border-radius:var(--box-radius);
-  cursor:pointer;text-align:center;padding:4px 6px;min-height:0;transition:background .12s}
-#street-line-bar:hover,#street-fade-bar:hover{background:rgba(255,255,255,.12)}
-#street-line-bar.active-bar,#street-fade-bar.active-bar{border-color:var(--color-gold)}
+/* ── STREET CRAPS: asphalt + chalk ─────────────────────────────────────────────
+   Street deliberately does NOT use the green-felt design tokens -- it's a game played on the
+   ground, so the board is chalk on blacktop. Everything here is scoped to body.game-street so
+   none of it leaks onto the Standard/Crapless felts, which keep the token system. */
+body.game-street #felt-stage{
+  background:
+    radial-gradient(ellipse at 50% 36%, #3c3c3f 0%, #2b2b2e 40%, #1d1d20 72%, #111113 100%),
+    /* two offset speckle layers so the surface reads as aggregate, not a flat wash */
+    radial-gradient(circle at 17% 23%, rgba(255,255,255,.055) 0 1.2px, transparent 1.3px),
+    radial-gradient(circle at 71% 61%, rgba(255,255,255,.04) 0 1px, transparent 1.1px),
+    #1d1d20;
+  background-size:100% 100%, 37px 41px, 53px 47px;
+}
+body.game-street #felt-stage .fm-art-img{display:none!important} /* no felt art on asphalt */
+
+/* Crude chalk rectangle. The hand-drawn read comes from three things together: an irregular
+   border-radius so no two corners match, a small rotation so nothing sits square to the board,
+   and a soft white bloom standing in for chalk dust. */
+.chalk-box{
+  border:3px solid rgba(255,255,255,.82);
+  border-radius:14px 6px 12px 8px / 7px 13px 6px 12px;
+  background:rgba(255,255,255,.03);
+  box-shadow:0 0 10px rgba(255,255,255,.16), inset 0 0 14px rgba(255,255,255,.06);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;cursor:pointer;position:relative;min-height:0;
+  transition:box-shadow .15s, background .15s;
+}
+.chalk-box:hover{background:rgba(255,255,255,.08);box-shadow:0 0 16px rgba(255,255,255,.3), inset 0 0 14px rgba(255,255,255,.08)}
+.chalk-box.active-bar{border-color:#fff;box-shadow:0 0 20px rgba(255,255,255,.45), inset 0 0 16px rgba(255,255,255,.12)}
+.chalk-label{font-family:'Permanent Marker','Caveat',cursive;color:rgba(255,255,255,.94);
+  text-shadow:0 0 6px rgba(255,255,255,.35);line-height:1;white-space:nowrap}
+
+#street-line-bar,#street-fade-bar{display:none;padding:4px 6px}
 body.game-street #street-line-bar,body.game-street #street-fade-bar{display:flex}
+/* Opposed tilts so the pair reads as drawn by hand rather than stamped. */
+#street-line-bar{transform:rotate(-0.7deg)}
+#street-fade-bar{transform:rotate(0.6deg)}
+#street-line-bar .chalk-label,#street-fade-bar .chalk-label{font-size:calc(var(--chip)*0.62)}
+
+/* The six point squares, same chalk treatment, alternating tilt so the row looks scrawled. */
+.street-pt{display:none;padding:2px}
+body.game-street .street-pt{display:flex}
+.street-pt .chalk-label{font-size:calc(var(--chip)*0.7)}
+.street-pt.tilt-a{transform:rotate(-1.2deg)}
+.street-pt.tilt-b{transform:rotate(0.9deg)}
+/* The live point gets chalk-circled so it reads as marked even before chips land on it. */
+.street-pt.is-point{border-color:#ffe9a8;box-shadow:0 0 22px rgba(255,220,130,.55), inset 0 0 18px rgba(255,220,130,.15)}
+.street-pt.is-point .chalk-label{color:#ffe9a8;text-shadow:0 0 10px rgba(255,220,130,.6)}
+/* House money sits in the corner of the box, visually separate from the player's own stack --
+   it is not their money and must never read as bankroll. See streetSyncHouse(): display only,
+   never enters G.bets/G.bankroll or the server payload. */
+.street-house-stk{position:absolute;right:5%;bottom:4%;pointer-events:none;opacity:.9;transform:scale(.72);transform-origin:100% 100%}
+.street-house-tag{position:absolute;right:5%;top:3%;font-family:'Permanent Marker','Caveat',cursive;
+  font-size:calc(var(--chip)*0.17);color:rgba(255,255,255,.42);letter-spacing:.04em;pointer-events:none}
 /* Street's board is ONLY those two bands. Everything else on the shared felt is hidden here in
    CSS rather than imperatively in applyGameMode(): FELT_LAYOUT is shared by all three modes and
    still positions all 44 of its entries for street, so hiding has to be declarative or a spot
@@ -622,10 +676,8 @@ body.game-street .horn-cell,
 body.game-street .prop-circle,
 body.game-street .prop-bar,
 body.game-street .lowhigh-field-row{display:none!important}
-/* The Fade band is the don't-side, so it borrows the same red treatment the Don't Pass bar uses
-   rather than inventing a third colour language for it. */
-#street-fade-bar .zone-name{background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-.street-sub{font-size:15px;color:rgba(255,255,255,.5);margin-top:2px;line-height:1.2}
+.street-sub{font-family:'Permanent Marker','Caveat',cursive;font-size:calc(var(--chip)*0.19);
+  color:rgba(255,255,255,.42);margin-top:3px;line-height:1.15}
 body.felt-compact .street-sub{display:none}
 #pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
 #pass-odds-cell:hover{background:rgba(255,255,255,.12)}
@@ -1052,7 +1104,8 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 .chip-ghost.win-in{transform:translateY(0);transition:transform .48s cubic-bezier(.22,.9,.32,1)}
 
 /* ── CASHOUT VOUCHER MODAL ── */
-@import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
+/* Webfonts are <link>ed in <head> -- see the note there. An @import at this depth in the
+   stylesheet is ignored by the CSS spec, which is exactly what was happening before. */
 #modal-cashout{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:12px}
 #modal-cashout.hidden{display:none}
 .voucher{background:#fff;color:#111;width:100%;max-width:420px;border-radius:4px;padding:20px 24px 16px;box-shadow:0 8px 40px rgba(0,0,0,.8);font-family:system-ui,sans-serif;position:relative;overflow:hidden}
@@ -2595,18 +2648,31 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
                out of every existing pass/dp code path. .zone-stk is already in CHIP_STK_SEL,
                so these get real chip stacks with no extra wiring. Hidden unless
                applyGameMode('street') shows them. -->
-          <div id="street-line-bar" onclick="placeBet('line')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('line')">
-            <div class="zone-name" style="font-size:40px">LINE</div>
+          <div id="street-line-bar" class="chalk-box" onclick="placeBet('line')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('line')">
+            <div class="chalk-label">LINE</div>
             <div class="street-sub">7 · 11 win &nbsp;·&nbsp; 2 · 3 · 12 lose</div>
             <div class="zone-stk" id="stk-line"></div>
             <div class="zone-note" id="lk-line"></div>
+            <span class="street-house-tag" id="house-tag-line"></span>
+            <span class="street-house-stk" id="stk-house-line"></span>
           </div>
-          <div id="street-fade-bar" onclick="placeBet('fade')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fade')">
-            <div class="zone-name" style="font-size:40px">FADE</div>
+          <div id="street-fade-bar" class="chalk-box" onclick="placeBet('fade')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fade')">
+            <div class="chalk-label">FADE</div>
             <div class="street-sub">Against the shooter &nbsp;·&nbsp; no bar</div>
             <div class="zone-stk" id="stk-fade"></div>
             <div class="zone-note" id="lk-fade"></div>
+            <span class="street-house-tag" id="house-tag-fade"></span>
+            <span class="street-house-stk" id="stk-house-fade"></span>
           </div>
+          <!-- The six point squares. Not clickable: street has no place/buy betting, these exist
+               only to mark the point and to hold the combined LINE+FADE stack once it travels
+               there. Kept out of the [onclick] bet-spot sweep for exactly that reason. -->
+          <div id="street-pt-4"  class="chalk-box street-pt tilt-a"><div class="chalk-label">4</div><div class="zone-stk" id="stk-pt-4"></div></div>
+          <div id="street-pt-5"  class="chalk-box street-pt tilt-b"><div class="chalk-label">5</div><div class="zone-stk" id="stk-pt-5"></div></div>
+          <div id="street-pt-6"  class="chalk-box street-pt tilt-a"><div class="chalk-label">6</div><div class="zone-stk" id="stk-pt-6"></div></div>
+          <div id="street-pt-8"  class="chalk-box street-pt tilt-b"><div class="chalk-label">8</div><div class="zone-stk" id="stk-pt-8"></div></div>
+          <div id="street-pt-9"  class="chalk-box street-pt tilt-a"><div class="chalk-label">9</div><div class="zone-stk" id="stk-pt-9"></div></div>
+          <div id="street-pt-10" class="chalk-box street-pt tilt-b"><div class="chalk-label">10</div><div class="zone-stk" id="stk-pt-10"></div></div>
         </div>
         <!-- THE LIGHT: shared cross-game progressive, immediately left of the Pass Line
              (Deck's placement request). No baked-in felt art here (unlike UTH), so both
@@ -2662,7 +2728,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.36</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.37</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3276,9 +3342,19 @@ const STANDARD_LAYOUT=[
 // street lines up with the other two felts, and the two bands split the vertical space that
 // Don't Pass + Pass Line occupy there (78.889 -> 97.777). Expect Deck to re-export these once
 // he has seen it live; the calibration tool already picks them up via calibBaseEntries().
+// Six point squares in one centred row across the upper board, LINE and FADE centred beneath
+// them. Row math: 6 boxes x 11% wide with 1.5% gaps = 73.5% total, so it starts at
+// (100-73.5)/2 = 13.25 and the row is centred on the felt. LINE/FADE are 36% wide at x=32,
+// so 32+36 = 68 and their centre is exactly 50 -- "centered on the playing field" per Deck.
 const STREET_LAYOUT=[
-  ['#street-line-bar',  56.719,78.889, 42.812,9.444,null],
-  ['#street-fade-bar',  56.719,88.333, 42.812,9.444,null],
+  ['#street-pt-4',      13.25,21.0, 11.0,13.0,null],
+  ['#street-pt-5',      25.75,21.0, 11.0,13.0,null],
+  ['#street-pt-6',      38.25,21.0, 11.0,13.0,null],
+  ['#street-pt-8',      50.75,21.0, 11.0,13.0,null],
+  ['#street-pt-9',      63.25,21.0, 11.0,13.0,null],
+  ['#street-pt-10',     75.75,21.0, 11.0,13.0,null],
+  ['#street-line-bar',  32.0, 46.0, 36.0,17.0,null],
+  ['#street-fade-bar',  32.0, 67.0, 36.0,17.0,null],
 ];
 // PORTRAIT_FELT_LAYOUT: Deck's export, whole px on the 1800x3200 portrait canvas -> %-of-felt
 // (x/1800*100, y/3200*100). #left-col-header/#info-panel aren't in the export (calibBaseEntries()
@@ -3478,9 +3554,18 @@ const PORTRAIT_CRAPLESS_LAYOUT=[
 // PORTRAIT_STREET_LAYOUT — same two spots, portrait. Seeded from PORTRAIT_STANDARD_LAYOUT's
 // #dp-bar/#pass-bar (57.222 x, 42.778 w, the 81.875/90.938 rows) for the same reason as the
 // landscape table above: not yet a real calibration export, just a sane starting position.
+// Portrait: the felt is far too narrow for one row of six, so the points wrap to 3x2. Same
+// centring rule -- 3 boxes x 24% with 4% gaps = 80%, starting at 10%; LINE/FADE 56% wide at
+// x=22 so their centre is 50.
 const PORTRAIT_STREET_LAYOUT=[
-  ['#street-line-bar',   57.222,81.875, 42.778,9.063,null],
-  ['#street-fade-bar',   57.222,90.938, 42.778,9.063,null],
+  ['#street-pt-4',       10.0,18.0, 24.0,8.5,null],
+  ['#street-pt-5',       38.0,18.0, 24.0,8.5,null],
+  ['#street-pt-6',       66.0,18.0, 24.0,8.5,null],
+  ['#street-pt-8',       10.0,28.5, 24.0,8.5,null],
+  ['#street-pt-9',       38.0,28.5, 24.0,8.5,null],
+  ['#street-pt-10',      66.0,28.5, 24.0,8.5,null],
+  ['#street-line-bar',   22.0,47.0, 56.0,13.0,null],
+  ['#street-fade-bar',   22.0,64.0, 56.0,13.0,null],
 ];
 const PORTRAIT_LR_LAYOUT=[
   // Same re-homing as landscape's own #lr-title-art (see that entry's comment) -- portrait's
@@ -6298,6 +6383,121 @@ function totalActiveBetValue(){
   t+=(G.bonus.low||0)+(G.bonus.all||0)+(G.bonus.high||0);
   return r2(t);
 }
+// ── STREET CRAPS BOARD ────────────────────────────────────────────────────────
+// House money is DERIVED, never stored. The house covers whatever the player has on the
+// opposite side, so house-in-FADE is exactly the player's LINE bet and vice versa. Deriving it
+// means it cannot desync from the player's bets, and -- the point that actually matters -- it
+// can never leak into G.bets, G.bankroll, net_pnl or the server payload. roll-street only ever
+// sees 'line' and 'fade'; the house match is a picture of the bet being covered, nothing more.
+function streetHouseIn(side){
+  if(activeGame!=='street')return 0;
+  return r2(side==='line'?(G.bets['fade']||0):(G.bets['line']||0));
+}
+// The contested pot once a point is set: both player stakes plus both house matches. With only
+// one side bet this is simply double that bet, which is what "combine into one stack" means.
+function streetPot(){return r2(((G.bets['line']||0)+(G.bets['fade']||0))*2);}
+
+// Fly a chip-stack image from one box to another. Built on the same .chip-ghost element the
+// win/lose sweeps already use so it inherits their z-index and cleanup, but with its own
+// transform transition rather than the fixed sweep/win keyframe classes, since this travels
+// between two arbitrary points on the board instead of on/off screen.
+function streetFly(fromEl,toEl,label,delay){
+  if(!fromEl||!toEl)return;
+  const a=fromEl.getBoundingClientRect(),b=toEl.getBoundingClientRect();
+  if(!a.width||!b.width)return;
+  const stage=document.getElementById('felt-stage');
+  const chipVar=stage?getComputedStyle(stage).getPropertyValue('--chip').trim():'';
+  const g=document.createElement('div');
+  g.className='chip-ghost';
+  g.style.left=a.left+'px';g.style.top=a.top+'px';g.style.width=a.width+'px';g.style.height=a.height+'px';
+  g.style.setProperty('--chip',chipVar||'30px');
+  g.style.transition='transform .5s cubic-bezier(.22,.9,.32,1), opacity .18s ease .42s';
+  const img=document.createElement('img');
+  img.src='chip-blank-25.webp';img.draggable=false;
+  img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--chip)*1);height:auto;z-index:1';
+  g.appendChild(img);
+  if(label){
+    const s=document.createElement('span');
+    s.textContent=label;
+    s.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*0.3);color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap';
+    g.appendChild(s);
+  }
+  document.body.appendChild(g);
+  const dx=(b.left+b.width/2)-(a.left+a.width/2);
+  const dy=(b.top+b.height/2)-(a.top+a.height/2);
+  setTimeout(()=>{g.style.transform='translate('+dx+'px,'+dy+'px)';g.style.opacity='0';},delay||20);
+  setTimeout(()=>{g.remove();},(delay||20)+700);
+}
+// House match sweeping in from the top edge of the playfield, per Deck's spec. Starts one box
+// height above the felt's top edge rather than off the viewport, so on a tall screen it still
+// reads as coming from the board's edge and not from somewhere off in the page.
+function streetHouseSweep(side){
+  const box=document.getElementById('street-'+side+'-bar');
+  const stage=document.getElementById('felt-stage');
+  if(!box||!stage)return;
+  const b=box.getBoundingClientRect(),s=stage.getBoundingClientRect();
+  const from={left:b.left,top:s.top-b.height,width:b.width,height:b.height,
+    getBoundingClientRect(){return this;}};
+  streetFly(from,box,fmt(streetHouseIn(side)),20);
+}
+// Transition trackers -- animations fire on CHANGE, not on every updateUI() pass (which runs
+// on a timer as well as on input, so re-firing per render would strobe).
+let streetLastHouse={line:0,fade:0},streetLastPoint=null;
+function renderStreetBoard(){
+  if(activeGame!=='street'){
+    // Restore the shared roll button when leaving street, or its label sticks on the other felts.
+    const rb=document.getElementById('roll-btn');
+    if(rb&&rb.textContent!=='ROLL')rb.textContent='ROLL';
+    streetLastHouse={line:0,fade:0};streetLastPoint=null;
+    return;
+  }
+  const atPoint=G.phase==='point'&&!!G.point;
+  const pot=streetPot();
+  // Point squares: mark the live one, and hold the combined stack once it has travelled there.
+  [4,5,6,8,9,10].forEach(n=>{
+    const box=document.getElementById('street-pt-'+n);
+    const stk=document.getElementById('stk-pt-'+n);
+    if(box)box.classList.toggle('is-point',atPoint&&G.point===n);
+    if(stk)stk.textContent=(atPoint&&G.point===n&&pot>0)?fmt(pot):'';
+  });
+  // LINE/FADE hold chips only BEFORE the point. Once it's set the money has moved to the number,
+  // so the boxes read empty -- that's the whole visual point of the travel animation.
+  ['line','fade'].forEach(k=>{
+    const own=atPoint?0:(G.bets[k]||0);
+    const house=atPoint?0:streetHouseIn(k);
+    const st=document.getElementById('stk-'+k);if(st)st.textContent=own?fmt(own):'';
+    const hs=document.getElementById('stk-house-'+k);if(hs)hs.textContent=house?fmt(house):'';
+    const tg=document.getElementById('house-tag-'+k);if(tg)tg.textContent=house?'HOUSE':'';
+    const lk=document.getElementById('lk-'+k);if(lk)lk.textContent=(G.passLocked&&own)?'🔒':'';
+    const bar=document.getElementById('street-'+k+'-bar');if(bar)bar.classList.toggle('active-bar',(G.bets[k]||0)>0);
+  });
+  // House match sweeps in the moment it grows (i.e. the player just backed the other side).
+  ['line','fade'].forEach(k=>{
+    const now=atPoint?0:streetHouseIn(k);
+    if(now>streetLastHouse[k]&&now>0)streetHouseSweep(k);
+    streetLastHouse[k]=now;
+  });
+  // Point just established: everything on both boxes travels to the number and combines.
+  if(atPoint&&streetLastPoint!==G.point){
+    const target=document.getElementById('street-pt-'+G.point);
+    let d=0;
+    ['line','fade'].forEach(k=>{
+      const src=document.getElementById('street-'+k+'-bar');
+      const own=G.bets[k]||0,house=streetHouseIn(k);
+      if(own>0){streetFly(src,target,fmt(own),d);d+=90;}
+      if(house>0){streetFly(src,target,fmt(house),d);d+=90;}
+    });
+  }
+  streetLastPoint=atPoint?G.point:null;
+  // Deck's spec: the button says what the shooter is actually rolling for. LINE wins by
+  // repeating the point, FADE wins on a seven. LINE takes precedence if somehow both are up.
+  const rb=document.getElementById('roll-btn');
+  if(rb){
+    const want=(G.bets['line']||0)>0?'ROLL FOR POINT':((G.bets['fade']||0)>0?'ROLL FOR SEVEN':'ROLL');
+    if(rb.textContent!==want)rb.textContent=want;
+  }
+}
+
 // ── ROLL SYNC SELF-HEAL ───────────────────────────────────────────────────────
 // Safety net for the failure the guard above is meant to prevent: the server rejects a roll as
 // a sync error, the cloche overlay closes mid-tumble, and the bet never counts. The player's
@@ -6861,16 +7061,7 @@ function updateUI(){
   }
   // Pass
   {const ps=document.getElementById('stk-pass');if(ps)ps.textContent=(G.bets['pass']||0)?fmt(G.bets['pass']):'';const lk=document.getElementById('lk-pass');if(lk)lk.textContent=G.passLocked?'🔒':'';const pm=document.getElementById('pass-main');if(pm)pm.classList.toggle('active-bar',!!(G.bets['pass']));const mb=document.getElementById('m-pass');if(mb)mb.style.display=(G.bets['pass']&&!G.passLocked)?'block':'none';const poc=G.bets['passodds']||0;const postk=document.getElementById('stk-passodds');if(postk)postk.textContent=poc?fmt(poc):'';const polim=document.getElementById('po-limit');const poc2=document.getElementById('pass-odds-cell');if(G.point&&G.bets['pass']){const m=ODDS_MULT[G.point]||1;if(polim)polim.textContent=m+'x·'+ODDS_LABEL[G.point];if(poc2)poc2.classList.toggle('active',poc>0);}else{if(polim)polim.textContent='—';if(poc2)poc2.classList.remove('active');}}
-  // Street Craps: LINE / FADE. Same shape as the Pass block above (stack text, 🔒 once the
-  // point locks the contract, .active-bar highlight) minus the odds cell, which street has no
-  // equivalent of. Runs in every mode -- the elements only exist on the street felt, so the
-  // getElementById guards make it a no-op elsewhere rather than needing a mode branch.
-  ['line','fade'].forEach(k=>{
-    const amt=G.bets[k]||0;
-    const st=document.getElementById('stk-'+k);if(st)st.textContent=amt?fmt(amt):'';
-    const lk=document.getElementById('lk-'+k);if(lk)lk.textContent=(G.passLocked&&amt)?'🔒':'';
-    const bar=document.getElementById('street-'+k+'-bar');if(bar)bar.classList.toggle('active-bar',amt>0);
-  });
+  renderStreetBoard();
   // Bonus bets
   const bO=G.bonus.open,bL=G.bonus.locked,bG=G.bonus.gracePeriod;
   [{type:'low',nums:LOW_NUMS,hit:G.bonus.lowHit},{type:'high',nums:HIGH_NUMS,hit:G.bonus.highHit}].forEach(({type,nums,hit})=>{
