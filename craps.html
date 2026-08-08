@@ -2728,7 +2728,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.39</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.40</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5574,7 +5574,10 @@ function chipStackHTML(amt,off,locked,isFP){
   h+='</span>';
   return h;
 }
-const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,.dp-stk,.dp-odds-stk,#stk-pass,#stk-passodds,#stk-come,#stk-field,#stk-dc-wait,.lr-stake,#stk-light';
+// .street-house-stk is in here so the house's covering bet renders as a REAL chip stack that
+// sits in the box until the point is established -- as bare text it read as a label and looked
+// like the swept-in chip had vanished on arrival.
+const CHIP_STK_SEL='.stk,.nb-stk,.hc-stk,.prop-bar-stk,.circle-stk,.zone-stk,.dp-stk,.dp-odds-stk,#stk-pass,#stk-passodds,#stk-come,#stk-field,#stk-dc-wait,.lr-stake,#stk-light,.street-house-stk';
 // Freeplay eligibility per spot is a client-side estimate, not the server's real
 // accounting (that only happens on resolve) -- each spot is checked in DOM order
 // against a running balance that depletes as earlier spots claim it, so the total
@@ -6439,6 +6442,26 @@ function streetHouseSweep(side){
   const from={left:b.left,top:s.top-b.height,width:b.width,height:b.height,
     getBoundingClientRect(){return this;}};
   streetFly(from,box,fmt(streetHouseIn(side)),20);
+  // Hand off to the real stack: renderStreetBoard() has already written the house amount into
+  // #stk-house-<side>, so without this you'd watch a chip fly toward a chip that was already
+  // sitting there. Hide the resting one for the flight, reveal it as the ghost lands.
+  const rest=document.getElementById('stk-house-'+side);
+  if(rest){
+    rest.style.opacity='0';
+    setTimeout(()=>{rest.style.opacity='';},560);
+  }
+}
+// A losing bet leaves the board the same way the house's match arrived: up and off the top edge
+// of the playfield. Used for come-out decisions, where the money is still sitting on LINE/FADE
+// (a point-phase loss is handled by streetPointSweep, which starts from the number box instead).
+function streetLoseSweep(side,amount){
+  const box=document.getElementById('street-'+side+'-bar');
+  const stage=document.getElementById('felt-stage');
+  if(!box||!stage||!(amount>0))return;
+  const b=box.getBoundingClientRect(),s=stage.getBoundingClientRect();
+  const off={left:b.left,top:s.top-b.height*1.4,width:b.width,height:b.height,
+    getBoundingClientRect(){return this;}};
+  streetFly(box,off,fmt(amount),20);
 }
 // A point DECISION: the combined stack leaves the number box and travels to whoever took it.
 //
@@ -6515,11 +6538,15 @@ function renderStreetBoard(){
     });
   }
   streetLastPoint=atPoint?G.point:null;
-  // Deck's spec: the button says what the shooter is actually rolling for. LINE wins by
-  // repeating the point, FADE wins on a seven. LINE takes precedence if somehow both are up.
+  // The button only names what the shooter is rolling for ONCE A POINT EXISTS. On the come-out
+  // there is no point to make and no seven to avoid -- a 7 is a Line win there, so "ROLL FOR
+  // SEVEN" would be actively wrong for a Fade bettor. Stays plain ROLL until the point is
+  // established, then LINE wins by repeating it and FADE wins on a seven. LINE takes precedence
+  // if somehow both are up.
   const rb=document.getElementById('roll-btn');
   if(rb){
-    const want=(G.bets['line']||0)>0?'ROLL FOR POINT':((G.bets['fade']||0)>0?'ROLL FOR SEVEN':'ROLL');
+    const want=!atPoint?'ROLL'
+      :((G.bets['line']||0)>0?'ROLL FOR POINT':((G.bets['fade']||0)>0?'ROLL FOR SEVEN':'ROLL'));
     if(rb.textContent!==want)rb.textContent=want;
   }
 }
@@ -6732,14 +6759,27 @@ async function rollDice(isRetry){
     // Street: snapshot the point and the pot BEFORE the server's state overwrites them --
     // restoreFromServerState() clears both the moment a decision lands, and the sweep needs to
     // know which number the stack was sitting on and how much was in it.
-    const streetPre=(activeGame==='street'&&G.phase==='point'&&G.point)
-      ? {point:G.point,pot:streetPot(),line:G.bets['line']||0,fade:G.bets['fade']||0} : null;
+    const streetPre=(activeGame==='street')
+      ? {point:G.point,phase:G.phase,pot:streetPot(),line:G.bets['line']||0,fade:G.bets['fade']||0,
+         hLine:streetHouseIn('line'),hFade:streetHouseIn('fade')} : null;
     restoreFromServerState(data.newState);
-    // Fire only on an actual decision -- the point being gone from the new state is what marks
-    // one. A non-decision roll during the point phase leaves the stack where it is.
-    if(streetPre&&!data.newState.point){
-      const winner=(sum===streetPre.point)?'line':(sum===7?'fade':null);
-      if(winner)streetPointSweep(streetPre.point,winner,streetPre[winner]>0,streetPre.pot);
+    if(streetPre){
+      if(streetPre.phase==='point'&&streetPre.point&&!data.newState.point){
+        // Point decision. The pot is on the number box, so the sweep starts from there.
+        const winner=(sum===streetPre.point)?'line':(sum===7?'fade':null);
+        if(winner)streetPointSweep(streetPre.point,winner,streetPre[winner]>0,streetPre.pot);
+      }else if(streetPre.phase==='comeout'){
+        // Come-out decision: 7/11 pays the Line, 2/3/12 pays the Fade. The money never left
+        // LINE/FADE, so a losing stake sweeps off the top from its own box. The winning side
+        // stays put -- it just got paid. The house's own match on the losing side goes with it,
+        // since that money is gone from the board too.
+        const winner=(sum===7||sum===11)?'line':((sum===2||sum===3||sum===12)?'fade':null);
+        if(winner){
+          const loser=winner==='line'?'fade':'line';
+          const lost=r2(streetPre[loser]+streetPre[loser==='line'?'hLine':'hFade']);
+          if(lost>0)streetLoseSweep(loser,lost);
+        }
+      }
     }
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     if(lightJustArmed){
