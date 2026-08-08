@@ -678,6 +678,64 @@ body.game-street .prop-bar,
 body.game-street .lowhigh-field-row{display:none!important}
 /* .street-sub (the hint line under LINE/FADE) removed at Deck's request -- the chalk boxes now
    carry just the word, which is what a real street board looks like. */
+
+/* ── STREET MONEY ──────────────────────────────────────────────────────────────
+   Nobody's stacking clay chips on a sidewalk, so street wagers render as folded bills instead.
+   Deliberately still built on .chip-stack: every existing hook -- the .has-stack positioning
+   rules, the z-index layering, the OFF/lock badges, and spawnChipGhost()'s .chip-amt lookup --
+   keys off that class and its children, so reusing it makes the notes drop straight into the
+   chip plumbing rather than needing a parallel system. .money-note only restyles it. */
+.money-note{position:relative;display:block;border-radius:2px;overflow:visible}
+.money-note .note-face{
+  position:absolute;inset:0;border-radius:2px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 42%),
+    linear-gradient(180deg, #4b7f52 0%, #366b40 38%, #2b5734 72%, #23492c 100%);
+  border:1px solid rgba(15,40,20,.85);
+  box-shadow:0 1px 3px rgba(0,0,0,.55), inset 0 0 0 1px rgba(180,220,180,.18);
+}
+/* The engraved inner rule real notes have -- one inset border, not a whole guilloche. */
+.money-note .note-face::after{
+  content:'';position:absolute;inset:9%;border:1px solid rgba(190,225,190,.22);border-radius:1px;
+}
+/* Value centred on the bill. Note the selector: the base rule is `.chip-stack .chip-amt`
+   (specificity 0,2,0) and it sets left:0/width:100%/flex-centre. A `.money-note .chip-amt` rule
+   ties that specificity and LOSES on order, which left the label with the base's left:0 plus
+   this rule's translate -- shifting it half a note to the left. Qualifying with .chip-stack
+   takes it to 0,3,0 so it wins outright. It also means the base's own flex centring does the
+   horizontal work; all that's needed here is to match the note's height so the vertical centre
+   lands mid-bill rather than mid-chip. */
+.chip-stack.money-note .chip-amt{
+  height:calc(var(--chip)*2.13);
+  bottom:auto;
+  color:#eafbe8;font-weight:800;letter-spacing:.01em;
+  text-shadow:0 1px 0 rgba(0,0,0,.6), 0 0 4px rgba(0,0,0,.35);
+  white-space:nowrap;z-index:2;
+}
+.money-note .chip-off,.money-note .chip-lock{z-index:3}
+/* The stack slot has to be sized for a bill, not a chip. Note the doubled body class: the base
+   rule is `body.felt-mode #felt-stage .has-stack{width:var(--chip)}` at (1,2,0), which a plain
+   `body.game-street #felt-stage .has-stack` merely TIES and then loses to on order -- so the
+   first attempt at this silently did nothing and the notes stayed chip-width. Qualifying with
+   both body classes takes it to (1,3,0) and it wins outright.
+   Sized at 5x the chip, in real banknote proportions (~2.35:1) rather than scaling both axes
+   equally -- a bill stretched to a square stops reading as paper. At --chip 27px that's about
+   135x57 inside a 273x112 chalk box, so it sits well within the lines. */
+body.game-street.felt-mode #felt-stage .has-stack{width:calc(var(--chip)*5)}
+/* At full size the bill is tall enough to sit right on top of the word. Push the label to the
+   top of the box and drop the note into the lower two thirds, so a box with money on it still
+   says which box it is. Only the two bet bands need this -- the point squares put their number
+   at the top the same way but hold only one note. */
+/* padding in --chip units, NOT a percentage: these boxes are position:absolute inside
+   #felt-stage, and percentage padding resolves against the CONTAINING BLOCK'S WIDTH -- so a
+   plain 4% here came out as 4% of the ~1132px stage (45px), shoving the label back into the
+   middle of the box and straight under the note. */
+body.game-street #street-line-bar,body.game-street #street-fade-bar,body.game-street .street-pt{
+  justify-content:flex-start;padding-top:calc(var(--chip)*0.12);
+}
+body.game-street.felt-mode #felt-stage #street-line-bar .has-stack,
+body.game-street.felt-mode #felt-stage #street-fade-bar .has-stack,
+body.game-street.felt-mode #felt-stage .street-pt .has-stack{top:66%}
 #pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
 #pass-odds-cell:hover{background:rgba(255,255,255,.12)}
 #pass-odds-cell.active{background:transparent}
@@ -1664,11 +1722,11 @@ body.felt-mode #felt-stage #info-panel{width:auto;min-width:0;max-width:none;bac
    stacks already use) instead of a fixed px value keeps them readable and non-overflowing at
    any felt size instead of only working by coincidence at desktop dimensions. */
 body.felt-mode #felt-stage #info-panel .info-btn{font-size:calc(var(--chip)*0.36);padding:calc(var(--chip)*0.08) calc(var(--chip)*0.14);white-space:nowrap}
-body.felt-mode #felt-stage #info-panel .hud-lbl{font-size:calc(var(--chip)*0.26)}
+body.felt-mode #felt-stage #info-panel .hud-lbl{font-size:calc(var(--chip)*0.72)}
 body.felt-mode #felt-stage #info-panel .hud-val{font-size:calc(var(--chip)*0.32)}
 body.felt-mode #felt-stage #info-panel .info-i{font-size:calc(var(--chip)*0.22)}
 body.felt-mode #felt-stage #info-panel #mute-voices-btn,
-body.felt-mode #felt-stage #info-panel #info-modal-btn{font-size:calc(var(--chip)*0.26)!important;width:calc(var(--chip)*0.36)!important;padding:calc(var(--chip)*0.02) 0!important}
+body.felt-mode #felt-stage #info-panel #info-modal-btn{font-size:calc(var(--chip)*0.72)!important;width:calc(var(--chip)*0.36)!important;padding:calc(var(--chip)*0.02) 0!important}
 body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--chip)*0.34)!important}
 body.felt-mode #felt-stage #info-panel .info-row:nth-child(2) .info-btn{font-size:calc(var(--chip)*0.30)!important;padding:calc(var(--chip)*0.06) calc(var(--chip)*0.11)!important}
 body.felt-mode #felt-stage #info-panel .bullet-icon{width:calc(var(--chip)*0.12)!important}
@@ -2725,7 +2783,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.42</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.43</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3344,12 +3402,15 @@ const STANDARD_LAYOUT=[
 // (100-73.5)/2 = 13.25 and the row is centred on the felt. LINE/FADE are 36% wide at x=32,
 // so 32+36 = 68 and their centre is exactly 50 -- "centered on the playing field" per Deck.
 const STREET_LAYOUT=[
-  ['#street-pt-4',      13.25,21.0, 11.0,13.0,null],
-  ['#street-pt-5',      25.75,21.0, 11.0,13.0,null],
-  ['#street-pt-6',      38.25,21.0, 11.0,13.0,null],
-  ['#street-pt-8',      50.75,21.0, 11.0,13.0,null],
-  ['#street-pt-9',      63.25,21.0, 11.0,13.0,null],
-  ['#street-pt-10',     75.75,21.0, 11.0,13.0,null],
+  // Widened 11% -> 12.5% so a full-size bill sits INSIDE the chalk instead of hanging 10px over
+  // each edge. Row re-centred for the new width: 6 x 12.5 + 5 x 1.5 gaps = 82.5, starting at
+  // (100-82.5)/2 = 8.75, so the run ends at 91.25 and its centre is exactly 50.
+  ['#street-pt-4',       8.75,20.0, 12.5,15.0,null],
+  ['#street-pt-5',      22.75,20.0, 12.5,15.0,null],
+  ['#street-pt-6',      36.75,20.0, 12.5,15.0,null],
+  ['#street-pt-8',      50.75,20.0, 12.5,15.0,null],
+  ['#street-pt-9',      64.75,20.0, 12.5,15.0,null],
+  ['#street-pt-10',     78.75,20.0, 12.5,15.0,null],
   ['#street-line-bar',  38.0, 46.0, 24.0,17.0,null],
   ['#street-fade-bar',  38.0, 67.0, 24.0,17.0,null],
 ];
@@ -5554,7 +5615,29 @@ function maybeTriggerChipSound(key,amt){
 }
 function chipBreakdown(amt){const out=[];let r=Math.floor(amt);for(const d of CHIP_DENOMS){while(r>=d){out.push(d);r-=d;}}if(!out.length)out.push(1);return out;}
 function chipLabel(amt,isFP){return (isFP?'FP$':'$')+(Number.isInteger(amt)?amt:amt.toFixed(2));}
+// Street wagers are folded bills, not clay chips. Returns the SAME .chip-stack shell every
+// chip hook already expects (.has-stack positioning, z-index layering, the OFF/lock badges, and
+// spawnChipGhost()'s .chip-amt lookup) with a note face instead of a pile of chip images -- so
+// the notes inherit all of that plumbing rather than needing a parallel path.
+function moneyNoteHTML(amt,off,locked,isFP){
+  const label=chipLabel(amt,isFP);
+  // Same length-driven type scale the chips use, nudged down a step: the value sits across a
+  // bill rather than on a round chip face, so a long amount has less room before it collides
+  // with the engraved inner rule.
+  // Scaled for the full-size bill (5x chip wide): the old chip-sized steps left an 8px value
+  // marooned in the middle of a 135px note. Still length-driven so a long amount steps down
+  // rather than running into the engraved inner rule.
+  const fs=label.length<=3?0.85:(label.length===4?0.72:(label.length===5?0.60:0.50));
+  let h='<span class="chip-stack money-note" style="height:calc(var(--chip)*2.13)">';
+  h+='<span class="note-face"></span>';
+  h+='<span class="chip-amt" style="font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
+  if(off)h+='<span class="chip-off" style="bottom:0">OFF</span>';
+  if(locked)h+='<span class="chip-lock" style="bottom:0">🔒</span>';
+  h+='</span>';
+  return h;
+}
 function chipStackHTML(amt,off,locked,isFP){
+  if(activeGame==='street')return moneyNoteHTML(amt,off,locked,isFP);
   const chips=chipBreakdown(amt),n=chips.length;
   let h='<span class="chip-stack" style="height:calc(var(--chip) + var(--edge)*'+(n-1)+')">';
   chips.forEach((d,i)=>{h+='<img class="chip-img" src="chip-blank-'+d+'.webp" alt="" draggable="false" style="bottom:calc(var(--edge)*'+i+')">';});
@@ -6412,16 +6495,14 @@ function streetFly(fromEl,toEl,label,delay){
   g.style.left=a.left+'px';g.style.top=a.top+'px';g.style.width=a.width+'px';g.style.height=a.height+'px';
   g.style.setProperty('--chip',chipVar||'30px');
   g.style.transition='transform .5s cubic-bezier(.22,.9,.32,1), opacity .18s ease .42s';
-  const img=document.createElement('img');
-  img.src='chip-blank-25.webp';img.draggable=false;
-  img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--chip)*1);height:auto;z-index:1';
-  g.appendChild(img);
-  if(label){
-    const s=document.createElement('span');
-    s.textContent=label;
-    s.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*0.3);color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap';
-    g.appendChild(s);
-  }
+  // Money in flight is a bill too, not a chip -- same note face the resting stacks use, so a
+  // stake looks like one object whether it's sitting on the board or travelling across it.
+  const note=document.createElement('span');
+  note.className='chip-stack money-note';
+  note.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--chip)*5);height:calc(var(--chip)*2.13);z-index:1';
+  note.innerHTML='<span class="note-face"></span>'
+    +(label?'<span class="chip-amt" style="font-size:calc(var(--chip)*0.72)">'+label+'</span>':'');
+  g.appendChild(note);
   document.body.appendChild(g);
   const dx=(b.left+b.width/2)-(a.left+a.width/2);
   const dy=(b.top+b.height/2)-(a.top+a.height/2);
