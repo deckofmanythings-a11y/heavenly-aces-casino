@@ -5,11 +5,22 @@
    pattern as winner-modal.js -- open with GameInstructions.open('<gameId>', ['optional','tags']). */
 (function(){
 
-/* Calibrated circle-i positions, exported straight out of the drag tool (instr-calib.js,
-   open any page with ?icalib=1). Key -> {anchor,x,y,size}: x/y are % of the container named
-   in that button's data-icalib-box, measured from the corner in `anchor` (t/b + l/r), and
-   size is the button diameter in px. A button with no entry here keeps the natural in-flow
-   position it has always had, so anything uncalibrated is left completely alone. */
+/* Calibrated positions for every round "i" button -- the instructions ones by the HOME
+   button and on the lobby tiles, and the paytable ones out on the felt. Exported straight
+   out of the drag tool (instr-calib.js; open any page with ?icalib=1).
+
+   Key -> { anchor, x, y, unit, w, h }
+     anchor  which corner x/y are measured from: t/b + l/r, e.g. 'tr'
+     x, y    always % of the button's container. Negative is fine and sometimes intended --
+             paigow's sit just outside their bet spot, on its rim.
+     unit    'px' for a fixed size, 'pct' for a size that scales with the felt art
+     w, h    the size, in that unit (h is only meaningful for 'pct', where the container
+             isn't square and equal pixels need unequal percentages)
+
+   The container is whatever data-icalib-box names, or the button's own offsetParent when it
+   doesn't -- which for the felt buttons is already the module their authored %s were written
+   against. A button with no entry here keeps exactly the position it has always had, so
+   anything uncalibrated is left completely alone. */
 var INSTR_POS = {};
 
 var INSTRUCTIONS_DATA = {
@@ -382,36 +393,49 @@ function loadOverrides(){
   try { return JSON.parse(localStorage.getItem('instrPosOverride') || '{}'); } catch(e){ return {}; }
 }
 
+/* The container a button's percentages are measured against. data-icalib-box names one
+   explicitly; without it we use the button's own offsetParent, which for the felt paytable
+   buttons is already exactly the module their authored %s were written against. */
 function boxFor(btn){
   var sel = btn.getAttribute('data-icalib-box');
-  if(!sel) return document.documentElement;
-  return btn.closest(sel) || document.querySelector(sel) || document.documentElement;
+  if(sel) return btn.closest(sel) || document.querySelector(sel) || document.documentElement;
+  return btn.offsetParent || document.documentElement;
 }
 
 function applyPos(btn, p){
   var box = boxFor(btn);
   if(box !== document.documentElement && getComputedStyle(box).position === 'static') box.style.position = 'relative';
-  /* Reparent into the container the % is measured against. Several of these buttons sit
-     inside a positioned flex wrapper (craps' #game-mode-toggle is position:relative), which
-     would otherwise become the offsetParent and make the coordinates mean something else.
-     Moving the node also pulls it out of that flex row so HOME reclaims the full width. */
-  if(btn.parentElement !== box) box.appendChild(btn);
+  /* Reparent only when a container was named explicitly. That's the header buttons, which
+     sit inside a positioned flex wrapper (craps' #game-mode-toggle is position:relative)
+     that would otherwise become the offsetParent and make the coordinates mean something
+     else; moving the node also frees the flex row so HOME reclaims the full width. The felt
+     buttons are already children of the module they're positioned against, so they stay put
+     -- reparenting those would tear them out of the bet spot they belong to. */
+  if(btn.getAttribute('data-icalib-box') && btn.parentElement !== box) box.appendChild(btn);
   var a = p.anchor || 'tl';
   btn.style.position = 'absolute';
   btn.style.margin = '0';
   btn.style.left = btn.style.right = btn.style.top = btn.style.bottom = 'auto';
   if(a.charAt(1) === 'l') btn.style.left = p.x + '%'; else btn.style.right = p.x + '%';
   if(a.charAt(0) === 't') btn.style.top  = p.y + '%'; else btn.style.bottom = p.y + '%';
-  if(p.size){
-    btn.style.width = btn.style.height = btn.style.minWidth = p.size + 'px';
-    btn.style.fontSize = Math.round(p.size * 0.54) + 'px';
+  var w = p.w != null ? p.w : p.size;   // p.size is the older px-only spelling
+  if(p.unit === 'pct'){
+    /* Percent-sized buttons scale with the felt art they sit on, which is the whole point
+       of how they were authored -- pinning them to px would break them on a resize. w/h are
+       separate because the module isn't square, and equal pixel sizes need unequal %s. */
+    btn.style.width = w + '%';
+    btn.style.height = (p.h != null ? p.h : w) + '%';
+    btn.style.minWidth = '0';
+  } else if(w){
+    btn.style.width = btn.style.height = btn.style.minWidth = w + 'px';
+    btn.style.fontSize = Math.round(w * 0.54) + 'px';
   }
   if(!btn.style.zIndex) btn.style.zIndex = '20';
 }
 
 function applyPositions(){
   var over = loadOverrides();
-  var btns = document.querySelectorAll('.info-circle-btn[data-icalib]');
+  var btns = document.querySelectorAll('[data-icalib]');
   for(var i=0;i<btns.length;i++){
     var b = btns[i];
     var p = over[b.getAttribute('data-icalib')] || INSTR_POS[b.getAttribute('data-icalib')];
@@ -427,7 +451,7 @@ function maybeLoadCalib(){
   if(!on || document.getElementById('icalib-script')) return;
   var s = document.createElement('script');
   s.id = 'icalib-script';
-  s.src = 'instr-calib.js?v=1';
+  s.src = 'instr-calib.js?v=2';
   document.head.appendChild(s);
 }
 

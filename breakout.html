@@ -7,7 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
-<script src="instructions.js?v=2"></script>
+<script src="instructions.js?v=3"></script>
 <script src="weekly-events.js?v=2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -545,7 +545,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.23</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.24</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>
@@ -620,11 +620,11 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
             <div class="felt-spot" id="breakoutbonus-spot" onclick="placeBet('breakoutBonus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('breakoutBonus')">
               <span class="panel-spot-stk" id="stk-breakoutBonus"></span>
             </div>
-            <button class="paytable-info-btn" id="breakoutbonus-info" onclick="event.stopPropagation();openPaytable('breakoutBonus')" title="Breakout Bonus Paytable">ⓘ</button>
+            <button class="paytable-info-btn" id="breakoutbonus-info" data-icalib="breakout:bonus" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('breakoutBonus')" title="Breakout Bonus Paytable">ⓘ</button>
             <div class="felt-spot" id="supertie-spot" onclick="placeBet('superTie')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superTie')">
               <span class="panel-spot-stk" id="stk-superTie"></span>
             </div>
-            <button class="paytable-info-btn" id="supertie-info" onclick="event.stopPropagation();openPaytable('superTie')" title="Super Tie Paytable">ⓘ</button>
+            <button class="paytable-info-btn" id="supertie-info" data-icalib="breakout:supertie" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('superTie')" title="Super Tie Paytable">ⓘ</button>
           </div>
           <div id="player-row-slot">
             <div id="player-module">
@@ -635,22 +635,22 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
               <div class="felt-spot spot-pairPlus" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
                 <span class="panel-spot-stk stk-pairPlus"></span>
               </div>
-              <button class="paytable-info-btn info-pairPlus" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
+              <button class="paytable-info-btn info-pairPlus" data-icalib="breakout:pairplus-player" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
               <div class="felt-spot spot-sweet17" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
                 <span class="panel-spot-stk stk-sweet17"></span>
               </div>
-              <button class="paytable-info-btn info-sweet17" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
+              <button class="paytable-info-btn info-sweet17" data-icalib="breakout:sweet17-player" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
             </div>
             <div id="side-bets-module" style="visibility:hidden">
               <img id="side-bets-module-art" class="module-art" src="side_bets_trim.png" alt="">
               <div class="felt-spot spot-pairPlus" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
                 <span class="panel-spot-stk stk-pairPlus"></span>
               </div>
-              <button class="paytable-info-btn info-pairPlus" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
+              <button class="paytable-info-btn info-pairPlus" data-icalib="breakout:pairplus-side" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
               <div class="felt-spot spot-sweet17" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
                 <span class="panel-spot-stk stk-sweet17"></span>
               </div>
-              <button class="paytable-info-btn info-sweet17" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
+              <button class="paytable-info-btn info-sweet17" data-icalib="breakout:sweet17-side" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
             </div>
           </div>
         </div>
@@ -666,11 +666,11 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
           <div class="felt-spot" id="trilux9-spot" onclick="placeBet('trilux9')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trilux9')">
             <span class="panel-spot-stk" id="stk-trilux9"></span>
           </div>
-          <button class="paytable-info-btn" id="trilux9-info" onclick="event.stopPropagation();openPaytable('trilux9')" title="TriLux Paytable">ⓘ</button>
+          <button class="paytable-info-btn" id="trilux9-info" data-icalib="breakout:trilux9" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('trilux9')" title="TriLux Paytable">ⓘ</button>
           <div class="felt-spot" id="fortunebonus-spot" onclick="placeBet('fortuneBonus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fortuneBonus')">
             <span class="panel-spot-stk" id="stk-fortuneBonus"></span>
           </div>
-          <button class="paytable-info-btn" id="fortunebonus-info" onclick="event.stopPropagation();openPaytable('fortuneBonus')" title="Fortune Paytable">ⓘ</button>
+          <button class="paytable-info-btn" id="fortunebonus-info" data-icalib="breakout:fortunebonus" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('fortuneBonus')" title="Fortune Paytable">ⓘ</button>
         </div>
 
         <!-- Mode selector: plain single-tap toggle, hidden entirely (not just
@@ -694,7 +694,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
           </div>
           <img id="light-off-img" class="module-art" src="lightOFF.webp" alt="" style="pointer-events:none">
           <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
-          <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
+          <button id="light-info-btn" data-icalib="breakout:light" data-icalib-unit="pct" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
         </div>
 
         <!-- TRILUX: Trilux Thursday only (Nephilim+) -- shown/hidden by updateUI() via
@@ -703,7 +703,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <div class="panel-spot" id="trilux-spot" onclick="toggleTrilux()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleTrilux()" title="Trilux — $5 side bet, Trilux Thursday only" style="display:none;position:absolute;left:0;bottom:-90px;width:100%;height:78px;align-items:flex-end;justify-content:center;background:url('TriLux_Web_Logo.webp') center/contain no-repeat">
           <span class="panel-spot-stk" id="stk-trilux" style="font-weight:800;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.9);margin-bottom:2px"></span>
         </div>
-        <button id="trilux-info-btn" onclick="event.stopPropagation();openTriluxModal()" title="Trilux Paytable" style="display:none;position:absolute;left:calc(100% + 4px);bottom:-56px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid #ffd700;font-size:12px;cursor:pointer">i</button>
+        <button id="trilux-info-btn" data-icalib="breakout:trilux" data-icalib-unit="px" onclick="event.stopPropagation();openTriluxModal()" title="Trilux Paytable" style="display:none;position:absolute;left:calc(100% + 4px);bottom:-56px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid #ffd700;font-size:12px;cursor:pointer">i</button>
       </div>
 
       <!-- TRILUX PAYTABLE MODAL -->

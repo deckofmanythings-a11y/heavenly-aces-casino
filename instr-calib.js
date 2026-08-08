@@ -19,8 +19,16 @@ var active = false, selected = null, layer = null, bar = null;
 
 function boxOf(btn){
   var sel = btn.getAttribute('data-icalib-box');
-  if(!sel) return document.documentElement;
-  return btn.closest(sel) || document.querySelector(sel) || document.documentElement;
+  if(sel) return btn.closest(sel) || document.querySelector(sel) || document.documentElement;
+  return btn.offsetParent || document.documentElement;
+}
+
+/* px or pct. The header buttons are a fixed pixel size; the felt paytable buttons are sized
+   as a % of the module they sit on so they scale with the baked art, and that has to survive
+   a calibration pass. data-icalib-unit sets the starting unit; the toolbar can flip it. */
+function unitOf(btn, cur){
+  if(cur && cur.unit) return cur.unit;
+  return btn.getAttribute('data-icalib-unit') === 'pct' ? 'pct' : 'px';
 }
 
 /* The container's PADDING box, in viewport coords. This is what left/top/right/bottom
@@ -47,22 +55,40 @@ function save(all){
 /* Current on-screen geometry of a button as {anchor,x,y,size}, read back from the live DOM.
    Used to seed a button that has never been calibrated, so dragging starts from where it
    actually sits today rather than snapping to a corner. */
-function readGeom(btn, anchor){
+function readGeom(btn, anchor, unit){
   var br = boxRect(btn), r = btn.getBoundingClientRect();
-  if(!br.width || !br.height) return { anchor: anchor||'tl', x:0, y:0, size: Math.round(r.width)||26 };
+  var u = unit || unitOf(btn);
   var a = anchor || 'tl';
+  if(!br.width || !br.height){
+    var fb = u === 'pct' ? 8 : (Math.round(r.width) || 26);
+    return { anchor:a, x:0, y:0, unit:u, w:fb, h:fb };
+  }
   var x = a.charAt(1) === 'l' ? (r.left - br.left) : (br.left + br.width  - r.right);
   var y = a.charAt(0) === 't' ? (r.top  - br.top)  : (br.top  + br.height - r.bottom);
-  return {
+  var g = {
     anchor: a,
     x: +( x / br.width  * 100 ).toFixed(3),
     y: +( y / br.height * 100 ).toFixed(3),
-    size: Math.round(r.width) || 26
+    unit: u, w: 0, h: 0
   };
+  if(u === 'pct'){
+    g.w = +( r.width  / br.width  * 100 ).toFixed(3);
+    g.h = +( r.height / br.height * 100 ).toFixed(3);
+  } else {
+    g.w = g.h = Math.round(r.width) || 26;
+  }
+  return g;
+}
+
+/* Everything below works in on-screen pixels and converts at the edges, so a button's
+   drawn size stays circular whichever unit it's stored in. */
+function pxSize(btn){
+  var r = btn.getBoundingClientRect();
+  return { w: r.width, h: r.height };
 }
 
 function buttons(){
-  return Array.prototype.slice.call(document.querySelectorAll('.info-circle-btn[data-icalib]'));
+  return Array.prototype.slice.call(document.querySelectorAll('[data-icalib]'));
 }
 function visible(){
   return buttons().filter(function(b){
@@ -161,7 +187,9 @@ function onGrab(e){
   var r = btn.getBoundingClientRect();
   drag = {
     key: selected, btn: btn, br: br,
-    size: cur.size, anchor: cur.anchor || 'tl',
+    pxW: r.width, pxH: r.height,          // clamp/anchor math is all in on-screen pixels
+    unit: cur.unit, w: cur.w, h: cur.h,   // size rides along untouched; dragging only moves
+    anchor: cur.anchor || 'tl',
     // grab offset within the button, so it doesn't jump to the cursor on pickup
     dx: e.clientX - r.left, dy: e.clientY - r.top
   };
@@ -177,19 +205,21 @@ function onMove(e){
   e.preventDefault();
   var br = drag.br;
   if(!br.width || !br.height) return;
-  var left = e.clientX - drag.dx - br.left;
-  var top  = e.clientY - drag.dy - br.top;
-  // keep it inside its container
-  left = Math.max(0, Math.min(left, br.width  - drag.size));
-  top  = Math.max(0, Math.min(top,  br.height - drag.size));
+  /* Clamp to the viewport, NOT to the container. Several of these are meant to hang off the
+     edge of a small container -- paigow's sit at top:-4px;right:-4px on the rim of a bet
+     spot -- so a container clamp would pin them to a corner and make those undraggable.
+     Negative percentages are legitimate here; going off-screen never is. */
+  var vl = Math.max(0, Math.min(e.clientX - drag.dx, (window.innerWidth  || 0) - drag.pxW));
+  var vt = Math.max(0, Math.min(e.clientY - drag.dy, (window.innerHeight || 0) - drag.pxH));
+  var left = vl - br.left, top = vt - br.top;
   var a = drag.anchor;
-  var x = a.charAt(1) === 'l' ? left : (br.width  - left - drag.size);
-  var y = a.charAt(0) === 't' ? top  : (br.height - top  - drag.size);
+  var x = a.charAt(1) === 'l' ? left : (br.width  - left - drag.pxW);
+  var y = a.charAt(0) === 't' ? top  : (br.height - top  - drag.pxH);
   commit(drag.key, {
     anchor: a,
     x: +( x / br.width  * 100 ).toFixed(3),
     y: +( y / br.height * 100 ).toFixed(3),
-    size: drag.size
+    unit: drag.unit, w: drag.w, h: drag.h
   });
 }
 
@@ -215,7 +245,7 @@ function commit(key, pos){
 
 function nudge(ddx, ddy){
   if(!selected) return;
-  var btn = targets().filter(function(b){ return b.getAttribute('data-icalib') === selected; })[0];
+  var btn = sel();
   if(!btn) return;
   var all = load(), cur = all[selected] || readGeom(btn);
   var br = boxRect(btn);
@@ -227,27 +257,49 @@ function nudge(ddx, ddy){
     anchor: cur.anchor,
     x: +( cur.x + ddx * sx / br.width  * 100 ).toFixed(3),
     y: +( cur.y + ddy * sy / br.height * 100 ).toFixed(3),
-    size: cur.size
+    unit: cur.unit, w: cur.w, h: cur.h
   });
+}
+
+function sel(){
+  return targets().filter(function(b){ return b.getAttribute('data-icalib') === selected; })[0];
 }
 
 function resize(delta){
   if(!selected) return;
-  var btn = targets().filter(function(b){ return b.getAttribute('data-icalib') === selected; })[0];
+  var btn = sel();
   if(!btn) return;
   var all = load(), cur = all[selected] || readGeom(btn);
-  cur.size = Math.max(14, Math.min(96, cur.size + delta));
+  var br = boxRect(btn), now = pxSize(btn);
+  // grow/shrink by on-screen pixels, then push it back into whichever unit this button uses
+  var px = Math.max(14, Math.min(96, now.w + delta));
+  if(cur.unit === 'pct'){
+    if(!br.width || !br.height) return;
+    cur.w = +( px / br.width  * 100 ).toFixed(3);
+    cur.h = +( px / br.height * 100 ).toFixed(3);
+  } else {
+    cur.w = cur.h = px;
+  }
   commit(selected, cur);
 }
 
 function setAnchor(a){
   if(!selected) return;
-  var btn = targets().filter(function(b){ return b.getAttribute('data-icalib') === selected; })[0];
+  var btn = sel();
   if(!btn) return;
   // re-measure against the new corner so the button doesn't move, only its reference does
   var all = load(), cur = all[selected];
-  if(cur){ /* make sure the DOM reflects cur before re-reading */ }
-  commit(selected, readGeom(btn, a));
+  commit(selected, readGeom(btn, a, cur && cur.unit));
+}
+
+/* Flipping the unit re-reads the button where it currently sits, so it stays exactly put and
+   only the way its size is expressed changes. */
+function toggleUnit(){
+  if(!selected) return;
+  var btn = sel();
+  if(!btn) return;
+  var all = load(), cur = all[selected] || readGeom(btn);
+  commit(selected, readGeom(btn, cur.anchor, cur.unit === 'pct' ? 'px' : 'pct'));
 }
 
 function resetOne(){
@@ -278,6 +330,7 @@ function buildBar(){
     +'<button data-n="0,-1">↑</button><button data-n="0,1">↓</button>'
     +'<span class="icalib-sep"></span>'
     +'<button data-s="-2">size −</button><button data-s="2">size +</button>'
+    +'<button id="icalib-unit" title="fixed px, or % of the module so it scales with the felt art">px/%</button>'
     +'<span class="icalib-sep"></span>'
     +'<button data-a="tl" title="anchor top-left">TL</button>'
     +'<button data-a="tr" title="anchor top-right">TR</button>'
@@ -297,6 +350,7 @@ function buildBar(){
     if(t.dataset.n){ var p = t.dataset.n.split(','); nudge(+p[0], +p[1]); }
     else if(t.dataset.s){ resize(+t.dataset.s); }
     else if(t.dataset.a){ setAnchor(t.dataset.a); }
+    else if(t.id === 'icalib-unit') toggleUnit();
     else if(t.id === 'icalib-reset') resetOne();
     else if(t.id === 'icalib-resetall') resetAll();
     else if(t.id === 'icalib-export-btn') showExport();
@@ -325,7 +379,14 @@ function refresh(){
   var all = load();
   if(selected && all[selected]){
     var p = all[selected];
-    out.textContent = selected + '  ' + p.anchor + ' x:' + p.x + '% y:' + p.y + '% ' + p.size + 'px';
+    var sz = p.unit === 'pct' ? (p.w + '%×' + p.h + '%') : (p.w + 'px');
+    /* Percentages are relative to a button's own container, and some of those are tiny (a
+       paigow bet spot is ~43px). Dragged far enough out the numbers get big and brittle --
+       a small change to the container then throws the button a long way -- so say so. */
+    var far = Math.abs(p.x) > 150 || Math.abs(p.y) > 150;
+    out.textContent = selected + '  ' + p.anchor + ' x:' + p.x + '% y:' + p.y + '%  ' + sz
+      + (far ? '  ⚠ far outside its container' : '');
+    out.style.color = far ? '#ffb454' : 'rgba(255,255,255,.75)';
   } else if(selected){
     out.textContent = selected + '  (uncalibrated)';
   } else {
@@ -353,7 +414,10 @@ function showExport(){
   var keys = Object.keys(all).sort();
   var lines = keys.map(function(k){
     var p = all[k];
-    return "  '" + k + "': { anchor:'" + p.anchor + "', x:" + p.x + ", y:" + p.y + ", size:" + p.size + " }";
+    var sz = p.unit === 'pct'
+      ? "unit:'pct', w:" + p.w + ", h:" + p.h
+      : "unit:'px', w:" + p.w;
+    return "  '" + k + "': { anchor:'" + p.anchor + "', x:" + p.x + ", y:" + p.y + ", " + sz + " }";
   });
   var text = 'var INSTR_POS = {\n' + lines.join(',\n') + (lines.length ? '\n' : '') + '};';
 

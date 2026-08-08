@@ -7,7 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
-<script src="instructions.js?v=2"></script>
+<script src="instructions.js?v=3"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -404,7 +404,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.17</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.18</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="iluvsuits:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('iluvsuits')" title="How to play">i</button>
@@ -468,7 +468,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
       </div>
       <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;pointer-events:none;z-index:4">
       <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
-      <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
+      <button id="light-info-btn" data-icalib="iluvsuits:light" data-icalib-unit="pct" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
 
     </div>
   </div>

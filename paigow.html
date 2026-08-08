@@ -7,7 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
-<script src="instructions.js?v=2"></script>
+<script src="instructions.js?v=3"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* Single source of truth for chip-stack diameter so every chip (felt bet spots AND
@@ -337,7 +337,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.18</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.19</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="paigow:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('paigow')" title="How to play">i</button>
@@ -407,20 +407,20 @@ input,textarea{-webkit-user-select:text;user-select:text}
           <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);object-fit:contain;pointer-events:none">
           <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);object-fit:contain;pointer-events:none">
           <span id="stk-light"></span>
-          <button class="paytable-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
+          <button class="paytable-info-btn" data-icalib="paigow:light" data-icalib-unit="px" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
         </div>
       </div>
       <div class="bet-spot-wrap">
         <div class="bet-spot-name">Fortune</div>
         <div class="bet-spot" id="fortune-spot" onclick="placeBet('fortune')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fortune')">
-          <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('fortune')" title="Fortune Paytable">i</button>
+          <button class="paytable-info-btn" data-icalib="paigow:fortune" data-icalib-unit="px" onclick="event.stopPropagation();openPaytable('fortune')" title="Fortune Paytable">i</button>
           <span id="stk-fortune"></span>
         </div>
       </div>
       <div class="bet-spot-wrap">
         <div class="bet-spot-name">Ante</div>
         <div class="bet-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
-          <button class="paytable-info-btn" onclick="event.stopPropagation();openPaytable('ante')" title="Ante Rules">i</button>
+          <button class="paytable-info-btn" data-icalib="paigow:ante" data-icalib-unit="px" onclick="event.stopPropagation();openPaytable('ante')" title="Ante Rules">i</button>
           <span id="stk-ante"></span>
         </div>
       </div>
