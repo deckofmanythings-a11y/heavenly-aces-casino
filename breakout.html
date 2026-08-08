@@ -178,12 +178,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #supertie-spot{left:-2.15%;top:47.2%;width:34.6%;height:52.7%;--chip:72px}
 #player-module .spot-pairPlus{left:5.23%;top:0%;width:31.36%;height:48.41%}
 #player-module .spot-sweet17{left:0%;top:53.33%;width:35.88%;height:46.51%}
-#player-module .info-pairPlus{left:31%;top:2%}
-#player-module .info-sweet17{left:31%;top:55%}
+/* The info buttons live on #player-row-slot, not in either module -- see the markup
+   comment there. That box is identical to #player-module's, so these are the same
+   percentages the player-module rules used to carry, and they now hold through every
+   betting state instead of being swapped out from under the player. */
+#player-row-slot > .info-pairPlus{left:31%;top:2%}
+#player-row-slot > .info-sweet17{left:31%;top:55%}
 #side-bets-module .spot-pairPlus{left:14.2%;top:0%;width:85.5%;height:48.4%}
 #side-bets-module .spot-sweet17{left:0%;top:53.3%;width:97.8%;height:46.5%}
-#side-bets-module .info-pairPlus{left:80%;top:2%}
-#side-bets-module .info-sweet17{left:80%;top:55%}
 
 /* The two main-wager bet spots ARE the baked DEALER HAND (red) / PLAYER HAND (blue)
    ring circles themselves -- matches the Dealer Instruction Manual's own diagrams
@@ -565,7 +567,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.27</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.28</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>
@@ -655,23 +657,30 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
               <div class="felt-spot spot-pairPlus" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
                 <span class="panel-spot-stk stk-pairPlus"></span>
               </div>
-              <button class="paytable-info-btn info-pairPlus" data-icalib="breakout:pairplus-player" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
               <div class="felt-spot spot-sweet17" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
                 <span class="panel-spot-stk stk-sweet17"></span>
               </div>
-              <button class="paytable-info-btn info-sweet17" data-icalib="breakout:sweet17-player" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
             </div>
             <div id="side-bets-module" style="visibility:hidden">
               <img id="side-bets-module-art" class="module-art" src="side_bets_trim.png" alt="">
               <div class="felt-spot spot-pairPlus" onclick="placeBet('pairPlus')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('pairPlus')">
                 <span class="panel-spot-stk stk-pairPlus"></span>
               </div>
-              <button class="paytable-info-btn info-pairPlus" data-icalib="breakout:pairplus-side" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
               <div class="felt-spot spot-sweet17" onclick="placeBet('sweet17')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('sweet17')">
                 <span class="panel-spot-stk stk-sweet17"></span>
               </div>
-              <button class="paytable-info-btn info-sweet17" data-icalib="breakout:sweet17-side" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
             </div>
+            <!-- ONE Pair Up / Sweet 17 info button each, owned by the slot rather than by
+                 either module. The bet spots still need a copy per module (their %s are
+                 written against two different-width boxes), but these buttons must not:
+                 updateUI swaps which module is visible as soon as a Dealer Bet is staged,
+                 so a copy inside one of them would vanish, and the copy inside the other
+                 would take over at its own coordinates -- the buttons visibly jumped on
+                 every bet. #player-row-slot is the same box as #player-module (that module
+                 is the only in-flow child, side-bets overlays it absolutely), so these keep
+                 exactly the calibrated percentages and simply never move again. -->
+            <button class="paytable-info-btn info-pairPlus" data-icalib="breakout:pairplus-player" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('pairPlus')" title="Pair Up Paytable">ⓘ</button>
+            <button class="paytable-info-btn info-sweet17" data-icalib="breakout:sweet17-player" data-icalib-unit="pct" onclick="event.stopPropagation();openPaytable('sweet17')" title="Sweet 17 Paytable">ⓘ</button>
           </div>
         </div>
 
