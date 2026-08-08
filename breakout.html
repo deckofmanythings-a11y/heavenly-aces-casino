@@ -7,7 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
-<script src="instructions.js?v=5"></script>
+<script src="instructions.js?v=6"></script>
 <script src="weekly-events.js?v=2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -421,9 +421,29 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   .crl-hand{font-size:1.7cqh;bottom:-2.4cqh}
 
   /* Module repositioned/centered for the narrow screen -- badge/circle/light
-     percentages inside each sub-module are unchanged (module-relative). */
+     percentages inside each sub-module are unchanged (module-relative).
+
+     The column used to run to 662px on a 375x812 screen against a panel ending at
+     639, so its last sub-module and those circle-i buttons sat under
+     #bottom-section -- which outranks the whole of #table-area, making them
+     unclickable no matter how high their own z-index went. The clearance is bought
+     back by the switch below going full-bleed (60.6px tall stacked -> 21.9px as a
+     row), which lifts the column's bottom edge to ~624 and leaves ~15px of daylight.
+
+     top stays at 58%. It can't go higher: .crl-hand labels hang 2.4cqh *below*
+     #player-region once cards are dealt, which reaches 429px, and 58% puts the
+     column top at 432. Raising it puts the Light over the player's cards. */
   #bets-module{left:28%;right:auto;top:58%;transform:none;width:44%}
-  #mode-toggle-btn{bottom:calc(100% + 1.5%)}
+  /* Full-bleed switch: a flex item still (NOT absolute), because setGameMode swaps
+     flex order between this and #light-row to put the Light north of the switch in
+     Breakout and south of it in Fortune -- taking it out of flow would kill that.
+     #bets-module is align-items:center and horizontally centred on screen, so a
+     100vw item overhangs evenly and lands exactly on both screen edges. Laying the
+     label and hint in a row instead of stacked also makes it a short wide bar rather
+     than a tall block, which is most of what buys the column its headroom back. */
+  #mode-toggle-btn{width:100vw;flex-shrink:0;flex-direction:row;justify-content:center;
+    align-items:baseline;gap:0.8cqh;border-radius:0;border-left:none;border-right:none;
+    padding:0.7cqh 0.6cqh}
   #mode-toggle-label{font-size:1.9cqh}
   #mode-toggle-hint{font-size:1.4cqh}
 
@@ -545,7 +565,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.26</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.27</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>

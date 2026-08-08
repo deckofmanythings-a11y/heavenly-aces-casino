@@ -34,7 +34,7 @@
    Positions below are Deck's own calibrated export from the drag tool, both orientations.
    No sizes: nothing was resized, so the stylesheet still owns that -- which is what keeps
    uth's 14%x9% and breakout's 5.5%x3.8% portrait size rules working. paigow's three are
-   deliberately absent and sit wherever their CSS puts them. */
+   landscape-only, restored from the first export. */
 var INSTR_POS = {
   'uth:trips': { landscape:{ anchor:'tl', x:-17.544, y:19.637  }, portrait:{ anchor:'tl', x:-22.959, y:17.544  } },
   'uth:ante':  { landscape:{ anchor:'tl', x:-17.544, y:52.87   }, portrait:{ anchor:'tl', x:-22.959, y:50.439  } },
@@ -50,6 +50,14 @@ var INSTR_POS = {
   'breakout:fortunebonus':    { landscape:{ anchor:'tl', x:-13.761, y:81.448 }, portrait:{ anchor:'tl', x:-15.432, y:77.982 } },
   /* The only one that sits right of its row rather than left of it -- >100% is intentional. */
   'breakout:light':           { landscape:{ anchor:'tl', x:106.195, y:35.398 }, portrait:{ anchor:'tl', x:107.143, y:35.714 } },
+
+  /* From Deck's first export, which the second pass missed rather than reset. Landscape
+     only, so portrait keeps the stylesheet's own placement. The original carried
+     unit:'px', w:16 as well, but that is exactly what .paytable-info-btn already sets,
+     so it is left off for the same reason as everywhere else here. */
+  'paigow:light':   { landscape:{ anchor:'tl', x:140, y:30 } },
+  'paigow:fortune': { landscape:{ anchor:'tl', x:140, y:30 } },
+  'paigow:ante':    { landscape:{ anchor:'tl', x:140, y:36 } },
 
   'iluvsuits:light': { landscape:{ anchor:'tl', x:74.89, y:32.998 }, portrait:{ anchor:'tl', x:79.208, y:47.256 } }
 };
@@ -515,7 +523,7 @@ function maybeLoadCalib(){
   if(!on || document.getElementById('icalib-script')) return;
   var s = document.createElement('script');
   s.id = 'icalib-script';
-  s.src = 'instr-calib.js?v=4';
+  s.src = 'instr-calib.js?v=5';
   document.head.appendChild(s);
 }
 
