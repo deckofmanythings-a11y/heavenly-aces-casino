@@ -85,6 +85,14 @@
     pipBaseRotation: null,  // optional {2: 90, 3: 90, ...} per-value baseline correction (degrees)
     pipDepressions: true,   // false skips the carved-dimple normal map, flat printed pips instead
     wallSegments: 14,
+    // 'cloche' = the glass bell jar every other game uses; dice are shaken straight up inside it.
+    // 'wall'   = Street Craps: dice are THROWN at a brick wall, bounce off and settle on asphalt.
+    // Defaults to 'cloche' so craps-standard/crapless, Sic-Bo and Destroyer are untouched -- the
+    // wall arena is strictly additive and only reachable by opting in via init({arena:'wall'}).
+    // Everything downstream (scene build, start positions, launch impulse, out-of-bounds clamp)
+    // branches on this one flag; the resolve/face-reading/relabel machinery is shared verbatim,
+    // so a wall roll is exactly as server-faithful as a cloche roll.
+    arena: 'cloche',
     zIndex: 9999,
     soundTheme: 'bell'      // 'bell' (default jovial chime) or 'action' (dramatic low drums +
                              // rising brass-stab tension for destroyer's missile-strike rolls)
@@ -92,6 +100,69 @@
 
   const PLATFORM_Y = 0.35;
   const STEP = 1 / 120;
+
+  // ---------- wall arena (Street Craps) ----------
+  // A back wall to throw against, asphalt underfoot, and invisible side/front/ceiling bounds so
+  // a hot throw can't leave the playfield. Sized so the camera (0,8.5,12.5 looking at 0,2.6,0)
+  // frames the wall behind the landing zone without moving the camera at all -- the cloche and
+  // the alley share one view, which keeps every other game's framing untouched.
+  const ARENA = { halfW: 6.5, height: 9.5, wallZ: -5.5, frontZ: 7.5 };
+  const isWall = () => CFG.arena === 'wall';
+
+  // Seamless running-bond brick, drawn rather than shipped as an image: it tiles by construction
+  // (courses offset by half a brick, edges wrap), so there's no crop-and-tile seam of the kind a
+  // photo would need. Also keeps the wall a zero-asset feature.
+  function brickTexture() {
+    const BW = 128, BH = 56, MORTAR = 7;   // one brick + its mortar gutter
+    const c = document.createElement('canvas');
+    c.width = BW * 2; c.height = BH * 2;   // two courses so the half-brick offset repeats
+    const g = c.getContext('2d');
+    g.fillStyle = '#2e2b29'; g.fillRect(0, 0, c.width, c.height);   // mortar
+    const face = (x, y, w, h, seed) => {
+      // Slight per-brick colour jitter so a wall of identical bricks doesn't read as wallpaper.
+      // Muted and dark on purpose -- this is a wall in an alley at night, not fresh facing brick,
+      // and the scene's key light already pushes it several stops brighter than these numbers.
+      const r = 78 + ((seed * 37) % 26), gr = 42 + ((seed * 17) % 16), b = 36 + ((seed * 11) % 12);
+      g.fillStyle = 'rgb(' + r + ',' + gr + ',' + b + ')';
+      g.fillRect(x, y, w, h);
+      g.fillStyle = 'rgba(0,0,0,.18)';            // bottom/right shading for a little relief
+      g.fillRect(x, y + h - 3, w, 3); g.fillRect(x + w - 3, y, 3, h);
+      g.fillStyle = 'rgba(255,255,255,.05)';      // top highlight
+      g.fillRect(x, y, w, 2);
+    };
+    // course 0 flush, course 1 offset by half a brick and wrapped at both edges
+    for (let i = -1; i <= 2; i++) {
+      face(i * BW, 0, BW - MORTAR, BH - MORTAR, i + 3);
+      face(i * BW + BW / 2, BH, BW - MORTAR, BH - MORTAR, i + 9);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    // Scale matters for believability: the wall mesh is ~17 world units across and a die is 2,
+    // so at repeat(3,2) each "brick" came out wider than a die and read as red panelling. Nine
+    // tiles across puts a brick at roughly 0.9 units -- under half a die, which is about right.
+    t.repeat.set(9, 7);
+    t.anisotropy = 4;
+    return t;
+  }
+  // Asphalt: dark base plus scattered aggregate speckle, matching the CSS street felt in
+  // craps.html so the 3D floor and the 2D board read as the same surface.
+  function asphaltTexture() {
+    const S = 256;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d');
+    g.fillStyle = '#232326'; g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 1400; i++) {
+      const x = Math.random() * S, y = Math.random() * S, r = Math.random() * 1.6 + 0.3;
+      const v = 40 + Math.floor(Math.random() * 55);
+      g.fillStyle = 'rgba(' + v + ',' + v + ',' + (v + 4) + ',' + (0.25 + Math.random() * 0.5) + ')';
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(4, 4);
+    t.anisotropy = 4;
+    return t;
+  }
 
   // face pairs in BoxGeometry material order [+x,-x,+y,-y,+z,-z]
   // opposite face of index i is (i ^ 1)
@@ -196,7 +267,7 @@
   let inited = false;
   let overlayEl, stageEl, labelEl;
   let scene, camera, renderer, world, platformMesh;
-  let matDie, matSurface, matGlass;
+  let matDie, matSurface, matGlass, matBrick, matAsphalt;
   let dice = [];
   let rafId = null;
   let lastTime = 0;
@@ -800,8 +871,27 @@
     world.addContactMaterial(new CANNON.ContactMaterial(matDie, matDie, {
       friction: 0.01, restitution: 0.48
     }));
+    // Brick gives a real rebound, but restrained: at 0.62 the dice pinballed between the wall
+    // and the front stop long enough to hit maxResolveSteps, which the live replay plays back at
+    // real time -- a ~20s roll. 0.45 still visibly bounces them off the brick and bleeds off in
+    // about a second. Friction is well above the glass so they bite and tumble, not skate.
+    matBrick = new CANNON.Material('brick');
+    world.addContactMaterial(new CANNON.ContactMaterial(matDie, matBrick, {
+      friction: 0.25, restitution: 0.45
+    }));
+    // Asphalt is its own surface rather than reusing the cloche's felt: it needs noticeably more
+    // friction and less bounce to kill a thrown die's momentum in a believable distance, and
+    // matSurface's numbers are tuned for dice dropping nearly straight down inside the jar.
+    matAsphalt = new CANNON.Material('asphalt');
+    world.addContactMaterial(new CANNON.ContactMaterial(matDie, matAsphalt, {
+      friction: 0.34, restitution: 0.26
+    }));
     world.defaultContactMaterial.friction = 0.2;
     world.defaultContactMaterial.restitution = 0.4;
+
+    // Street Craps throws at a wall instead of shaking under a bell jar. Early return so the
+    // entire cloche build below is left exactly as it was for every other game.
+    if (isWall()) { buildWallArena(); return; }
 
     const R = CFG.clocheRadius, H = CFG.clocheHeight;
 
@@ -881,6 +971,70 @@
     scene.add(clocheGroup);
   }
 
+  // ---------- wall arena build ----------
+  // Physics is four static boxes (back wall + two sides + a front stop) plus a ground plane and
+  // a high ceiling. Only the back wall and the ground are drawn; the rest are invisible bounds
+  // that exist purely so a hot throw can't leave the playfield. Same PLATFORM_Y as the cloche,
+  // so resetDicePositions()/clampDice()'s floor math is shared.
+  function buildWallArena() {
+    const A = ARENA;
+
+    const ground = new CANNON.Body({ mass: 0, material: matAsphalt });
+    ground.addShape(new CANNON.Plane());
+    ground.position.set(0, PLATFORM_Y, 0);
+    ground.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+    world.addBody(ground);
+
+    const groundMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(A.halfW * 2 + 6, A.frontZ - A.wallZ + 6),
+      new THREE.MeshStandardMaterial({ map: asphaltTexture(), roughness: 0.98, metalness: 0 }));
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.position.set(0, PLATFORM_Y + 0.001, (A.frontZ + A.wallZ) / 2);
+    groundMesh.receiveShadow = true;
+    scene.add(groundMesh);
+    platformMesh = groundMesh;  // reused by the same show/hide paths the cloche platform uses
+
+    // Back wall: the thing you actually throw at.
+    const wallBody = new CANNON.Body({ mass: 0, material: matBrick });
+    wallBody.addShape(new CANNON.Box(new CANNON.Vec3(A.halfW + 2, A.height, 0.4)));
+    wallBody.position.set(0, PLATFORM_Y + A.height, A.wallZ - 0.4);
+    world.addBody(wallBody);
+
+    const wallMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(A.halfW * 2 + 4, A.height * 2, 0.8),
+      new THREE.MeshStandardMaterial({ map: brickTexture(), roughness: 0.92, metalness: 0.02 }));
+    wallMesh.position.set(0, PLATFORM_Y + A.height, A.wallZ - 0.4);
+    wallMesh.receiveShadow = true;
+    wallMesh.castShadow = true;
+    scene.add(wallMesh);
+
+    // A dark strip where wall meets ground -- grounds the wall instead of letting it float.
+    const skirt = new THREE.Mesh(
+      new THREE.PlaneGeometry(A.halfW * 2 + 4, 1.2),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.55 }));
+    skirt.rotation.x = -Math.PI / 2;
+    skirt.position.set(0, PLATFORM_Y + 0.01, A.wallZ + 0.6);
+    scene.add(skirt);
+
+    // Invisible bounds: sides, a front stop, and a ceiling.
+    const bound = (hx, hy, hz, x, y, z) => {
+      const b = new CANNON.Body({ mass: 0, material: matGlass });
+      b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)));
+      b.position.set(x, y, z);
+      world.addBody(b);
+    };
+    const midZ = (A.frontZ + A.wallZ) / 2, depth = (A.frontZ - A.wallZ) / 2 + 1;
+    bound(0.4, A.height, depth, -A.halfW - 0.4, PLATFORM_Y + A.height, midZ);
+    bound(0.4, A.height, depth,  A.halfW + 0.4, PLATFORM_Y + A.height, midZ);
+    bound(A.halfW + 1, A.height, 0.4, 0, PLATFORM_Y + A.height, A.frontZ + 0.4);
+
+    const ceil = new CANNON.Body({ mass: 0, material: matGlass });
+    ceil.addShape(new CANNON.Plane());
+    ceil.position.set(0, PLATFORM_Y + A.height * 1.8, 0);
+    ceil.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
+    world.addBody(ceil);
+  }
+
   function buildDice(n) {
     for (const d of dice) { scene.remove(d.mesh); world.remove(d.body); }
     dice = [];
@@ -914,8 +1068,10 @@
       const body = new CANNON.Body({ mass: 1, material: matDie });
       const h = s / 2 * 0.95;
       body.addShape(new CANNON.Box(new CANNON.Vec3(h, h, h)));
-      body.linearDamping = 0.12;
-      body.angularDamping = 0.12;
+      // The alley needs more drag than the jar: a thrown die covers real distance and has to
+      // come to rest in a believable stretch of ground rather than skidding the full length.
+      body.linearDamping = isWall() ? 0.22 : 0.12;
+      body.angularDamping = isWall() ? 0.26 : 0.12;
       body.allowSleep = false;
       world.addBody(body);
 
@@ -926,6 +1082,21 @@
 
   function resetDicePositions() {
     const s = CFG.dieSize, n = dice.length;
+    // Wall arena: dice start at the near edge, in the shooter's hand, spread across the width --
+    // they get thrown AT the wall, so they can't start in a ring around the middle like the
+    // cloche's shake-in-place layout.
+    if (isWall()) {
+      for (let i = 0; i < n; i++) {
+        const d = dice[i];
+        const spread = n > 1 ? (i / (n - 1) - 0.5) * s * 1.6 : 0;
+        d.body.position.set(spread, PLATFORM_Y + s / 2 + 0.6 + i * 0.05, ARENA.frontZ - s);
+        d.body.velocity.set(0, 0, 0);
+        d.body.angularVelocity.set(0, 0, 0);
+        d.body.quaternion.setFromEuler(
+          Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+      }
+      return;
+    }
     for (let i = 0; i < n; i++) {
       const d = dice[i];
       const a = (i / n) * Math.PI * 2;
@@ -1003,6 +1174,18 @@
         p.y = PLATFORM_Y + s * 0.5;
         if (d.body.velocity.y < 0) d.body.velocity.y = 0;
       }
+      // The cloche's clamp is radial (round jar). The alley is a rectangle, so clamping by
+      // radius there would haul dice back toward the middle of the floor and fight the throw.
+      if (isWall()) {
+        const A = ARENA, m = s * 0.4;
+        const maxX = A.halfW - m;
+        if (p.x >  maxX) { p.x =  maxX; if (d.body.velocity.x > 0) d.body.velocity.x *= -0.3; }
+        if (p.x < -maxX) { p.x = -maxX; if (d.body.velocity.x < 0) d.body.velocity.x *= -0.3; }
+        const minZ = A.wallZ + m, maxZ = A.frontZ - m;
+        if (p.z < minZ) { p.z = minZ; if (d.body.velocity.z < 0) d.body.velocity.z *= -0.3; }
+        if (p.z > maxZ) { p.z = maxZ; if (d.body.velocity.z > 0) d.body.velocity.z *= -0.3; }
+        continue;
+      }
       const horiz = Math.sqrt(p.x * p.x + p.z * p.z);
       const maxR = R - s * 0.4;
       if (horiz > maxR) { const k = maxR / horiz; p.x *= k; p.z *= k; }
@@ -1022,12 +1205,27 @@
     const rng = ctx.rng;
     if (ctx.step === 0) {
       for (const d of dice) {
-        d.body.velocity.set(
-          (rng() - 0.5) * 5,
-          9 + rng() * 5,
-          (rng() - 0.5) * 5);
-        d.body.angularVelocity.set(
-          (rng() - 0.5) * 20, (rng() - 0.5) * 20, (rng() - 0.5) * 20);
+        if (isWall()) {
+          // A throw, not a shake: dominant velocity is straight down the alley at the wall
+          // (-z), with only a little lift and lateral scatter so the dice actually reach the
+          // brick and rebound rather than dying on the floor halfway there. All randomness
+          // still comes from ctx.rng, so the pre-simulation and the live replay stay identical
+          // -- the same determinism contract the cloche has.
+          d.body.velocity.set(
+            (rng() - 0.5) * 3,
+            4 + rng() * 2,
+            -(12 + rng() * 3));
+          // Heavy tumble about the throw axis, which is what a real thrown die does.
+          d.body.angularVelocity.set(
+            (rng() - 0.5) * 22, (rng() - 0.5) * 16, (rng() - 0.5) * 22);
+        } else {
+          d.body.velocity.set(
+            (rng() - 0.5) * 5,
+            9 + rng() * 5,
+            (rng() - 0.5) * 5);
+          d.body.angularVelocity.set(
+            (rng() - 0.5) * 20, (rng() - 0.5) * 20, (rng() - 0.5) * 20);
+        }
       }
     }
 

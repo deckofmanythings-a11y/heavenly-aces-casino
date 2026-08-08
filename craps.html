@@ -2728,7 +2728,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.38</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.39</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -9012,7 +9012,7 @@ applyFocusVisibility();
 </script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="cloche-dice.js?v=0.7.3"></script>
+<script src="cloche-dice.js?v=0.7.4"></script>
 <script src="winner-modal.js?v=0.5.4"></script>
 <script src="dailies-popup.js?v=5"></script>
 <script>
@@ -9029,7 +9029,14 @@ applyFocusVisibility();
 // shading, and layering a real dimple on top of a drawn one reads as double-carved.
 const DIE3D_MARBLE={1:'3Ddie_marble_1.webp?v=1',2:'3Ddie_marble_2.webp?v=1',3:'3Ddie_marble_3.webp?v=1',4:'3Ddie_marble_4.webp?v=1',5:'3Ddie_marble_5.webp?v=1',6:'3ddie_marble_6.webp?v=1'};
 (function(){
-  ClocheDice.init({diceCount:2,dieSize:2.0,faceImages:DIE3D_MARBLE,pipDepressions:false});
+  // Street Craps throws at a brick wall instead of shaking under the bell jar. The arena is an
+  // opt-in flag on the shared module (default 'cloche'), so Sic-Bo and Destroyer -- which load
+  // the same file -- are untouched. Chosen at init from the URL rather than switched later:
+  // buildScene() runs once, and the mode is fixed for the life of the page (the lobby tile is
+  // the only way in, and switchGameMode is dead -- see the note on it).
+  const streetArena=new URLSearchParams(location.search).get('mode')==='street';
+  ClocheDice.init({diceCount:2,dieSize:2.0,faceImages:DIE3D_MARBLE,pipDepressions:false,
+                   arena:streetArena?'wall':'cloche'});
   ClocheDice.setMuted(soundMuted);
   ClocheDice.setVolume(window.AudioSettings?AudioSettings.effectiveVolume():1);
 })();
