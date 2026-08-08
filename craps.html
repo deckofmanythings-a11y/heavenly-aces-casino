@@ -2728,7 +2728,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.40</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.41</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -7079,7 +7079,14 @@ function updateUI(){
   // box, which Crapless has no equivalent of -- instead uses the standalone #puck-off-crapless
   // marker (Deck: "smack dab in the middle of the space between Lucky Roller and the upper
   // right info box"), plain-anchor mode so the puck centers directly on it.
-  if(activeGame==='standard'){
+  // Street has no puck at all: the point is marked by chalk-circling the number square itself
+  // (.street-pt.is-point), which is the whole idea of the board. It also CANNOT use either of
+  // the other two anchors -- both hang off the number strip, which street hides, so the anchor
+  // resolves to a 0x0 rect and the puck was parking itself at viewport 0,0, outside the felt
+  // entirely. Passing a null target is updatePuck3D's own "hide it" path.
+  if(activeGame==='street'){
+    updatePuck3D(null,null,null);
+  }else if(activeGame==='standard'){
     let puckTarget=null,puckState=null,puckFit=null;
     if(G.phase==='point'){const pb=document.getElementById('nb-puckbox-'+G.point);if(pb){puckTarget=pb;puckFit=pb;}puckState='on';}
     else if(G.phase==='comeout'){puckTarget=document.getElementById('puck-off-dc');puckState='off';}
@@ -7825,7 +7832,21 @@ function focusGroupRowHTML(g){
     +'</div><div class="fm-numrow">'+nums+'</div></div>';
 }
 function renderFocusPanel(){
-  document.getElementById('fm-group-list').innerHTML=FOCUS_GROUPS.map(focusGroupRowHTML).join('');
+  // Every entry in FOCUS_GROUPS is a bet type Street doesn't have -- the board is LINE and FADE
+  // and nothing else. Rendering the usual 15 rows there would offer toggles that control
+  // nothing (the spots are hidden in CSS and refused by placeBet), so say so once instead.
+  // Handled here rather than by tagging all 15 groups: the exclusion is a property of the mode,
+  // not of each individual group.
+  if(activeGame==='street'){
+    document.getElementById('fm-group-list').innerHTML=
+      '<div class="fm-group"><div class="fm-group-hdr" style="cursor:default">'
+      +'<div><div class="fm-group-name">Street Craps</div>'
+      +'<div class="fm-group-desc" style="color:rgba(255,200,80,.8)">'
+      +'The board is just LINE and FADE — there are no other bet spots to show or hide.</div></div>'
+      +'</div></div>';
+  }else{
+    document.getElementById('fm-group-list').innerHTML=FOCUS_GROUPS.map(focusGroupRowHTML).join('');
+  }
   const pt=document.getElementById('fm-practice-toggle');if(pt)pt.checked=!!G.practiceMode;
   const sub=document.getElementById('fm-practice-sub');
   if(sub)sub.textContent=G.practiceMode?'On — free chips, nothing here touches your real bankroll':'Off — wagers your real bankroll';
