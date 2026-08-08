@@ -9,7 +9,7 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="weekly-events.js?v=2"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
-<script src="instructions.js?v=6"></script>
+<script src="instructions.js?v=7"></script>
 <style>
 /* Matches the tier cards' own engraved-serif title font -- see dailies.html for the same
    pattern (this is where the "print the username on the card" idea started). */
@@ -204,6 +204,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-icon">🎲</div>
       <div class="lt-label">CRAPLESS</div>
       <div class="lt-sub">No naturals</div>
+    </div>
+    <div class="lobby-tile" onclick="dNav('craps.html?mode=street')">
+      <button class="info-circle-btn" data-icalib="index:tile" data-icalib-box=".lobby-tile" onclick="showInstr(event,'craps-street')" title="How to play">i</button>
+      <div class="status-badge status-beta" onclick="toggleBadgeTip(event,this)">Beta<span class="sb-tip">Beta — mostly complete, may have bugs</span></div>
+      <div class="lt-icon">🎲</div>
+      <div class="lt-label">STREET</div>
+      <div class="lt-sub">Line vs Fade</div>
     </div>
     <div class="lobby-tile" onclick="dNav('sicbo.html')">
       <button class="info-circle-btn" data-icalib="index:tile" data-icalib-box=".lobby-tile" onclick="showInstr(event,'sicbo')" title="How to play">i</button>

@@ -104,6 +104,27 @@ var INSTRUCTIONS_DATA = {
       +'<p>Flat $5 bet, active for the whole time you\'re the shooter. Pays out based on how many points you make in a row without seven-ing out: 12 in a row wins the whole pool, 9 wins 10% of the pool, 6 pays $15, 4 pays $5.</p>'
     }
   ] },
+  'craps-street': { title: '🎲 Street Craps', pages: [
+    { body:
+      '<h3>The Core Loop</h3>'
+      +'<p>Street Craps is the game as it\'s played on a blanket, not a table — no felt full of proposition bets, just the shooter\'s stake against the people betting they\'ll miss. There are exactly <b>two bets</b>, and both pay <b>even money</b>.</p>'
+      +'<p>On the <b>come-out</b> roll: <b>7 or 11</b> and the Line wins. <b>2, 3, or 12</b> and the Line loses. Anything else — 4, 5, 6, 8, 9, 10 — becomes <b>the Point</b>, and the puck flips to <b>ON</b>.</p>'
+      +'<p>Once a point is set, keep rolling. Repeat the point and the <b>Line wins</b>. Roll a <b>7</b> first and the Line loses. Every other number just keeps the round alive.</p>'
+    },
+    { heading:'The Two Bets', body:
+      '<h3><span class="bet-name">Line</span></h3>'
+      +'<p>The shooter\'s bet. You\'re backing the shooter to make their point before they seven out. Pays <span class="odds">even money</span>.</p>'
+      +'<h3><span class="bet-name">Fade</span></h3>'
+      +'<p>Betting <i>against</i> the shooter — the exact mirror of the Line. It wins whenever the Line loses. Pays <span class="odds">even money</span>.</p>'
+      +'<p><b>No bar on the 12.</b> In casino craps the don\'t-pass bet pushes on a come-out 12; here it doesn\'t. Fade wins on <b>2, 3, and 12</b> alike, and there are no pushes anywhere in this game.</p>'
+      +'<p>Once the point is set, both bets are locked and can\'t be taken down or changed until the round resolves.</p>'
+    },
+    { heading:'What\'s Not Here', body:
+      '<h3>No odds bets</h3>'
+      +'<p>Backing your line bet with true-odds Odds is a <i>casino</i> invention — a zero-edge bet the house offers to draw players in. There\'s no house on a street corner, so there are no Odds here.</p>'
+      +'<p>There\'s also no Come, Don\'t Come, Field, Place, Buy, Lay, Hard Ways, or proposition betting. Two bets, even money, big swings. If you want the full board, play <b>Standard</b> or <b>Crapless</b>.</p>'
+    }
+  ] },
   'craps-crapless': { title: '🎲 Crapless Craps', pages: [
     { body:
       '<h3>The Core Loop</h3>'

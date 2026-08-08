@@ -8,7 +8,7 @@
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
-<script src="instructions.js?v=6"></script>
+<script src="instructions.js?v=7"></script>
 <style>
 /* ── DESIGN TOKENS (Phase 2 of the CSS-only felt re-skin) ──────────────────────
    Codifies the visual system pulled from Interblock's real Craps cabinet
@@ -581,6 +581,52 @@ body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{he
 #field-bar{flex:2;min-height:0;background:var(--box-fill-lightest);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);border:var(--box-border)}
 .field-info{font-size:15px;color:rgba(255,255,255,.5);margin-top:1px}
 #pass-bar{display:flex;align-items:stretch;flex:2;min-height:0;border-radius:var(--box-radius);overflow:hidden;border:var(--box-border)}
+/* Street Craps' two bet bands. Same token set as every other bet box so the felt reads as one
+   table, but no odds cell and no split -- each band is a single flat spot, which is the whole
+   point of the variant. display:none by default; applyGameMode('street') is the only thing that
+   shows them, so they can never appear on the standard/crapless felts. */
+#street-line-bar,#street-fade-bar{display:none;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--box-fill-flat);border:var(--box-border);border-radius:var(--box-radius);
+  cursor:pointer;text-align:center;padding:4px 6px;min-height:0;transition:background .12s}
+#street-line-bar:hover,#street-fade-bar:hover{background:rgba(255,255,255,.12)}
+#street-line-bar.active-bar,#street-fade-bar.active-bar{border-color:var(--color-gold)}
+body.game-street #street-line-bar,body.game-street #street-fade-bar{display:flex}
+/* Street's board is ONLY those two bands. Everything else on the shared felt is hidden here in
+   CSS rather than imperatively in applyGameMode(): FELT_LAYOUT is shared by all three modes and
+   still positions all 44 of its entries for street, so hiding has to be declarative or a spot
+   re-appears any time enterFeltMode() re-runs. Deliberately kept: #left-col-header,
+   #history-strip, #info-panel, #bottom-section (chrome) and the puck (street has a real point).
+   The verification pass asserts nothing but LINE/FADE is visible, which is what actually proves
+   this list is complete -- if a spot is missed it shows up there, not here. */
+body.game-street #num-zone,
+body.game-street #num-strip-h,
+body.game-street #dc-wait-wrap,
+body.game-street #come-bar,
+body.game-street #field-bar,
+body.game-street #dp-bar,
+body.game-street #dont-pass-stub,
+body.game-street #pass-bar,
+body.game-street #lucky-roller,
+body.game-street #light-spot,
+body.game-street #tab-hw,
+body.game-street #tab-hop,
+body.game-street #line-mode-toggle,
+body.game-street #hw-panel-label,
+body.game-street #hop-panel-label-1,
+body.game-street #hop-panel-label-2,
+body.game-street #prop-panel-label,
+body.game-street .circle-stack,
+body.game-street .sc-stack,
+body.game-street .bb,
+body.game-street .horn-cell,
+body.game-street .prop-circle,
+body.game-street .prop-bar,
+body.game-street .lowhigh-field-row{display:none!important}
+/* The Fade band is the don't-side, so it borrows the same red treatment the Don't Pass bar uses
+   rather than inventing a third colour language for it. */
+#street-fade-bar .zone-name{background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.street-sub{font-size:15px;color:rgba(255,255,255,.5);margin-top:2px;line-height:1.2}
+body.felt-compact .street-sub{display:none}
 #pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
 #pass-odds-cell:hover{background:rgba(255,255,255,.12)}
 #pass-odds-cell.active{background:transparent}
@@ -2215,7 +2261,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     <div id="left-col-header" style="flex-direction:column;gap:0">
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px;position:relative;z-index:9998">
         <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
-        <button class="info-circle-btn" data-icalib="craps:header" data-icalib-box="#game-screen" onclick="GameInstructions.open(activeGame==='standard'?'craps-standard':'craps-crapless')" title="How to play">i</button>
+        <button class="info-circle-btn" data-icalib="craps:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('craps-'+(MODE_CONFIG[activeGame]?activeGame:'crapless'))" title="How to play">i</button>
         <div id="fibo-wrap" onclick="toggleFiboHint(event)" ondblclick="toggleCalibMode()" title="Double-click for Calibrate Positions">
           <img src="fibo.webp" id="fibo-icon" alt="Fibonacci press guide">
           <div id="fibo-hint">
@@ -2541,6 +2587,26 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
 
             </div>
           </div>
+          <!-- STREET CRAPS: its own two bet bands, not a relabelled Pass Line/Don't Pass.
+               Reusing #pass-bar/#dp-bar would have meant street bets travelling under the
+               'pass'/'dp' keys, dragging in all of standard's odds cells and Don't-side
+               contract handling for a game that has neither. Separate elements keep the bet
+               keys ('line'/'fade') matching what roll-street actually reads, and keep street
+               out of every existing pass/dp code path. .zone-stk is already in CHIP_STK_SEL,
+               so these get real chip stacks with no extra wiring. Hidden unless
+               applyGameMode('street') shows them. -->
+          <div id="street-line-bar" onclick="placeBet('line')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('line')">
+            <div class="zone-name" style="font-size:40px">LINE</div>
+            <div class="street-sub">7 · 11 win &nbsp;·&nbsp; 2 · 3 · 12 lose</div>
+            <div class="zone-stk" id="stk-line"></div>
+            <div class="zone-note" id="lk-line"></div>
+          </div>
+          <div id="street-fade-bar" onclick="placeBet('fade')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fade')">
+            <div class="zone-name" style="font-size:40px">FADE</div>
+            <div class="street-sub">Against the shooter &nbsp;·&nbsp; no bar</div>
+            <div class="zone-stk" id="stk-fade"></div>
+            <div class="zone-note" id="lk-fade"></div>
+          </div>
         </div>
         <!-- THE LIGHT: shared cross-game progressive, immediately left of the Pass Line
              (Deck's placement request). No baked-in felt art here (unlike UTH), so both
@@ -2596,7 +2662,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.35</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.36</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2702,6 +2768,23 @@ const MODE_CONFIG={
     oddsPay:{4:2,5:1.5,6:6/5,8:6/5,9:1.5,10:2},
     oddsMult:{4:3,5:4,6:5,8:5,9:4,10:3},
     oddsLabel:{4:'2:1',5:'3:2',6:'6:5',8:'6:5',9:'3:2',10:'2:1'},
+    numDefs:{4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2}},
+    allNums:[4,5,6,8,9,10]
+  },
+  // Street Craps: two even-money bets (LINE and FADE) and nothing else. Come-out 7/11 pays the
+  // Line, 2/3/12 pays the Fade -- no bar on the 12, no vig, and no odds bets, all deliberate
+  // (taking odds behind the line is a casino construct, not a street one). See roll-street's
+  // header for the house-edge note that follows from the no-bar/no-vig pair.
+  //
+  // Most of this entry is inert and exists only so MODE_CONFIG stays one uniform shape that
+  // applyGameMode() can read without per-mode existence checks. Street has no Place/Buy/Come/
+  // Lay/prop bets at all, so nothing ever reads oddsPay/oddsMult/oddsLabel here -- they are
+  // empty rather than absent so a stray lookup yields undefined instead of throwing on a null
+  // table. allNums/numDefs ARE live: they drive the point marker and its label.
+  street:{
+    oddsPay:{},
+    oddsMult:{},
+    oddsLabel:{},
     numDefs:{4:{label:'4',place:[9,5],buyRatio:2},5:{label:'5',place:[7,5],buyRatio:1.5},6:{label:'Six',place:[7,6],buyRatio:6/5},8:{label:'8',place:[7,6],buyRatio:6/5},9:{label:'Nine',place:[7,5],buyRatio:1.5},10:{label:'10',place:[9,5],buyRatio:2}},
     allNums:[4,5,6,8,9,10]
   }
@@ -3186,6 +3269,17 @@ const STANDARD_LAYOUT=[
 // in it matched what's already stored here byte-for-byte (Deck positioned them identically both
 // times), confirming this array really is genuinely shared between the two modes, not something
 // that happened to be reused by accident.
+// STREET_LAYOUT — Street Craps has exactly two bet spots, so this is the whole board.
+// Not calibrated on the felt yet (unlike STANDARD/CRAPLESS, whose numbers ARE ground truth from
+// Deck's drag-tool exports -- do not re-derive those). These are seeded from the bands they sit
+// in place of: x/w copied from STANDARD_LAYOUT's #field-bar/#pass-bar column (56.719/42.812) so
+// street lines up with the other two felts, and the two bands split the vertical space that
+// Don't Pass + Pass Line occupy there (78.889 -> 97.777). Expect Deck to re-export these once
+// he has seen it live; the calibration tool already picks them up via calibBaseEntries().
+const STREET_LAYOUT=[
+  ['#street-line-bar',  56.719,78.889, 42.812,9.444,null],
+  ['#street-fade-bar',  56.719,88.333, 42.812,9.444,null],
+];
 // PORTRAIT_FELT_LAYOUT: Deck's export, whole px on the 1800x3200 portrait canvas -> %-of-felt
 // (x/1800*100, y/3200*100). #left-col-header/#info-panel aren't in the export (calibBaseEntries()
 // skips them, same as landscape) -- kept as landscape's own values until Deck calibrates those
@@ -3381,6 +3475,13 @@ const PORTRAIT_CRAPLESS_LAYOUT=[
 // carried over. #dice-zone moved to a totally different spot again too (relY=1043%, far below
 // #lucky-roller's own now-much-shorter height) -- same "still valid CSS, not a mistake" case
 // as landscape's own #dice-zone, just a more extreme number since the parent box shrank.
+// PORTRAIT_STREET_LAYOUT — same two spots, portrait. Seeded from PORTRAIT_STANDARD_LAYOUT's
+// #dp-bar/#pass-bar (57.222 x, 42.778 w, the 81.875/90.938 rows) for the same reason as the
+// landscape table above: not yet a real calibration export, just a sane starting position.
+const PORTRAIT_STREET_LAYOUT=[
+  ['#street-line-bar',   57.222,81.875, 42.778,9.063,null],
+  ['#street-fade-bar',   57.222,90.938, 42.778,9.063,null],
+];
 const PORTRAIT_LR_LAYOUT=[
   // Same re-homing as landscape's own #lr-title-art (see that entry's comment) -- portrait's
   // #bnums-low/#bnums-high are literally copied from landscape's values (never separately
@@ -3411,10 +3512,23 @@ const PORTRAIT_LR_LAYOUT=[
 // time (no DOM dependency), so the initial value already matches whatever the page opened at.
 function desiredPortrait(){ return window.innerHeight>window.innerWidth; }
 let feltPortrait=desiredPortrait();
+// One table per mode instead of nested `mode==='standard'? :` ternaries. Those ternaries had
+// exactly two outcomes, so ANY mode that wasn't 'standard' silently rendered the crapless board
+// -- adding a third mode without this change would have shipped Street Craps looking like
+// Crapless, with no error anywhere to notice it by.
+const MODE_LAYOUTS={
+  standard:{land:STANDARD_LAYOUT,port:PORTRAIT_STANDARD_LAYOUT},
+  crapless:{land:CRAPLESS_LAYOUT,port:PORTRAIT_CRAPLESS_LAYOUT},
+  street:  {land:STREET_LAYOUT,  port:PORTRAIT_STREET_LAYOUT},
+};
+// The layout family for whatever mode is live. Was `activeGame==='standard'?'standard':'crapless'`
+// copy-pasted at four call sites; centralised so a new mode is one MODE_LAYOUTS entry rather
+// than four ternaries someone has to remember to find.
+function layoutMode(){return MODE_LAYOUTS[activeGame]?activeGame:'crapless';}
 function feltLayoutFor(mode){
   const felt=feltPortrait?PORTRAIT_FELT_LAYOUT:FELT_LAYOUT;
-  const spec=feltPortrait?(mode==='standard'?PORTRAIT_STANDARD_LAYOUT:PORTRAIT_CRAPLESS_LAYOUT):(mode==='standard'?STANDARD_LAYOUT:CRAPLESS_LAYOUT);
-  return felt.concat(spec);
+  const m=MODE_LAYOUTS[mode]||MODE_LAYOUTS.crapless;
+  return felt.concat(feltPortrait?m.port:m.land);
 }
 function curLrLayout(){ return feltPortrait?PORTRAIT_LR_LAYOUT:LR_LAYOUT; }
 // id -> tab ('hw'/'hop'/null) for every '@name' entry, derived from the layout arrays
@@ -3564,15 +3678,15 @@ function sizeDiceZone(){
 }
 function feltApplyTab(t){
   feltTab=t;
-  const mode=activeGame==='standard'?'standard':'crapless';
+  const mode=layoutMode();
   feltLayoutFor(mode).forEach(([sel,,,,,tab])=>{
     if(!tab)return;const el=feltEl(sel);if(!el)return;
     el.style.display=(tab===t)?'':'none';
   });
 }
 function enterFeltMode(){
-  const mode=activeGame==='standard'?'standard':'crapless';
-  document.body.classList.remove('game-crapless','game-standard');
+  const mode=layoutMode();
+  document.body.classList.remove('game-crapless','game-standard','game-street');
   document.body.classList.add('game-'+mode);
   // Phase 8 cleanup: feltSplitStandardNumBox() used to exist here, reshuffling Buy/Lay/Place
   // into new wrapper divs for the old shared-box layout -- now that all three (plus the
@@ -3645,7 +3759,7 @@ function exitFeltMode(){
     if(home.next&&home.next.parentNode===home.parent)home.parent.insertBefore(el,home.next);
     else home.parent.appendChild(el);
   });
-  feltLayoutFor(activeGame==='standard'?'standard':'crapless').forEach(([sel])=>{
+  feltLayoutFor(layoutMode()).forEach(([sel])=>{
     const el=feltEl(sel);if(!el)return;
     const home=feltHomes.get(el);if(!home)return;
     el.classList.remove('felt-abs');
@@ -4272,6 +4386,9 @@ function checkBroke(){
   setTimeout(()=>openRedeemModal(true),300);
 }
 function hasWorkingBets(){
+  // Street's two spots. Without these, rollDice()'s "Place an active bet before rolling" guard
+  // rejects every street roll -- the felt would take the bet and then refuse to roll it.
+  if(G.bets['line']||G.bets['fade'])return true;
   if(G.bets['pass']||G.bets['dp'])return true;
   if(G.bets['dpodds'])return true;
   if(G.bets['come']||G.comeBets.length>0)return true;
@@ -4684,7 +4801,10 @@ function startSession(player){
   // whichever mode the player was last in, unless a link into this page asked for a specific
   // one (?mode=crapless / ?mode=standard, used by the site nav's CRAPLESS/STANDARD entries).
   const forcedMode=new URLSearchParams(location.search).get('mode');
-  applyServerGameState(player,forcedMode==='crapless'||forcedMode==='standard'?forcedMode:null);
+  // Validated against MODE_CONFIG rather than an inline list of mode names, so a new mode is
+  // reachable by ?mode= the moment it has a config -- the old two-name check would have
+  // silently ignored ?mode=street and dropped the player onto their last-used board instead.
+  applyServerGameState(player,MODE_CONFIG[forcedMode]?forcedMode:null);
   updateUI();initDice();
 }
 // saveCleanState() writes whatever G currently holds into the real player's saved
@@ -5867,6 +5987,15 @@ function placeBet(key,loc){
     const ts=tutorialCurrentStep();
     if(!ts||ts.requirement!=='bet'||ts.betKey!==key){addLog('Follow the tutorial\'s highlighted step to continue.','info');return;}
   }
+  // Street Craps offers exactly two spots, and 'line'/'fade' exist ONLY there. Both directions
+  // are checked because the failure is silent and costs real money either way: roll-street
+  // ignores every key but line/fade, and roll-standard/roll-crapless ignore line/fade, so a
+  // stake placed on the wrong board would be debited by the affordability delta and then never
+  // resolved by anyone. Refuse at the door instead. CSS already hides the other spots in street;
+  // this is the logic-level backstop for anything that slips past a display rule.
+  const isStreetKey=(key==='line'||key==='fade');
+  if(activeGame==='street'&&!isStreetKey){addLog('Street Craps: Line and Fade only.','info');return;}
+  if(activeGame!=='street'&&isStreetKey){addLog('Line/Fade: Street Craps only.','info');return;}
   // Deck: Buy, Place, and Hardways bets are real money at all times, same rule as the
   // FP\$ chip-label exclusion (see renderChipStacks()) -- they never draw from Free Play,
   // so they don't get combined-room treatment below the way every other bet type does.
@@ -5896,7 +6025,13 @@ function placeBet(key,loc){
   const a=r2(Math.min(G.chip,room,MAX_BET-cur));G.bets[key]=r2(cur+a);G.bankroll=r2(G.bankroll-a);addDualSplit(key,loc,a);updateUI();
   if(tutorialActive)tutorialOnBetPlaced(key);
 }
-function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}
+function removeBet(key,loc){if(key==='pass'&&G.passLocked){addLog('Pass Line locked.','info');return;}
+  // Street's LINE and FADE are both hard contracts once the point is set -- roll-street rejects
+  // any change to either with a sync-error 409, so letting the client take one down here would
+  // just bounce the next roll. (Real craps lets a don't-side bet be taken down; disallowed here
+  // because after the point FADE is the favoured side, and free optionality on it is worth real
+  // money against the house.)
+  if((key==='line'||key==='fade')&&G.passLocked){addLog((key==='line'?'Line':'Fade')+' is locked once the point is set.','info');return;}const c=G.bets[key]||0;if(!c)return;pushUndo();const rv=r2(Math.min(G.chip,c));G.bets[key]=r2(c-rv);G.bankroll=r2(G.bankroll+rv);if(G.bets[key]<=0)delete G.bets[key];addDualSplit(key,loc,-rv);updateUI();}
 
 // ── THE LIGHT (shared cross-game progressive) ─────────────────────────────────
 // Flat $5, no chip-denomination choice -- can only be armed fresh at come-out (before
@@ -6075,8 +6210,10 @@ function loadLayout(){
 function clearRemovable(){
   let ret=0;const keep={};
   for(const k in G.bets){
-    // Pass flat is contract once locked; everything else including dp/dpodds/dc/lay is free
-    if(k==='pass'&&G.passLocked)keep[k]=G.bets[k];
+    // Pass flat is contract once locked; everything else including dp/dpodds/dc/lay is free.
+    // Street's line/fade are contract too once the point is set -- see removeBet(); refunding
+    // them here would desync against roll-street, which still has them standing.
+    if((k==='pass'||k==='line'||k==='fade')&&G.passLocked)keep[k]=G.bets[k];
     else ret=r2(ret+G.bets[k]);
   }
   // Established Come bets' flat amount is a contract — never cleared. Come Odds are free
@@ -6270,7 +6407,10 @@ async function rollDice(isRetry){
       // to do with them: never swept as a loss, never paid as a win, just silently ignored.
       // index.html's main table already branches on activeGame the same way (see its own
       // rollEndpoint line) -- this just brings Focus Mode in line with it.
-      const rollEndpoint=activeGame==='standard'?'/roll-standard':'/roll-crapless';
+      // Three-way, not a ternary defaulting to crapless -- street bets would otherwise be sent
+      // to roll-crapless, which has no idea what 'line'/'fade' are and would drop them.
+      const ROLL_ENDPOINTS={standard:'/roll-standard',crapless:'/roll-crapless',street:'/roll-street'};
+      const rollEndpoint=ROLL_ENDPOINTS[activeGame]||'/roll-crapless';
       const res=await fetch(FUNCTIONS_URL+rollEndpoint,{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
@@ -6721,6 +6861,16 @@ function updateUI(){
   }
   // Pass
   {const ps=document.getElementById('stk-pass');if(ps)ps.textContent=(G.bets['pass']||0)?fmt(G.bets['pass']):'';const lk=document.getElementById('lk-pass');if(lk)lk.textContent=G.passLocked?'🔒':'';const pm=document.getElementById('pass-main');if(pm)pm.classList.toggle('active-bar',!!(G.bets['pass']));const mb=document.getElementById('m-pass');if(mb)mb.style.display=(G.bets['pass']&&!G.passLocked)?'block':'none';const poc=G.bets['passodds']||0;const postk=document.getElementById('stk-passodds');if(postk)postk.textContent=poc?fmt(poc):'';const polim=document.getElementById('po-limit');const poc2=document.getElementById('pass-odds-cell');if(G.point&&G.bets['pass']){const m=ODDS_MULT[G.point]||1;if(polim)polim.textContent=m+'x·'+ODDS_LABEL[G.point];if(poc2)poc2.classList.toggle('active',poc>0);}else{if(polim)polim.textContent='—';if(poc2)poc2.classList.remove('active');}}
+  // Street Craps: LINE / FADE. Same shape as the Pass block above (stack text, 🔒 once the
+  // point locks the contract, .active-bar highlight) minus the odds cell, which street has no
+  // equivalent of. Runs in every mode -- the elements only exist on the street felt, so the
+  // getElementById guards make it a no-op elsewhere rather than needing a mode branch.
+  ['line','fade'].forEach(k=>{
+    const amt=G.bets[k]||0;
+    const st=document.getElementById('stk-'+k);if(st)st.textContent=amt?fmt(amt):'';
+    const lk=document.getElementById('lk-'+k);if(lk)lk.textContent=(G.passLocked&&amt)?'🔒':'';
+    const bar=document.getElementById('street-'+k+'-bar');if(bar)bar.classList.toggle('active-bar',amt>0);
+  });
   // Bonus bets
   const bO=G.bonus.open,bL=G.bonus.locked,bG=G.bonus.gracePeriod;
   [{type:'low',nums:LOW_NUMS,hit:G.bonus.lowHit},{type:'high',nums:HIGH_NUMS,hit:G.bonus.highHit}].forEach(({type,nums,hit})=>{
@@ -7068,7 +7218,7 @@ function calibBaseEntries(){
   // column, same "one shared stack, not per-button" shape as the C/C&E/E circles used to be,
   // just never exposed to the drag tool.
   const skip=new Set(['.circle-stack','#left-col-header','#info-panel','#bottom-section','#num-zone']);
-  return feltLayoutFor(activeGame==='standard'?'standard':'crapless').filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
+  return feltLayoutFor(layoutMode()).filter(e=>!skip.has(e[0])).concat(calibExtraEntries());
 }
 function calibInitState(){
   const st={};
@@ -7796,6 +7946,12 @@ function makePracticeState(){
 }
 function toggleFocusPractice(enabled){
   if(!!G.practiceMode===enabled)return;
+  // Practice Mode resolves locally through focusLocalResolve(), which is a hand-port of
+  // roll-standard and knows nothing about street's 'line'/'fade' keys -- a street practice roll
+  // would resolve nothing at all, leaving the bets sitting there looking broken. Rather than
+  // keep a second copy of the street rules that can drift out of sync with roll-street (exactly
+  // what the FOCUS_PRACTICE_NOTE warns about), Practice Mode is simply not offered in street.
+  if(enabled&&activeGame==='street'){addLog('Practice Mode isn\'t available in Street Craps.','info');return;}
   if(animating||tumbling||ClocheDice.isRolling()){addLog('Wait for the current roll to finish before switching modes.','info');return;}
   if(tBets()>0){addLog('Clear your bets before switching Practice Mode on or off.','info');return;}
   if(enabled){
