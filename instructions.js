@@ -31,29 +31,27 @@
    doesn't -- which for the felt buttons is already the module their authored %s were written
    against.
 
-   Positions below are Deck's own calibrated export from the drag tool. Sizes are deliberately
-   not carried over: the export's w/h came back identical to the CSS, so there was nothing to
-   bake and leaving them out keeps the portrait size rules intact. */
+   Positions below are Deck's own calibrated export from the drag tool, both orientations.
+   No sizes: nothing was resized, so the stylesheet still owns that -- which is what keeps
+   uth's 14%x9% and breakout's 5.5%x3.8% portrait size rules working. paigow's three are
+   deliberately absent and sit wherever their CSS puts them. */
 var INSTR_POS = {
-  'uth:trips':  { landscape:{ anchor:'tl', x:-13, y:19 } },
-  'uth:ante':   { landscape:{ anchor:'tl', x:-13, y:52 } },
-  'uth:blind':  { landscape:{ anchor:'tl', x:85,  y:52 } },
-  'uth:play':   { landscape:{ anchor:'tl', x:-13, y:83 } },
-  'uth:light':  { landscape:{ anchor:'tl', x:-13, y:-30 } },
+  'uth:trips': { landscape:{ anchor:'tl', x:-17.544, y:19.637  }, portrait:{ anchor:'tl', x:-22.959, y:17.544  } },
+  'uth:ante':  { landscape:{ anchor:'tl', x:-17.544, y:52.87   }, portrait:{ anchor:'tl', x:-22.959, y:50.439  } },
+  'uth:blind': { landscape:{ anchor:'tl', x:87.719,  y:52.87   }, portrait:{ anchor:'tl', x:86.735,  y:50.439  } },
+  'uth:play':  { landscape:{ anchor:'tl', x:-17.544, y:84.592  }, portrait:{ anchor:'tl', x:-22.959, y:83.333  } },
+  'uth:light': { landscape:{ anchor:'tl', x:-17.544, y:-16.616 }, portrait:{ anchor:'tl', x:-22.959, y:-17.544 } },
 
-  'breakout:bonus':            { landscape:{ anchor:'tl', x:-10, y:22 } },
-  'breakout:supertie':         { landscape:{ anchor:'tl', x:-10, y:74 } },
-  'breakout:pairplus-player':  { landscape:{ anchor:'tl', x:-10, y:21 } },
-  'breakout:sweet17-player':   { landscape:{ anchor:'tl', x:-10, y:71 } },
-  'breakout:trilux9':          { landscape:{ anchor:'tl', x:-15, y:21 } },
-  'breakout:fortunebonus':     { landscape:{ anchor:'tl', x:-15, y:78 } },
-  'breakout:light':            { landscape:{ anchor:'tl', x:-26, y:36 } },
+  'breakout:bonus':           { landscape:{ anchor:'tl', x:-13.761, y:23.504 }, portrait:{ anchor:'tl', x:-12.346, y:21.552 } },
+  'breakout:supertie':        { landscape:{ anchor:'tl', x:-13.761, y:72.65  }, portrait:{ anchor:'tl', x:-12.346, y:73.276 } },
+  'breakout:pairplus-player': { landscape:{ anchor:'tl', x:-13.761, y:24.155 }, portrait:{ anchor:'tl', x:-12.346, y:19.608 } },
+  'breakout:sweet17-player':  { landscape:{ anchor:'tl', x:-13.761, y:74.879 }, portrait:{ anchor:'tl', x:-12.346, y:73.529 } },
+  'breakout:trilux9':         { landscape:{ anchor:'tl', x:-13.761, y:24.887 }, portrait:{ anchor:'tl', x:-15.432, y:22.936 } },
+  'breakout:fortunebonus':    { landscape:{ anchor:'tl', x:-13.761, y:81.448 }, portrait:{ anchor:'tl', x:-15.432, y:77.982 } },
+  /* The only one that sits right of its row rather than left of it -- >100% is intentional. */
+  'breakout:light':           { landscape:{ anchor:'tl', x:106.195, y:35.398 }, portrait:{ anchor:'tl', x:107.143, y:35.714 } },
 
-  'paigow:light':   { landscape:{ anchor:'tl', x:140, y:30 } },
-  'paigow:fortune': { landscape:{ anchor:'tl', x:140, y:30 } },
-  'paigow:ante':    { landscape:{ anchor:'tl', x:140, y:36 } },
-
-  'iluvsuits:light': { landscape:{ anchor:'tl', x:78.977, y:39.606 } }
+  'iluvsuits:light': { landscape:{ anchor:'tl', x:74.89, y:32.998 }, portrait:{ anchor:'tl', x:79.208, y:47.256 } }
 };
 
 var INSTRUCTIONS_DATA = {
@@ -517,7 +515,7 @@ function maybeLoadCalib(){
   if(!on || document.getElementById('icalib-script')) return;
   var s = document.createElement('script');
   s.id = 'icalib-script';
-  s.src = 'instr-calib.js?v=3';
+  s.src = 'instr-calib.js?v=4';
   document.head.appendChild(s);
 }
 

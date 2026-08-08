@@ -118,6 +118,25 @@ function pxSize(btn){
   return { w: r.width, h: r.height };
 }
 
+/* A button can be dropped somewhere perfectly visible-looking and still be dead: z-index only
+   competes inside its own stacking context, so dragging one under a bar that outranks its
+   whole ancestor (breakout's #bottom-section beats #table-area) leaves it unclickable. Hit-test
+   the middle and name whatever is actually on top. Halos are ours, so they don't count. */
+function coveredBy(btn){
+  var r = btn.getBoundingClientRect();
+  if(!r.width || !r.height) return null;
+  var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  if(cx < 0 || cy < 0 || cx > (window.innerWidth||0) || cy > (window.innerHeight||0)) return null;
+  var stack = document.elementsFromPoint(cx, cy);
+  for(var i = 0; i < stack.length; i++){
+    var el = stack[i];
+    if(el === btn) return null;                              // reached it: nothing on top
+    if(el.closest && el.closest('#icalib-layer, #icalib-bar')) continue;
+    return '#' + (el.id || (el.className && String(el.className).split(' ')[0]) || el.tagName.toLowerCase());
+  }
+  return null;
+}
+
 function buttons(){
   return Array.prototype.slice.call(document.querySelectorAll('[data-icalib]'));
 }
@@ -428,8 +447,16 @@ function refresh(){
   if(!bar) return;
   var out = document.getElementById('icalib-readout');
   var all = load();
-  if(selected && all[selected]){
-    var p = all[selected];
+  /* Fall back to measuring the button where it currently sits. Once positions are baked into
+     INSTR_POS there's nothing in localStorage for them, and reporting those as "uncalibrated"
+     with no numbers made an already-placed button look untouched. */
+  var live = null;
+  if(selected && !all[selected]){
+    var lb = sel();
+    if(lb){ live = readGeom(lb); live._measured = true; }
+  }
+  if(selected && (all[selected] || live)){
+    var p = all[selected] || live;
     var btn = sel();
     // show the whole-pixel offset that's actually being snapped, with the stored % after it
     var px = '';
@@ -444,9 +471,12 @@ function refresh(){
        paigow bet spot is ~43px). Dragged far enough out the numbers get big and brittle --
        a small change to the container then throws the button a long way -- so say so. */
     var far = Math.abs(p.x) > 150 || Math.abs(p.y) > 150;
+    var covered = btn ? coveredBy(btn) : null;
+    var warn = far ? '  ⚠ far outside its container'
+             : (covered ? '  ⚠ buried under ' + covered + ' — unclickable here' : '');
     out.textContent = selected + '  ' + p.anchor + ' ' + px + '(' + p.x + '%, ' + p.y + '%)' + sz
-      + (far ? '  ⚠ far outside its container' : '');
-    out.style.color = far ? '#ffb454' : 'rgba(255,255,255,.75)';
+      + (p._measured ? '  [as placed]' : '') + warn;
+    out.style.color = warn ? '#ffb454' : 'rgba(255,255,255,.75)';
   } else if(selected){
     out.textContent = selected + '  (uncalibrated)';
   } else {
