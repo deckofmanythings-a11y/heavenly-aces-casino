@@ -2596,7 +2596,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.29</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.30</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3858,9 +3858,42 @@ function resetPoint(){
 // every roll-*/cashout/redeem call already is. It deliberately only ever writes a hardcoded-clean
 // (always-empty-bets) sub-state or flips which mode is active -- never arbitrary client-supplied
 // bets/point/passLocked -- so there's no path for a client to inject a "won" bet it never paid for.
+// Every write to the stored game_state must be visible to rollDice() before it lets a roll go
+// out, or the roll validates against a blob the server hasn't updated yet and comes back a
+// sync-error 409 -- which reads to the player as "the dice started rolling and then just
+// stopped, and my bet wasn't counted".
+//
+// This guard used to live in resetTableToComeOut() alone, which left the other three writers
+// (saveCleanState's cleanMode write, and switchGameMode's activeMode write) completely
+// unguarded. switchGameMode is the one that actually bit players: it awaits saveCleanState,
+// then an activeMode save, then a bankroll re-fetch, and the felt is interactive that whole
+// time -- so arriving at craps from another game and immediately betting raced all three.
+// That is exactly why "go to another game, bet, come back" cleared it: the detour gave the
+// writes time to land.
+//
+// Owning the flag here instead means any future writer is covered automatically. Counted, not
+// boolean, so overlapping writes can't have the inner one's completion clear the outer's guard.
+let savingTableState=false;
+let pendingStateSaves=0,pendingSavePromise=null,pendingSaveResolve=null;
+function noteSaveStart(){
+  pendingStateSaves++;
+  savingTableState=true;
+  if(!pendingSavePromise)pendingSavePromise=new Promise(r=>{pendingSaveResolve=r;});
+}
+function noteSaveEnd(){
+  pendingStateSaves=Math.max(0,pendingStateSaves-1);
+  if(pendingStateSaves>0)return;
+  savingTableState=false;
+  const r=pendingSaveResolve;pendingSavePromise=null;pendingSaveResolve=null;
+  if(r)r();
+}
+// Resolves once every in-flight state write has landed. rollDice() awaits this rather than
+// refusing outright, so the race costs the player a moment instead of a rejected click.
+function awaitPendingStateSaves(){return pendingSavePromise||Promise.resolve();}
 async function callSaveGameState(payload){
   if(!currentPlayer||G.practiceMode)return{ok:true};
   const token=localStorage.getItem('craps_session');
+  noteSaveStart();
   try{
     const res=await fetch(FUNCTIONS_URL+'/save-game-state',{
       method:'POST',
@@ -3872,6 +3905,8 @@ async function callSaveGameState(payload){
     return data;
   }catch(e){
     return{ok:false,message:e&&e.message?e.message:'Network error.'};
+  }finally{
+    noteSaveEnd();
   }
 }
 // Set while the clean state above is still being written to the server -- hiding the modal
@@ -3881,7 +3916,9 @@ async function callSaveGameState(payload){
 // against the still-stale stored state (old point/locked bet), reject the roll as a sync error,
 // and roll the client back -- the exact "reset works, but the next roll brings the old point/bet
 // back" report. rollDice() below checks this and refuses to roll until it's clear.
-let savingTableState=false;
+// savingTableState/noteSaveStart/noteSaveEnd now live on callSaveGameState above, which owns
+// the flag for every writer. This function no longer sets it by hand -- doing both would let
+// this finally{} clear a guard another in-flight write still needs.
 async function resetTableToComeOut(){
   clearRemovable(); // refunds every non-Contract bet, leaves only the locked Pass flat (if any) in G.bets
   // Forfeit whatever Contract bets clearRemovable() deliberately left behind -- it refunds,
@@ -3891,7 +3928,6 @@ async function resetTableToComeOut(){
   G.phase='comeout';G.point=null;G.betsOn=false;G.betsOffThisRoll=false;G.passLocked=false;G.betsLock=null;
   G.comeOddsPrompted=new Set();G.dcOddsPrompted=new Set();
   if(currentPlayer&&!G.practiceMode){
-    savingTableState=true;
     const rollBtn=document.getElementById('roll-btn');if(rollBtn)rollBtn.disabled=true;
     try{
       const data=await callSaveGameState({cleanMode:activeGame,rollHistory:G.rollHistory,lastWin:G.lastWin,bankrollAfterLastRoll:G.bankrollAfterLastRoll,snapshot:G.snapshot,canRepeat:G.canRepeat});
@@ -3900,7 +3936,6 @@ async function resetTableToComeOut(){
         addLog('Warning: the table reset may not have saved (' +(data.message||'unknown error')+ '). If your next roll gets reverted, try again.','lose');
       }
     }finally{
-      savingTableState=false;
       if(rollBtn)rollBtn.disabled=false;
     }
   }
@@ -6126,13 +6161,63 @@ function totalActiveBetValue(){
   t+=(G.bonus.low||0)+(G.bonus.all||0)+(G.bonus.high||0);
   return r2(t);
 }
-async function rollDice(){
+// ── ROLL SYNC SELF-HEAL ───────────────────────────────────────────────────────
+// Safety net for the failure the guard above is meant to prevent: the server rejects a roll as
+// a sync error, the cloche overlay closes mid-tumble, and the bet never counts. The player's
+// own workaround was to switch games, bet, and come back -- which worked only because that
+// detour rewrites the stored blob. This does the same repair in place, without them doing
+// anything.
+//
+// Deliberately limited to error==='sync'. A network error is NOT healed or retried: the request
+// may well have reached the server and resolved, with only the response lost, so re-rolling
+// could charge the player twice. Every sync-error branch on the server returns before it writes
+// anything, so retrying one is safe -- no money moved.
+let rollHealUsed=false;
+async function healRollSync(intended){
+  if(!currentPlayer||G.practiceMode)return false;
+  await awaitPendingStateSaves(); // never re-read while one of our own writes is still landing
+  let fresh=null;
+  try{
+    const{data}=await sb.from('players').select('*').eq('id',currentPlayer.id).maybeSingle();
+    fresh=data;
+  }catch(e){console.warn('[roll heal] player re-fetch failed:',e&&e.message);}
+  if(!fresh)return false;
+  currentPlayer=fresh;
+  applyServerGameState(fresh,activeGame);
+  G.bankroll=parseFloat(fresh.bankroll)||0;
+  G.freePlay=parseFloat(fresh.free_play_balance)||0;
+  G.bankrollAfterLastRoll=G.bankroll;
+  // Only re-stage the player's bets onto a table the refreshed truth says is genuinely idle.
+  // If the server actually has a live point or standing contract bets, that state is real and
+  // the player needs to see it -- forcing their staged bets back on top would be inventing a
+  // position they never agreed to from this board.
+  const idle=G.phase==='comeout'&&!G.point&&!G.passLocked&&
+    !Object.keys(G.bets).length&&!G.comeBets.length&&!G.dcBets.length;
+  if(!idle){console.warn('[roll heal] refreshed table is not idle; leaving server truth in place');return false;}
+  const want=intended&&intended.bets?intended.bets:null;
+  if(!want||!Object.keys(want).length)return false;
+  let total=0;for(const k in want)total=r2(total+(want[k]||0));
+  const wb=intended.bonus||{low:0,all:0,high:0};
+  total=r2(total+(wb.low||0)+(wb.all||0)+(wb.high||0));
+  if(total>maxBettable()+0.001){console.warn('[roll heal] staged bets no longer affordable; not re-staging');return false;}
+  G.bets={...want};
+  G.bonus.low=wb.low||0;G.bonus.all=wb.all||0;G.bonus.high=wb.high||0;
+  return true;
+}
+async function rollDice(isRetry){
   if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
-  // See the comment on savingTableState above resetTableToComeOut() -- Reset Point/switching
-  // bullets hides its modal (and re-enables the felt) before its cleanup write to the server
-  // actually lands; rolling in that gap would race the write and get bounced by the server's
-  // still-stale stored state.
-  if(savingTableState){addLog('Just a moment — finishing the table reset before you can roll.','info');return;}
+  if(!isRetry)rollHealUsed=false;
+  // See the comment on callSaveGameState -- any in-flight write to the stored game_state has to
+  // land before a roll goes out, or the server validates against a stale blob and 409s.
+  // Previously this refused the click outright, which meant the player pressed Roll and nothing
+  // happened. Now it just waits for the write, then continues: same protection, but the roll
+  // they asked for still happens without them having to do anything.
+  if(savingTableState){
+    addLog('Syncing the table — your roll will go as soon as that lands.','info');
+    await awaitPendingStateSaves();
+    // Re-check the cheap guards that could have changed while we were waiting.
+    if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
+  }
   // Same logic-level gate as placeBet() -- the CSS pointer-events rule on #roll-btn should
   // already stop this, but a second, DOM-independent check costs nothing and can't be
   // bypassed by anything that slips past the CSS.
@@ -6206,9 +6291,34 @@ async function rollDice(){
       // addLog -- this is diagnostic noise, not something a player needs to read) so the next
       // occurrence is actually diagnosable instead of guessed at.
       console.warn('[roll sync error]',data.detail||'(no detail)','lastGoodState:',data.lastGoodState);
-      addLog((data.message||'Sync Error. Restoring last known good bet and bankroll state.')+(data.detail?' ['+data.detail+']':''),'lose');
+      // The player's staged bets, captured by snap() before this roll went out -- restoring the
+      // server's state below overwrites G.bets, so grab the intent first or the heal has nothing
+      // to put back.
+      const intended=G.snapshot?{bets:{...G.snapshot.bets},bonus:{...G.snapshot.bonus}}:null;
       restoreFromServerState(data.lastGoodState);
       if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+      if(!rollHealUsed&&!isRetry&&!G.practiceMode&&currentPlayer){
+        rollHealUsed=true; // set before the retry so the second attempt can't heal again
+        addLog('Table out of sync — re-syncing and rerolling for you.','info');
+        const healed=await healRollSync(intended);
+        if(healed){
+          document.getElementById('roll-btn').disabled=false;
+          updateUI();
+          // failRoll() above closes the cloche, but its teardown isn't synchronous -- retrying
+          // while ClocheDice.isRolling() is still true would hit rollDice's first guard and
+          // silently do nothing, stranding the player on a healed board with no reroll. Wait
+          // for the overlay to actually go idle (bounded, so a stuck overlay can't hang here).
+          for(let i=0;i<40&&ClocheDice.isRolling();i++)await new Promise(r=>setTimeout(r,50));
+          if(ClocheDice.isRolling()){
+            console.warn('[roll heal] cloche still busy; healed the board but leaving the reroll to the player');
+            addLog('Table re-synced — your bets are back. Hit Roll when ready.','info');
+            return;
+          }
+          return rollDice(true);
+        }
+        console.warn('[roll heal] could not auto-heal; leaving restored state for the player');
+      }
+      addLog((data.message||'Sync Error. Restoring last known good bet and bankroll state.')+(data.detail?' ['+data.detail+']':''),'lose');
     }else{
       console.warn('[roll error]',data.error,data.message);
       addLog(data.message||'Roll failed. Try again.','lose');
