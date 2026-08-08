@@ -8,7 +8,7 @@
 <script src="supabase-js.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
-<script src="instructions.js?v=1"></script>
+<script src="instructions.js?v=2"></script>
 <style>
 /* ── DESIGN TOKENS (Phase 2 of the CSS-only felt re-skin) ──────────────────────
    Codifies the visual system pulled from Interblock's real Craps cabinet
@@ -2215,7 +2215,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
     <div id="left-col-header" style="flex-direction:column;gap:0">
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px;position:relative;z-index:9998">
         <button class="gmode-btn gmode-btn-home" onclick="navigateAway('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
-        <button class="info-circle-btn" onclick="GameInstructions.open(activeGame==='standard'?'craps-standard':'craps-crapless')" title="How to play">i</button>
+        <button class="info-circle-btn" data-icalib="craps:header" data-icalib-box="#game-screen" onclick="GameInstructions.open(activeGame==='standard'?'craps-standard':'craps-crapless')" title="How to play">i</button>
         <div id="fibo-wrap" onclick="toggleFiboHint(event)" ondblclick="toggleCalibMode()" title="Double-click for Calibrate Positions">
           <img src="fibo.webp" id="fibo-icon" alt="Fibonacci press guide">
           <div id="fibo-hint">
@@ -2596,7 +2596,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.30</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.31</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>

@@ -5,6 +5,13 @@
    pattern as winner-modal.js -- open with GameInstructions.open('<gameId>', ['optional','tags']). */
 (function(){
 
+/* Calibrated circle-i positions, exported straight out of the drag tool (instr-calib.js,
+   open any page with ?icalib=1). Key -> {anchor,x,y,size}: x/y are % of the container named
+   in that button's data-icalib-box, measured from the corner in `anchor` (t/b + l/r), and
+   size is the button diameter in px. A button with no entry here keeps the natural in-flow
+   position it has always had, so anything uncalibrated is left completely alone. */
+var INSTR_POS = {};
+
 var INSTRUCTIONS_DATA = {
   'craps-standard': { title: '🎲 Craps — Standard', pages: [
     { body:
@@ -366,6 +373,68 @@ function close(){
   if(overlay) overlay.classList.add('hidden');
 }
 
-window.GameInstructions = { open: open, close: close, DATA: INSTRUCTIONS_DATA };
+/* ---- calibrated button placement ---------------------------------------------------
+   Positions come from INSTR_POS above, with anything still sitting in localStorage from an
+   in-progress calibration pass layered on top so the drag tool shows live results before the
+   values get baked in. */
+
+function loadOverrides(){
+  try { return JSON.parse(localStorage.getItem('instrPosOverride') || '{}'); } catch(e){ return {}; }
+}
+
+function boxFor(btn){
+  var sel = btn.getAttribute('data-icalib-box');
+  if(!sel) return document.documentElement;
+  return btn.closest(sel) || document.querySelector(sel) || document.documentElement;
+}
+
+function applyPos(btn, p){
+  var box = boxFor(btn);
+  if(box !== document.documentElement && getComputedStyle(box).position === 'static') box.style.position = 'relative';
+  /* Reparent into the container the % is measured against. Several of these buttons sit
+     inside a positioned flex wrapper (craps' #game-mode-toggle is position:relative), which
+     would otherwise become the offsetParent and make the coordinates mean something else.
+     Moving the node also pulls it out of that flex row so HOME reclaims the full width. */
+  if(btn.parentElement !== box) box.appendChild(btn);
+  var a = p.anchor || 'tl';
+  btn.style.position = 'absolute';
+  btn.style.margin = '0';
+  btn.style.left = btn.style.right = btn.style.top = btn.style.bottom = 'auto';
+  if(a.charAt(1) === 'l') btn.style.left = p.x + '%'; else btn.style.right = p.x + '%';
+  if(a.charAt(0) === 't') btn.style.top  = p.y + '%'; else btn.style.bottom = p.y + '%';
+  if(p.size){
+    btn.style.width = btn.style.height = btn.style.minWidth = p.size + 'px';
+    btn.style.fontSize = Math.round(p.size * 0.54) + 'px';
+  }
+  if(!btn.style.zIndex) btn.style.zIndex = '20';
+}
+
+function applyPositions(){
+  var over = loadOverrides();
+  var btns = document.querySelectorAll('.info-circle-btn[data-icalib]');
+  for(var i=0;i<btns.length;i++){
+    var b = btns[i];
+    var p = over[b.getAttribute('data-icalib')] || INSTR_POS[b.getAttribute('data-icalib')];
+    if(p) applyPos(b, p);
+  }
+}
+
+/* Calibrate mode is sticky across pages -- ?icalib=1 turns it on, and it then rides in
+   sessionStorage so walking the lobby into each game keeps the tool up until Exit. */
+function maybeLoadCalib(){
+  var on = false;
+  try { on = /[?&]icalib=1/.test(location.search) || sessionStorage.getItem('icalib') === '1'; } catch(e){}
+  if(!on || document.getElementById('icalib-script')) return;
+  var s = document.createElement('script');
+  s.id = 'icalib-script';
+  s.src = 'instr-calib.js?v=1';
+  document.head.appendChild(s);
+}
+
+function init(){ applyPositions(); maybeLoadCalib(); }
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+window.GameInstructions = { open: open, close: close, DATA: INSTRUCTIONS_DATA, applyPositions: applyPositions };
 
 })();
