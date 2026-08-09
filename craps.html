@@ -2783,7 +2783,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.43</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.44</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5694,7 +5694,12 @@ function renderChipStacks(){
     // excluded here the same as the others. Skipped rather than just labeled $, so
     // they don't deplete fpRemaining either, leaving it fully available for whatever
     // other spot comes next in this same pass.
-    const isFP=!(cell||isOdds||isHardway)&&amt<=fpRemaining;
+    // Street money is never Free Play: roll-street doesn't draw FP at all (line/fade survive
+    // across rolls, and FP may only back same-roll bets), so an FP$ label on a street note
+    // would claim backing that doesn't exist -- and it would wrongly deplete fpRemaining for
+    // the real one-roll spots later in this same pass.
+    const isStreetStk=el.id==='stk-line'||el.id==='stk-fade'||/^stk-pt-/.test(el.id)||el.classList.contains('street-house-stk');
+    const isFP=!(cell||isOdds||isHardway||isStreetStk)&&amt<=fpRemaining;
     if(isFP)fpRemaining-=amt;
     // Pass Line's own contract lock, and the Lucky Roller bonus bets' lock once they become
     // a contract at roll start -- same integrated badge everything else uses, on the chip
@@ -6170,8 +6175,15 @@ function placeBet(key,loc){
   // Floored at 0: G.bankroll can be transiently negative (another bet drawing on Free
   // Play), and Math.min() below would otherwise turn a negative room into a negative
   // bet amount instead of correctly refusing the bet.
-  const excludeFP=/^(buy|place|hard)\d/.test(key);
+  // Street's line/fade are real-money only too: Free Play may only back bets that fully
+  // resolve within the roll they're placed (the one-roll props), and both street bets survive
+  // across rolls once a point is set. roll-street therefore never draws FP -- so offering
+  // combined bankroll+FP room here let a player with $0 real bankroll stage a bet the server
+  // had to 409 ("New bets exceed actual bankroll", dice start then stop). Refuse at the door
+  // with a message that says why, instead of letting the server bounce it.
+  const excludeFP=/^(buy|place|hard)\d/.test(key)||isStreetKey;
   const room=excludeFP?Math.max(0,maxBettable()):r2(maxBettable()+G.freePlay);
+  if(isStreetKey&&!room&&G.freePlay>0){addLog('Line/Fade are real money only — Free Play can\'t back them.','info');return;}
   if(!room){addLog(G.bulletActive&&G.bulletHard&&G.bankroll>0?'Hard bullets: switch bullets or end the session to use the rest of your bankroll.':'No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   pushUndo();
   if(key==='pass'){if(G.passLocked){addLog('Pass Line locked.','info');return;}if(G.phase==='point'){addLog('Pass Line: come-out only.','info');return;}}
