@@ -260,37 +260,48 @@ input,textarea{-webkit-user-select:text;user-select:text}
    needsCut:true (a brand-new player, or the shoe hit its cut-card penetration
    point / safety reserve). Player drags (or clicks, or arrow-keys) along the
    horizontal strip to set where the plastic cut card goes; that position becomes
-   the fraction sent to the 'cut' action.
-   The strip is the WHOLE shoe, but the server clamps the fraction to 0.40-0.80
-   (see cutStripFrac / the 'cut' action in roll-breakout), so the two ends are
-   drawn as explicit hatched no-cut zones -- an unlabelled dead 40% of the strip
-   read as a broken control. ── */
+   the fraction sent to the 'cut' action, which SPLITS the shoe there.
+   Two distinct markers, matching real table procedure: #cut-marker is the player's
+   red cut card (draggable, splits the stack) and #cut-house is the dealer's yellow
+   reshuffle marker (fixed -- the house sets penetration, never the player). The
+   strip is the WHOLE shoe, and the one-deck-from-either-end table rule is drawn as
+   hatched no-cut zones -- an unlabelled dead stretch read as a broken control. ── */
 #modal-cut .modal-box{max-width:520px}
 #cut-strip{position:relative;height:76px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);border:1px solid rgba(255,255,255,.2);border-radius:6px;margin:12px 0 8px;cursor:grab;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 #cut-strip.dragging{cursor:grabbing}
 #cut-strip:focus-visible{outline:2px solid #ffd700;outline-offset:2px}
 #cut-strip-fill{position:absolute;inset:0;background:repeating-linear-gradient(90deg,#3a3a3a 0 3px,#2c2c2c 3px 6px)}
-/* Gold tint over the portion of the shoe that will actually be dealt (0 -> marker). */
+/* Gold tint over the cards that will actually be dealt. FIXED at the house
+   penetration -- it deliberately does NOT follow the player's cut card, because the
+   player's cut has no say in how deep the shoe plays. */
 #cut-play{position:absolute;left:0;top:0;bottom:0;width:75%;background:linear-gradient(180deg,rgba(255,215,0,.24),rgba(255,215,0,.07));pointer-events:none;z-index:2}
-/* The two ranges the server will not honour. */
-.cut-zone{position:absolute;top:0;bottom:0;pointer-events:none;z-index:3;display:flex;align-items:center;justify-content:center;background-image:repeating-linear-gradient(45deg,rgba(255,59,59,.28) 0 5px,rgba(255,59,59,0) 5px 11px);background-color:rgba(20,0,0,.3);box-shadow:inset 0 0 0 1px rgba(255,59,59,.4)}
-#cut-zone-lo{left:0;width:40%}
-#cut-zone-hi{left:80%;right:0}
+/* The dealer's reshuffle marker -- the yellow plastic card, sitting at the house
+   penetration depth. Not interactive. */
+#cut-house{position:absolute;top:0;bottom:0;left:75%;width:3px;margin-left:-1.5px;background:repeating-linear-gradient(180deg,#ffd700 0 6px,rgba(255,215,0,.35) 6px 12px);box-shadow:0 0 7px rgba(255,215,0,.7);pointer-events:none;z-index:3}
+/* The one-deck-from-either-end table rule. */
+.cut-zone{position:absolute;top:0;bottom:0;pointer-events:none;z-index:4;display:flex;align-items:center;justify-content:center;background-image:repeating-linear-gradient(45deg,rgba(255,59,59,.28) 0 5px,rgba(255,59,59,0) 5px 11px);background-color:rgba(20,0,0,.3);box-shadow:inset 0 0 0 1px rgba(255,59,59,.4)}
+#cut-zone-lo{left:0;width:16.667%}
+#cut-zone-hi{left:83.333%;right:0}
 .cut-zone span{font-size:9px;font-weight:800;letter-spacing:.08em;color:rgba(255,205,205,.9);text-shadow:0 1px 3px #000;text-transform:uppercase;white-space:nowrap;padding:0 4px;text-align:center;line-height:1.35}
 /* Fired when a click/drag lands in a no-cut zone, so the marker refusing to follow
    the finger reads as a rule rather than a dropped input. */
 .cut-zone.bump{animation:cutBump .4s ease}
 @keyframes cutBump{0%,100%{background-color:rgba(20,0,0,.3)}35%{background-color:rgba(255,59,59,.55)}}
-#cut-marker{position:absolute;top:0;bottom:0;left:75%;width:3px;margin-left:-1.5px;background:#ff3b3b;box-shadow:0 0 8px rgba(255,59,59,.95);pointer-events:none;z-index:4}
+#cut-marker{position:absolute;top:0;bottom:0;left:50%;width:3px;margin-left:-1.5px;background:#ff3b3b;box-shadow:0 0 8px rgba(255,59,59,.95);pointer-events:none;z-index:5}
 /* Arrowheads top and bottom -- reads as a grabbable cut card, not just a hairline. */
 #cut-marker::before,#cut-marker::after{content:'';position:absolute;left:50%;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent}
 #cut-marker::before{top:0;border-top:9px solid #ff3b3b}
 #cut-marker::after{bottom:0;border-bottom:9px solid #ff3b3b}
 /* Only animates for keyboard steps and for snap-back out of a no-cut zone; during a
    drag the class is off so the marker tracks the pointer with zero lag. */
-#cut-marker.eased,#cut-play.eased{transition:left .12s cubic-bezier(.2,.8,.3,1),width .12s cubic-bezier(.2,.8,.3,1)}
+#cut-marker.eased{transition:left .12s cubic-bezier(.2,.8,.3,1)}
 #cut-pct{text-align:center;font-size:20px;font-weight:800;color:#ffd700;margin-bottom:2px}
 #cut-detail{text-align:center;font-size:12px;color:rgba(255,255,255,.55);margin-bottom:10px;min-height:15px}
+/* Legend under the strip -- the two markers mean different things, so say so. */
+#cut-legend{display:flex;justify-content:center;gap:16px;font-size:11px;color:rgba(255,255,255,.6);margin-bottom:12px;flex-wrap:wrap}
+#cut-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+#cut-legend .sw-cut{background:#ff3b3b;box-shadow:0 0 5px rgba(255,59,59,.8)}
+#cut-legend .sw-house{background:#ffd700;box-shadow:0 0 5px rgba(255,215,0,.7)}
 
 /* Contract-bet lock badge -- ported wholesale from craps/UTH chip-lock convention */
 .chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
@@ -553,16 +564,21 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div class="modal-overlay hidden" id="modal-cut">
     <div class="modal-box dark" style="text-align:center">
       <div class="modal-title">Cut the Deck</div>
-      <div class="modal-sub">Fresh 6-deck shoe. Drag the cut card anywhere in the open middle — house rules keep the last deck-and-a-bit out of play and won't take a cut in the shaded ends.</div>
-      <div id="cut-pct">75%</div>
+      <div class="modal-sub">Fresh 6-deck shoe. Drag the cut card to split it — at least one deck in from either end. The dealer sets the reshuffle marker.</div>
+      <div id="cut-pct">156 cards in</div>
       <div id="cut-detail"></div>
       <div id="cut-strip" tabindex="0" role="slider" aria-label="Cut card position"
-           aria-valuemin="40" aria-valuemax="80" aria-valuenow="75" aria-valuetext="75 percent">
+           aria-valuemin="17" aria-valuemax="83" aria-valuenow="50" aria-valuetext="split at 156 cards">
         <div id="cut-strip-fill"></div>
         <div id="cut-play"></div>
-        <div class="cut-zone" id="cut-zone-lo"><span>No cut<br>too shallow</span></div>
-        <div class="cut-zone" id="cut-zone-hi"><span>No cut<br>house reserve</span></div>
+        <div id="cut-house"></div>
+        <div class="cut-zone" id="cut-zone-lo"><span>No cut<br>one deck</span></div>
+        <div class="cut-zone" id="cut-zone-hi"><span>No cut<br>one deck</span></div>
         <div id="cut-marker"></div>
+      </div>
+      <div id="cut-legend">
+        <span><i class="sw-cut"></i>Your cut — splits the shoe</span>
+        <span><i class="sw-house"></i>Dealer's reshuffle marker</span>
       </div>
       <button class="modal-submit" id="cut-confirm-btn" onclick="confirmCut()">Cut Here</button>
     </div>
@@ -597,7 +613,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.30</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.31</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>
@@ -924,8 +940,8 @@ function makeInitialG(){
     locked:{progressive:false,trilux:false,trilux9:false,fortuneBonus:false},
     progressivePool:1000, // shown before the first deal/roll response arrives with a live value
     shoeTotal:312,shoeRemaining:0, // real server-tracked shoe state -- 0 remaining reads as "needs a cut" until the first action response arrives
-    penetrationCards:0, // cards dealt before a reshuffle is forced -- server always reserves roughly the last fifth regardless of the chosen cut fraction
-    pendingCutFraction:0.75,
+    penetrationCards:0, // cards dealt before a reshuffle is forced -- fixed house policy (1.5 decks cut off), NOT influenced by where the player cuts
+    pendingCutFraction:0.5, // where the player's cut card splits the shoe; nothing to do with penetration
     dealInFlight:false, // re-entrancy guard -- see dealHand()
   };
 }
@@ -1405,31 +1421,36 @@ function renderShoeTrays(){
 }
 
 // ── CUT THE DECK ─────────────────────────────────────────────────────────────
-// CUT_MIN/CUT_MAX mirror the server's clamp in roll-breakout's 'cut' action --
-// anything outside is silently overridden there, so the strip both refuses it and
-// SHOWS why (the hatched .cut-zone bands are hard-coded to these same numbers in
-// CSS; change all four together).
-const CUT_MIN=0.40,CUT_MAX=0.80;
-const CUT_SHOE_CARDS=312; // 6 decks -- matches SHOE_SIZE server-side
+const CUT_SHOE_CARDS=312;        // 6 decks -- matches SHOE_SIZE server-side
+const CUT_MIN_OFFSET=52;         // table rule: cut at least one deck from either end
+const CUT_HOUSE_RESERVE=78;      // 1.5 decks cut off -- the DEALER's call, mirrors HOUSE_RESERVE_CARDS
+// Mirrors the server's clamp in roll-breakout's 'cut' action, so the strip refuses
+// what the server would silently override and SHOWS why. The hatched .cut-zone
+// bands and #cut-play/#cut-house are hard-coded to these same numbers in CSS --
+// change them together.
+const CUT_MIN=CUT_MIN_OFFSET/CUT_SHOE_CARDS, CUT_MAX=1-CUT_MIN_OFFSET/CUT_SHOE_CARDS;
+const CUT_DEALT=CUT_SHOE_CARDS-CUT_HOUSE_RESERVE;
 function updateCutMarker(eased){
   const frac=G.pendingCutFraction;
-  const pct=Math.round(frac*100);
-  const marker=document.getElementById('cut-marker'),play=document.getElementById('cut-play');
+  const pct=frac*100;
+  const marker=document.getElementById('cut-marker');
   // Easing is opt-in: on during keyboard steps and snap-backs, off mid-drag so the
   // marker sits exactly under the finger instead of lagging behind it.
   marker.classList.toggle('eased',!!eased);
-  play.classList.toggle('eased',!!eased);
-  document.getElementById('cut-pct').textContent=pct+'%';
   marker.style.left=pct+'%';
-  play.style.width=pct+'%';
   const cards=Math.round(CUT_SHOE_CARDS*frac);
-  // ~5.5 cards per round heads-up (two hands of ~2.7), so this is a feel estimate,
-  // not a promise -- hits and splits move it either way.
-  document.getElementById('cut-detail').textContent=
-    cards+' of '+CUT_SHOE_CARDS+' cards in play · roughly '+Math.round(cards/5.5)+' hands';
+  document.getElementById('cut-pct').textContent=cards+' cards in';
   const strip=document.getElementById('cut-strip');
-  strip.setAttribute('aria-valuenow',pct);
-  strip.setAttribute('aria-valuetext',pct+' percent, '+cards+' cards in play');
+  strip.setAttribute('aria-valuenow',Math.round(pct));
+  strip.setAttribute('aria-valuetext','split at '+cards+' cards');
+}
+// Constant text -- the house's depth doesn't move with the player's cut, which is
+// the whole point of splitting the two markers apart. ~5.5 cards per round heads-up
+// (two hands of ~2.7), so the hand count is a feel estimate, not a promise.
+function cutHouseText(){
+  const decks=(CUT_HOUSE_RESERVE/52).toString().replace('1.5','1½');
+  return 'Dealer deals '+CUT_DEALT+' of '+CUT_SHOE_CARDS+' cards, then reshuffles — '
+    +decks+' decks cut off, house rule (~'+Math.round(CUT_DEALT/5.5)+' hands)';
 }
 // Turns a clientX into a legal fraction, and flashes whichever no-cut zone was hit
 // so a marker that stops short of the pointer reads as the house rule it is.
@@ -1496,9 +1517,10 @@ function initCutStrip(){
   });
 }
 function showCutModal(){
-  G.pendingCutFraction=0.75;
+  G.pendingCutFraction=0.5; // cut card starts mid-shoe, where a dealer would offer it
   initCutStrip();
   updateCutMarker(false);
+  document.getElementById('cut-detail').textContent=cutHouseText();
   document.getElementById('modal-cut').classList.remove('hidden');
   document.getElementById('cut-strip').focus({preventScroll:true});
 }
