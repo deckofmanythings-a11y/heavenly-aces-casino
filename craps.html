@@ -2783,7 +2783,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.44</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.45</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4931,6 +4931,9 @@ function applyServerGameState(player,forcedMode){
 }
 function startSession(player){
   currentPlayer=player;
+  // Fire-and-forget: the felt is usable immediately on the $1/$300 defaults and tightens the
+  // moment the row arrives -- blocking login on a config fetch would be the wrong trade.
+  refreshTierLimits(player.tier);
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
   document.getElementById('top-bar-username').textContent=player.username;
@@ -6147,7 +6150,27 @@ function cancelCommission(){
 // deliberately exempt -- they're already bounded by their own per-mode oddsLim()
 // (3-4-5x in standard, a flat 2x in crapless) / dcOddsLim() math off an
 // already-capped flat bet.
-const MIN_BET=1,MAX_BET=300;
+// `let`, not `const`: these are only the pre-login defaults. The real per-spot limits are the
+// player's TIER row in tier_bet_limits (admin-editable, anon-readable -- verified live: tier 0
+// is $1/$50, tier 5 is $1/$30,000), which the server enforces on every roll. The client
+// clamping against a hardcoded $300 while the server held a tier-0 player to $50 is exactly the
+// "bets over $50 start the dice then 409 them back" report: every stake in the 50..300 gap
+// passed the client and bounced off the server. refreshTierLimits() overwrites these from the
+// table at login and again whenever a roll response reports a tier change (the streak system
+// moves tiers without a re-login); on fetch failure they stay at the defaults, which matches
+// the server's own missing-row fallback.
+let MIN_BET=1,MAX_BET=300;
+let _tierLimitsTier=null;
+async function refreshTierLimits(tier){
+  if(tier==null||tier===_tierLimitsTier)return;
+  try{
+    const{data,error}=await sb.from('tier_bet_limits').select('min_bet,max_bet').eq('tier',tier).maybeSingle();
+    if(error||!data){console.warn('[tier limits] fetch failed, keeping',MIN_BET,MAX_BET,error&&error.message);return;}
+    MIN_BET=parseFloat(data.min_bet)||1;
+    MAX_BET=parseFloat(data.max_bet)||300;
+    _tierLimitsTier=tier;
+  }catch(e){console.warn('[tier limits] fetch threw, keeping defaults:',e&&e.message);}
+}
 function placeBet(key,loc){
   // Logic-level gate, not just CSS: a FOCUS_GROUPS bet area (Pass Line, Come, etc.) has no
   // "visible but not yet clickable" state of its own -- once its group is visible it's fully
@@ -6872,6 +6895,10 @@ async function rollDice(isRetry){
       }
     }
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+    // Every roll response reports the player's current tier (the streak system can move it
+    // mid-session, no re-login involved) -- refreshTierLimits() no-ops unless it changed, so
+    // this is free on the common path and catches a promotion/demotion the moment it lands.
+    if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
     if(lightJustArmed){
       const img=document.getElementById('light-on-img');
       img.classList.remove('lit-in');void img.offsetWidth;img.classList.add('lit-in');
