@@ -803,7 +803,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.16</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.17</div>
       <div style="width:100%;display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="destroyer:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('destroyer')" title="How to play">i</button>
@@ -1451,6 +1451,7 @@ async function redeemCode(){
 // ── SESSION ───────────────────────────────────────────────────────────────────
 function startSession(player){
   currentPlayer=player;
+  refreshTierLimits(player.tier); // fire-and-forget; felt usable on defaults meanwhile
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
   G.bankroll=parseFloat(player.bankroll)||0;
@@ -1599,7 +1600,23 @@ function updateBetDisplay(){
 // Table limits (per player tier -- $1/$300 default, see tier_bet_limits). Mirrors the
 // server-authoritative check in roll-destroyer; this is UX only, the server rejects
 // independently.
-const MIN_BET=1,MAX_BET=300;
+// `let`, not `const`: these are only pre-login defaults. The real per-spot limits are the
+// player's TIER row in tier_bet_limits (admin-editable; live values 50/300/1000/2500/10000/
+// 30000 for tiers 0-5), which the server enforces on every request. Clamping against a
+// hardcoded $300 while the server held a tier-0 player to $50 meant every stake in the
+// 50..300 gap passed the client and 409'd server-side. Ported from craps.html Ver. 1.0.45.
+let MIN_BET=1,MAX_BET=300;
+let _tierLimitsTier=null;
+async function refreshTierLimits(tier){
+  if(tier==null||tier===_tierLimitsTier)return;
+  try{
+    const{data,error}=await sb.from('tier_bet_limits').select('min_bet,max_bet').eq('tier',tier).maybeSingle();
+    if(error||!data){console.warn('[tier limits] fetch failed, keeping',MIN_BET,MAX_BET,error&&error.message);return;}
+    MIN_BET=parseFloat(data.min_bet)||1;
+    MAX_BET=parseFloat(data.max_bet)||300;
+    _tierLimitsTier=tier;
+  }catch(e){console.warn('[tier limits] fetch threw, keeping defaults:',e&&e.message);}
+}
 function addBetChip(){
   if(G.phase!=='placement')return;
   const chip=G.chip||5;
@@ -1774,6 +1791,7 @@ async function startBattle(){
   if(!data.ok){addLog(data.message||'Error.','info');return;}
   applyState(data.state,data.newBankroll);
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+  if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   G.buyPrice=data.buyPrice||0;G.canBuy=false;
   hidePlacementScreen();
   showFiringScreen();
@@ -1879,6 +1897,7 @@ async function fireMissile(){
   else if(firedType==='extra'&&!hit&&!wasPendingBuyDim){G.missilesBoughtUsed=(G.missilesBoughtUsed||0)+1;}
   applyState(state,newBankroll);
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+  if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   G.buyPrice=buyPrice||0;G.canBuy=canBuy||false;
   if(!G.rollHistory)G.rollHistory=[];
   G.rollHistory.push({letter:roll.letter,number:displayNumber,hit});
@@ -1979,6 +1998,7 @@ async function resolveGameEnd(){
   G.phase='done';
   applyState(data.state,data.newBankroll);
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+  if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   G.lastWin=data.winnings||0;
   if(currentPlayer)currentPlayer.bankroll=data.newBankroll;
   handleBattleOver(data.finalPayout,data.winnings,data.state);
@@ -2017,6 +2037,7 @@ async function buyMissile(){
   if(!data.ok){addLog(data.message||'Error.','info');updateUI();return;}
   applyState(data.state,data.newBankroll);
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+  if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   G.buyPrice=data.buyPrice||0;G.canBuy=data.canBuy||false;
   G.totalSpent=r2((G.totalSpent||G.bet)+(data.pricePaid||G.buyPrice));
   G.freeMissiles=(G.freeMissiles||0)+1; // purchased missile is now ready to fire

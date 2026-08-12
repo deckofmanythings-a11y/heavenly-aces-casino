@@ -679,7 +679,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.13</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.14</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -907,7 +907,23 @@ function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.
 // Table limits (per player tier -- $1/$300 default, see tier_bet_limits). Mirrors the
 // server-authoritative check in roll-sicbo; this is UX only, the server rejects
 // independently.
-const MIN_BET=1,MAX_BET=300;
+// `let`, not `const`: these are only pre-login defaults. The real per-spot limits are the
+// player's TIER row in tier_bet_limits (admin-editable; live values 50/300/1000/2500/10000/
+// 30000 for tiers 0-5), which the server enforces on every request. Clamping against a
+// hardcoded $300 while the server held a tier-0 player to $50 meant every stake in the
+// 50..300 gap passed the client and 409'd server-side. Ported from craps.html Ver. 1.0.45.
+let MIN_BET=1,MAX_BET=300;
+let _tierLimitsTier=null;
+async function refreshTierLimits(tier){
+  if(tier==null||tier===_tierLimitsTier)return;
+  try{
+    const{data,error}=await sb.from('tier_bet_limits').select('min_bet,max_bet').eq('tier',tier).maybeSingle();
+    if(error||!data){console.warn('[tier limits] fetch failed, keeping',MIN_BET,MAX_BET,error&&error.message);return;}
+    MIN_BET=parseFloat(data.min_bet)||1;
+    MAX_BET=parseFloat(data.max_bet)||300;
+    _tierLimitsTier=tier;
+  }catch(e){console.warn('[tier limits] fetch threw, keeping defaults:',e&&e.message);}
+}
 function placeBet(key){
   // Free Play counts toward what a player can stage -- roll-sicbo already validates
   // against realBankroll+free_play.balance combined server-side.
@@ -947,6 +963,7 @@ function repeatLastBet(){
 // ── SESSION ───────────────────────────────────────────────────────────────────
 function startSession(player){
   currentPlayer=player;
+  refreshTierLimits(player.tier); // fire-and-forget; felt usable on defaults meanwhile
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
   document.getElementById('top-bar-username')&&(document.getElementById('top-bar-username').textContent=player.username);
@@ -1026,6 +1043,7 @@ async function rollDice(){
     G.bets={};
     G.bankroll=data.newBankroll;
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+    if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
     G.lastWin=data.returned||0;
     const isTriple=d1===d2&&d2===d3;
     if(!G.rollHistory)G.rollHistory=[];

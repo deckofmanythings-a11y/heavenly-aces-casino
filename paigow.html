@@ -342,7 +342,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.22</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.23</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="paigow:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('paigow')" title="How to play">i</button>
@@ -713,6 +713,7 @@ async function tryRestoreSession(){
 }
 function startSession(player){
   currentPlayer=player;
+  refreshTierLimits(player.tier); // fire-and-forget; felt usable on defaults meanwhile
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
   document.getElementById('top-bar-username').textContent=player.username;
@@ -799,7 +800,23 @@ async function redeemVoucher(code){document.getElementById('redeem-input').value
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
 
 // ── TABLE LIMITS (per player tier -- $1/$300 default, see tier_bet_limits) ────
-const MIN_BET=1,MAX_BET=300;
+// `let`, not `const`: these are only pre-login defaults. The real per-spot limits are the
+// player's TIER row in tier_bet_limits (admin-editable; live values 50/300/1000/2500/10000/
+// 30000 for tiers 0-5), which the server enforces on every request. Clamping against a
+// hardcoded $300 while the server held a tier-0 player to $50 meant every stake in the
+// 50..300 gap passed the client and 409'd server-side. Ported from craps.html Ver. 1.0.45.
+let MIN_BET=1,MAX_BET=300;
+let _tierLimitsTier=null;
+async function refreshTierLimits(tier){
+  if(tier==null||tier===_tierLimitsTier)return;
+  try{
+    const{data,error}=await sb.from('tier_bet_limits').select('min_bet,max_bet').eq('tier',tier).maybeSingle();
+    if(error||!data){console.warn('[tier limits] fetch failed, keeping',MIN_BET,MAX_BET,error&&error.message);return;}
+    MIN_BET=parseFloat(data.min_bet)||1;
+    MAX_BET=parseFloat(data.max_bet)||300;
+    _tierLimitsTier=tier;
+  }catch(e){console.warn('[tier limits] fetch threw, keeping defaults:',e&&e.message);}
+}
 const LIGHT_BET=5;
 
 // ── PRE-DEAL BET ACTIONS (Ante and Fortune are both freely stackable) ────────
@@ -1051,6 +1068,7 @@ async function dealHand(){
   G.hand={playerCards:data.playerCards,dealerCards:data.dealerCards,dealerLow:data.dealerLow,dealerHigh:data.dealerHigh};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+  if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   G.bets={ante:0,fortune:0};
   G.selectedLow=[];
@@ -1200,6 +1218,7 @@ function finishHand(data){
   });
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+  if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   G.lastWin=data.payout||0;
   G.lastBetDisplay=r2(G.locked.ante+G.locked.fortune+(G.locked.light?LIGHT_BET:0));
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
