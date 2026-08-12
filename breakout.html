@@ -258,14 +258,39 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* ── CUT-THE-DECK MODAL -- shown whenever the server refuses to deal with
    needsCut:true (a brand-new player, or the shoe hit its cut-card penetration
-   point / safety reserve). Player clicks anywhere along the horizontal strip to
-   set where the plastic cut card goes; that position becomes the fraction sent to
-   the 'cut' action. ── */
+   point / safety reserve). Player drags (or clicks, or arrow-keys) along the
+   horizontal strip to set where the plastic cut card goes; that position becomes
+   the fraction sent to the 'cut' action.
+   The strip is the WHOLE shoe, but the server clamps the fraction to 0.40-0.80
+   (see cutStripFrac / the 'cut' action in roll-breakout), so the two ends are
+   drawn as explicit hatched no-cut zones -- an unlabelled dead 40% of the strip
+   read as a broken control. ── */
 #modal-cut .modal-box{max-width:520px}
-#cut-strip{position:relative;height:70px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);border:1px solid rgba(255,255,255,.2);border-radius:6px;margin:14px 0 10px;cursor:pointer;overflow:hidden}
-#cut-strip-fill{position:absolute;inset:0;background:repeating-linear-gradient(90deg,#3a3a3a 0 3px,#2c2c2c 3px 6px);width:100%}
-#cut-marker{position:absolute;top:-6px;bottom:-6px;width:4px;background:#ff3b3b;box-shadow:0 0 6px rgba(255,59,59,.8);left:75%;pointer-events:none;transition:left .05s linear}
-#cut-pct{text-align:center;font-size:20px;font-weight:800;color:#ffd700;margin-bottom:4px}
+#cut-strip{position:relative;height:76px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);border:1px solid rgba(255,255,255,.2);border-radius:6px;margin:12px 0 8px;cursor:grab;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+#cut-strip.dragging{cursor:grabbing}
+#cut-strip:focus-visible{outline:2px solid #ffd700;outline-offset:2px}
+#cut-strip-fill{position:absolute;inset:0;background:repeating-linear-gradient(90deg,#3a3a3a 0 3px,#2c2c2c 3px 6px)}
+/* Gold tint over the portion of the shoe that will actually be dealt (0 -> marker). */
+#cut-play{position:absolute;left:0;top:0;bottom:0;width:75%;background:linear-gradient(180deg,rgba(255,215,0,.24),rgba(255,215,0,.07));pointer-events:none;z-index:2}
+/* The two ranges the server will not honour. */
+.cut-zone{position:absolute;top:0;bottom:0;pointer-events:none;z-index:3;display:flex;align-items:center;justify-content:center;background-image:repeating-linear-gradient(45deg,rgba(255,59,59,.28) 0 5px,rgba(255,59,59,0) 5px 11px);background-color:rgba(20,0,0,.3);box-shadow:inset 0 0 0 1px rgba(255,59,59,.4)}
+#cut-zone-lo{left:0;width:40%}
+#cut-zone-hi{left:80%;right:0}
+.cut-zone span{font-size:9px;font-weight:800;letter-spacing:.08em;color:rgba(255,205,205,.9);text-shadow:0 1px 3px #000;text-transform:uppercase;white-space:nowrap;padding:0 4px;text-align:center;line-height:1.35}
+/* Fired when a click/drag lands in a no-cut zone, so the marker refusing to follow
+   the finger reads as a rule rather than a dropped input. */
+.cut-zone.bump{animation:cutBump .4s ease}
+@keyframes cutBump{0%,100%{background-color:rgba(20,0,0,.3)}35%{background-color:rgba(255,59,59,.55)}}
+#cut-marker{position:absolute;top:0;bottom:0;left:75%;width:3px;margin-left:-1.5px;background:#ff3b3b;box-shadow:0 0 8px rgba(255,59,59,.95);pointer-events:none;z-index:4}
+/* Arrowheads top and bottom -- reads as a grabbable cut card, not just a hairline. */
+#cut-marker::before,#cut-marker::after{content:'';position:absolute;left:50%;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent}
+#cut-marker::before{top:0;border-top:9px solid #ff3b3b}
+#cut-marker::after{bottom:0;border-bottom:9px solid #ff3b3b}
+/* Only animates for keyboard steps and for snap-back out of a no-cut zone; during a
+   drag the class is off so the marker tracks the pointer with zero lag. */
+#cut-marker.eased,#cut-play.eased{transition:left .12s cubic-bezier(.2,.8,.3,1),width .12s cubic-bezier(.2,.8,.3,1)}
+#cut-pct{text-align:center;font-size:20px;font-weight:800;color:#ffd700;margin-bottom:2px}
+#cut-detail{text-align:center;font-size:12px;color:rgba(255,255,255,.55);margin-bottom:10px;min-height:15px}
 
 /* Contract-bet lock badge -- ported wholesale from craps/UTH chip-lock convention */
 .chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
@@ -528,10 +553,15 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div class="modal-overlay hidden" id="modal-cut">
     <div class="modal-box dark" style="text-align:center">
       <div class="modal-title">Cut the Deck</div>
-      <div class="modal-sub">Fresh 6-deck shoe. Tap anywhere along the strip to set the cut card.</div>
+      <div class="modal-sub">Fresh 6-deck shoe. Drag the cut card anywhere in the open middle — house rules keep the last deck-and-a-bit out of play and won't take a cut in the shaded ends.</div>
       <div id="cut-pct">75%</div>
-      <div id="cut-strip" onclick="cutStripClick(event)">
+      <div id="cut-detail"></div>
+      <div id="cut-strip" tabindex="0" role="slider" aria-label="Cut card position"
+           aria-valuemin="40" aria-valuemax="80" aria-valuenow="75" aria-valuetext="75 percent">
         <div id="cut-strip-fill"></div>
+        <div id="cut-play"></div>
+        <div class="cut-zone" id="cut-zone-lo"><span>No cut<br>too shallow</span></div>
+        <div class="cut-zone" id="cut-zone-hi"><span>No cut<br>house reserve</span></div>
         <div id="cut-marker"></div>
       </div>
       <button class="modal-submit" id="cut-confirm-btn" onclick="confirmCut()">Cut Here</button>
@@ -567,7 +597,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.29</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.30</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>
@@ -1375,27 +1405,104 @@ function renderShoeTrays(){
 }
 
 // ── CUT THE DECK ─────────────────────────────────────────────────────────────
-function updateCutMarker(){
-  const pct=Math.round(G.pendingCutFraction*100);
+// CUT_MIN/CUT_MAX mirror the server's clamp in roll-breakout's 'cut' action --
+// anything outside is silently overridden there, so the strip both refuses it and
+// SHOWS why (the hatched .cut-zone bands are hard-coded to these same numbers in
+// CSS; change all four together).
+const CUT_MIN=0.40,CUT_MAX=0.80;
+const CUT_SHOE_CARDS=312; // 6 decks -- matches SHOE_SIZE server-side
+function updateCutMarker(eased){
+  const frac=G.pendingCutFraction;
+  const pct=Math.round(frac*100);
+  const marker=document.getElementById('cut-marker'),play=document.getElementById('cut-play');
+  // Easing is opt-in: on during keyboard steps and snap-backs, off mid-drag so the
+  // marker sits exactly under the finger instead of lagging behind it.
+  marker.classList.toggle('eased',!!eased);
+  play.classList.toggle('eased',!!eased);
   document.getElementById('cut-pct').textContent=pct+'%';
-  document.getElementById('cut-marker').style.left=pct+'%';
+  marker.style.left=pct+'%';
+  play.style.width=pct+'%';
+  const cards=Math.round(CUT_SHOE_CARDS*frac);
+  // ~5.5 cards per round heads-up (two hands of ~2.7), so this is a feel estimate,
+  // not a promise -- hits and splits move it either way.
+  document.getElementById('cut-detail').textContent=
+    cards+' of '+CUT_SHOE_CARDS+' cards in play · roughly '+Math.round(cards/5.5)+' hands';
+  const strip=document.getElementById('cut-strip');
+  strip.setAttribute('aria-valuenow',pct);
+  strip.setAttribute('aria-valuetext',pct+' percent, '+cards+' cards in play');
+}
+// Turns a clientX into a legal fraction, and flashes whichever no-cut zone was hit
+// so a marker that stops short of the pointer reads as the house rule it is.
+function cutStripFrac(clientX){
+  const strip=document.getElementById('cut-strip');
+  const rect=strip.getBoundingClientRect();
+  const raw=(clientX-rect.left)/rect.width;
+  if(raw<CUT_MIN)bumpCutZone('cut-zone-lo');
+  else if(raw>CUT_MAX)bumpCutZone('cut-zone-hi');
+  return Math.min(CUT_MAX,Math.max(CUT_MIN,raw));
+}
+function bumpCutZone(id){
+  const el=document.getElementById(id);
+  if(!el||el.classList.contains('bump'))return;
+  el.classList.add('bump');
+  // Timer is stored PER ZONE, not in one shared variable -- dragging from one no-cut
+  // zone to the other inside 400ms would otherwise cancel the first zone's cleanup
+  // and leave it stuck lit. Not keyed off animationend either: that never fires if
+  // the animation is suppressed (reduced-motion, backgrounded tab, hidden modal).
+  clearTimeout(el._bumpTimer);
+  el._bumpTimer=setTimeout(()=>el.classList.remove('bump'),400);
+}
+function initCutStrip(){
+  const strip=document.getElementById('cut-strip');
+  if(!strip||strip.dataset.wired)return;
+  strip.dataset.wired='1';
+  let dragging=false;
+  strip.addEventListener('pointerdown',e=>{
+    dragging=true;
+    strip.classList.add('dragging');
+    strip.setPointerCapture(e.pointerId);
+    G.pendingCutFraction=cutStripFrac(e.clientX);
+    // First touch eases from wherever the marker was; everything after tracks live.
+    updateCutMarker(true);
+    e.preventDefault();
+  });
+  strip.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    G.pendingCutFraction=cutStripFrac(e.clientX);
+    updateCutMarker(false);
+  });
+  const endDrag=e=>{
+    if(!dragging)return;
+    dragging=false;
+    strip.classList.remove('dragging');
+    if(e.pointerId!=null&&strip.hasPointerCapture(e.pointerId))strip.releasePointerCapture(e.pointerId);
+  };
+  strip.addEventListener('pointerup',endDrag);
+  strip.addEventListener('pointercancel',endDrag);
+  strip.addEventListener('keydown',e=>{
+    const step=e.shiftKey?0.05:0.01;
+    let f=G.pendingCutFraction;
+    if(e.key==='ArrowLeft'||e.key==='ArrowDown')f-=step;
+    else if(e.key==='ArrowRight'||e.key==='ArrowUp')f+=step;
+    else if(e.key==='Home')f=CUT_MIN;
+    else if(e.key==='End')f=CUT_MAX;
+    else if(e.key==='Enter'||e.key===' '){confirmCut();e.preventDefault();return;}
+    else return;
+    e.preventDefault();
+    if(f<CUT_MIN)bumpCutZone('cut-zone-lo');
+    else if(f>CUT_MAX)bumpCutZone('cut-zone-hi');
+    G.pendingCutFraction=Math.min(CUT_MAX,Math.max(CUT_MIN,f));
+    updateCutMarker(true);
+  });
 }
 function showCutModal(){
   G.pendingCutFraction=0.75;
-  updateCutMarker();
+  initCutStrip();
+  updateCutMarker(false);
   document.getElementById('modal-cut').classList.remove('hidden');
+  document.getElementById('cut-strip').focus({preventScroll:true});
 }
 function hideCutModal(){document.getElementById('modal-cut').classList.add('hidden');}
-function cutStripClick(e){
-  const rect=document.getElementById('cut-strip').getBoundingClientRect();
-  let frac=(e.clientX-rect.left)/rect.width;
-  // Matches the server's own clamp -- it always reserves roughly the last fifth of
-  // the shoe regardless of where the player taps, so the strip shouldn't let them
-  // aim anywhere the server would silently override anyway.
-  frac=Math.min(0.8,Math.max(0.4,frac));
-  G.pendingCutFraction=frac;
-  updateCutMarker();
-}
 async function confirmCut(){
   const btn=document.getElementById('cut-confirm-btn');btn.disabled=true;
   const token=localStorage.getItem('craps_session');
