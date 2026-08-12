@@ -679,7 +679,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.14</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.15</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -1696,14 +1696,30 @@ const DIE_IMGS=(()=>{
   return {1:mk(DIE3D_CLOCHE[1]),2:mk(DIE3D_CLOCHE[2]),3:mk(DIE3D_CLOCHE[3]),4:mk(DIE3D_CLOCHE[4]),5:mk(DIE3D_CLOCHE[5]),6:mk(DIE3D_CLOCHE[6])};
 })();
 
+// One texture per face value, shared by all three dice. This used to build a fresh canvas
+// per die per face (18 in total) off the SIX shared DIE_IMGS Image objects, and register the
+// paint callback with `img.onload=draw` -- an assignment, so each new die silently REPLACED
+// the previous die's callback on that same shared image. On a cold cache (image not decoded
+// yet when initDice runs) only the last-registered callback survived, so only die3 ever got
+// painted: die1/die2 kept blank canvases, and a blank canvas is transparent black, which a
+// non-transparent MeshPhongMaterial renders as solid black -- reading as "that die didn't
+// render at all" against the dark board. On a warm cache img.complete was already true and
+// everything drew inline, which is why it looked fine most of the time and only broke on a
+// cold/slow load (Deck: "don't always render all of them, and sometimes some faces are
+// missing" -- the mixed state is a partial cache, some faces decoded and some not).
+// Caching by value fixes it by construction (one canvas, one listener per image), and
+// addEventListener instead of onload= means a stray extra caller can never clobber it again.
+const PIP_TEX={};
 function pipTex(v){
+  if(PIP_TEX[v])return PIP_TEX[v];
   const img=DIE_IMGS[v];
   const S=256,c=document.createElement('canvas');c.width=c.height=S;
   const ctx=c.getContext('2d');
   const tex=new THREE.CanvasTexture(c);
   function draw(){ctx.clearRect(0,0,S,S);ctx.drawImage(img,0,0,S,S);tex.needsUpdate=true;}
   if(img.complete&&img.naturalWidth>0){draw();}
-  else{img.onload=draw;}
+  else{img.addEventListener('load',draw);}
+  PIP_TEX[v]=tex;
   return tex;
 }
 const FMAT=[2,5,3,4,1,6];
