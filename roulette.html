@@ -10,7 +10,7 @@
 <script src="instructions.js?v=7"></script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
-<script src="roulette-wheel.js?v=43"></script>
+<script src="roulette-wheel.js?v=44"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -254,6 +254,30 @@ body{--chip:82px;--edge:calc(var(--chip)*0.16)}
 @media (orientation:portrait){
   .has-stack{transform:translate(-50%,-50%) rotate(-90deg)}
 }
+
+/* ── SETTLEMENT SWEEP ──
+   Flying chip clones for the dealer sequence that runs once the table is back (see
+   runSettlement). Deliberately a SEPARATE layer of clones rather than transforms on the real
+   .cell-stk elements: those already carry a transform that differs by orientation
+   (translate(-50%,-50%) plus a portrait counter-rotation), and animating them would clobber it
+   -- exactly the bug the .has-stack comment right above documents. Clones split the two jobs
+   across two elements instead, so neither can fight the other: .sweep-chip owns position and
+   the sweep translate, .sweep-inner owns the portrait counter-rotation.
+   The layer lives INSIDE #rl-panel, so translateY here is felt-space "toward the dealer's edge"
+   in both orientations -- in portrait the whole panel is rotated 90deg, and the chips ride along
+   with it, which is what makes up/down mean the same thing to the player either way.
+   Distances are in cqh (#rl-panel is a size container) so they scale with the felt and need no
+   JS measurement; 115 clears the top edge even for a bet sitting on the bottom row. */
+#sweep-layer{position:absolute;inset:0;pointer-events:none;z-index:12}
+.sweep-chip{position:absolute;width:var(--chip);transform:translate(-50%,-50%);opacity:1;
+  transition:transform .5s cubic-bezier(.33,0,.2,1),opacity .5s ease}
+.sweep-inner{width:100%}
+.sweep-chip.drop-in{opacity:0;transform:translate(-50%,-50%) translateY(calc(var(--chip) * -0.85))}
+.sweep-chip.to-dealer{opacity:0;transform:translate(-50%,-50%) translateY(-115cqh)}
+.sweep-chip.to-player{opacity:0;transform:translate(-50%,-50%) translateY(115cqh)}
+@media (orientation:portrait){
+  .sweep-inner{transform:rotate(-90deg)}
+}
 </style>
 </head>
 <body>
@@ -312,7 +336,7 @@ body{--chip:82px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.44</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.45</div>
       <div style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="roulette:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('roulette')" title="How to play">i</button>
@@ -930,6 +954,20 @@ function renderRollHistory(){
 // the fixed .zero-top/.zero-bot CSS classes -- see roulette.html's #zero-col markup), so those
 // two are hardcoded here from the same measured felt geometry buildTable() uses everywhere else.
 const ZERO_RECT={'0':{left:0.104,top:0.168,width:8.234,height:31.229},'00':{left:0.104,top:31.397,width:8.234,height:29.63}};
+// Felt-space rect (percent of #rl-panel) for any bet key -- the shared lookup placeDolly and the
+// settlement sweep both need. Same two sources buildTable itself uses: inline styles for every
+// generated cell, ZERO_RECT for the two hand-authored zero cells.
+function cellRectPct(key){
+  const zr=ZERO_RECT[key.startsWith('straight-')?key.slice(9):''];
+  if(zr)return zr;
+  // Plain [data-key], NOT '.bet-cell[data-key]': the dozens, columns and even-money spots are
+  // built by outCell as '.out-cell', so a .bet-cell-scoped lookup silently misses every one of
+  // them (and they are the most commonly bet spots on the table).
+  const cell=document.querySelector('[data-key="'+key+'"]');
+  if(!cell||!cell.style.left)return null;
+  return {left:parseFloat(cell.style.left),top:parseFloat(cell.style.top),
+          width:parseFloat(cell.style.width),height:parseFloat(cell.style.height)};
+}
 function placeDolly(pocket){
   const dolly=document.getElementById('dolly-marker');
   if(!dolly)return;
@@ -946,6 +984,144 @@ function placeDolly(pocket){
 function clearDolly(){
   const dolly=document.getElementById('dolly-marker');
   if(dolly)dolly.style.display='none';
+}
+
+// ── SETTLEMENT SWEEP ──────────────────────────────────────────────────────────
+// Deck: results must not happen until the ball has completely settled AND we're back on the
+// table. RouletteWheel's spin promise now resolves at exactly that moment (it hands the payload
+// over from closeOverlay, after the overlay has faded and the canvas is back in its corner), so
+// everything below runs on a felt the player is actually looking at: dolly, losing bets swept up
+// and away, winners paid and swept down, then the Winner modal.
+//
+// IMPORTANT: this decides which chips animate which way, NOT what anything is worth. Every dollar
+// still comes from the server's response. But a confidently-wrong sweep (chips gliding to the
+// player on a bet that actually lost) would be worse than no sweep at all, so the evaluation is
+// checked against the server's own returned total before it is allowed to drive the animation --
+// see `agrees` in runSettlement. On any disagreement it degrades to a neutral clear.
+const RL_RED=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+// Column bets, matching buildTable's own strip layout: col1 = top row (3,6..36), col2 = middle
+// (2,5..35), col3 = bottom (1,4..34).
+const RL_COL_NUMS={col1:[],col2:[],col3:[]};
+for(let i=1;i<=12;i++){RL_COL_NUMS.col1.push(i*3);RL_COL_NUMS.col2.push(i*3-1);RL_COL_NUMS.col3.push(i*3-2);}
+function rlBetWins(key,pocket){
+  const isZero=(pocket==='0'||pocket==='00');
+  const n=isZero?-1:parseInt(pocket,10);
+  if(key.indexOf('straight-')===0)return key.slice(9)===pocket;
+  // Splits and corners are only ever generated across the 1-36 grid, never touching 0/00.
+  if(key.indexOf('split-')===0||key.indexOf('corner-')===0)
+    return !isZero&&key.split('-').slice(1).some(x=>+x===n);
+  if(isZero)return false; // 0/00 lose every dozen, column and outside bet -- that IS the house edge
+  if(key.indexOf('dozen')===0){const d=+key.slice(5);return n>=(d-1)*12+1&&n<=d*12;}
+  if(RL_COL_NUMS[key])return RL_COL_NUMS[key].indexOf(n)!==-1;
+  if(key==='red')return RL_RED.has(n);
+  if(key==='black')return !RL_RED.has(n);
+  if(key==='odd')return n%2===1;
+  if(key==='even')return n%2===0;
+  if(key==='low')return n>=1&&n<=18;
+  if(key==='high')return n>=19&&n<=36;
+  return false;
+}
+function rlPayoutMult(key){ // to-1, matching the ratios printed on the felt
+  if(key.indexOf('straight-')===0)return 35;
+  if(key.indexOf('split-')===0)return 17;
+  if(key.indexOf('corner-')===0)return 8;
+  if(key.indexOf('dozen')===0||RL_COL_NUMS[key])return 2;
+  return 1;
+}
+const rlWait=ms=>new Promise(r=>setTimeout(r,ms));
+// Two frames, not one: the clone has to be painted at its start state before the class that
+// transitions it is added, or the browser coalesces both into one style resolution and the
+// transition never runs (it just appears at the end state).
+// Raced against a timer because rAF does NOT fire in a backgrounded tab -- a player who tabs away
+// mid-spin would otherwise leave runSettlement awaiting forever, and with it the round: bets never
+// clear, bankroll never updates, the spin button stays disabled until reload. The race costs
+// nothing when the tab is visible (rAF wins in ~16ms) and degrades to "no transition" when it
+// isn't, which is exactly right for animation nobody is watching.
+const rlPaint=()=>Promise.race([
+  new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))),
+  rlWait(150),
+]);
+function rlSweepLayer(){
+  let el=document.getElementById('sweep-layer');
+  if(!el){el=document.createElement('div');el.id='sweep-layer';document.getElementById('rl-panel').appendChild(el);}
+  return el;
+}
+function rlFlyStack(key,html,offsetPct){
+  const r=cellRectPct(key);
+  if(!r||!html)return null;
+  const d=document.createElement('div');
+  d.className='sweep-chip';
+  d.style.left=(r.left+r.width/2+(offsetPct||0))+'%';
+  d.style.top=(r.top+r.height/2)+'%';
+  d.innerHTML='<div class="sweep-inner">'+html+'</div>';
+  rlSweepLayer().appendChild(d);
+  return d;
+}
+const RL_PAY_OFFSET=5.2; // % of felt width the payout stack sits beside its bet (~0.8 chip widths)
+async function runSettlement(pocket,bets,data){
+  const layer=rlSweepLayer();
+  layer.innerHTML='';
+  const keys=Object.keys(bets).filter(k=>bets[k]>0);
+  if(!keys.length)return;
+  const winners=keys.filter(k=>rlBetWins(k,pocket));
+  // The server's `returned` may or may not include the stake back depending on its own
+  // convention, so accept either reading -- what matters is that SOME consistent reading of this
+  // client-side evaluation reproduces the server's number exactly. If neither does, the two
+  // disagree about who won and the differential sweep is not trustworthy.
+  const total=winners.reduce((s,k)=>s+bets[k]*(rlPayoutMult(k)+1),0);
+  const profit=winners.reduce((s,k)=>s+bets[k]*rlPayoutMult(k),0);
+  const served=data.returned||0;
+  const agrees=Math.abs(total-served)<0.01||Math.abs(profit-served)<0.01;
+  if(!agrees)console.warn('[roulette] sweep evaluation disagrees with server (returned '+served+', expected '+total+'/'+profit+') -- falling back to a neutral clear');
+  // Lift every live stack onto the sweep layer as a clone, then blank the real one. Cloning the
+  // rendered innerHTML rather than regenerating it keeps FP$ chips looking exactly as they did a
+  // frame earlier (renderChipStacks decides FP eligibility by walking the table in DOM order --
+  // not something worth reproducing here just to redraw the same chips).
+  const clones=[];
+  keys.forEach(k=>{
+    const el=document.getElementById('stk-'+k);
+    const html=el?el.innerHTML:'';
+    if(el){el.innerHTML='';el.classList.remove('has-stack');}
+    const d=rlFlyStack(k,html,0);
+    if(d)clones.push({key:k,el:d,win:winners.indexOf(k)!==-1});
+  });
+  if(!clones.length)return;
+  await rlPaint();
+  if(!agrees){
+    clones.forEach(c=>c.el.classList.add('to-dealer'));
+    await rlWait(600); layer.innerHTML=''; return;
+  }
+  // 1. Losing bets: swept up and off the felt, the way a dealer clears before paying anyone.
+  const losing=clones.filter(c=>!c.win);
+  if(losing.length){
+    losing.forEach(c=>c.el.classList.add('to-dealer'));
+    await rlWait(680);
+    losing.forEach(c=>c.el.remove());
+  }
+  // 2. Pay the winners: each winning bet gets its winnings stacked beside it.
+  const winning=clones.filter(c=>c.win);
+  const pays=[];
+  winning.forEach(c=>{
+    const r=cellRectPct(c.key);
+    if(!r)return;
+    // Bets out on the right-hand 2:1 column strip get paid on their left instead, so the payout
+    // stack never lands off the edge of the felt.
+    const dir=(r.left+r.width/2)>88?-1:1;
+    const p=rlFlyStack(c.key,chipStackHTML(bets[c.key]*rlPayoutMult(c.key),false),dir*RL_PAY_OFFSET);
+    if(p){p.classList.add('drop-in');pays.push(p);}
+  });
+  if(pays.length){
+    await rlPaint();
+    pays.forEach(p=>p.classList.remove('drop-in'));
+    await rlWait(560);
+  }
+  // 3. Bet and winnings together, swept down to the player.
+  const home=winning.map(c=>c.el).concat(pays);
+  if(home.length){
+    home.forEach(e=>e.classList.add('to-player'));
+    await rlWait(620);
+  }
+  layer.innerHTML='';
 }
 async function spinWheel(){
   if(spinning||RouletteWheel.isSpinning())return;
@@ -981,7 +1157,11 @@ async function spinWheel(){
   }
   const{pocket,color}=data.roll;
   feedPocket(pocket);      // wheel now pre-simulates and forces the ball onto this pocket
+  // Resolves only once the ball has fully settled AND the fullscreen wheel has closed back to
+  // its corner -- see roulette-wheel.js's pendingReveal. Everything past this line is therefore
+  // happening on a table the player is looking at.
   try{await spinPromise;}catch(e){}
+  const betsAtSpin={...G.bets};
   const resEl=document.getElementById('wheel-result');
   resEl.textContent=pocket;
   resEl.className='win-'+color;
@@ -991,7 +1171,18 @@ async function spinWheel(){
     const cls=/wins?[!:]|WON|returned/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
     addLog(line,cls);
   });
-  G.lastBetSnapshot={...G.bets};
+  G.lastBetSnapshot=betsAtSpin;
+  // Dealer's sequence on the felt: losers up and away, winners paid and swept down. Awaited so
+  // the bankroll, the HUD and the Winner modal all land AFTER the chips have actually moved,
+  // rather than announcing the win over a table still showing the bets that produced it.
+  // Never let a presentation failure strand the round -- everything below (bankroll, HUD, buttons)
+  // is the real bookkeeping and has to run even if the chips refuse to fly.
+  try{await runSettlement(pocket,betsAtSpin,data);}
+  catch(e){
+    console.warn('[roulette] settlement sweep failed:',e);
+    const layer=document.getElementById('sweep-layer');
+    if(layer)layer.innerHTML='';
+  }
   G.bets={};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;

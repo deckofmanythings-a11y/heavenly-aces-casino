@@ -509,6 +509,9 @@
   // second renderer. z-index 150: above the table, below the winner modal (200), so the coin
   // waterfall plays over the tight final wheel shot, and below the cashout voucher (300).
   let overlayEl = null, overlayOpen = false, overlayCloseTimer = null;
+  // Result payload parked by finishResolve, handed to the spin promise by closeOverlay once the
+  // table is actually back on screen -- see both for why the resolve moved there.
+  let pendingReveal = null;
   // Manual "show wheel" showcase: a full-screen, straight-down, frozen (no spin, no ball) look at
   // the layout, entirely separate from the spin overlay's own state machine -- it reuses the same
   // fullscreen div/canvas-reparent plumbing but never runs while a real spin is in progress.
@@ -559,6 +562,18 @@
       // a DOM move, and it beats the corner wheel visibly un-zooming for 3 seconds.
       settleZoom = 0;
       onResize();
+      // The table is now genuinely back: overlay hidden, canvas reparented into its corner. THIS
+      // is the moment the caller is allowed to start settling the round (see finishResolve's
+      // pendingReveal note). Resolving here rather than on a timer means the felt sequence can
+      // never start underneath a wheel that is still up, no matter how the linger is retimed --
+      // and a failed/aborted spin never gets here with a payload parked, since only finishResolve
+      // sets one.
+      const payload = pendingReveal;
+      if (payload) {
+        pendingReveal = null;
+        const done = activeResolve; activeResolve = null; activeReject = null;
+        if (done) done(payload);
+      }
     }, 320);
   }
   function openShowcase() {
@@ -1320,17 +1335,18 @@
     // same way) draws the ball once the spin is done.
     restBallOffset = Math.PI - finalSlot * SLOT_ANGLE;
 
-    const payload = { pocket: serverPocket, color: colorOf(serverPocket), forced: true };
+    // Deck: nothing about the result may happen until the ball has completely settled AND the
+    // table is back on screen -- the dolly, the chip sweeps and the winner modal are a dealer's
+    // sequence that belongs on the felt, not something that fires behind a wheel still filling
+    // the screen. So the spin promise is NOT resolved here on a timer any more; the payload is
+    // parked and handed over by closeOverlay once the overlay has actually finished fading and
+    // the canvas is back in its corner (see pendingReveal there). phase still returns to 'idle'
+    // on its own short beat, exactly as before, so the wheel's own state machine is unaffected.
+    pendingReveal = { pocket: serverPocket, color: colorOf(serverPocket), forced: true };
     phase = 'reveal';
-    setTimeout(() => {
-      phase = 'idle';
-      const done = activeResolve; activeResolve = null; activeReject = null; serverPocket = null;
-      if (done) done(payload);
-    }, 350);
-    // The fullscreen overlay lingers well past the promise resolution (which stays at 350ms so
-    // payouts/log/winner-modal aren't delayed) -- the player gets a beat to read the winning
-    // number off the tight final shot before the wheel fades back to its corner. The winner
-    // modal (z 200) plays OVER the lingering wheel shot (z 150), which is exactly the drama.
+    setTimeout(() => { phase = 'idle'; serverPocket = null; }, 350);
+    // The player still gets the full beat to read the winning number off the tight final shot
+    // before the wheel fades back to its corner -- that hold is the drama, and it is unchanged.
     overlayCloseTimer = setTimeout(closeOverlay, 2600);
   }
 
@@ -1417,7 +1433,10 @@
     spin(pocketOrPromise) {
       if (!inited) return Promise.reject(new Error('RouletteWheel.init() first'));
       if (showcaseOpen) closeShowcase(); // a player who left the showcase open shouldn't block spinning
-      if (phase !== 'idle') return Promise.reject(new Error('spin in progress'));
+      // pendingReveal, not just phase: phase returns to 'idle' on its own short beat while the
+      // overlay is still lingering, so there is a ~2.5s window where a second spin would overwrite
+      // activeResolve and the parked payload would then resolve the WRONG promise.
+      if (phase !== 'idle' || pendingReveal) return Promise.reject(new Error('spin in progress'));
       return new Promise((resolve, reject) => {
         activeResolve = resolve; activeReject = reject; serverPocket = null;
         phase = 'preroll';
@@ -1435,7 +1454,9 @@
         });
       });
     },
-    isSpinning: () => phase !== 'idle',
+    // Stays true through the reveal linger too -- the round isn't over until the payload has been
+    // handed off (see pendingReveal), and callers use this to gate the spin button.
+    isSpinning: () => phase !== 'idle' || !!pendingReveal,
     // Full-screen, straight-down, frozen (no ball, no spin) look at the wheel's layout -- purely
     // presentational, no-ops while a real spin is in progress. showWheel() is a no-op if already
     // open; hideWheel() also runs from the in-canvas close button.
