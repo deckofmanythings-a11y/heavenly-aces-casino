@@ -93,6 +93,7 @@
   let scene, camera, renderer, canvasEl, rafId, lastTime = 0;
   let wheelMesh, wheelCanvas, wheelCtx, wheelTexture, ballMesh, pointerMesh;
   let fretDebugGroup = null; // see buildFretDebugGroup / RouletteWheel.debugFrets -- dev-only alignment aid
+  let fretVisGroup = null;   // the visible gold pocket dividers -- see buildFretMeshes
   let labelOffset = 0; // which WHEEL_ORDER index is drawn at texture-slot 0 (the relabel knob)
 
   // ---------- audio (ticks only; reuses site-wide AudioSettings like every other module) ----------
@@ -335,7 +336,7 @@
     // Added directly to the SCENE, not wheelMesh -- unlike the numbered ring, the cone wears the
     // photographed wood texture above, so (per the same reasoning as the outer bowl) it must stay
     // static rather than spin with the wheelhead.
-    const CONE_BASE_R = CFG.wheelRadius * 0.62, CONE_TOP_R = CFG.wheelRadius * 0.05, CONE_H = CFG.wheelRadius * 0.34;
+    const CONE_TOP_R = CFG.wheelRadius * 0.05, CONE_H = CFG.wheelRadius * 0.34; // CONE_BASE_R is module-scope -- the physics curb is built on it
     const coneGeo = new THREE_.CylinderGeometry(CONE_TOP_R, CONE_BASE_R, CONE_H, 48);
     const coneMesh = new THREE_.Mesh(coneGeo, new THREE_.MeshStandardMaterial({ map: coneUnwrapTex, roughness: 0.35 }));
     coneMesh.position.y = faceMesh.position.y + CONE_H / 2 + 0.001;
@@ -614,9 +615,156 @@
   // 1% cap rate at n=100 -- matches normal baseline variance, no settle-timing regression.
   const DIP_DEPTH = 0.012; // world units the pocket's own center sits below its edges
   const DIP_RADIAL_HALF = 0.12; // deliberately much narrower than the fret band -- see comment above
+  const DIP_TILE_HALF_T = 0.02; // dip tiles' own box half-thickness
+  const DIP_OVERLAP = 1.2;      // see rebuildPocketFloor for why the tiles are padded past their exact width
+  // Every pocket is the same angular width (fretAngleAt is uniform), so each dip half-tile's
+  // length and tilt are constants rather than per-pocket values -- rebuildPocketFloor uses these
+  // exact ones, and so does fretGroundAt below, which is the whole point of hoisting them: the
+  // fret ring's height is now derived from where the dip tiles actually put their top surface, so
+  // the two can never drift apart the way they silently had (see FRET_RISE).
+  const DIP_TILE_LEN = (SLOT_ANGLE / 2) * POCKET_R;
+  const DIP_TILT = Math.atan2(DIP_DEPTH, DIP_TILE_LEN);
+  // The bowl slope's incline, and the half-thickness of the flat planks that physically realize it
+  // (see buildPhysicsWorld). Hoisted for the same reason as the dip constants above: a plank's
+  // CENTER line is the nominal cone, but the ball rides on the plank's TOP FACE, which is one
+  // half-thickness (measured perpendicular, hence the /cos) higher -- a distinction that matters
+  // now that fret height is measured against the real ridable surface instead of the nominal one.
+  const SLOPE_ANGLE = Math.atan2(ORBIT_Y - POCKET_Y, ORBIT_R - POCKET_R);
+  const PLANK_HALF_T = 0.02;
+  // Height of the REAL surface the ball rides on directly under a fret, at radius r -- the higher
+  // of the two overlapping surfaces that exist across the fret band: the pocket floor's dip tiles
+  // (inside POCKET_R; a fret sits exactly at a seam, which is a tile's HIGH edge, not its dipped
+  // center) and the bowl slope's planks (outside POCKET_R, climbing with r).
+  //
+  // Deck: "it feels like it just goes continually clockwise with little fret disturbance." This
+  // function is why. The frets were a flat box from y=0 to y=0.10 -- authored against POCKET_Y
+  // (0.09), the NOMINAL floor height -- but neither real surface actually sits at 0.09: the dip
+  // tiles' seam edge lands at ~0.111 and the slope's plank tops start at ~0.110 and climb to
+  // ~0.163 at FRET_OUTER_R. So the frets were flush-to-buried along the entire band: 0.00 to
+  // -0.06 of protrusion where there should have been a divider. The ball was not "ignoring" the
+  // frets, it was never touching them -- it rode over a smooth cone into a smooth dish, which is
+  // exactly the continuous clockwise slide with no vertical disturbance that got reported.
+  function fretGroundAt(r) {
+    const tileTop = POCKET_Y - DIP_DEPTH / 2 + DIP_TILE_HALF_T / Math.cos(DIP_TILT)
+      + (DIP_TILE_LEN * DIP_OVERLAP / 2) * Math.sin(DIP_TILT);
+    const slopeTop = POCKET_Y + (r - POCKET_R) * Math.tan(SLOPE_ANGLE) + PLANK_HALF_T / Math.cos(SLOPE_ANGLE);
+    return Math.max(tileTop, slopeTop);
+  }
+  // How far a fret stands PROUD of that surface, at the fret band's two ends. Deliberately kept
+  // below CFG.ballRadius (0.045): the vertical pop Deck asked for only exists when the fret's top
+  // edge sits BELOW the ball's center, so a hit resolves against the top EDGE (normal tilted up
+  // and back -> real upward launch) instead of a tall flat side face (normal purely horizontal ->
+  // the ball just gets shoved sideways and keeps sliding, which is the old behavior). The fret top
+  // is a straight line between the two ends, so protrusion peaks ~0.017 higher mid-band where the
+  // flat dip shelf meets the climbing slope -- that gradient is a feature: light chatter when the
+  // ball first reaches the band out at FRET_OUTER_R, progressively bigger kicks as it works inward,
+  // and real walls once it is slow enough to be captured. Tuned empirically -- see the commit.
+  const FRET_RISE = 0.014;
+  // ...but only in the pocket ring, faded to flush by the time the band reaches its outer edge.
+  // Two independent reasons, and both are load-bearing:
+  //
+  // 1. NUMERICAL. Early in a throw the ball is doing ~20 m/s, which is ~0.17 world units per
+  //    1/120s step -- more than TEN TIMES a fret's 0.012 thickness. A fret standing proud out
+  //    there does not get a glancing contact, it gets a deep single-step penetration that the
+  //    solver then resolves with an enormous impulse. Measured with frets at constant height:
+  //    hops of 0.3-0.7 units (up to ~44% of the wheel's whole radius) launching the ball clean
+  //    over the 0.39-high center curb into the hub. This is the same discrete-collision tunneling
+  //    the outer wall already documents and was made thick to survive; a fret can't be made thick
+  //    without ceasing to look like a fret, so it gets faded out of the fast zone instead.
+  // 2. PHYSICAL. A real wheel has NO frets on the ball track -- the track is smooth, and the
+  //    dividers exist only in the pocket ring the ball drops into once it has slowed. Bumps on
+  //    the fast track were never the real article to begin with.
+  //
+  // Full height at RISE_FULL_R and inward, linearly to flush at FRET_OUTER_R. The payoff is a
+  // progression rather than a constant: a smooth fast descent, then chatter that builds as the
+  // ball works inward and slows, then real walls once it's slow enough to be captured.
+  const RISE_FULL_R = POCKET_R;
+  function fretRiseAt(r) {
+    if (r <= RISE_FULL_R) return FRET_RISE;
+    const t = (FRET_OUTER_R - r) / (FRET_OUTER_R - RISE_FULL_R);
+    return FRET_RISE * Math.max(0, Math.min(1, t));
+  }
+  // Single source of truth for the fret ring's geometry -- consumed by the real CANNON shapes
+  // (addFretShapes), the visible gold dividers, and the debug markers alike, so what the player
+  // sees and what the ball hits cannot disagree. Reads the FRET_* radii live (they are `let`, the
+  // calibrator panel reassigns them), so it must stay a function, not a precomputed object.
+  //
+  // TWO segments per fret, not one. The ride surface under a fret is a bent line, not a straight
+  // one: flat across the dip shelf, then climbing once the bowl slope takes over (they cross at
+  // r ~= 1.144, solved below rather than hardcoded). A single straight box spanning both ends
+  // therefore can't stand a constant height above it -- it bulges mid-band. Measured, that bulge
+  // was not cosmetic: at FRET_RISE 0.015 a single-box fret peaked at ~0.032 protrusion mid-band
+  // (71% of the ball's radius), which stopped acting like a divider and started acting like a
+  // WALL -- 35% of spins never settled at all (vs 0% flush) and some killed the ball's momentum
+  // dead in ~2s, an obviously fake-looking abrupt stop. Splitting the fret so each segment
+  // parallels the surface under it holds protrusion at exactly FRET_RISE everywhere, which makes
+  // FRET_RISE a single honest dial instead of a number whose real effect depends on radius.
+  function fretSegs() {
+    const halfH = 0.05; // unchanged -- deep enough the ball can never slip under a fret
+    // Where the climbing slope overtakes the flat dip shelf; clamped into the band so a
+    // calibrator-dragged band that sits entirely on one surface degenerates to a single segment.
+    const flat = fretGroundAt(FRET_INNER_R);
+    let bendR = POCKET_R + (flat - (POCKET_Y + PLANK_HALF_T / Math.cos(SLOPE_ANGLE))) / Math.tan(SLOPE_ANGLE);
+    bendR = Math.max(FRET_INNER_R, Math.min(FRET_OUTER_R, bendR));
+    const spans = [[FRET_INNER_R, bendR], [bendR, FRET_OUTER_R]].filter(([a, b]) => b - a > 1e-4);
+    return spans.map(([r0, r1]) => {
+      const y0 = fretGroundAt(r0) + fretRiseAt(r0), y1 = fretGroundAt(r1) + fretRiseAt(r1);
+      const dR = r1 - r0, dY = y1 - y0;
+      const tilt = Math.atan2(dY, dR);        // this segment climbs exactly as its own surface does
+      const halfLen = Math.hypot(dR, dY) / 2; // measured along the tilted top, not its flat projection
+      // Center = the top line's midpoint pushed one half-height back along the box's OWN (tilted)
+      // up-normal, cos(tilt)*y - sin(tilt)*radial, so the top FACE lands exactly on that line
+      // rather than one half-height above it -- the same off-by-a-half-thickness the slope planks
+      // have and that fretGroundAt has to compensate for. Getting this wrong here would silently
+      // re-introduce the exact class of bug being fixed.
+      return { halfLen, halfH, tilt, r: (r0 + r1) / 2 + halfH * Math.sin(tilt), y: (y0 + y1) / 2 - halfH * Math.cos(tilt) };
+    });
+  }
+  // (Re)builds the N real fret box shapes onto fretBody from the current fretSpec(). CANNON's
+  // addShape just pushes onto shapes/shapeOffsets/shapeOrientations (confirmed from cannon.min.js
+  // source, not assumed), so clearing those three arrays and re-adding is a safe rebuild -- and
+  // fretBody is mass:0/KINEMATIC, so there is no mass-property recompute to worry about either.
+  function addFretShapes() {
+    if (!fretBody) return;
+    const segs = fretSegs();
+    fretBody.shapes = []; fretBody.shapeOffsets = []; fretBody.shapeOrientations = [];
+    for (let i = 0; i < N; i++) {
+      const a = fretAngleAt(i);
+      const qYaw = new CANNON_.Quaternion(); qYaw.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+      segs.forEach((s) => {
+        const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, s.halfH, s.halfLen));
+        const offset = new CANNON_.Vec3(Math.sin(a) * s.r, s.y, Math.cos(a) * s.r);
+        const qTilt = new CANNON_.Quaternion(); qTilt.setFromAxisAngle(new CANNON_.Vec3(1, 0, 0), -s.tilt);
+        fretBody.addShape(shape, offset, qYaw.mult(qTilt));
+      });
+    }
+  }
+  // The visible gold dividers, built from that same fretSpec() -- so the ball is never seen
+  // bouncing off nothing. Before this the frets existed only as painted lines on the wheel
+  // texture, which was fine while they were buried and inert; now that they are real obstacles
+  // the player has to be able to see what just kicked the ball.
+  function buildFretMeshes() {
+    fretVisGroup = new THREE_.Group();
+    const mat = new THREE_.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.75, roughness: 0.28 });
+    for (let i = 0; i < N; i++) {
+      const a = fretAngleAt(i);
+      fretSegs().forEach((s) => {
+        const mesh = new THREE_.Mesh(new THREE_.BoxGeometry(0.012, s.halfH * 2, s.halfLen * 2), mat);
+        mesh.position.set(Math.sin(a) * s.r, s.y, Math.cos(a) * s.r);
+        mesh.rotation.order = 'YXZ'; // yaw first, then tilt -- matches the CANNON qYaw.mult(qTilt) order
+        mesh.rotation.set(-s.tilt, a, 0);
+        fretVisGroup.add(mesh);
+      });
+    }
+    wheelMesh.add(fretVisGroup);
+  }
   // Shared by the physics wall (buildPhysicsWorld) and the visible bowl meshes (buildScene) so
   // the ball always bounces exactly where the wood appears to be -- one constant, no drift.
   const WALL_INNER_R = ORBIT_R + 0.12;
+  // The center cone's base radius, used by the visible cone mesh in buildScene. Kept at module
+  // scope (rather than local to buildScene) because the physics inner curb's comment refers to it:
+  // the curb deliberately does NOT sit here, and that is worth being able to see side by side.
+  const CONE_BASE_R = CFG.wheelRadius * 0.62;
   const BOWL_OUTER_R = WALL_INNER_R + 0.22; // visible bowl ring's outer edge
   const BOWL_VIS_TOP_Y = 0.42; // visible bowl rim height -- covers everything the ball visibly does
   // The wheel never stops or resets between spins -- like a real casino table, it just cruises
@@ -654,7 +802,7 @@
     // (the same corner-trap class of bug hit once before at this exact seam).
     const SEGS = 48;
     const SLOPE_EXT_R = ORBIT_R + 0.25; // safely past the wall's inner face (ORBIT_R + 0.12)
-    const slopeAngle = Math.atan2(ORBIT_Y - POCKET_Y, ORBIT_R - POCKET_R);
+    const slopeAngle = SLOPE_ANGLE; // hoisted to module scope -- fretGroundAt needs it too
     const SLOPE_EXT_Y = POCKET_Y + (SLOPE_EXT_R - POCKET_R) * Math.tan(slopeAngle); // same incline, extended
     const midR = (SLOPE_EXT_R + POCKET_R) / 2, midY = (SLOPE_EXT_Y + POCKET_Y) / 2;
     const slopeLen = Math.hypot(SLOPE_EXT_R - POCKET_R, SLOPE_EXT_Y - POCKET_Y);
@@ -662,7 +810,7 @@
     for (let i = 0; i < SEGS; i++) {
       const a = i * (2 * Math.PI / SEGS);
       const body = new CANNON_.Body({ mass: 0, material: matBowl });
-      body.addShape(new CANNON_.Box(new CANNON_.Vec3(arcLen / 2, 0.02, slopeLen / 2)));
+      body.addShape(new CANNON_.Box(new CANNON_.Vec3(arcLen / 2, PLANK_HALF_T, slopeLen / 2)));
       body.position.set(Math.sin(a) * midR, midY, Math.cos(a) * midR);
       const qYaw = new CANNON_.Quaternion(); qYaw.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
       const qTilt = new CANNON_.Quaternion(); qTilt.setFromAxisAngle(new CANNON_.Vec3(1, 0, 0), -slopeAngle);
@@ -694,22 +842,65 @@
       world.addBody(body);
     }
 
-    // Inner curb: a ring of flat boxes well inside the frets' inner edge (frets sit at POCKET_R
-    // with radial half-depth POCKET_R*0.11, so their inner edge is ~POCKET_R*0.89). Without this,
-    // a ball that takes a bad-angle bounce off a fret can occasionally get kicked radially inward
-    // past the fret ring entirely, into the open center hub where NOTHING touches it anymore --
-    // it just glides to a dead, motionless stop, disconnected from the wheel forever (confirmed:
-    // every spin ended at the identical resting radius with zero angular velocity once this was
-    // missing). Real wheels have a raised center cone for exactly this reason.
+    // Inner curb: the physical stand-in for the center cone's base. Without it, a ball that takes
+    // a bad-angle bounce off a fret gets kicked radially inward past the fret ring entirely, into
+    // the open center hub where NOTHING touches it anymore -- it just glides to a dead, motionless
+    // stop, disconnected from the wheel forever (confirmed: every spin ended at the identical
+    // resting radius with zero angular velocity once this was missing). Real wheels have a raised
+    // center cone for exactly this reason, and CONE_BASE_R is now literally that cone's own base
+    // radius rather than an independent guess -- see its definition for the dead-annulus bug that
+    // the old POCKET_R*0.75 value caused once the frets became real obstacles.
+    // Stays at its original radius, deliberately. Anchoring it outward onto CONE_BASE_R was tried
+    // and MEASURABLY backfired: out there the curb sits in the path of a ball that is still fast,
+    // and a 0.1-thick barrier is tunnelable at ~0.17 units/step, so the ball speared into it and
+    // got flung over the top into the hub -- 2 of 48 spins ended at r=0.14 and r=0.79 (one of them
+    // burning the full 45s cap), and those same two failed IDENTICALLY at flush fret height, which
+    // is what identified the curb rather than the frets as the cause. Left where a still-fast ball
+    // does not reach it; the fret taper above is what keeps balls from being launched in here in
+    // the first place, which is the real fix for the dead annulus this once tried to close.
+    const CURB_HALF_T = 0.05;
     const CURB_R = POCKET_R * 0.75;
     const curbSegs = 24;
     for (let i = 0; i < curbSegs; i++) {
       const a = (i / curbSegs) * Math.PI * 2;
       const body = new CANNON_.Body({ mass: 0, material: matWall });
       const segLen = (2 * Math.PI * CURB_R / curbSegs) * 1.3;
-      body.addShape(new CANNON_.Box(new CANNON_.Vec3(segLen / 2, 0.2, 0.05)));
+      body.addShape(new CANNON_.Box(new CANNON_.Vec3(segLen / 2, 0.2, CURB_HALF_T)));
       body.position.set(Math.sin(a) * CURB_R, POCKET_Y + 0.1, Math.cos(a) * CURB_R);
       body.quaternion.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+      world.addBody(body);
+    }
+
+    // Cone skirt: the annulus between the curb and the fret ring's inner edge had NO surface of its
+    // own -- a ball that got in there dropped onto the flat safety-net floor 0.1 below the pocket
+    // ring and just rode there, parked in the middle of the wheel face, nowhere near a pocket.
+    // Measured on the shipped build (frets flush, before any change here): 3 of 48 spins ended
+    // exactly like that, in under 5s. It is PRE-EXISTING, not caused by the fret work -- it
+    // reproduces identically at flush fret height -- but bouncier frets would show it off more
+    // often, so it gets closed now. The fix is the surface a real wheel already has: the cone. A
+    // ring of tilted planks (the same pattern the bowl slope is built from, and for the same
+    // reason -- a CANNON.Cylinder will not slide a resting sphere in this build) rising inward at
+    // the visible cone's own gradient, so gravity walks a stray ball back OUT into the pocket ring
+    // instead of stranding it. The curb stays as the deep backstop behind it.
+    const SKIRT_OUT_R = FRET_INNER_R + 0.02;  // overlaps the pocket floor's inner edge, no seam to catch on
+    const SKIRT_IN_R = CURB_R;
+    const SKIRT_OUT_Y = fretGroundAt(SKIRT_OUT_R); // meets the pocket ring exactly at its own height
+    const CONE_GRADIENT = (CFG.wheelRadius * 0.34) / (CONE_BASE_R - CFG.wheelRadius * 0.05); // matches the visible cone
+    const SKIRT_IN_Y = SKIRT_OUT_Y + (SKIRT_OUT_R - SKIRT_IN_R) * CONE_GRADIENT;
+    const skirtSegs = 32;
+    const skirtAngle = Math.atan2(SKIRT_IN_Y - SKIRT_OUT_Y, SKIRT_OUT_R - SKIRT_IN_R);
+    const skirtMidR = (SKIRT_OUT_R + SKIRT_IN_R) / 2, skirtMidY = (SKIRT_OUT_Y + SKIRT_IN_Y) / 2;
+    const skirtLen = Math.hypot(SKIRT_OUT_R - SKIRT_IN_R, SKIRT_IN_Y - SKIRT_OUT_Y);
+    for (let i = 0; i < skirtSegs; i++) {
+      const a = (i / skirtSegs) * Math.PI * 2;
+      const body = new CANNON_.Body({ mass: 0, material: matBowl });
+      const arc = (2 * Math.PI * skirtMidR / skirtSegs) * 1.4; // overlap so there are no gaps
+      body.addShape(new CANNON_.Box(new CANNON_.Vec3(arc / 2, PLANK_HALF_T, skirtLen / 2)));
+      body.position.set(Math.sin(a) * skirtMidR, skirtMidY - PLANK_HALF_T, Math.cos(a) * skirtMidR);
+      const qYaw = new CANNON_.Quaternion(); qYaw.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
+      // +skirtAngle, not -: this ramp rises INWARD, the mirror of the bowl slope's outward rise.
+      const qTilt = new CANNON_.Quaternion(); qTilt.setFromAxisAngle(new CANNON_.Vec3(1, 0, 0), skirtAngle);
+      body.quaternion = qYaw.mult(qTilt);
       world.addBody(body);
     }
 
@@ -731,13 +922,7 @@
     // (see resolveStep/tickIdleWheel) and also set angularVelocity so contact impulse response
     // against the dynamic ball uses the correct relative velocity.
     fretBody = new CANNON_.Body({ mass: 0, type: CANNON_.Body.KINEMATIC, material: matFret });
-    for (let i = 0; i < N; i++) {
-      const a = fretAngleAt(i);
-      const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, FRET_HALF_DEPTH));
-      const offset = new CANNON_.Vec3(Math.sin(a) * FRET_CENTER_R, 0.05, Math.cos(a) * FRET_CENTER_R);
-      const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
-      fretBody.addShape(shape, offset, q);
-    }
+    addFretShapes(); // tilted to follow the bowl and standing FRET_RISE proud of it -- see fretSpec
     world.addBody(fretBody);
 
     // Pocket floor dip: each compartment gets a shallow V (two tilted half-tiles meeting at the
@@ -778,6 +963,7 @@
       fretDebugGroup.add(mesh);
     }
     wheelMesh.add(fretDebugGroup);
+    buildFretMeshes(); // the player-visible dividers, same fretSpec() the CANNON shapes above use
 
     ballBody = new CANNON_.Body({ mass: 0.02, material: matBall });
     ballBody.addShape(new CANNON_.Sphere(CFG.ballRadius));
@@ -831,15 +1017,14 @@
     FRET_OUTER_R = CFG.wheelRadius * outerFrac;
     FRET_CENTER_R = (FRET_INNER_R + FRET_OUTER_R) / 2;
     FRET_HALF_DEPTH = (FRET_OUTER_R - FRET_INNER_R) / 2;
-    if (fretBody) {
-      fretBody.shapes = []; fretBody.shapeOffsets = []; fretBody.shapeOrientations = [];
-      for (let i = 0; i < N; i++) {
-        const a = fretAngleAt(i);
-        const shape = new CANNON_.Box(new CANNON_.Vec3(0.006, 0.05, FRET_HALF_DEPTH));
-        const offset = new CANNON_.Vec3(Math.sin(a) * FRET_CENTER_R, 0.05, Math.cos(a) * FRET_CENTER_R);
-        const q = new CANNON_.Quaternion(); q.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), a);
-        fretBody.addShape(shape, offset, q);
-      }
+    addFretShapes();
+    if (fretVisGroup) {
+      // Rebuilt wholesale rather than updated in place: the segment COUNT per fret can change
+      // (fretSegs collapses to one segment for a band sitting entirely on one surface), so a
+      // child-index-to-fret mapping isn't stable across a rebuild.
+      fretVisGroup.children.forEach((m) => m.geometry.dispose());
+      wheelMesh.remove(fretVisGroup);
+      buildFretMeshes();
     }
     if (fretDebugGroup) {
       fretDebugGroup.children.forEach((mesh, i) => {
@@ -861,16 +1046,16 @@
       const a1raw = fretAngleAt((i + 1) % N);
       const a1 = a1raw > a0 ? a1raw : a1raw + Math.PI * 2;
       const centerA = (a0 + a1) / 2;
-      const tileLen = ((a1 - a0) / 2) * POCKET_R;
+      const tileLen = ((a1 - a0) / 2) * POCKET_R;   // === DIP_TILE_LEN (fretAngleAt is uniform)
       const tiltAngle = Math.atan2(DIP_DEPTH, tileLen); // slope gradient from the TRUE tile length, unaffected by the overlap pad below
-      const OVERLAP = 1.2; // tiles are padded 20% wider than their exact math width so adjacent
+      const OVERLAP = DIP_OVERLAP; // tiles are padded 20% wider than their exact math width so adjacent
       // tiles (at each fret seam and at each pocket's own center seam) physically overlap instead
       // of meeting edge-to-edge -- an exact edge-to-edge fit left sub-millimeter seams (floating-
       // point rounding in the sin/cos placement) that the ball could catch on, perturbing its
       // velocity just enough to keep resetting the settle-hold streak on nearly every spin.
       [[a0, centerA, -1], [centerA, a1, 1]].forEach(([lo, hi, sign]) => {
         const midA = (lo + hi) / 2;
-        const shape = new CANNON_.Box(new CANNON_.Vec3((tileLen * OVERLAP) / 2, 0.02, DIP_RADIAL_HALF));
+        const shape = new CANNON_.Box(new CANNON_.Vec3((tileLen * OVERLAP) / 2, DIP_TILE_HALF_T, DIP_RADIAL_HALF));
         const offset = new CANNON_.Vec3(Math.sin(midA) * POCKET_R, POCKET_Y - DIP_DEPTH / 2, Math.cos(midA) * POCKET_R);
         const qYaw = new CANNON_.Quaternion(); qYaw.setFromAxisAngle(new CANNON_.Vec3(0, 1, 0), midA);
         const qTilt = new CANNON_.Quaternion(); qTilt.setFromAxisAngle(new CANNON_.Vec3(0, 0, 1), sign * tiltAngle);
@@ -1016,7 +1201,7 @@
     (function chunk() {
       for (let i = 0; i < PRESIM_CHUNK_STEPS && !ctx.done && ctx.step < CFG.maxResolveSteps; i++) resolveStep(ctx);
       if (ctx.done || ctx.step >= CFG.maxResolveSteps) {
-        onDone(ctx.done ? restingSlot(baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step) : null);
+        onDone(ctx.done ? restingSlot(baseline.wheelAngle + WHEEL_SPEED * STEP * ctx.step) : null, ctx.step);
       } else {
         setTimeout(chunk, 0);
       }
@@ -1065,10 +1250,19 @@
     // phase stays 'preroll' (ball still visibly agitating) for the chunked presimulation's
     // duration -- same "however long it takes" tolerance the preroll already has for the network
     // response, just extended slightly further.
-    presimulateChunked(baseline, (slot) => {
+    presimulateChunked(baseline, (slot, totalSteps) => {
       labelOffset = offsetForSlot(serverPocket, slot === null ? 0 : slot); // slot===null is practically unreachable
 
       relabelStep = RELABEL_STEP_MIN + Math.floor(Math.random() * (RELABEL_STEP_MAX - RELABEL_STEP_MIN));
+      // Freak-short throws exist: settle times are a long-tailed distribution and a measured 48-spin
+      // sample had several land in 1-7s (4 of 48 even before any of the fret work -- this is not new,
+      // it just got marginally more likely). On one of those the whole spin is OVER before the
+      // relabel window opens, so the swap never runs mid-spin and finishResolve's at-rest check has
+      // to correct it -- i.e. the number visibly changes right as the player is reading it, which is
+      // the one thing the deferred relabel exists to prevent. presimulate has already measured this
+      // exact throw's length, so clamp the swap into the first half of it. On a normal-length spin
+      // the clamp is inert (half of ~2400 steps is far past RELABEL_STEP_MAX).
+      relabelStep = Math.min(relabelStep, Math.max(1, Math.floor(totalSteps * 0.5)));
       relabeled = false;
       zoomWindowStart = relabelStep - ZOOM_RAMP; // peak zoom (t=1) covers relabelStep itself
 
