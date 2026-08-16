@@ -2783,7 +2783,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.45</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.46</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5058,7 +5058,17 @@ function initDice(){
   // the Game Selector became a single Home button), and the SECOND load hits three.min.js from
   // browser cache, fast enough to mask the race -- not a Crapless-specific bug at all, just far
   // more likely to be visible there since it's often the very first page a session lands on.
-  if(!THREE){setTimeout(initDice,100);return;}
+  if(!THREE){
+    // Say something once the wait stops looking like a slow download and starts looking like a
+    // dead one. Cause seen in the wild: mid-pageload DNS flap (stale resolver flipping the
+    // domain back to the old host) 404s three.min.js AFTER craps.html already loaded -- the
+    // page looks fine, but the dice engine never arrives, renderer never initializes, and the
+    // Roll button hits its silent !renderer guard forever. "Roll button does nothing" twice
+    // now; a visible message turns that report into a self-diagnosis.
+    window._initDiceRetries=(window._initDiceRetries||0)+1;
+    if(window._initDiceRetries===30)addLog('Dice engine is taking unusually long to load — if the Roll button doesn\'t respond, refresh the page (Ctrl+Shift+R).','info');
+    setTimeout(initDice,100);return;
+  }
   const W=480,H=168,cvs=document.getElementById('dice-canvas');
   renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
@@ -6708,7 +6718,13 @@ async function healRollSync(intended){
   return true;
 }
 async function rollDice(isRetry){
-  if(animating||tumbling||!renderer||ClocheDice.isRolling())return;
+  // The !renderer case gets its own branch because it is the only one that means BROKEN rather
+  // than busy: animating/tumbling/isRolling are a roll in progress (stay silent -- spam-clicking
+  // mid-roll shouldn't scold), but a missing renderer means the dice engine never loaded
+  // (three.min.js lost to a mid-load DNS flap or network hiccup) and silence here is exactly
+  // the "Roll button does nothing" report. Say so, and give initDice another kick.
+  if(!renderer){addLog('Dice engine hasn\'t loaded — retrying now. If this keeps up, refresh the page (Ctrl+Shift+R).','info');initDice();return;}
+  if(animating||tumbling||ClocheDice.isRolling())return;
   if(!isRetry)rollHealUsed=false;
   // See the comment on callSaveGameState -- any in-flight write to the stored game_state has to
   // land before a roll goes out, or the server validates against a stale blob and 409s.
