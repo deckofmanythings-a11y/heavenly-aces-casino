@@ -888,6 +888,8 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 .chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
 .chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
 .chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:10px}
+.chip[data-val="500"]{background-image:url('chip-blank-500.webp');font-size:10px}
+.chip[data-val="1000"]{background-image:url('chip-blank-1000.webp');font-size:8px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
@@ -2776,6 +2778,8 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
           <div class="chip" data-val="25" onclick="selectChip(25)">$25</div>
           <div class="chip" data-val="50" onclick="selectChip(50)">$50</div>
           <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
+          <div class="chip" data-val="500" onclick="selectChip(500)">$500</div>
+          <div class="chip" data-val="1000" onclick="selectChip(1000)">$1000</div>
         </div>
         <div class="bb-row">
           <button class="bar-btn" id="load-layout-btn" onclick="loadLayout()" title="Replay your saved starting bets (set one up in Focus Settings)">Load Layout</button>
@@ -5504,7 +5508,7 @@ function initBetsLockLongPress(){
 document.addEventListener('DOMContentLoaded',initBetsLockLongPress);
 
 // ===================== CHIP STACK BET INDICATORS =====================
-const CHIP_DENOMS=[100,50,25,10,5,3,2,1];
+const CHIP_DENOMS=[1000,500,100,50,25,10,5,3,2,1];
 const SFX_CHIP={
   1:['1_chip.ogg'],
   2:['2chips.ogg'],
@@ -5723,8 +5727,35 @@ function renderChipStacks(){
     el.classList.add('has-stack');
   });
 }
+// A chip denomination is only OFFERED to the player if they can actually use it: it must be
+// <= the table's per-spot Max Bet for their tier (MAX_BET, dynamic via refreshTierLimits) AND
+// <= their spendable bankroll (maxBettable() -- bullets-aware). Keeps a tier-0 or low-balance
+// player from being handed a $500/$1000 chip that would only ever bounce off the server's limit
+// or overdraw them. Recomputed every updateUI() since both bankroll and MAX_BET move during play.
+function updateChipTray(){
+  const chips=[...document.querySelectorAll('.chip[data-val]')];
+  // Tutorial pins the table to $1 bets (see selectChip's own guard) -- show only the $1 chip so
+  // the tray matches, regardless of the lesson's play-money bankroll.
+  if(typeof tutorialActive!=='undefined'&&tutorialActive){
+    chips.forEach(c=>{c.style.display=(+c.dataset.val===1)?'':'none';});
+    return;
+  }
+  const playable=maxBettable();
+  let anyVisible=false,highestVisible=0;
+  chips.forEach(c=>{
+    const d=+c.dataset.val;
+    const show=(d<=MAX_BET+0.001)&&(d<=playable+0.001);
+    c.style.display=show?'':'none';
+    if(show){anyVisible=true;if(d>highestVisible)highestVisible=d;}
+  });
+  // Never leave the tray empty when the player is broke -- keep the $1 floor selectable so a
+  // redeem/Free-Play $1 bet is still possible and G.chip never points at a hidden denom.
+  if(!anyVisible){const one=document.querySelector('.chip[data-val="1"]');if(one){one.style.display='';highestVisible=1;}}
+  // Selected chip just went out of range -> drop to the highest one still on the tray.
+  if(highestVisible>0&&G.chip>highestVisible)selectChip(highestVisible);
+}
 const _updateUI_orig=updateUI;
-updateUI=function(){_updateUI_orig();renderChipStacks();};
+updateUI=function(){_updateUI_orig();renderChipStacks();updateChipTray();};
 // applyBetAreaNudges() used to apply manual pixel-offset transforms on top of Come/DC's chip
 // positions (combox-flat/odds-N, dcbox-flat/odds-N) -- back when #come-slot-N/#dc-slot-N were a
 // single hardcoded CSS anchor shared by every number, this was the only way to correct drift.

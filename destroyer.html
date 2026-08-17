@@ -429,6 +429,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .chip[data-val="25"]{background-image:url('chip-blank-25.webp')}
 .chip[data-val="50"]{background-image:url('chip-blank-50.webp')}
 .chip[data-val="100"]{background-image:url('chip-blank-100.webp');font-size:26px}
+.chip[data-val="500"]{background-image:url('chip-blank-500.webp');font-size:26px}
+.chip[data-val="1000"]{background-image:url('chip-blank-1000.webp');font-size:20px}
 .bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.22);border-radius:3px;color:#fff;font-size:44px;padding:3px 24px;cursor:pointer;flex-shrink:0;height:96px}
 #hud-pnl-bottom{font-size:52px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 3px}
 
@@ -803,7 +805,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.17</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.18</div>
       <div style="width:100%;display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="destroyer:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('destroyer')" title="How to play">i</button>
@@ -888,6 +890,8 @@ Tap BEGIIN GAME to start the game.</div>
       <div class="chip" data-val="25" onclick="selectChip(25);addBetChip()">$25</div>
       <div class="chip" data-val="50" onclick="selectChip(50);addBetChip()">$50</div>
       <div class="chip" data-val="100" onclick="selectChip(100);addBetChip()">$100</div>
+<div class="chip" data-val="500" onclick="selectChip(500);addBetChip()">$500</div>
+          <div class="chip" data-val="1000" onclick="selectChip(1000);addBetChip()">$1000</div>
     </div>
     <div id="buy-area">
       <button id="buy-btn" onclick="buyMissile()" disabled style="display:none"></button>
@@ -1516,6 +1520,25 @@ function resetGameState(){
 
 // ── CHIP SELECTION ────────────────────────────────────────────────────────────
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
+// Only OFFER a chip denomination the player can actually use: <= the table's per-spot Max Bet
+// for their tier (MAX_BET) AND <= their spendable bankroll. Stops a low-tier or low-balance
+// player being handed a $500/$1000 chip that only bounces off the server limit or overdraws them.
+// Recomputed every updateUI() since bankroll and MAX_BET both move during play. Ported from craps.
+function updateChipTray(){
+  const chips=[...document.querySelectorAll('.chip[data-val]')];
+  const playable=(typeof maxBettable==='function')?maxBettable():(G.bankroll||0);
+  let anyVisible=false,highestVisible=0;
+  chips.forEach(c=>{
+    const d=+c.dataset.val;
+    const show=(d<=MAX_BET+0.001)&&(d<=playable+0.001);
+    c.style.display=show?'':'none';
+    if(show){anyVisible=true;if(d>highestVisible)highestVisible=d;}
+  });
+  if(!anyVisible){const one=document.querySelector('.chip[data-val="1"]');if(one){one.style.display='';highestVisible=1;}}
+  if(highestVisible>0&&G.chip>highestVisible)selectChip(highestVisible);
+}
+const _updateUI_chipwrap=updateUI;
+updateUI=function(){_updateUI_chipwrap.apply(this,arguments);updateChipTray();};
 
 // ── LOG ───────────────────────────────────────────────────────────────────────
 function addLog(t,cls){
@@ -1577,7 +1600,7 @@ function reRandomize(){G.ships=randomizeLocal();renderPlacementGrid();}
 // ── BET MANAGEMENT ────────────────────────────────────────────────────────────
 // Chip stack visual for the bet circle, same denomination-breakdown approach Craps uses
 // for its bet-spot chip stacks (chipBreakdownHTML in index.html).
-const CHIP_DENOMS_DEST=[100,50,25,10,5,3,2,1];
+const CHIP_DENOMS_DEST=[1000,500,100,50,25,10,5,3,2,1];
 function chipBreakdownDest(amt){
   const out=[];let r=Math.floor(amt);
   for(const d of CHIP_DENOMS_DEST){while(r>=d){out.push(d);r-=d;}}
