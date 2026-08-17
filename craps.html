@@ -2787,7 +2787,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.47</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.48</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -5729,9 +5729,11 @@ function renderChipStacks(){
 }
 // A chip denomination is only OFFERED to the player if they can actually use it: it must be
 // <= the table's per-spot Max Bet for their tier (MAX_BET, dynamic via refreshTierLimits) AND
-// <= their spendable bankroll (maxBettable() -- bullets-aware). Keeps a tier-0 or low-balance
-// player from being handed a $500/$1000 chip that would only ever bounce off the server's limit
-// or overdraw them. Recomputed every updateUI() since both bankroll and MAX_BET move during play.
+// <= their playable total. "Playable" = spendable bankroll (maxBettable() -- bullets-aware) PLUS
+// Free Play, matching exactly what placeBet() uses for betting room, so the tray never offers a
+// chip the bet logic would clamp, nor hides one the player could actually place with Free Play.
+// Keeps a tier-0 or low-balance player from being handed a $500/$1000 chip. Recomputed every
+// updateUI() since bankroll, Free Play and MAX_BET all move during play.
 function updateChipTray(){
   const chips=[...document.querySelectorAll('.chip[data-val]')];
   // Tutorial pins the table to $1 bets (see selectChip's own guard) -- show only the $1 chip so
@@ -5740,7 +5742,7 @@ function updateChipTray(){
     chips.forEach(c=>{c.style.display=(+c.dataset.val===1)?'':'none';});
     return;
   }
-  const playable=maxBettable();
+  const playable=maxBettable()+(G.freePlay||0);
   let anyVisible=false,highestVisible=0;
   chips.forEach(c=>{
     const d=+c.dataset.val;

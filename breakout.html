@@ -615,7 +615,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.32</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.33</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>
@@ -1132,12 +1132,12 @@ async function redeemVoucher(code){document.getElementById('redeem-input').value
 // ── CHIP SELECTION ────────────────────────────────────────────────────────────
 function selectChip(v){G.chip=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',+c.dataset.val===v));}
 // Only OFFER a chip denomination the player can actually use: <= the table's per-spot Max Bet
-// for their tier (MAX_BET) AND <= their spendable bankroll. Stops a low-tier or low-balance
-// player being handed a $500/$1000 chip that only bounces off the server limit or overdraws them.
+// for their tier (MAX_BET) AND <= their playable total (spendable bankroll + Free Play, matching
+// what placeBet uses for room). Stops a low-tier/low-balance player being handed a chip they can't use.
 // Recomputed every updateUI() since bankroll and MAX_BET both move during play. Ported from craps.
 function updateChipTray(){
   const chips=[...document.querySelectorAll('.chip[data-val]')];
-  const playable=(typeof maxBettable==='function')?maxBettable():(G.bankroll||0);
+  const playable=((typeof maxBettable==='function')?maxBettable():(G.bankroll||0))+(G.freePlay||0);
   let anyVisible=false,highestVisible=0;
   chips.forEach(c=>{
     const d=+c.dataset.val;

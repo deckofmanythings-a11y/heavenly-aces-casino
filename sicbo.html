@@ -683,7 +683,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 <div class="chip" data-val="500" onclick="selectChip(500)">$500</div>
           <div class="chip" data-val="1000" onclick="selectChip(1000)">$1000</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.16</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.17</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -1193,12 +1193,12 @@ function renderChipStacks(){
 }
 const _updateUI_orig=updateUI;
 // Only OFFER a chip denomination the player can actually use: <= the table's per-spot Max Bet
-// for their tier (MAX_BET) AND <= their spendable bankroll. Stops a low-tier or low-balance
-// player being handed a $500/$1000 chip that only bounces off the server limit or overdraws them.
+// for their tier (MAX_BET) AND <= their playable total (spendable bankroll + Free Play, matching
+// what placeBet uses for room). Stops a low-tier/low-balance player being handed a chip they can't use.
 // Recomputed every updateUI() since bankroll and MAX_BET both move during play. Ported from craps.
 function updateChipTray(){
   const chips=[...document.querySelectorAll('.chip[data-val]')];
-  const playable=(typeof maxBettable==='function')?maxBettable():(G.bankroll||0);
+  const playable=((typeof maxBettable==='function')?maxBettable():(G.bankroll||0))+(G.freePlay||0);
   let anyVisible=false,highestVisible=0;
   chips.forEach(c=>{
     const d=+c.dataset.val;
