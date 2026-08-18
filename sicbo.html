@@ -350,16 +350,22 @@ input,textarea{-webkit-user-select:text;user-select:text}
 @font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Regular.woff2?v=1') format('woff2');font-weight:400;font-style:normal;font-display:block}
 @font-face{font-family:'Cinzel';src:url('fonts/Cinzel-Bold.woff2?v=1') format('woff2');font-weight:700;font-style:normal;font-display:block}
 #sb-panel{font-family:'Cinzel',Georgia,'Times New Roman',serif}
-.bs-label{color:#2b1806}
-.bs-sub{color:rgba(43,24,6,.75)}
-.tot-num{color:#2b1806}
-.tot-pay{color:rgba(43,24,6,.7)}
-.at-lbl{color:#4a1030}
-.at-pay{color:rgba(74,16,48,.75)}
-.trip-pay{color:rgba(74,16,48,.75)}
-.dbl-pay{color:rgba(12,37,64,.75)}
-.dom-pay{color:rgba(18,48,24,.7)}
-.any-pay{color:rgba(74,48,5,.75)}
+/* Ink follows the palette. These were fixed dark values tuned for the cream board, which
+   is unreadable the moment a dark palette is selected -- each theme now supplies its own
+   ink set, keeping the per-category hues (blue SMALL, red BIG, purple triples, green
+   combos, gold any-number) as a tone that reads against that theme's box interior. */
+.bs-label{color:var(--ink)}
+.bs-sub{color:var(--ink-soft)}
+.tot-num{color:var(--ink)}
+.tot-pay{color:var(--ink-soft)}
+.at-lbl{color:var(--ink-trip)}
+.at-pay{color:var(--ink-trip-soft)}
+.trip-pay{color:var(--ink-trip-soft)}
+.dbl-pay{color:var(--ink-dbl)}
+.dom-pay{color:var(--ink-dom)}
+.any-pay{color:var(--ink-any)}
+#btn-small .at-lbl{color:var(--ink-small)!important}
+#btn-big .at-lbl{color:var(--ink-big)!important}
 /* Gold chip-stack amounts stay gold (matches the site's real chip color everywhere else) --
    just adds a dark shadow so gold-on-cream still pops instead of washing out. */
 .bs-stk,.tot-stk,.at-stk,.trip-stk,.dbl-stk,.dom-stk,.any-stk{text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 4px rgba(0,0,0,.35)}
@@ -369,13 +375,22 @@ input,textarea{-webkit-user-select:text;user-select:text}
    (gold), Cash Out (green, inline style), Last Win/Playable/Bet (green/gold, inline style)
    are untouched -- they're already fully-opaque saturated colors that read fine on cream, and
    in Cash Out/Last Win/Playable/Bet's case an inline style would win over this anyway. */
-.gmode-btn{color:#2b1806}
-.gmode-btn .gmode-sub{color:rgba(43,24,6,.6)}
-.gmode-btn.active .gmode-sub{color:rgba(155,105,10,.8)}
-.hud-lbl{color:rgba(43,24,6,.6)}
-#hud-lastbet{color:rgba(43,24,6,.75)!important}
-.info-btn{color:#2b1806}
-.bar-btn{color:#2b1806}
+.gmode-btn{color:var(--ink)}
+.gmode-btn .gmode-sub{color:var(--ink-soft)}
+.gmode-btn.active .gmode-sub{color:var(--ink-accent)}
+.hud-lbl{color:var(--ink-soft)}
+.info-btn{color:var(--ink)}
+.bar-btn{color:var(--ink)}
+/* These four carried their colour as an inline style on the element (so they survived the
+   old fixed-ink pass); they are classes now so a palette can reach them -- see the markup
+   for #top-bar-username, #cashout-btn and the four HUD values. */
+.ink-plain{color:var(--ink)!important}
+.ink-soft{color:var(--ink-soft)!important}
+.ink-accent{color:var(--ink-accent)!important}
+.ink-good{color:var(--ink-good)!important}
+#cashout-btn{border-color:var(--ink-good)!important}
+.log-line{color:var(--ink-soft)}
+#log-btn-sb,#felt-btn-sb{color:var(--ink-accent)}
 
 /* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
@@ -512,31 +527,44 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
    box-sizing:border-box the frame grows INWARD, so a framed box still occupies exactly
    its calibrated width and height. */
 
+/* ── FELT PALETTES ────────────────────────────────────────────────────────────
+   Deck asked for a colour selector with several appealing options. Nothing below
+   hard-codes a colour any more: the marble ground, the frame metal, the box interiors
+   and every ink tone are read from custom properties, and a theme is just one block
+   redefining them. #sb-panel carries data-felt="<id>"; applyFelt() sets it and stores
+   the choice in localStorage. Themes are scoped to #sb-panel so a palette can never
+   leak into the modals, the auth screen or the shared chrome.
+   The category tints (SMALL/BIG on the totals row, the doubles/triples pair) are a
+   separate flat padding-box layer stacked over the shared interior rather than four
+   bespoke gradients, so a theme sets one colour per category instead of restating the
+   whole box fill -- and the hover sheen is one more layer on the same stack, which is
+   what lets the per-type :hover rules collapse into a single --sheen swap. */
+
 /* Marble ground. --ph (panel height in px) is set by sizeSbPanel() -- the panel cannot
    use its own cqh units here (an element is never its own container-query container, so
    cqh in this rule would silently resolve against the viewport instead), and its frame
    still has to scale with the board. */
 #sb-panel{
-  background-color:#e9e0c9;
+  background-color:var(--felt-2);
   background-image:
-    repeating-linear-gradient(64deg,rgba(255,255,255,.26) 0 1px,transparent 1px 37px),
-    repeating-linear-gradient(-51deg,rgba(193,175,134,.14) 0 1px,transparent 1px 53px),
-    linear-gradient(72deg,transparent 0 17.6%,rgba(255,255,255,.44) 18% 18.7%,transparent 19.1% 39.6%,rgba(188,170,127,.20) 40% 40.7%,transparent 41.1% 100%),
-    linear-gradient(-63deg,transparent 0 26.6%,rgba(255,255,255,.40) 27.1% 27.9%,transparent 28.3% 60.6%,rgba(198,180,139,.17) 61% 61.8%,transparent 62.2% 100%),
-    linear-gradient(21deg,transparent 0 71%,rgba(255,255,255,.30) 71.4% 72%,transparent 72.4% 100%),
-    radial-gradient(120% 90% at 18% 8%,rgba(255,252,243,.92),transparent 60%),
-    radial-gradient(110% 82% at 84% 93%,rgba(212,197,160,.52),transparent 62%),
-    linear-gradient(158deg,#f5edda 0%,#e9dfc7 38%,#f2e9d7 62%,#dfd4b8 100%);
+    repeating-linear-gradient(64deg,var(--vein-hi) 0 1px,transparent 1px 37px),
+    repeating-linear-gradient(-51deg,var(--vein-lo) 0 1px,transparent 1px 53px),
+    linear-gradient(72deg,transparent 0 17.6%,var(--vein-hi) 18% 18.7%,transparent 19.1% 39.6%,var(--vein-lo) 40% 40.7%,transparent 41.1% 100%),
+    linear-gradient(-63deg,transparent 0 26.6%,var(--vein-hi) 27.1% 27.9%,transparent 28.3% 60.6%,var(--vein-lo) 61% 61.8%,transparent 62.2% 100%),
+    linear-gradient(21deg,transparent 0 71%,var(--vein-hi) 71.4% 72%,transparent 72.4% 100%),
+    radial-gradient(120% 90% at 18% 8%,var(--glow-hi),transparent 60%),
+    radial-gradient(110% 82% at 84% 93%,var(--glow-lo),transparent 62%),
+    linear-gradient(158deg,var(--felt-1) 0%,var(--felt-2) 38%,var(--felt-3) 62%,var(--felt-4) 100%);
   border-radius:calc(var(--ph,941px)*.010);
   box-shadow:
-    inset 0 0 0 calc(var(--ph,941px)*.0022) #8d6f22,
-    inset 0 0 0 calc(var(--ph,941px)*.0055) #d9bc65,
-    inset 0 0 0 calc(var(--ph,941px)*.0080) #f3e9c4,
-    inset 0 0 0 calc(var(--ph,941px)*.0105) #a8862a,
-    inset 0 0 calc(var(--ph,941px)*.06) rgba(150,125,70,.16);
+    inset 0 0 0 calc(var(--ph,941px)*.0022) var(--edge-1),
+    inset 0 0 0 calc(var(--ph,941px)*.0055) var(--edge-2),
+    inset 0 0 0 calc(var(--ph,941px)*.0080) var(--edge-3),
+    inset 0 0 0 calc(var(--ph,941px)*.0105) var(--edge-4),
+    inset 0 0 calc(var(--ph,941px)*.06) var(--edge-glow);
 }
 
-/* One gold-plate treatment for all 51 bet cells. The ID rules further up
+/* One plate treatment for all 51 bet cells. The ID rules further up
    (#btn-small/#btn-big/#any-triple-btn) and the per-type :hover/.active rules are all
    restated here because they out-specify or tie with a bare .sb-cell -- an ID beats any
    class outright, and .dom-cell:hover / .dom-cell.active tie .sb-cell at 0,2,0 and would
@@ -547,50 +575,32 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 #any-triple-btn,#any-triple-btn:hover,#any-triple-btn.active{
   --frame:clamp(1.5px,.72cqh,9px);
   --rad:clamp(3px,1.25cqh,15px);
+  --tint:transparent;
+  --sheen:transparent;
   border:var(--frame) solid transparent;
   border-radius:var(--rad);
   padding:calc(var(--frame)*.55);
   background:
-    linear-gradient(180deg,#fdf9e8 0%,#faf3d4 44%,#f2e7b4 100%) padding-box,
-    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
-  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) rgba(150,112,25,.26),
-             0 calc(var(--frame)*.22) calc(var(--frame)*.7) rgba(92,70,20,.30);
+    linear-gradient(var(--sheen),var(--sheen)) padding-box,
+    linear-gradient(var(--tint),var(--tint)) padding-box,
+    linear-gradient(180deg,var(--box-1) 0%,var(--box-2) 44%,var(--box-3) 100%) padding-box,
+    var(--metal) border-box;
+  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) var(--box-shade),
+             0 calc(var(--frame)*.22) calc(var(--frame)*.7) var(--drop-shade);
   overflow:hidden;
 }
-/* Totals 4-10 read as SMALL, 11-17 as BIG -- the same blue/red split the two header cells
-   use, carried on the box's own interior so the gold frame survives (see makeTotCell). */
-.tot-small{
-  background:
-    linear-gradient(180deg,#f2f5ec 0%,#ecf1e2 44%,#e2ebc8 100%) padding-box,
-    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
-}
-.tot-big{
-  background:
-    linear-gradient(180deg,#fdf4e4 0%,#faedd0 44%,#f3e1b0 100%) padding-box,
-    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
-}
-/* Deck wants doubles and triples to stay readable as a matched pair without a heavy fill.
-   The tint now rides on the box's OWN cream interior (the padding-box layer) rather than
-   being a wash laid over artwork, so the gold frame is untouched. */
-.dbl-cell{
-  background:
-    linear-gradient(180deg,#f4f5ea 0%,#eff2dc 44%,#e7ecbe 100%) padding-box,
-    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
-}
-.trip-cell{
-  background:
-    linear-gradient(180deg,#fbf3e8 0%,#f7ecd6 44%,#efe0b8 100%) padding-box,
-    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
-}
-.sb-cell:hover,#btn-small:hover,#btn-big:hover,#any-triple-btn:hover{
-  background:
-    linear-gradient(180deg,#fffdf3 0%,#fdf8e0 44%,#f8efc6 100%) padding-box,
-    linear-gradient(155deg,#a87d1b 0%,#e8c257 10%,#fffbe0 21%,#eed07a 33%,#c8a038 47%,#a07714 59%,#dcba4d 73%,#fff5cd 85%,#bd932a 100%) border-box;
-}
+/* Totals 4-10 read as SMALL, 11-17 as BIG -- the same split the two header cells use,
+   and doubles/triples stay readable as a matched pair (Deck) without a heavy fill. Each
+   is one flat colour on the tint layer, so a theme sets four values, not four gradients. */
+.tot-small{--tint:var(--tint-small)}
+.tot-big{--tint:var(--tint-big)}
+.dbl-cell{--tint:var(--tint-dbl)}
+.trip-cell{--tint:var(--tint-trip)}
+.sb-cell:hover,#btn-small:hover,#btn-big:hover,#any-triple-btn:hover{--sheen:var(--sheen-on)}
 .sb-cell.active,#btn-small.active,#btn-big.active,#any-triple-btn.active{
-  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) rgba(150,112,25,.26),
-             0 0 0 calc(var(--frame)*.42) rgba(255,214,90,.95),
-             0 0 calc(var(--frame)*2.4) rgba(255,198,60,.6);
+  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) var(--box-shade),
+             0 0 0 calc(var(--frame)*.42) var(--active-ring),
+             0 0 calc(var(--frame)*2.4) var(--active-glow);
 }
 
 /* The art's seam ornaments (a small gold dart straddling each join between two boxes) are
@@ -641,9 +651,9 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   border:var(--frame) solid transparent;
   border-radius:clamp(3px,1.25cqh,15px);
   background:
-    linear-gradient(180deg,#fdf9e8 0%,#faf3d4 44%,#f2e7b4 100%) padding-box,
-    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
-  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) rgba(150,112,25,.26);
+    linear-gradient(180deg,var(--box-1) 0%,var(--box-2) 44%,var(--box-3) 100%) padding-box,
+    var(--metal) border-box;
+  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) var(--box-shade);
 }
 /* The ROLL wordmark was baked into the art, which is why this button was painted fully
    transparent -- text, background, border and shadow -- and left as a bare hitbox over
@@ -655,21 +665,195 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
   border:var(--frame) solid transparent!important;
   border-radius:clamp(3px,1.25cqh,15px)!important;
   background:
-    linear-gradient(180deg,#fdf9e8 0%,#faf3d4 44%,#f2e7b4 100%) padding-box,
-    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box!important;
-  color:#6b4a08!important;
+    linear-gradient(180deg,var(--box-1) 0%,var(--box-2) 44%,var(--box-3) 100%) padding-box,
+    var(--metal) border-box!important;
+  color:var(--roll-ink)!important;
   font-family:'Cinzel',Georgia,'Times New Roman',serif;
   font-weight:700;font-size:clamp(11px,5.2cqh,64px);letter-spacing:.16em;
-  text-shadow:0 1px 0 rgba(255,255,255,.7),0 -1px 0 rgba(122,90,14,.45)!important;
+  text-shadow:var(--roll-shadow)!important;
   box-shadow:inset 0 calc(var(--frame)*.3) calc(var(--frame)*.8) rgba(150,112,25,.26),
              0 calc(var(--frame)*.2) calc(var(--frame)*.6) rgba(92,70,20,.3)!important;
 }
 #roll-btn:hover{
   background:
-    linear-gradient(180deg,#fffdf3 0%,#fdf8e0 44%,#f8efc6 100%) padding-box,
-    linear-gradient(155deg,#a87d1b 0%,#e8c257 10%,#fffbe0 21%,#eed07a 33%,#c8a038 47%,#a07714 59%,#dcba4d 73%,#fff5cd 85%,#bd932a 100%) border-box!important;
+    linear-gradient(var(--sheen-on),var(--sheen-on)) padding-box,
+    linear-gradient(180deg,var(--box-1) 0%,var(--box-2) 44%,var(--box-3) 100%) padding-box,
+    var(--metal) border-box!important;
 }
 #roll-btn:disabled{filter:grayscale(.55) brightness(.92);cursor:default}
+
+/* ── THE PALETTES ─────────────────────────────────────────────────────────────
+   Six boards: three light, three dark. Each block is a complete ink+surface set --
+   a theme never inherits a colour from another, so adding a seventh means copying one
+   block and nothing else. Ivory is also declared on bare #sb-panel so the board still
+   renders correctly if data-felt is missing or holds a name that no longer exists.
+   Ink choice per theme is a contrast decision, not a taste one: the light boards take
+   near-black category hues, the dark boards take pale ones, because the same ink cannot
+   read against both a cream and an obsidian interior.
+   Each block is also hooked to a plain .felt-<id> class. That is what lets the picker's
+   preview cards -- which live in a modal OUTSIDE #sb-panel, where the id selector cannot
+   reach -- paint themselves from the very same declarations the board uses, instead of the
+   palettes being duplicated in JS just to draw six swatches. */
+
+/* 1. IVORY & GOLD -- the original angel board, kept as the default. */
+#sb-panel,#sb-panel[data-felt="ivory"],.felt-ivory{
+  --felt-1:#f5edda;--felt-2:#e9dfc7;--felt-3:#f2e9d7;--felt-4:#dfd4b8;
+  --vein-hi:rgba(255,255,255,.40);--vein-lo:rgba(190,172,130,.18);
+  --glow-hi:rgba(255,252,243,.92);--glow-lo:rgba(212,197,160,.52);
+  --edge-1:#8d6f22;--edge-2:#d9bc65;--edge-3:#f3e9c4;--edge-4:#a8862a;--edge-glow:rgba(150,125,70,.16);
+  --metal:linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%);
+  --box-1:#fdf9e8;--box-2:#faf3d4;--box-3:#f2e7b4;
+  --box-shade:rgba(150,112,25,.26);--drop-shade:rgba(92,70,20,.30);
+  --sheen-on:rgba(255,255,255,.45);
+  --active-ring:rgba(255,214,90,.95);--active-glow:rgba(255,198,60,.60);
+  --tint-small:rgba(20,60,130,.075);--tint-big:rgba(130,20,20,.075);
+  --tint-dbl:rgba(12,37,64,.065);--tint-trip:rgba(74,16,48,.065);
+  --ink:#2b1806;--ink-soft:rgba(43,24,6,.72);--ink-accent:#7a5c00;--ink-good:#145214;
+  --ink-small:#0c2540;--ink-big:#4a0e0e;--ink-trip:#4a1030;--ink-trip-soft:rgba(74,16,48,.75);
+  --ink-dbl:rgba(12,37,64,.78);--ink-dom:rgba(18,48,24,.75);--ink-any:rgba(74,48,5,.78);
+  --roll-ink:#6b4a08;--roll-shadow:0 1px 0 rgba(255,255,255,.7),0 -1px 0 rgba(122,90,14,.45);
+}
+
+/* 2. EMERALD & GOLD -- a real casino baize under the same gold. */
+#sb-panel[data-felt="emerald"],.felt-emerald{
+  --felt-1:#1c4a34;--felt-2:#123425;--felt-3:#1f5439;--felt-4:#0d2619;
+  --vein-hi:rgba(140,220,175,.16);--vein-lo:rgba(6,26,16,.35);
+  --glow-hi:rgba(70,150,105,.45);--glow-lo:rgba(4,20,12,.55);
+  --edge-1:#0a1f14;--edge-2:#c9a944;--edge-3:#f2e6b8;--edge-4:#8a6a1c;--edge-glow:rgba(0,0,0,.35);
+  --metal:linear-gradient(155deg,#7d5a10 0%,#cfa73c 10%,#f7edc0 21%,#dbbb5e 33%,#ac8628 47%,#7d5a10 59%,#c5a338 73%,#efe1a8 85%,#9a761c 100%);
+  --box-1:#246a4b;--box-2:#1b5439;--box-3:#13402b;
+  --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:rgba(255,220,110,.95);--active-glow:rgba(255,205,70,.55);
+  --tint-small:rgba(90,170,255,.13);--tint-big:rgba(255,120,110,.13);
+  --tint-dbl:rgba(90,170,255,.10);--tint-trip:rgba(210,140,255,.10);
+  --ink:#f6edcd;--ink-soft:rgba(246,237,205,.80);--ink-accent:#ffd869;--ink-good:#8fe0a0;
+  --ink-small:#bcd9ff;--ink-big:#ffc0b8;--ink-trip:#efc6ff;--ink-trip-soft:rgba(239,198,255,.82);
+  --ink-dbl:rgba(188,217,255,.85);--ink-dom:rgba(190,240,205,.85);--ink-any:rgba(255,231,168,.88);
+  --roll-ink:#f8eec8;--roll-shadow:0 1px 0 rgba(0,0,0,.55),0 -1px 0 rgba(255,240,190,.25);
+}
+
+/* 3. OBSIDIAN & GOLD -- black marble, maximum contrast against the gold. */
+#sb-panel[data-felt="obsidian"],.felt-obsidian{
+  --felt-1:#1b1a20;--felt-2:#141318;--felt-3:#232128;--felt-4:#0d0c10;
+  --vein-hi:rgba(220,215,235,.14);--vein-lo:rgba(0,0,0,.45);
+  --glow-hi:rgba(90,86,105,.40);--glow-lo:rgba(0,0,0,.55);
+  --edge-1:#000;--edge-2:#c9a944;--edge-3:#f2e6b8;--edge-4:#7d5f16;--edge-glow:rgba(0,0,0,.5);
+  --metal:linear-gradient(155deg,#6f4f0d 0%,#c9a23a 10%,#fbf3d0 21%,#dcbc5e 33%,#a67f22 47%,#6f4f0d 59%,#c19d33 73%,#f3e7b2 85%,#8e6c14 100%);
+  --box-1:#2b2934;--box-2:#201f28;--box-3:#17161d;
+  --box-shade:rgba(0,0,0,.45);--drop-shade:rgba(0,0,0,.5);
+  --sheen-on:rgba(255,255,255,.10);
+  --active-ring:rgba(255,214,90,.95);--active-glow:rgba(255,198,60,.55);
+  --tint-small:rgba(70,150,255,.15);--tint-big:rgba(255,95,85,.15);
+  --tint-dbl:rgba(70,150,255,.11);--tint-trip:rgba(200,120,255,.11);
+  --ink:#f2e8c9;--ink-soft:rgba(242,232,201,.78);--ink-accent:#ffd45e;--ink-good:#7fdc95;
+  --ink-small:#a9cdff;--ink-big:#ffb3ab;--ink-trip:#e9b8ff;--ink-trip-soft:rgba(233,184,255,.80);
+  --ink-dbl:rgba(169,205,255,.85);--ink-dom:rgba(160,235,180,.85);--ink-any:rgba(255,224,150,.88);
+  --roll-ink:#f8eec8;--roll-shadow:0 1px 0 rgba(0,0,0,.6),0 -1px 0 rgba(255,238,180,.22);
+}
+
+/* 4. SAPPHIRE & PLATINUM -- cool blue stone with a white-metal frame. */
+#sb-panel[data-felt="sapphire"],.felt-sapphire{
+  --felt-1:#1b2c4c;--felt-2:#142238;--felt-3:#22375c;--felt-4:#0e1728;
+  --vein-hi:rgba(190,215,255,.17);--vein-lo:rgba(4,10,22,.38);
+  --glow-hi:rgba(90,130,200,.42);--glow-lo:rgba(4,10,22,.55);
+  --edge-1:#070d18;--edge-2:#b9c6d8;--edge-3:#eef3fa;--edge-4:#6d7c92;--edge-glow:rgba(0,0,0,.35);
+  --metal:linear-gradient(155deg,#61708a 0%,#b3c1d4 10%,#f6faff 21%,#c6d2e2 33%,#8b9ab1 47%,#5d6b84 59%,#aab8cc 73%,#eef4fb 85%,#7c8ba2 100%);
+  --box-1:#2a3f66;--box-2:#203254;--box-3:#18263f;
+  --box-shade:rgba(0,0,0,.36);--drop-shade:rgba(0,0,0,.44);
+  --sheen-on:rgba(255,255,255,.12);
+  --active-ring:rgba(190,225,255,.95);--active-glow:rgba(130,190,255,.55);
+  --tint-small:rgba(120,200,255,.13);--tint-big:rgba(255,130,120,.13);
+  --tint-dbl:rgba(120,200,255,.10);--tint-trip:rgba(205,150,255,.10);
+  --ink:#eaf1fd;--ink-soft:rgba(234,241,253,.78);--ink-accent:#9fd4ff;--ink-good:#8ce0ad;
+  --ink-small:#bfe0ff;--ink-big:#ffc2ba;--ink-trip:#e3c4ff;--ink-trip-soft:rgba(227,196,255,.82);
+  --ink-dbl:rgba(191,224,255,.86);--ink-dom:rgba(178,238,205,.86);--ink-any:rgba(255,232,180,.88);
+  --roll-ink:#f2f7ff;--roll-shadow:0 1px 0 rgba(0,0,0,.5),0 -1px 0 rgba(220,235,255,.28);
+}
+
+/* 5. BURGUNDY & BRASS -- oxblood stone, warmer and darker metal than the gold. */
+#sb-panel[data-felt="burgundy"],.felt-burgundy{
+  --felt-1:#48192a;--felt-2:#361120;--felt-3:#551f33;--felt-4:#280b16;
+  --vein-hi:rgba(255,205,215,.15);--vein-lo:rgba(20,4,10,.38);
+  --glow-hi:rgba(150,70,95,.42);--glow-lo:rgba(20,4,10,.55);
+  --edge-1:#1b0710;--edge-2:#c39a4e;--edge-3:#efdcae;--edge-4:#8a6526;--edge-glow:rgba(0,0,0,.38);
+  --metal:linear-gradient(155deg,#6d4a12 0%,#b98f36 10%,#f0dda6 21%,#cfae5c 33%,#9c7526 47%,#6d4a12 59%,#b48b33 73%,#ecd9a4 85%,#8a661c 100%);
+  --box-1:#5d2739;--box-2:#4a1d2d;--box-3:#381522;
+  --box-shade:rgba(0,0,0,.38);--drop-shade:rgba(0,0,0,.45);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:rgba(255,208,120,.95);--active-glow:rgba(255,180,90,.55);
+  --tint-small:rgba(120,180,255,.13);--tint-big:rgba(255,140,120,.12);
+  --tint-dbl:rgba(120,180,255,.10);--tint-trip:rgba(215,150,255,.10);
+  --ink:#f9e6d5;--ink-soft:rgba(249,230,213,.78);--ink-accent:#ffcf85;--ink-good:#93dfa6;
+  --ink-small:#c5dcff;--ink-big:#ffc7bd;--ink-trip:#eec6ff;--ink-trip-soft:rgba(238,198,255,.82);
+  --ink-dbl:rgba(197,220,255,.86);--ink-dom:rgba(186,238,200,.86);--ink-any:rgba(255,229,178,.88);
+  --roll-ink:#ffeeda;--roll-shadow:0 1px 0 rgba(0,0,0,.55),0 -1px 0 rgba(255,225,185,.25);
+}
+
+/* 6. ROSE & ROSE GOLD -- the softest of the light boards. */
+#sb-panel[data-felt="rose"],.felt-rose{
+  --felt-1:#f8ebe8;--felt-2:#efdad7;--felt-3:#fbf1ef;--felt-4:#e4c8c5;
+  --vein-hi:rgba(255,255,255,.46);--vein-lo:rgba(190,140,140,.18);
+  --glow-hi:rgba(255,248,246,.92);--glow-lo:rgba(216,174,172,.50);
+  --edge-1:#8a5147;--edge-2:#e0aa96;--edge-3:#fbe6dd;--edge-4:#b4705f;--edge-glow:rgba(150,95,85,.16);
+  --metal:linear-gradient(155deg,#8f5341 0%,#d99b81 10%,#fdeae0 21%,#e5ab90 33%,#b97a62 47%,#8f5341 59%,#d29578 73%,#f8e0d3 85%,#a96550 100%);
+  --box-1:#fdf3f1;--box-2:#f9e7e4;--box-3:#f2d6d2;
+  --box-shade:rgba(150,95,85,.24);--drop-shade:rgba(105,60,52,.28);
+  --sheen-on:rgba(255,255,255,.5);
+  --active-ring:rgba(255,180,150,.95);--active-glow:rgba(255,150,120,.55);
+  --tint-small:rgba(30,70,140,.075);--tint-big:rgba(140,25,30,.075);
+  --tint-dbl:rgba(18,45,80,.06);--tint-trip:rgba(80,20,55,.06);
+  --ink:#43202a;--ink-soft:rgba(67,32,42,.72);--ink-accent:#9a5237;--ink-good:#1d5b34;
+  --ink-small:#123055;--ink-big:#5c1418;--ink-trip:#54153c;--ink-trip-soft:rgba(84,21,60,.75);
+  --ink-dbl:rgba(18,48,85,.78);--ink-dom:rgba(20,58,32,.75);--ink-any:rgba(94,55,20,.80);
+  --roll-ink:#7d3a2a;--roll-shadow:0 1px 0 rgba(255,255,255,.72),0 -1px 0 rgba(140,80,62,.42);
+}
+
+/* Palette-driven properties must not be transitioned. Chrome does not re-resolve a
+   transitioned property when only the custom property behind its var() changes: the
+   transition runs toward the PREVIOUS target and settles there, so the element is left
+   showing the palette before last. #roll-btn (transition:all .1s) and .gmode-btn
+   (transition:all .15s) are the only themed elements that transition everything, and the
+   roll button was reproducibly one palette behind on colour because of it -- its --roll-ink
+   read correctly the whole time while its computed colour did not. Narrowing the transition
+   to properties no theme touches keeps the hover feel and makes the switch exact. */
+#roll-btn,.gmode-btn{transition-property:filter,transform,opacity,box-shadow}
+
+/* ── PALETTE PICKER ───────────────────────────────────────────────────────────
+   A swatch button beside the roll-log "?" in the history strip, opening a grid of
+   previews. The button paints itself in the current theme's own metal and box colours,
+   so it reads as a sample of what is on the board rather than a generic icon. */
+#felt-btn-sb{
+  width:22px;height:22px;border-radius:50%;cursor:pointer;flex-shrink:0;padding:0;
+  border:1px solid var(--edge-4);box-shadow:0 0 0 2px #000;
+  background:
+    linear-gradient(180deg,var(--box-1) 0%,var(--box-2) 50%,var(--box-3) 100%) padding-box,
+    var(--metal) border-box;
+}
+#felt-btn-sb:hover{filter:brightness(1.12)}
+.felt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.felt-card{
+  border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:0;cursor:pointer;
+  overflow:hidden;text-align:left;background:none;display:block;
+}
+.felt-card:hover{border-color:rgba(255,215,0,.55)}
+.felt-card.on{border-color:#ffd700;box-shadow:0 0 0 2px rgba(255,215,0,.35)}
+/* The preview is the real thing in miniature: the theme's marble, one framed box on it,
+   and the box's own ink -- built from the same variables the board uses, so a palette
+   can never look one way here and another way on the felt. */
+.felt-prev{height:52px;display:flex;align-items:center;justify-content:center;
+  background-image:
+    radial-gradient(120% 90% at 18% 8%,var(--glow-hi),transparent 60%),
+    radial-gradient(110% 82% at 84% 93%,var(--glow-lo),transparent 62%),
+    linear-gradient(158deg,var(--felt-1) 0%,var(--felt-2) 38%,var(--felt-3) 62%,var(--felt-4) 100%);}
+.felt-prev span{
+  display:block;padding:5px 14px;border:2px solid transparent;border-radius:5px;
+  font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:14px;color:var(--ink);
+  background:
+    linear-gradient(180deg,var(--box-1) 0%,var(--box-2) 44%,var(--box-3) 100%) padding-box,
+    var(--metal) border-box;}
+.felt-name{display:block;font-size:13px;padding:5px 6px;color:rgba(255,255,255,.8);
+  background:rgba(0,0,0,.35);letter-spacing:.03em}
 </style>
 </head>
 <body>
@@ -725,6 +909,15 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
     </div>
   </div>
 
+  <div class="modal-overlay hidden" id="modal-felt">
+    <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column">
+      <div class="modal-title" style="margin-bottom:2px">Board Colour</div>
+      <div class="modal-sub" style="margin-bottom:10px">Applies to this board only, and is remembered.</div>
+      <div class="felt-grid" id="felt-grid"></div>
+      <button class="modal-btn cancel" onclick="closeFeltModal()" style="margin-top:10px">Close</button>
+    </div>
+  </div>
+
   <!-- SB-PANEL CALIBRATION MODE toolbar + export, same pattern as Destroyer's calibrator. -->
   <div id="sb-calib-toolbar" class="hidden">
     <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
@@ -769,18 +962,18 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
     <div id="info-panel">
       <div class="cell-fit" style="display:flex;flex-direction:column;gap:3px;align-items:stretch;justify-content:flex-start;width:100%">
         <div class="info-row">
-          <span id="top-bar-username" onclick="dNav('index.html')" style="font-size:19px;font-weight:700;color:#7a5c00;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
+          <span id="top-bar-username" onclick="dNav('index.html')" class="ink-accent" style="font-size:19px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
         </div>
         <div class="info-row">
           <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
-          <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(20,82,20,.5);color:#145214">Cash Out</button>
+          <button class="info-btn ink-good" id="cashout-btn" onclick="cashOut()">Cash Out</button>
           <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
         </div>
         <div class="hud-grid">
-          <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:#2b1806">—</div></div>
-          <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val" id="hud-lastwin" style="color:#145214">—</div></div>
-          <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#7a5c00">$0</div></div>
-          <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#7a5c00">$0</div></div>
+          <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val ink-soft" id="hud-lastbet">—</div></div>
+          <div class="hud-item"><div class="hud-lbl">Last Win</div><div class="hud-val ink-good" id="hud-lastwin">—</div></div>
+          <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val ink-accent" id="hud-bankroll">$0</div></div>
+          <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val ink-accent" id="hud-bet">$0</div></div>
         </div>
       </div>
     </div>
@@ -792,7 +985,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
       <div id="row-top">
         <div class="bs-btn" id="btn-small" onclick="placeBet('small')" oncontextmenu="event.preventDefault();removeBet('small')">
           <div class="cell-fit">
-            <span class="at-lbl" style="color:#0c2540">SMALL</span>
+            <span class="at-lbl">SMALL</span>
             <span class="bs-sub">Numbers from 4 to 10, any triple loses</span>
             <span class="bs-sub">1 pays 1</span>
           </div>
@@ -809,7 +1002,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
         </div>
         <div class="bs-btn" id="btn-big" onclick="placeBet('big')" oncontextmenu="event.preventDefault();removeBet('big')">
           <div class="cell-fit">
-            <span class="at-lbl" style="color:#4a0e0e">BIG</span>
+            <span class="at-lbl">BIG</span>
             <span class="bs-sub">Numbers from 11 to 17, any triple loses</span>
             <span class="bs-sub">1 pays 1</span>
           </div>
@@ -847,6 +1040,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
       <div id="history-strip">
         <div id="roll-history"></div>
         <button id="log-btn-sb" onclick="openLogModal()">?</button>
+        <button id="felt-btn-sb" onclick="openFeltModal()" title="Board colour"></button>
       </div>
       <div id="bottom-bar">
         <div class="chip" data-val="1" onclick="selectChip(1)">$1</div>
@@ -860,7 +1054,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 <div class="chip" data-val="500" onclick="selectChip(500)">$500</div>
           <div class="chip" data-val="1000" onclick="selectChip(1000)">$1000</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.19</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.0</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -960,6 +1154,57 @@ function checkBroke(){if(G.bankroll<=0&&tBets()===0)setTimeout(()=>openRedeemMod
 // Now lives in winner-modal.js (WinnerModal.show/close) -- shared with craps and destroyer.
 function openCapModal(){document.getElementById('modal-cap').classList.remove('hidden');}
 function closeCapModal(){document.getElementById('modal-cap').classList.add('hidden');}
+// ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+// Deck asked for a colour selector for the board. Each entry is only an id matching a
+// #sb-panel[data-felt="..."] block in the stylesheet -- every actual colour lives in CSS,
+// so switching palette is a single attribute write and nothing is repainted from JS.
+const FELT_THEMES=[
+  {id:'ivory',    name:'Ivory & Gold'},
+  {id:'emerald',  name:'Emerald & Gold'},
+  {id:'obsidian', name:'Obsidian & Gold'},
+  {id:'sapphire', name:'Sapphire & Platinum'},
+  {id:'burgundy', name:'Burgundy & Brass'},
+  {id:'rose',     name:'Rose & Rose Gold'},
+];
+const FELT_KEY='sicbo_felt';
+function currentFelt(){
+  let v=null;
+  try{v=localStorage.getItem(FELT_KEY);}catch(e){}
+  // Fall back to ivory for anything unrecognised, so a stale name left in storage by a
+  // renamed or removed theme cannot leave the board with no palette at all.
+  return FELT_THEMES.some(t=>t.id===v)?v:'ivory';
+}
+function applyFelt(id,persist){
+  const theme=FELT_THEMES.some(t=>t.id===id)?id:'ivory';
+  const panel=document.getElementById('sb-panel');
+  if(panel)panel.setAttribute('data-felt',theme);
+  if(persist){try{localStorage.setItem(FELT_KEY,theme);}catch(e){}}
+  const grid=document.getElementById('felt-grid');
+  if(grid)[...grid.children].forEach(c=>c.classList.toggle('on',c.dataset.felt===theme));
+}
+// Preview cards carry the palette as a .felt-<id> class, so each swatch is painted by the
+// exact declarations the board itself uses. A palette therefore cannot look one way in the
+// picker and another way on the felt, and a new theme needs no preview artwork of its own.
+function buildFeltModal(){
+  const grid=document.getElementById('felt-grid');
+  if(!grid||grid.childElementCount)return;
+  FELT_THEMES.forEach(t=>{
+    const card=document.createElement('button');
+    card.className='felt-card felt-'+t.id;
+    card.dataset.felt=t.id;
+    card.innerHTML='<span class="felt-prev"><span>SMALL</span></span><span class="felt-name"></span>';
+    card.querySelector('.felt-name').textContent=t.name;
+    card.onclick=()=>applyFelt(t.id,true);
+    grid.appendChild(card);
+  });
+}
+function openFeltModal(){
+  buildFeltModal();
+  applyFelt(currentFelt(),false);
+  document.getElementById('modal-felt').classList.remove('hidden');
+}
+function closeFeltModal(){document.getElementById('modal-felt').classList.add('hidden');}
+
 function openLogModal(){document.getElementById('modal-log').classList.remove('hidden');}
 function closeLogModal(){document.getElementById('modal-log').classList.add('hidden');}
 function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.prepend(p);while(el.children.length>80)el.removeChild(el.lastChild);const ll=document.getElementById('last-log-line');if(ll){ll.textContent=t;ll.className='log-line '+(c||'');}}
@@ -2164,6 +2409,7 @@ function renderLoop3(now){
 // ── BOOT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth-screen').style.display!=='none')handleAuth();});
 selectChip(25);
+applyFelt(currentFelt(),false);   // before buildTable, so the board never flashes the default palette first
 buildTable();
 // Cinzel is @font-face font-display:block -- the first solve can land against a fallback
 // face whose metrics differ, so re-solve once the real font is actually in.
