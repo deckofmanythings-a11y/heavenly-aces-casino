@@ -50,7 +50,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    button) stay as whole-row CSS rules below, same as before.
    Positions below are Deck's own calibrated export from the drag/resize tool
    (sbCalibExport(), whole pixels on the 1672x941 canvas), converted to %. */
-#sb-panel{position:relative;aspect-ratio:1672/941;max-width:100%;max-height:100%;width:100%;background-image:url('sicbo_panel.webp?v=1');background-size:100% 100%;background-repeat:no-repeat;container-type:size;font-size:1.6cqh;margin:0 auto}
+#sb-panel{position:relative;aspect-ratio:1672/941;max-width:100%;max-height:100%;width:100%;container-type:size;font-size:1.6cqh;margin:0 auto}
 #top-row,#table-area,#bottom-section,#bottom-left,#row-top,#row-dt-top,#row-dt-bot,#doubles-grid-low,#doubles-grid-high,#triples-grid-low,#triples-grid-high,#combos-grid,#totals-row-all,#any-num-row{display:contents!important}
 /* Folded into each cell instead (Deck: "Payout headers will now become part of the number
    cells themselves") -- see buildTable()'s makeDblCell/makeTripCell/combo-cell for the new
@@ -328,16 +328,16 @@ input,textarea{-webkit-user-select:text;user-select:text}
    inherits since it shares that class. */
 
 /* Deck: "I do want to see what the whole table looks like without any of the shading" --
-   every bet cell's background/border stripped so the cream/gold board art shows through
-   directly. !important since #btn-small/#btn-big/#any-triple-btn set their own background/
-   border-color on top of the shared .bs-btn border, and border:none as a shorthand beats any
-   border-color override regardless (border-style:none makes the color moot). */
-#btn-small,#btn-big,#any-triple-btn,.tot-cell,.trip-cell,.dbl-cell,.dom-cell,.any-cell{background:transparent!important;border:none!important}
-/* ...except doubles/triples, which Deck specifically wants to keep distinguishable -- a very
-   subtle tint (5% alpha) instead of the old bold rgba(...,.22-.28) fill, just enough to read
-   as "these two are a matched pair" without fighting the board art underneath. */
-.dbl-cell{background:rgba(12,37,64,.05)!important}
-.trip-cell{background:rgba(74,16,48,.05)!important}
+   every bet cell's background/border was stripped here with !important so the cream/gold
+   board ART showed through the cells directly.
+   REMOVED with the CSS-felt rebuild: there is no art underneath any more, so a blanket
+   background:transparent!important + border:none!important is now the exact opposite of what
+   this board needs -- it was overriding the CSS FELT block's gold frames into nothing (a
+   border shorthand of `none` computes the used border-width to 0, which is why the cells
+   rendered as flat cream rectangles). Deck's actual intent -- no heavy category fills, but
+   doubles and triples still readable as a matched pair -- is carried instead by the tinted
+   interiors on .dbl-cell/.trip-cell in the CSS FELT block, which tint the box's own cream
+   fill rather than laying a colour wash over a picture. */
 
 /* ── SIC-BO PANEL GOTHIC/ANGEL RE-SKIN -- Deck swapped sicbo_panel.webp for a light cream/gold
    angel-themed version (same layout). Every payout/label color above was tuned for the old
@@ -493,6 +493,191 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 .sb-calib-box .sb-calib-dot{position:absolute;left:50%;top:50%;width:6px;height:6px;background:#f0f;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
 #sb-calib-toolbar{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff}
 #sb-calib-toolbar.hidden{display:none}
+
+/* ══ CSS FELT ═══════════════════════════════════════════════════════════════════
+   Deck: "Rebuild the felt but in CSS. Mirror the layout exactly." sicbo_panel.webp
+   (the baked 1672x941 cream/gold angel board) is no longer painted -- the marble
+   ground, every gold bet-box frame, the Home/Info/Roll chrome and the ROLL wordmark
+   are all drawn here instead.
+   The LAYOUT is deliberately NOT re-derived. Every box still takes its geometry from
+   SB_CELL_POS (the 51 bet cells) and the six region rules at the top of this sheet --
+   Deck's own calibrated export -- so the CSS board lands on exactly the coordinates
+   the art occupied, box for box. Nothing in this block sets a position; it only paints.
+
+   Each box is drawn with the two-layer padding-box/border-box gradient trick rather
+   than a ::before overlay: a transparent border of --frame carries the gold bevel via
+   a border-box gradient, while the cream interior is a padding-box gradient sitting
+   behind the content. That keeps cell content in normal flow (no z-index juggling
+   against the chip stacks, which are position:absolute overlays), and with the global
+   box-sizing:border-box the frame grows INWARD, so a framed box still occupies exactly
+   its calibrated width and height. */
+
+/* Marble ground. --ph (panel height in px) is set by sizeSbPanel() -- the panel cannot
+   use its own cqh units here (an element is never its own container-query container, so
+   cqh in this rule would silently resolve against the viewport instead), and its frame
+   still has to scale with the board. */
+#sb-panel{
+  background-color:#e9e0c9;
+  background-image:
+    repeating-linear-gradient(64deg,rgba(255,255,255,.26) 0 1px,transparent 1px 37px),
+    repeating-linear-gradient(-51deg,rgba(193,175,134,.14) 0 1px,transparent 1px 53px),
+    linear-gradient(72deg,transparent 0 17.6%,rgba(255,255,255,.44) 18% 18.7%,transparent 19.1% 39.6%,rgba(188,170,127,.20) 40% 40.7%,transparent 41.1% 100%),
+    linear-gradient(-63deg,transparent 0 26.6%,rgba(255,255,255,.40) 27.1% 27.9%,transparent 28.3% 60.6%,rgba(198,180,139,.17) 61% 61.8%,transparent 62.2% 100%),
+    linear-gradient(21deg,transparent 0 71%,rgba(255,255,255,.30) 71.4% 72%,transparent 72.4% 100%),
+    radial-gradient(120% 90% at 18% 8%,rgba(255,252,243,.92),transparent 60%),
+    radial-gradient(110% 82% at 84% 93%,rgba(212,197,160,.52),transparent 62%),
+    linear-gradient(158deg,#f5edda 0%,#e9dfc7 38%,#f2e9d7 62%,#dfd4b8 100%);
+  border-radius:calc(var(--ph,941px)*.010);
+  box-shadow:
+    inset 0 0 0 calc(var(--ph,941px)*.0022) #8d6f22,
+    inset 0 0 0 calc(var(--ph,941px)*.0055) #d9bc65,
+    inset 0 0 0 calc(var(--ph,941px)*.0080) #f3e9c4,
+    inset 0 0 0 calc(var(--ph,941px)*.0105) #a8862a,
+    inset 0 0 calc(var(--ph,941px)*.06) rgba(150,125,70,.16);
+}
+
+/* One gold-plate treatment for all 51 bet cells. The ID rules further up
+   (#btn-small/#btn-big/#any-triple-btn) and the per-type :hover/.active rules are all
+   restated here because they out-specify or tie with a bare .sb-cell -- an ID beats any
+   class outright, and .dom-cell:hover / .dom-cell.active tie .sb-cell at 0,2,0 and would
+   win on source order alone. */
+.sb-cell,.sb-cell:hover,.sb-cell.active,
+#btn-small,#btn-small:hover,#btn-small.active,
+#btn-big,#btn-big:hover,#btn-big.active,
+#any-triple-btn,#any-triple-btn:hover,#any-triple-btn.active{
+  --frame:clamp(1.5px,.72cqh,9px);
+  --rad:clamp(3px,1.25cqh,15px);
+  border:var(--frame) solid transparent;
+  border-radius:var(--rad);
+  padding:calc(var(--frame)*.55);
+  background:
+    linear-gradient(180deg,#fdf9e8 0%,#faf3d4 44%,#f2e7b4 100%) padding-box,
+    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
+  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) rgba(150,112,25,.26),
+             0 calc(var(--frame)*.22) calc(var(--frame)*.7) rgba(92,70,20,.30);
+  overflow:hidden;
+}
+/* Totals 4-10 read as SMALL, 11-17 as BIG -- the same blue/red split the two header cells
+   use, carried on the box's own interior so the gold frame survives (see makeTotCell). */
+.tot-small{
+  background:
+    linear-gradient(180deg,#f2f5ec 0%,#ecf1e2 44%,#e2ebc8 100%) padding-box,
+    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
+}
+.tot-big{
+  background:
+    linear-gradient(180deg,#fdf4e4 0%,#faedd0 44%,#f3e1b0 100%) padding-box,
+    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
+}
+/* Deck wants doubles and triples to stay readable as a matched pair without a heavy fill.
+   The tint now rides on the box's OWN cream interior (the padding-box layer) rather than
+   being a wash laid over artwork, so the gold frame is untouched. */
+.dbl-cell{
+  background:
+    linear-gradient(180deg,#f4f5ea 0%,#eff2dc 44%,#e7ecbe 100%) padding-box,
+    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
+}
+.trip-cell{
+  background:
+    linear-gradient(180deg,#fbf3e8 0%,#f7ecd6 44%,#efe0b8 100%) padding-box,
+    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
+}
+.sb-cell:hover,#btn-small:hover,#btn-big:hover,#any-triple-btn:hover{
+  background:
+    linear-gradient(180deg,#fffdf3 0%,#fdf8e0 44%,#f8efc6 100%) padding-box,
+    linear-gradient(155deg,#a87d1b 0%,#e8c257 10%,#fffbe0 21%,#eed07a 33%,#c8a038 47%,#a07714 59%,#dcba4d 73%,#fff5cd 85%,#bd932a 100%) border-box;
+}
+.sb-cell.active,#btn-small.active,#btn-big.active,#any-triple-btn.active{
+  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) rgba(150,112,25,.26),
+             0 0 0 calc(var(--frame)*.42) rgba(255,214,90,.95),
+             0 0 calc(var(--frame)*2.4) rgba(255,198,60,.6);
+}
+
+/* Junction ornament -- the little gold dart the art sits on each shared edge between two
+   boxes. Drawn just inside each cell's left frame (the cells are overflow:hidden, so a
+   true straddle of the seam would be clipped in half). .no-orn is applied in JS to the
+   row-opening cell of every row, read straight off SB_CELL_POS's x, so no ornament
+   dangles at the left edge of the board. */
+.sb-cell::after{
+  content:'';position:absolute;pointer-events:none;z-index:2;
+  left:calc(var(--frame)*-.42);top:50%;
+  width:calc(var(--frame)*1.75);height:calc(var(--frame)*4.6);
+  transform:translateY(-50%);
+  clip-path:polygon(50% 0,100% 21%,100% 79%,50% 100%,0 79%,0 21%);
+  background:linear-gradient(180deg,#8d6712 0%,#f4e7b2 34%,#d0a93d 62%,#8d6712 100%);
+}
+.sb-cell.no-orn::after{display:none}
+
+/* ── TEXT SIZING (rules 1-3) ───────────────────────────────────────────────────
+   Each wrapper carries ONE font-size, solved per cell by fitBetCells(); every child is
+   sized in em off it, dice art included, so the whole block scales as a single rigid
+   unit and the largest-that-still-fits size is an exact division rather than a search.
+   width:max-content is what makes the measurement honest -- without it the wrapper is
+   as wide as the cell it sits in, so a long label reports the CELL's width back instead
+   of its own natural width and the solve converges on the wrong number.
+   Rule 3 lives in these em ratios: every payout/qualifier line is a fixed fraction of
+   the label it sits under, so it stays proportionally smaller at every board size. */
+.sb-cell > .cell-fit{
+  width:max-content;max-width:none;flex-shrink:0;
+  gap:.07em;line-height:1.05;
+  font-family:'Cinzel',Georgia,'Times New Roman',serif;
+  transform-origin:center center;
+}
+.sb-cell > .cell-fit *{white-space:nowrap}
+/* !important throughout this section: it is overriding the earlier hand-tuned
+   "readability pass" (see .tot-num/.at-lbl/.dbl-pay etc. around line 305), which sets these
+   same properties at up to 1,1,0 specificity (#btn-small .at-lbl) and pins the dice art with
+   its own !important. Those fixed min(px,cqw) guesses are exactly what the solver replaces --
+   it computes the largest size that genuinely fits each box instead of estimating one. */
+.sb-cell > .cell-fit img{width:1em!important;height:1em!important;flex-shrink:0}
+/* Labels -- the 1em reference each cell's payout text is measured against. */
+.sb-cell .at-lbl{font-size:1em!important;font-weight:700;line-height:1.02;letter-spacing:.02em}
+.sb-cell .tot-num{font-size:1em!important;font-weight:700;line-height:1.02}
+/* Payout / qualifier lines -- deliberately smaller than the label above them. */
+.sb-cell .bs-sub{font-size:.40em!important;font-weight:400;line-height:1.18}
+.sb-cell .at-pay,.sb-cell .tot-pay,.sb-cell .dbl-pay,
+.sb-cell .trip-pay,.sb-cell .dom-pay{font-size:.46em!important;font-weight:400;line-height:1.1}
+/* min-height:8px on the empty totals stack would otherwise pad the measured natural
+   height by a fixed amount that does not scale with the wrapper, skewing the solve. */
+.sb-cell .tot-stk{font-size:.42em!important;min-height:0;line-height:1}
+
+/* ── REGION CHROME ─────────────────────────────────────────────────────────────
+   Home plate, Info plate and the Roll plate are the three framed regions in the art
+   (the dice bay and the history/chip strip are bare marble there, and stay bare here). */
+#left-col-header,#info-panel{
+  --frame:clamp(1.5px,.72cqh,9px);
+  border:var(--frame) solid transparent;
+  border-radius:clamp(3px,1.25cqh,15px);
+  background:
+    linear-gradient(180deg,#fdf9e8 0%,#faf3d4 44%,#f2e7b4 100%) padding-box,
+    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box;
+  box-shadow:inset 0 calc(var(--frame)*.35) calc(var(--frame)*.9) rgba(150,112,25,.26);
+}
+/* The ROLL wordmark was baked into the art, which is why this button was painted fully
+   transparent -- text, background, border and shadow -- and left as a bare hitbox over
+   the picture. With the art gone it has to draw itself again. Every declaration being
+   overridden here is an ID rule carrying !important, so these have to match that weight
+   to land at all. */
+#roll-btn{
+  --frame:clamp(2px,.95cqh,12px);
+  border:var(--frame) solid transparent!important;
+  border-radius:clamp(3px,1.25cqh,15px)!important;
+  background:
+    linear-gradient(180deg,#fdf9e8 0%,#faf3d4 44%,#f2e7b4 100%) padding-box,
+    linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%) border-box!important;
+  color:#6b4a08!important;
+  font-family:'Cinzel',Georgia,'Times New Roman',serif;
+  font-weight:700;font-size:clamp(11px,5.2cqh,64px);letter-spacing:.16em;
+  text-shadow:0 1px 0 rgba(255,255,255,.7),0 -1px 0 rgba(122,90,14,.45)!important;
+  box-shadow:inset 0 calc(var(--frame)*.3) calc(var(--frame)*.8) rgba(150,112,25,.26),
+             0 calc(var(--frame)*.2) calc(var(--frame)*.6) rgba(92,70,20,.3)!important;
+}
+#roll-btn:hover{
+  background:
+    linear-gradient(180deg,#fffdf3 0%,#fdf8e0 44%,#f8efc6 100%) padding-box,
+    linear-gradient(155deg,#a87d1b 0%,#e8c257 10%,#fffbe0 21%,#eed07a 33%,#c8a038 47%,#a07714 59%,#dcba4d 73%,#fff5cd 85%,#bd932a 100%) border-box!important;
+}
+#roll-btn:disabled{filter:grayscale(.55) brightness(.92);cursor:default}
 </style>
 </head>
 <body>
@@ -683,7 +868,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 <div class="chip" data-val="500" onclick="selectChip(500)">$500</div>
           <div class="chip" data-val="1000" onclick="selectChip(1000)">$1000</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.17</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.18</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -1425,7 +1610,7 @@ function buildTable(){
     const el=document.getElementById(id);
     if(el)sbPosition(el,id);
   });
-  const DIE_SZ='width:min(33px,5.4cqw);height:min(33px,5.4cqw);display:inline-block;vertical-align:middle';
+  const DIE_SZ='width:1em;height:1em;display:block';
   const MB_CSS='display:none;position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:2px;background:rgba(0,0,0,.6);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:12px;line-height:9px;text-align:center;cursor:pointer;z-index:3;padding:0';
 
   // Row 4: All 14 totals in one row (4-17)
@@ -1442,11 +1627,11 @@ function buildTable(){
     cell.oncontextmenu=e=>{e.preventDefault();removeBet('double'+v);};
     // Use a table row to guarantee horizontal dice regardless of flex context
     const dd=document.createElement('div');
-    dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
+    dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:.07em;flex-shrink:0';
     for(let i=0;i<2;i++){
       const img=document.createElement('img');
       img.src=DIE3D[v];
-      img.style.cssText='width:min(33px,5.4cqw);height:min(33px,5.4cqw);flex-shrink:0';
+      img.style.cssText='width:1em;height:1em;flex-shrink:0';
       dd.appendChild(img);
     }
     const pay=document.createElement('div');pay.className='dbl-pay';pay.textContent='1 pays 12';
@@ -1463,11 +1648,11 @@ function buildTable(){
     cell.onclick=()=>placeBet('triple'+v);
     cell.oncontextmenu=e=>{e.preventDefault();removeBet('triple'+v);};
     const dd=document.createElement('div');
-    dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2px;width:100%;flex-shrink:0';
+    dd.style.cssText='display:flex;flex-direction:row;align-items:center;justify-content:center;gap:.07em;flex-shrink:0';
     for(let i=0;i<3;i++){
       const img=document.createElement('img');
       img.src=DIE3D[v];
-      img.style.cssText='width:min(33px,5.4cqw);height:min(33px,5.4cqw);flex-shrink:0';
+      img.style.cssText='width:1em;height:1em;flex-shrink:0';
       dd.appendChild(img);
     }
     const pay=document.createElement('div');pay.className='trip-pay';pay.textContent='1 pays 190';
@@ -1495,10 +1680,10 @@ function buildTable(){
     cell.onclick=()=>placeBet(key);
     cell.oncontextmenu=e=>{e.preventDefault();removeBet(key);};
     const dd=document.createElement('div');
-    dd.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0';
+    dd.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.06em;flex-shrink:0';
     [a,b].forEach(v=>{
       const img=document.createElement('img');img.src=DIE3D[v];
-      img.style.cssText='width:min(33px,5.4cqw);height:min(33px,5.4cqw);flex-shrink:0';
+      img.style.cssText='width:1em;height:1em;flex-shrink:0';
       dd.appendChild(img);
     });
     const pay=document.createElement('div');pay.className='dom-pay';pay.textContent='1 pays 6';
@@ -1517,7 +1702,7 @@ function buildTable(){
     const cell=document.createElement('div');cell.className='any-cell';cell.id='cell-any'+v;
     cell.onclick=()=>placeBet('any'+v);
     cell.oncontextmenu=e=>{e.preventDefault();removeBet('any'+v);};
-    const die=document.createElement('div');die.className='any-die';
+    const die=document.createElement('div');die.className='any-die cell-fit';
     const img=document.createElement('img');img.src=DIE3D[v];img.style.cssText=DIE_SZ;
     die.appendChild(img);
     const stk=document.createElement('span');stk.className='any-stk';stk.id='stk-any'+v;
@@ -1533,29 +1718,136 @@ function buildTable(){
   infoCell.style.cssText='cursor:default;padding:3px 5px;color:#111;pointer-events:none';
   const infoWrap=document.createElement('div');
   infoWrap.className='cell-fit';
-  infoWrap.style.cssText='align-items:flex-start;justify-content:center;gap:2px;font-size:min(21px,3.5cqw);line-height:1.4;white-space:nowrap';
+  infoWrap.style.cssText='align-items:flex-start;justify-content:center;gap:.10em;line-height:1.34;white-space:nowrap';
   infoWrap.innerHTML='<span>1 pays 1 on 1 die</span><span>1 pays 2 on 2 dice</span><span>1 pays 12 on 3 dice</span>';
   infoCell.appendChild(infoWrap);
   sbPosition(infoCell,'cell-any-info');
   an.appendChild(infoCell);
+  markRowOpeners();
   fitSicboCells();
 }
-// Shrinks each .cell-fit wrapper (dice icons + folded-in payout text) down just enough to fit
-// its cell's real calibrated box -- see the .cell-fit CSS comment for why a single fixed ratio
-// can't serve doubles/triples (wide-short) and combos (narrow-tall) at once. Re-run whenever the
-// panel's actual pixel size changes (sizeSbPanel()'s callers), since the fit is measured in real
-// px, not relative units.
-function fitSicboCells(){
-  document.querySelectorAll('.cell-fit').forEach(wrap=>{
+// ── CELL TEXT FIT ────────────────────────────────────────────────────────────
+// Enforces Deck's three rules for the CSS felt: every cell's content fits its box
+// completely, at the largest size that still fits, with payout lines smaller than the
+// label above them (rule 3 is the em ratios in the stylesheet; rules 1-2 are solved here).
+//
+// This REPLACES a scale-down-only fit. The old one measured natural content and applied
+// transform:scale(Math.min(1,availW/w,availH/h)) -- clamped at 1, so it could only ever
+// rescue a cell that was overflowing and could never grow one whose text sat small in a
+// box with room to spare. Rule 2 was unenforceable by construction under that cap.
+//
+// Because every child of a .cell-fit is sized in em off the wrapper's own font-size (dice
+// art included), the wrapper's natural size scales exactly linearly with that one number.
+// So the largest fitting size is a division, not a search: measure at a 100px reference,
+// multiply by the tighter of the two axis ratios. Two corrective passes follow anyway --
+// real text advances are very slightly non-linear across font sizes once hinting applies.
+const FIT_REF=100;
+function fitBetCells(){
+  document.querySelectorAll('.sb-cell > .cell-fit').forEach(wrap=>{
     const cell=wrap.parentElement;
     if(!cell)return;
+    const cs=getComputedStyle(cell);
+    // clientWidth/Height already exclude the frame (it is this element's border), so only
+    // the cell's own padding has to come off.
+    const availW=cell.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+    const availH=cell.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+    if(!(availW>1)||!(availH>1)){wrap.style.fontSize='';return;}
+    let fs=FIT_REF;
+    wrap.style.fontSize=fs+'px';
+    for(let i=0;i<3;i++){
+      // getBoundingClientRect is sub-pixel where scrollWidth/Height round up to whole px;
+      // take the larger of the two so a child that spills the wrapper still counts.
+      const r=wrap.getBoundingClientRect();
+      const w=Math.max(r.width,wrap.scrollWidth),h=Math.max(r.height,wrap.scrollHeight);
+      if(!(w>0)||!(h>0))break;
+      const s=Math.min(availW/w,availH/h);
+      fs*=s;
+      wrap.style.fontSize=fs+'px';
+      if(Math.abs(s-1)<0.002)break;
+    }
+    // 1.5% headroom -- scrollWidth/Height round up, and sub-pixel layout rounding can
+    // otherwise leave a cell a hair over its box at some board sizes.
+    fs*=0.985;
+    wrap.style.fontSize=fs+'px';
+    // Last-resort guarantee for rule 1. The em solve assumes the wrapper's natural size is
+    // strictly linear in its font-size, which holds only while EVERY child actually scales
+    // with it -- one stray non-scaling child (a px-pinned image, a stylesheet rule that
+    // out-specifies the em ratio, a browser minimum-font-size floor on a very small board)
+    // and the division silently converges on a number that still overflows. This measures
+    // the real result and scales off any residual, so a cell can never end up over its box
+    // even when that assumption breaks. It is a no-op in the normal case.
     wrap.style.transform='none';
-    const availW=cell.clientWidth-4,availH=cell.clientHeight-4; // -4: cell's own 2px padding
-    if(availW<=0||availH<=0)return;
-    const w=wrap.scrollWidth,h=wrap.scrollHeight;
-    if(w<=0||h<=0)return;
-    const scale=Math.min(1,availW/w,availH/h);
-    wrap.style.transform=scale<0.995?'scale('+scale+')':'none';
+    const rr=wrap.getBoundingClientRect();
+    const over=Math.max(Math.max(rr.width,wrap.scrollWidth)/availW,
+                        Math.max(rr.height,wrap.scrollHeight)/availH);
+    wrap.style.transform=over>1.001?'scale('+(1/over)+')':'none';
+  });
+}
+// The Home plate and the Info plate are the two framed regions whose contents are real
+// controls at fixed px rather than em-scaled text, so they cannot use the em solve above --
+// they get scaled down to fit instead.
+// Measuring these honestly needs the same width:max-content trick the bet cells get: both
+// wrappers are laid out at width:100% of their plate, so scrollWidth reports the PLATE's
+// width back rather than the content's own, and an overflowing panel measures as fitting
+// perfectly. (That is exactly what was happening -- the info plate's content ran 176px tall
+// and 140px wide inside a 62x116 box while this reported no overflow at all and left the
+// scale at 1.) Widen to max-content, measure, restore, then scale.
+function fitRegionContent(wrap){
+  const box=wrap.parentElement;
+  if(!box)return;
+  wrap.style.transform='none';
+  // clientWidth/Height include the plate's own padding, which the content cannot use --
+  // #info-panel carries padding:4px 6px, so ignoring it overstated the room by 12px across
+  // and left the button row hanging a couple of pixels past the frame.
+  const bs=getComputedStyle(box);
+  const availW=box.clientWidth-parseFloat(bs.paddingLeft)-parseFloat(bs.paddingRight);
+  const availH=box.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom);
+  if(!(availW>1)||!(availH>1))return;
+  // The width stays at max-content -- it is NOT restored afterwards. Measuring at max-content
+  // and then rendering back at width:100% means the scale was solved against a different
+  // layout than the one actually painted: the info plate's button row reflows at the narrower
+  // width and spills sideways, so a scale that fits perfectly during measurement still
+  // overflowed by 34px once restored. Holding one layout for both makes the fit exact.
+  wrap.style.width='max-content';
+  const r=wrap.getBoundingClientRect();
+  const w=Math.max(r.width,wrap.scrollWidth),h=Math.max(r.height,wrap.scrollHeight);
+  if(!(w>0)||!(h>0))return;
+  // 2% headroom, same reason as the bet cells: the measured natural size rounds up, and a
+  // control's own focus ring/shadow can sit a pixel or two outside its layout box.
+  const scale=Math.min(1,(availW/w)*0.98,(availH/h)*0.98);
+  // transform-origin MUST be the top-LEFT corner. Any centred origin scales about the
+  // element's own UNSCALED midpoint, and whenever the content is bigger than its plate that
+  // midpoint already sits outside the box -- so the scaled result stays hung outside it no
+  // matter how small the factor gets. Both axes were measured doing exactly that: a correct
+  // 0.399 scale on the info plate still overflowed 56px downward with a centre-y origin, and
+  // 90px sideways with a centre-x one. The wrapper's top-left corner is the one point
+  // guaranteed to be inside the plate, so scaling from there can only ever shrink inward.
+  // Centring is then done explicitly, by translating the leftover slack -- which is the same
+  // result a centred origin was reaching for, without the containment hole.
+  wrap.style.transformOrigin='top left';
+  if(scale<0.995){
+    const dx=Math.max(0,(availW-w*scale)/2),dy=Math.max(0,(availH-h*scale)/2);
+    wrap.style.transform='translate('+dx+'px,'+dy+'px) scale('+scale+')';
+  }else{
+    wrap.style.transform='none';
+  }
+}
+function fitSicboCells(){
+  document.querySelectorAll('#info-panel > .cell-fit').forEach(fitRegionContent);
+  const home=document.getElementById('game-mode-toggle');
+  if(home)fitRegionContent(home);
+  fitBetCells();
+}
+// The ornament straddling each seam between two boxes must not appear on the cell that
+// OPENS a row, or it hangs off the left edge of the board. Read the row-opening cells off
+// SB_CELL_POS's own x rather than listing ids by hand, so it cannot drift when the table
+// is recalibrated.
+function markRowOpeners(){
+  Object.keys(SB_CELL_POS).forEach(id=>{
+    if(SB_CELL_POS[id][0]<2){
+      const el=document.getElementById(id);
+      if(el)el.classList.add('no-orn');
+    }
   });
 }
 
@@ -1696,8 +1988,12 @@ function makeTotCell(t){
   const cell=document.createElement('div');cell.className='tot-cell';cell.id='cell-total'+t;
   cell.onclick=()=>placeBet('total'+t);
   cell.oncontextmenu=e=>{e.preventDefault();removeBet('total'+t);};
-  if(t<=10){cell.style.background='rgba(0,80,180,.25)';cell.style.borderColor='rgba(100,160,255,.4)';}
-  else{cell.style.background='rgba(180,0,0,.25)';cell.style.borderColor='rgba(255,100,100,.4)';}
+  // Which half of the board a total belongs to (4-10 SMALL, 11-17 BIG) is marked with a class
+  // now, not an inline background. Inline styles beat any stylesheet rule that is not
+  // !important, so painting it here would override the CSS felt's gold frame and cream
+  // interior on all 14 totals cells -- the tint belongs on the box's own interior, which
+  // .tot-small/.tot-big do in the CSS FELT block.
+  cell.classList.add(t<=10?'tot-small':'tot-big');
   const num=document.createElement('div');num.className='tot-num';num.textContent=t;
   const pay=document.createElement('div');pay.className='tot-pay';pay.textContent='1 pays '+TOTAL_PAY[t];
   const stk=document.createElement('div');stk.className='tot-stk';stk.id='stk-total'+t;
@@ -1835,6 +2131,9 @@ function sizeSbPanel(){
   if(h>H){h=H;w=h*RATIO;}
   panel.style.width=w+'px';
   panel.style.height=h+'px';
+  // #sb-panel is its own container-query container, so cqh inside its own rule resolves
+  // against the viewport rather than the board -- publish the real height for its frame.
+  panel.style.setProperty('--ph',h+'px');
   if(typeof fitSicboCells==='function')fitSicboCells();
 }
 window.addEventListener('resize',sizeSbPanel);
@@ -1887,6 +2186,9 @@ function renderLoop3(now){
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth-screen').style.display!=='none')handleAuth();});
 selectChip(25);
 buildTable();
+// Cinzel is @font-face font-display:block -- the first solve can land against a fallback
+// face whose metrics differ, so re-solve once the real font is actually in.
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{sizeSbPanel();});
 tryRestoreSession();
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
