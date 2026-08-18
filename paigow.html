@@ -8,6 +8,8 @@
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="instructions.js?v=7"></script>
+<link rel="stylesheet" href="felt-themes.css?v=1">
+<script src="felt-themes.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* Single source of truth for chip-stack diameter so every chip (felt bet spots AND
@@ -72,14 +74,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
    the two size and center together as one visual unit instead of the panel floating
    in oversized leftover space with the sidebar pinned to the screen's outer edge --
    the bug in the first version of this). */
-#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px}
+#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:var(--felt-rail);padding:4px}
 #table-felt-wrap{flex:1;min-width:0;height:100%;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;container-type:size}
-#table-panel{position:relative;aspect-ratio:3200/2000;width:min(calc(100cqw - 92px),160cqh);height:min(100cqh,calc((100cqw - 92px)/1.6));flex-shrink:0;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);border:1px solid rgba(255,215,0,.15);border-radius:1.5cqh;container-type:size;display:flex;flex-direction:column}
+#table-panel{position:relative;aspect-ratio:3200/2000;width:min(calc(100cqw - 92px),160cqh);height:min(100cqh,calc((100cqw - 92px)/1.6));flex-shrink:0;background:radial-gradient(ellipse at center,var(--felt-1) 0%,var(--felt-2) 70%,var(--felt-4) 100%);border:1px solid var(--edge-2);border-radius:1.5cqh;container-type:size;display:flex;flex-direction:column}
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
 .card-region{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:0.3cqh 1cqh;min-height:0}
-.card-region + .card-region{border-top:1px solid rgba(255,215,0,.12)}
-.felt-label{font-family:'Cinzel',serif;font-weight:800;color:#ffe066;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);font-size:2.1cqh;margin-bottom:0.3cqh}
+.card-region + .card-region{border-top:1px solid var(--edge-glow)}
+.felt-label{font-family:'Cinzel',serif;font-weight:800;color:var(--ink-accent);letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);font-size:2.1cqh;margin-bottom:0.3cqh}
 .split-block{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:0.4cqh;width:100%}
 /* Each row pairs a verbose hand-strength label (to the LEFT) with that row's cards --
    e.g. "Pair of Kings" beside the High row, "Jack High" beside the Low row. The whole
@@ -100,7 +102,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .pc-slot-wrap.selectable:hover .pc-card{transform:translateY(-0.4cqh)}
 .pc-slot-wrap.selected .pc-card .pc-face{box-shadow:0 0 0 3px #ffd700,0 2px 8px rgba(0,0,0,.5)}
 .pc-slot-wrap.selected .pc-card{transform:translateY(-0.8cqh)}
-.select-hint{font-size:1.5cqh;min-height:1.8cqh;text-align:center;color:rgba(255,255,255,.6);margin-top:0.15cqh}
+.select-hint{font-size:1.5cqh;min-height:1.8cqh;text-align:center;color:var(--ink-soft);margin-top:0.15cqh}
 .select-hint.ok{color:#7ee87e}
 .select-hint.bad{color:#ff8a80}
 
@@ -109,9 +111,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
    Light on top, Ante on bottom, per Deck's explicit order. ── */
 #bet-sidebar{display:flex;flex-direction:column;flex-shrink:0;align-items:center;justify-content:center;gap:2.2vh;padding:4px 2px}
 .bet-spot-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
-.bet-spot{width:min(60px,8.5vw);height:min(60px,8.5vw);border-radius:50%;border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s;--edge:calc(var(--chip)*0.16)}
-.bet-spot:hover{background:rgba(255,215,0,.14)}
-.bet-spot.active{border-color:#ffd700;background:rgba(255,215,0,.22)}
+.bet-spot{width:min(60px,8.5vw);height:min(60px,8.5vw);border-radius:50%;border:2px solid var(--spot-edge);background:var(--spot-fill);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;transition:background .15s,border-color .15s;--edge:calc(var(--chip)*0.16)}
+.bet-spot:hover{background:var(--spot-fill-hover)}
+.bet-spot.active{border-color:var(--active-ring);background:var(--spot-fill-on)}
 .bet-spot.locked{cursor:default}
 .bet-spot .bs-lock{position:absolute;bottom:-3px;right:-3px;background:#b02020;color:#fff;font-size:9px;border-radius:999px;padding:1px 4px;border:1px solid rgba(255,255,255,.6)}
 /* Light badge sized for its own ~80% chip-to-box ratio (chip stays the shared --chip
@@ -129,7 +131,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    on (see dealHand()'s classList.remove->void offsetWidth->classList.add re-trigger). */
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
-.bet-spot-name{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em}
+.bet-spot-name{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
 .paytable-info-btn{width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid rgba(255,215,0,.6);font-size:11px;font-family:Georgia,'Times New Roman',serif;font-style:italic;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-weight:800;position:absolute;top:-4px;right:-4px}
 
 /* ── BET-SPOT CHIP STACKS -- ported wholesale from uth.html/craps ── */
@@ -266,6 +268,45 @@ input,textarea{-webkit-user-select:text;user-select:text}
   .bet-spot.light{width:min(48.75px,11.7vw);height:min(48.75px,11.7vw)}
   #action-row{width:100%}
 }
+
+/* ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+   Pai Gow's own felt, restated as a palette so it is the default rather than a
+   hard-coded look. The six shared palettes live in felt-themes.css; this block is
+   here because "Casino Green" is THIS table's green -- Craps' green is a different
+   one, and neither is a shared option. Values are lifted verbatim from the rules
+   they replaced, so this theme renders exactly as the board did before. */
+[data-felt="classic"],.felt-classic{
+  --theme-label:"Casino Green";--theme-scheme:dark;
+  --felt-1:#0f3324;--felt-2:#081f16;--felt-3:#0c2a1d;--felt-4:#051209;--felt-rail:#0a2218;
+  --vein-hi:rgba(140,220,175,.14);--vein-lo:rgba(4,18,9,.35);
+  --glow-hi:rgba(60,140,95,.40);--glow-lo:rgba(4,18,9,.55);
+  --edge-1:#061109;--edge-2:rgba(255,215,0,.15);--edge-3:#f2e6b8;--edge-4:#8a6a1c;--edge-glow:rgba(255,215,0,.12);
+  --metal:linear-gradient(155deg,#7d5a10 0%,#cfa73c 10%,#f7edc0 21%,#dbbb5e 33%,#ac8628 47%,#7d5a10 59%,#c5a338 73%,#efe1a8 85%,#9a761c 100%);
+  --box-1:#15462f;--box-2:#0f3324;--box-3:#0a2418;
+  --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:#ffd700;--active-glow:rgba(255,205,70,.55);
+  --ink:#ffffff;--ink-soft:rgba(255,255,255,.6);--ink-accent:#ffe066;--ink-good:#7ee87e;
+}
+/* Bet-spot fills are derived per palette rather than shared, because a translucent
+   gold wash reads as a highlight on a dark felt and as dirt on a light one. */
+[data-felt="classic"],.felt-classic,
+[data-felt="emerald"],.felt-emerald,
+[data-felt="obsidian"],.felt-obsidian,
+[data-felt="sapphire"],.felt-sapphire,
+[data-felt="burgundy"],.felt-burgundy{
+  --spot-edge:rgba(255,255,255,.34);--spot-fill:rgba(255,255,255,.07);
+  --spot-fill-hover:rgba(255,255,255,.15);--spot-fill-on:rgba(255,255,255,.24);
+}
+[data-felt="ivory"],.felt-ivory,[data-felt="rose"],.felt-rose{
+  --spot-edge:rgba(70,50,10,.40);--spot-fill:rgba(70,50,10,.06);
+  --spot-fill-hover:rgba(70,50,10,.13);--spot-fill-on:rgba(70,50,10,.20);
+}
+/* Classic keeps the exact gold spot treatment it had before this became themeable. */
+[data-felt="classic"],.felt-classic{
+  --spot-edge:rgba(255,215,0,.4);--spot-fill:rgba(255,215,0,.06);
+  --spot-fill-hover:rgba(255,215,0,.14);--spot-fill-on:rgba(255,215,0,.22);
+}
 </style>
 </head>
 <body>
@@ -344,7 +385,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.25</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.26</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="paigow:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('paigow')" title="How to play">i</button>
@@ -362,6 +403,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
         <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
+        <span id="felt-mount" style="display:flex;align-items:center"></span>
       </div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
@@ -673,6 +715,17 @@ function describeScore(score){
     default: return RANK_NAME[k[0]]+' High';
   }
 }
+
+// ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+// Palettes and the picker itself are shared (felt-themes.css / felt-themes.js); all
+// this game supplies is where the attribute goes, its own storage key, and which
+// palette is its native look. data-felt sits on #game-screen rather than #table-panel
+// so the trigger button -- which paints itself from the live palette -- can live in the
+// info panel and still have a palette to read.
+FeltThemes.init({
+  root:'#game-screen', key:'paigow_felt', defaultId:'classic',
+  mount:'#felt-mount', preview:'ANTE',
+});
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function showTab(tab){_authMode=tab;document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('auth-btn').textContent=tab==='login'?'Log In':'Create Account';document.getElementById('auth-error').style.display='none';}

@@ -1,0 +1,149 @@
+/* ============================================================================
+   felt-themes.css -- site-wide board colour palettes + the picker's own chrome.
+
+   Companion to felt-themes.js. The vocabulary here is the GENERIC table-game set
+   (felt ground, rail, frame metal, bet-box plate, ink). A game needing more than
+   this -- Sic-Bo's per-category tints, for instance -- declares those extra
+   variables in its own palette blocks; they do not belong here, because a
+   variable no other board reads is not shared vocabulary.
+
+   Every palette is keyed BOTH on [data-felt="<id>"] and on a plain .felt-<id>
+   class. The class is not redundant: the picker's preview cards live inside a
+   modal that sits outside the themed root, where the attribute selector cannot
+   reach them, so the class lets a preview paint itself from these exact
+   declarations instead of the colours being duplicated in JS just to draw
+   swatches. Two copies would drift within a week.
+
+   No palette inherits from another. Adding a seventh means copying one block
+   whole -- a partial theme falling through to some other theme's values is the
+   most confusing state this system can reach.
+
+   Each game keeps its OWN current look as an extra palette block in its own
+   <style>, and passes that id to FeltThemes.init() as the default. That is why
+   there is no "green" here: Craps' green and the card tables' green are
+   different greens, and each is a native default rather than a shared option.
+   ========================================================================== */
+
+/* 1. IVORY & GOLD */
+[data-felt="ivory"],.felt-ivory{
+  --theme-label:"Ivory & Gold";--theme-scheme:light;
+  --felt-1:#f5edda;--felt-2:#e9dfc7;--felt-3:#f2e9d7;--felt-4:#dfd4b8;--felt-rail:#cdbf9c;
+  --vein-hi:rgba(255,255,255,.40);--vein-lo:rgba(190,172,130,.18);
+  --glow-hi:rgba(255,252,243,.92);--glow-lo:rgba(212,197,160,.52);
+  --edge-1:#8d6f22;--edge-2:#d9bc65;--edge-3:#f3e9c4;--edge-4:#a8862a;--edge-glow:rgba(150,125,70,.16);
+  --metal:linear-gradient(155deg,#8f6813 0%,#d4ae44 10%,#f7edc0 21%,#dfc067 33%,#b6902e 47%,#8d6712 59%,#ccaa41 73%,#f1e5b3 85%,#a78121 100%);
+  --box-1:#fdf9e8;--box-2:#faf3d4;--box-3:#f2e7b4;
+  --box-shade:rgba(150,112,25,.26);--drop-shade:rgba(92,70,20,.30);
+  --sheen-on:rgba(255,255,255,.45);
+  --active-ring:rgba(255,214,90,.95);--active-glow:rgba(255,198,60,.60);
+  --ink:#2b1806;--ink-soft:rgba(43,24,6,.72);--ink-accent:#7a5c00;--ink-good:#145214;
+}
+/* 2. EMERALD & GOLD */
+[data-felt="emerald"],.felt-emerald{
+  --theme-label:"Emerald & Gold";--theme-scheme:dark;
+  --felt-1:#1c4a34;--felt-2:#123425;--felt-3:#1f5439;--felt-4:#0d2619;--felt-rail:#08190f;
+  --vein-hi:rgba(140,220,175,.16);--vein-lo:rgba(6,26,16,.35);
+  --glow-hi:rgba(70,150,105,.45);--glow-lo:rgba(4,20,12,.55);
+  --edge-1:#0a1f14;--edge-2:#c9a944;--edge-3:#f2e6b8;--edge-4:#8a6a1c;--edge-glow:rgba(0,0,0,.35);
+  --metal:linear-gradient(155deg,#7d5a10 0%,#cfa73c 10%,#f7edc0 21%,#dbbb5e 33%,#ac8628 47%,#7d5a10 59%,#c5a338 73%,#efe1a8 85%,#9a761c 100%);
+  --box-1:#246a4b;--box-2:#1b5439;--box-3:#13402b;
+  --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:rgba(255,220,110,.95);--active-glow:rgba(255,205,70,.55);
+  --ink:#f6edcd;--ink-soft:rgba(246,237,205,.80);--ink-accent:#ffd869;--ink-good:#8fe0a0;
+}
+/* 3. OBSIDIAN & GOLD */
+[data-felt="obsidian"],.felt-obsidian{
+  --theme-label:"Obsidian & Gold";--theme-scheme:dark;
+  --felt-1:#1b1a20;--felt-2:#141318;--felt-3:#232128;--felt-4:#0d0c10;--felt-rail:#08080a;
+  --vein-hi:rgba(220,215,235,.14);--vein-lo:rgba(0,0,0,.45);
+  --glow-hi:rgba(90,86,105,.40);--glow-lo:rgba(0,0,0,.55);
+  --edge-1:#000;--edge-2:#c9a944;--edge-3:#f2e6b8;--edge-4:#7d5f16;--edge-glow:rgba(0,0,0,.5);
+  --metal:linear-gradient(155deg,#6f4f0d 0%,#c9a23a 10%,#fbf3d0 21%,#dcbc5e 33%,#a67f22 47%,#6f4f0d 59%,#c19d33 73%,#f3e7b2 85%,#8e6c14 100%);
+  --box-1:#2b2934;--box-2:#201f28;--box-3:#17161d;
+  --box-shade:rgba(0,0,0,.45);--drop-shade:rgba(0,0,0,.5);
+  --sheen-on:rgba(255,255,255,.10);
+  --active-ring:rgba(255,214,90,.95);--active-glow:rgba(255,198,60,.55);
+  --ink:#f2e8c9;--ink-soft:rgba(242,232,201,.78);--ink-accent:#ffd45e;--ink-good:#7fdc95;
+}
+/* 4. SAPPHIRE & PLATINUM */
+[data-felt="sapphire"],.felt-sapphire{
+  --theme-label:"Sapphire & Platinum";--theme-scheme:dark;
+  --felt-1:#1b2c4c;--felt-2:#142238;--felt-3:#22375c;--felt-4:#0e1728;--felt-rail:#0a1120;
+  --vein-hi:rgba(190,215,255,.17);--vein-lo:rgba(4,10,22,.38);
+  --glow-hi:rgba(90,130,200,.42);--glow-lo:rgba(4,10,22,.55);
+  --edge-1:#070d18;--edge-2:#b9c6d8;--edge-3:#eef3fa;--edge-4:#6d7c92;--edge-glow:rgba(0,0,0,.35);
+  --metal:linear-gradient(155deg,#61708a 0%,#b3c1d4 10%,#f6faff 21%,#c6d2e2 33%,#8b9ab1 47%,#5d6b84 59%,#aab8cc 73%,#eef4fb 85%,#7c8ba2 100%);
+  --box-1:#2a3f66;--box-2:#203254;--box-3:#18263f;
+  --box-shade:rgba(0,0,0,.36);--drop-shade:rgba(0,0,0,.44);
+  --sheen-on:rgba(255,255,255,.12);
+  --active-ring:rgba(190,225,255,.95);--active-glow:rgba(130,190,255,.55);
+  --ink:#eaf1fd;--ink-soft:rgba(234,241,253,.78);--ink-accent:#9fd4ff;--ink-good:#8ce0ad;
+}
+/* 5. BURGUNDY & BRASS */
+[data-felt="burgundy"],.felt-burgundy{
+  --theme-label:"Burgundy & Brass";--theme-scheme:dark;
+  --felt-1:#48192a;--felt-2:#361120;--felt-3:#551f33;--felt-4:#280b16;--felt-rail:#1d0810;
+  --vein-hi:rgba(255,205,215,.15);--vein-lo:rgba(20,4,10,.38);
+  --glow-hi:rgba(150,70,95,.42);--glow-lo:rgba(20,4,10,.55);
+  --edge-1:#1b0710;--edge-2:#c39a4e;--edge-3:#efdcae;--edge-4:#8a6526;--edge-glow:rgba(0,0,0,.38);
+  --metal:linear-gradient(155deg,#6d4a12 0%,#b98f36 10%,#f0dda6 21%,#cfae5c 33%,#9c7526 47%,#6d4a12 59%,#b48b33 73%,#ecd9a4 85%,#8a661c 100%);
+  --box-1:#5d2739;--box-2:#4a1d2d;--box-3:#381522;
+  --box-shade:rgba(0,0,0,.38);--drop-shade:rgba(0,0,0,.45);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:rgba(255,208,120,.95);--active-glow:rgba(255,180,90,.55);
+  --ink:#f9e6d5;--ink-soft:rgba(249,230,213,.78);--ink-accent:#ffcf85;--ink-good:#93dfa6;
+}
+/* 6. ROSE & ROSE GOLD */
+[data-felt="rose"],.felt-rose{
+  --theme-label:"Rose & Rose Gold";--theme-scheme:light;
+  --felt-1:#f8ebe8;--felt-2:#efdad7;--felt-3:#fbf1ef;--felt-4:#e4c8c5;--felt-rail:#d3b4b1;
+  --vein-hi:rgba(255,255,255,.46);--vein-lo:rgba(190,140,140,.18);
+  --glow-hi:rgba(255,248,246,.92);--glow-lo:rgba(216,174,172,.50);
+  --edge-1:#8a5147;--edge-2:#e0aa96;--edge-3:#fbe6dd;--edge-4:#b4705f;--edge-glow:rgba(150,95,85,.16);
+  --metal:linear-gradient(155deg,#8f5341 0%,#d99b81 10%,#fdeae0 21%,#e5ab90 33%,#b97a62 47%,#8f5341 59%,#d29578 73%,#f8e0d3 85%,#a96550 100%);
+  --box-1:#fdf3f1;--box-2:#f9e7e4;--box-3:#f2d6d2;
+  --box-shade:rgba(150,95,85,.24);--drop-shade:rgba(105,60,52,.28);
+  --sheen-on:rgba(255,255,255,.5);
+  --active-ring:rgba(255,180,150,.95);--active-glow:rgba(255,150,120,.55);
+  --ink:#43202a;--ink-soft:rgba(67,32,42,.72);--ink-accent:#9a5237;--ink-good:#1d5b34;
+}
+
+/* ── PICKER CHROME ──────────────────────────────────────────────────────────
+   The trigger paints itself in the CURRENT theme's own metal and box colours, so
+   it reads as a sample of what is on the board rather than a generic icon. It
+   therefore has to sit inside the themed root; placed in the neutral top bar it
+   would have no palette to read and would render unpainted. */
+.felt-btn{
+  width:22px;height:22px;border-radius:50%;cursor:pointer;flex-shrink:0;padding:0;
+  border:1px solid var(--edge-4,#888);box-shadow:0 0 0 2px #000;
+  background:
+    linear-gradient(180deg,var(--box-1,#333) 0%,var(--box-2,#222) 50%,var(--box-3,#111) 100%) padding-box,
+    var(--metal,#888) border-box;
+}
+.felt-btn:hover{filter:brightness(1.12)}
+.felt-btn:focus-visible{outline:2px solid #ffd700;outline-offset:2px}
+.felt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.felt-card{
+  border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:0;cursor:pointer;
+  overflow:hidden;text-align:left;background:none;display:block;
+}
+.felt-card:hover{border-color:rgba(255,215,0,.55)}
+.felt-card:focus-visible{outline:2px solid #ffd700;outline-offset:2px}
+.felt-card.on{border-color:#ffd700;box-shadow:0 0 0 2px rgba(255,215,0,.35)}
+/* The preview is the real thing in miniature -- the theme's own ground, one framed
+   box on it, and that box's ink -- built from the same variables the board uses, so
+   a palette cannot look one way here and another once applied. */
+.felt-prev{height:52px;display:flex;align-items:center;justify-content:center;
+  background-image:
+    radial-gradient(120% 90% at 18% 8%,var(--glow-hi),transparent 60%),
+    radial-gradient(110% 82% at 84% 93%,var(--glow-lo),transparent 62%),
+    linear-gradient(158deg,var(--felt-1) 0%,var(--felt-2) 38%,var(--felt-3) 62%,var(--felt-4) 100%);}
+.felt-prev span{
+  display:block;padding:5px 14px;border:2px solid transparent;border-radius:5px;
+  font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:14px;color:var(--ink);
+  background:
+    linear-gradient(180deg,var(--box-1) 0%,var(--box-2) 44%,var(--box-3) 100%) padding-box,
+    var(--metal) border-box;}
+.felt-name{display:block;font-size:13px;padding:5px 6px;color:rgba(255,255,255,.8);
+  background:rgba(0,0,0,.35);letter-spacing:.03em}
