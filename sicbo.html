@@ -593,20 +593,12 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
              0 0 calc(var(--frame)*2.4) rgba(255,198,60,.6);
 }
 
-/* Junction ornament -- the little gold dart the art sits on each shared edge between two
-   boxes. Drawn just inside each cell's left frame (the cells are overflow:hidden, so a
-   true straddle of the seam would be clipped in half). .no-orn is applied in JS to the
-   row-opening cell of every row, read straight off SB_CELL_POS's x, so no ornament
-   dangles at the left edge of the board. */
-.sb-cell::after{
-  content:'';position:absolute;pointer-events:none;z-index:2;
-  left:calc(var(--frame)*-.42);top:50%;
-  width:calc(var(--frame)*1.75);height:calc(var(--frame)*4.6);
-  transform:translateY(-50%);
-  clip-path:polygon(50% 0,100% 21%,100% 79%,50% 100%,0 79%,0 21%);
-  background:linear-gradient(180deg,#8d6712 0%,#f4e7b2 34%,#d0a93d 62%,#8d6712 100%);
-}
-.sb-cell.no-orn::after{display:none}
+/* The art's seam ornaments (a small gold dart straddling each join between two boxes) are
+   deliberately not reproduced. Because the cells are overflow:hidden, a dart centred on the
+   seam gets clipped in half, so the version here sat fully inside each cell's left frame --
+   which read as a notch bitten out of the box rather than a shared join, and Deck asked for
+   them gone. Drawing them properly would mean a separate un-clipped layer positioned over
+   the seams rather than an ::after on the cells. */
 
 /* ── TEXT SIZING (rules 1-3) ───────────────────────────────────────────────────
    Each wrapper carries ONE font-size, solved per cell by fitBetCells(); every child is
@@ -868,7 +860,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 <div class="chip" data-val="500" onclick="selectChip(500)">$500</div>
           <div class="chip" data-val="1000" onclick="selectChip(1000)">$1000</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.18</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.3.19</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -1723,7 +1715,6 @@ function buildTable(){
   infoCell.appendChild(infoWrap);
   sbPosition(infoCell,'cell-any-info');
   an.appendChild(infoCell);
-  markRowOpeners();
   fitSicboCells();
 }
 // ── CELL TEXT FIT ────────────────────────────────────────────────────────────
@@ -1837,18 +1828,6 @@ function fitSicboCells(){
   const home=document.getElementById('game-mode-toggle');
   if(home)fitRegionContent(home);
   fitBetCells();
-}
-// The ornament straddling each seam between two boxes must not appear on the cell that
-// OPENS a row, or it hangs off the left edge of the board. Read the row-opening cells off
-// SB_CELL_POS's own x rather than listing ids by hand, so it cannot drift when the table
-// is recalibrated.
-function markRowOpeners(){
-  Object.keys(SB_CELL_POS).forEach(id=>{
-    if(SB_CELL_POS[id][0]<2){
-      const el=document.getElementById(id);
-      if(el)el.classList.add('no-orn');
-    }
-  });
 }
 
 // ── SB-PANEL CALIBRATION MODE ────────────────────────────────────────────────
