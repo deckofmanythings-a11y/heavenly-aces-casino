@@ -19,6 +19,8 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <script src="instructions.js?v=7"></script>
+<link rel="stylesheet" href="felt-themes.css?v=2">
+<script src="felt-themes.js?v=2"></script>
 <style>
 /* ── DESIGN TOKENS (Phase 2 of the CSS-only felt re-skin) ──────────────────────
    Codifies the visual system pulled from Interblock's real Craps cabinet
@@ -58,13 +60,14 @@
      thicker than intended relative to the shrunk box. round(down,...,1px) floors to a whole
      px instead, so it visibly thins out faster than the font does; max(1px,...) keeps it from
      disappearing to 0 at extreme scale. */
-  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
   /* Same color/opacity as --box-border, just 2px instead of 4px -- on the small prop-bet cells
      (Horn Bet, Seven, Any Craps, Aces/Ace2/Midnight/Yo) a 4px border eats a much bigger share
      of the box's own small footprint than it does on Pass Line/Come/Field/number boxes, which
      read as visibly thicker there even though the token value is identical everywhere (Deck:
      "the borders on the Horn bets, Seven, Any Craps seem extra thick"). */
-  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
+  --box-border-color: rgba(255,255,255,.4);
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -121,8 +124,8 @@
    same formula here, at #felt-stage (where --font-scale actually lives), makes the var()
    resolve against the real local value instead of the root fallback. */
 #felt-stage{
-  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
-  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid rgba(255,255,255,.4);
+  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
+  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -2068,6 +2071,58 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
   .chip{width:24px;height:24px;font-size:10px}
   #roll-btn{font-size:20px;padding:6px 10px}
 }
+
+/* ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+   The six shared palettes live in felt-themes.css; this maps their generic
+   vocabulary onto the four-tier green system the tokens above already define, so
+   every bet box, panel label and section header follows the palette without a
+   single per-region rule being touched. data-felt sits on <body> because
+   #info-panel (which hosts the picker button, and paints it from the live
+   palette) is a SIBLING of #felt-stage, not a child of it.
+
+   Street Craps is deliberately excluded: body.game-street #felt-stage sets
+   `background` outright rather than reading --felt-bg, so the asphalt ground
+   survives any palette by construction. Its chalk boxes are scoped the same way.
+
+   The generic mapping is keyed on body[data-felt] so it applies to every palette;
+   "classic" then restates Craps' original values verbatim AFTER it, winning on
+   source order at equal specificity, which is what keeps the default board
+   byte-identical to what it rendered before it became themeable. */
+body[data-felt]{
+  --felt-bg: radial-gradient(ellipse at center, var(--felt-1) 0%, var(--felt-2) 55%, var(--felt-4) 100%);
+  --box-fill:          linear-gradient(180deg, var(--box-1) 0%, var(--box-3) 100%);
+  --box-fill-flat:     linear-gradient(180deg, var(--box-2) 0%, var(--box-3) 100%);
+  --box-fill-lightest: linear-gradient(180deg, var(--box-1) 0%, var(--box-2) 100%);
+  --box-fill-darkest:  linear-gradient(180deg, var(--felt-4) 0%, var(--edge-1) 100%);
+  --box-border-color: var(--edge-4);
+}
+/* The light boards need dark box edges; a white hairline vanishes on cream. */
+body[data-felt="ivory"],body[data-felt="rose"]{--box-border-color:rgba(70,50,10,.45)}
+
+/* Craps' own felt, restated as a palette so it is the default rather than a
+   hard-coded look. Every value below is lifted verbatim from the :root tokens it
+   shadows. The shared felt/box/ink half exists so this palette can draw its own
+   preview swatch from the same declarations as the rest. */
+body[data-felt="classic"],.felt-classic{
+  --theme-label:"Casino Green";--theme-scheme:dark;
+  --felt-1:#1d6636;--felt-2:#144d29;--felt-3:#186030;--felt-4:#0a2f18;--felt-rail:#0a2a14;
+  --vein-hi:rgba(150,225,180,.14);--vein-lo:rgba(5,25,13,.35);
+  --glow-hi:rgba(70,160,105,.42);--glow-lo:rgba(5,25,13,.55);
+  --edge-1:#071f0f;--edge-2:#c9a944;--edge-3:#f2e6b8;--edge-4:rgba(255,255,255,.4);--edge-glow:rgba(255,255,255,.1);
+  --metal:linear-gradient(155deg,#7d5a10 0%,#cfa73c 10%,#f7edc0 21%,#dbbb5e 33%,#ac8628 47%,#7d5a10 59%,#c5a338 73%,#efe1a8 85%,#9a761c 100%);
+  --box-1:#1e6a3c;--box-2:#0e3c22;--box-3:#062314;
+  --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:#ffd700;--active-glow:rgba(255,205,70,.55);
+  --ink:#ffffff;--ink-soft:rgba(255,255,255,.7);--ink-accent:#ffe066;--ink-good:#7ee87e;
+  /* Verbatim originals -- this is the "unchanged" requirement, not an approximation. */
+  --felt-bg: radial-gradient(ellipse at center, #1d6636 0%, #144d29 55%, #0a2f18 100%);
+  --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
+  --box-fill-flat: linear-gradient(180deg, rgba(14,60,34,.55) 0%, rgba(6,35,20,.68) 100%);
+  --box-fill-lightest: linear-gradient(180deg, rgba(60,175,95,.5) 0%, rgba(32,115,62,.62) 100%);
+  --box-fill-darkest: linear-gradient(180deg, rgba(5,24,14,.75) 0%, rgba(1,9,5,.86) 100%);
+  --box-border-color: rgba(255,255,255,.4);
+}
 </style>
 </head>
 <body>
@@ -2470,6 +2525,7 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
         <span id="top-bar-username" onclick="navigateAway('index.html')" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
         <button class="info-btn" id="mute-voices-btn" onclick="toggleMuteVoices()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0" title="Mute Voices">🔊</button>
         <button class="info-btn" id="info-modal-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
+        <span id="felt-mount" style="display:flex;align-items:center"></span>
       </div>
       <div class="info-row">
         <div id="finances-wrap">
@@ -4846,6 +4902,22 @@ function showToast(msg){
 }
 function openInfoModal(){document.getElementById('modal-info').classList.remove('hidden');}
 function closeInfoModal(){document.getElementById('modal-info').classList.add('hidden');}
+
+// ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+// Palettes and the picker are shared (felt-themes.css / felt-themes.js). data-felt
+// goes on <body> rather than #felt-stage because #info-panel -- which hosts the
+// trigger and paints it from the live palette -- is a sibling of the felt, not a
+// child. Street Craps is unaffected either way: its ground is set outright rather
+// than read from --felt-bg, so asphalt survives every palette by construction.
+FeltThemes.init({
+  root:'body', key:'craps_felt', defaultId:'classic',
+  mount:'#felt-mount', preview:'PASS',
+  // Ivory and Rose are held back until Craps' felt ink is themeable. Its labels are
+  // hard-coded white in ~100 declarations, 22 of them inline in the markup where no
+  // stylesheet can reach them, so both light boards currently render unreadable.
+  // Delete this line once that pass is done -- the palettes then appear on their own.
+  exclude:['ivory','rose'],
+});
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function showTab(tab){_authMode=tab;document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('auth-btn').textContent=tab==='login'?'Log In':'Create Account';document.getElementById('auth-error').style.display='none';}

@@ -9,7 +9,14 @@
        defaultId: 'classic',          // that game's OWN current look
        mount:     '#some-flex-row',   // where the trigger button goes
        preview:   'ANTE',             // word shown on the preview swatches
+       exclude:   ['ivory','rose'],   // optional: palettes this board can't yet take
      });
+
+   `exclude` is for a board that is not YET able to render a palette legibly -- e.g.
+   Craps, whose felt text is hard-coded white in ~100 places (22 of them inline in
+   markup, where no stylesheet can reach them), so the two light boards would ship
+   unreadable. It is a stopgap that names a debt, not a design choice: once that ink
+   pass is done, delete the option and the palettes appear.
 
    The palette list is DISCOVERED from the stylesheets, never hand-maintained
    here. A JS array of themes duplicating what the CSS already declares is a
@@ -58,7 +65,8 @@
   }
 
   function make(cfg) {
-    const themes = discover();
+    const skip = new Set(cfg.exclude || []);
+    const themes = discover().filter(t => !skip.has(t.id));
     // The game's own look leads the list; everything else keeps CSS source order.
     const idx = themes.findIndex(t => t.id === cfg.defaultId);
     if (idx > 0) themes.unshift(themes.splice(idx, 1)[0]);
