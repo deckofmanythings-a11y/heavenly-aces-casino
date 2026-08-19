@@ -19,8 +19,8 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <script src="instructions.js?v=7"></script>
-<link rel="stylesheet" href="felt-themes.css?v=5">
-<script src="felt-themes.js?v=5"></script>
+<link rel="stylesheet" href="felt-themes.css?v=6">
+<script src="felt-themes.js?v=6"></script>
 <style>
 /* ── DESIGN TOKENS (Phase 2 of the CSS-only felt re-skin) ──────────────────────
    Codifies the visual system pulled from Interblock's real Craps cabinet
@@ -90,10 +90,11 @@
   --font-script: Georgia, 'Times New Roman', serif;
 
   /* Color roles */
-  --color-loss: #ff5c5c;      /* SEVEN, ANY CRAPS -- loss-flavored one-roll bets */
-  --color-passline: #4a9eff;  /* PASS LINE label */
-  --color-gold: #ffd700;      /* buttons, active-state glow, win highlights */
-  --color-text: #ffffff;
+  --color-loss: var(--ink-bad);      /* SEVEN, ANY CRAPS -- loss-flavored one-roll bets */
+  --color-passline: #4a9eff;
+  --color-passline-dark: #12508f;  /* PASS LINE label */
+  --color-gold: var(--ink-accent);      /* buttons, active-state glow, win highlights */
+  --color-text: var(--ink);
 
   /* Text gradients (Deck: fonts should be gradient too) -- applied via background-clip:text
      wherever a selector below opts in (.grad-white/.grad-gold/.grad-red/.grad-metallic-gold).
@@ -146,7 +147,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .auth-field input:focus{border-color:rgba(255,215,0,.5)}
 .auth-btn{width:100%;background:#c8a200;border:none;border-radius:7px;color:#111;font-size:24px;font-weight:700;padding:10px;cursor:pointer;margin-top:4px}
 .auth-btn:disabled{opacity:.5;cursor:not-allowed}
-.auth-error{background:rgba(180,0,0,.25);border:1px solid rgba(255,80,80,.3);border-radius:6px;padding:8px 10px;font-size:21px;color:#ff9a9a;margin-bottom:12px;display:none}
+.auth-error{background:rgba(180,0,0,.25);border:1px solid rgba(255,80,80,.3);border-radius:6px;padding:8px 10px;font-size:21px;color:var(--ink-bad);margin-bottom:12px;display:none}
 
 /* ── GAME: full viewport, no scroll ── */
 #game-screen{display:none;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;width:100vw;flex-direction:column;overflow:hidden;background:#0a2a14}
@@ -188,7 +189,7 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 .lr-nums{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
 .lr-num{position:relative;width:32px;height:32px;border-radius:3px;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:rgba(var(--ink-rgb),.4);border:0.5px solid rgba(255,255,255,.15)}
 .lr-explain{font-size:11px;color:rgba(var(--ink-rgb),.45);display:block}
-.lr-num.hit{background:transparent;color:#7ee87e;border-color:#7ee87e}
+.lr-num.hit{background:transparent;color:var(--ink-good);border-color:#7ee87e}
 .lr-stake{font-size:38px;font-weight:600;color:var(--ink-accent);min-height:1.2em;line-height:1.2}
 .lr-note{font-size:15px;color:rgba(var(--ink-rgb),.4)}
 /* Removed site-wide (Sic-Bo/Roulette/Craps): right-click and drag-off already remove
@@ -451,8 +452,8 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 .sc-stack{display:flex;flex-direction:column;gap:3px;flex:1}
 .sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:var(--ink);font-size:calc(15px * var(--font-scale,1));padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
 .sc-btn:hover{background:rgba(255,255,255,.2)}
-.sc-btn.on{background:rgba(100,200,100,.25);border-color:#7ee87e;color:#7ee87e}
-.sc-btn.locked{background:rgba(255,190,60,.25);border-color:#ffbe3c;color:#ffbe3c}
+.sc-btn.on{background:rgba(100,200,100,.25);border-color:#7ee87e;color:var(--ink-good)}
+.sc-btn.locked{background:rgba(255,190,60,.25);border-color:#ffbe3c;color:var(--ink-warn)}
 .sc-btn.locked:hover{background:rgba(255,190,60,.35)}
 #beton-btn{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 
@@ -488,13 +489,13 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 .nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
 .nb-pay{font-size:calc(11px * var(--font-scale,1));color:rgba(var(--ink-rgb),.4);display:block}
 .off-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;background:rgba(0,0,0,.5)}
-.off-ov span{font-size:15px;font-weight:700;color:rgba(255,200,0,.95)}
+.off-ov span{font-size:15px;font-weight:700;color:rgba(var(--ink-warn-rgb),.95)}
 .num-box-wrap{position:relative}
 .num-box-wrap:hover .come-rm{display:flex}
 .mbtn-buy,.mbtn-place{display:none!important}
 .come-on-box{background:rgba(0,140,65,.32);border:0.5px solid rgba(0,220,100,.45);border-radius:2px;padding:1px 2px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;justify-content:center;position:relative;margin-top:1px}
-.come-flat-amt{font-size:14px;font-weight:700;color:#7eff9a}
-.come-odds-btn{font-size:11px;background:rgba(0,90,40,.6);border:0.5px solid rgba(0,200,100,.4);border-radius:2px;color:#7eff9a;padding:1px 2px;cursor:pointer}
+.come-flat-amt{font-size:14px;font-weight:700;color:var(--ink-good)}
+.come-odds-btn{font-size:11px;background:rgba(0,90,40,.6);border:0.5px solid rgba(0,200,100,.4);border-radius:2px;color:var(--ink-good);padding:1px 2px;cursor:pointer}
 .come-odds-amt{font-size:11px;color:var(--ink-accent)}
 /* Come/DC bet+odds chips sit side-by-side in the number box, per the Interblock reference
    (Come bet chip left, Come Odds chip right; Don't Come Odds chip left, DC bet chip right).
@@ -551,7 +552,7 @@ body.felt-mode #felt-stage .come-odds-btn{position:absolute;bottom:1px;right:2px
    split are gone -- each number's Come/DC zone can be dragged independently to wherever it
    needs to be, collision included, same as every other calibrated box. */
 body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{height:100%}
-.come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:#ff9a9a;font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
+.come-rm{display:none;position:absolute;top:0;right:0;width:9px;height:9px;border-radius:2px;background:rgba(120,0,0,.7);color:var(--ink-bad);font-size:14px;line-height:8px;text-align:center;cursor:pointer;z-index:5;padding:0}
 
 /* Come / Field / Pass */
 #cfp-zone{flex:9;display:flex;flex-direction:column;min-height:0;padding:0 3px 3px 3px}
@@ -642,7 +643,7 @@ body.game-street .street-pt{display:flex}
 .street-pt.tilt-b{transform:rotate(0.9deg)}
 /* The live point gets chalk-circled so it reads as marked even before chips land on it. */
 .street-pt.is-point{border-color:#ffe9a8;box-shadow:0 0 22px rgba(255,220,130,.55), inset 0 0 18px rgba(255,220,130,.15)}
-.street-pt.is-point .chalk-label{color:#ffe9a8;text-shadow:0 0 10px rgba(255,220,130,.6)}
+.street-pt.is-point .chalk-label{color:var(--ink-warn);text-shadow:0 0 10px rgba(255,220,130,.6)}
 /* House money sits in the corner of the box, visually separate from the player's own stack --
    it is not their money and must never read as bankroll. See streetSyncHouse(): display only,
    never enters G.bets/G.bankroll or the server payload. */
@@ -712,7 +713,7 @@ body.game-street .lowhigh-field-row{display:none!important}
 .chip-stack.money-note .chip-amt{
   height:calc(var(--chip)*2.13);
   bottom:auto;
-  color:#eafbe8;font-weight:800;letter-spacing:.01em;
+  color:var(--ink-good);font-weight:800;letter-spacing:.01em;
   text-shadow:0 1px 0 rgba(0,0,0,.6), 0 0 4px rgba(0,0,0,.35);
   white-space:nowrap;z-index:2;
 }
@@ -799,9 +800,9 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-odds-cell{background:var(--box-fill-flat);border-top:0.5px solid rgba(255,255,255,.15);padding:2px;text-align:center;cursor:pointer;transition:background .12s;display:none;flex-direction:column;justify-content:center}
 #dp-odds-cell:hover{background:rgba(255,255,255,.12)}
 #dp-odds-cell.active{background:transparent}
-.dp-odds-lbl{font-size:9px;color:rgba(255,130,130,.5);display:block}
+.dp-odds-lbl{font-size:9px;color:rgba(var(--ink-bad-rgb),.5);display:block}
 .dp-odds-stk{font-size:11px;color:var(--ink-accent);display:block;min-height:1.2em;line-height:1.2}
-.dp-odds-pay{font-size:8px;color:rgba(255,130,130,.4);display:block}
+.dp-odds-pay{font-size:8px;color:rgba(var(--ink-bad-rgb),.4);display:block}
 /* DC chip in number box */
 .dc-chip-box{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px}
 /* In standard felt mode this element is relocated into the top [DC|Lay] row as a normal flex
@@ -816,11 +817,11 @@ body.felt-mode.game-standard #felt-stage .nb-buy-wrap .dc-chip-box{position:rela
    Come and Come Bets and Odds are not respecting the placement boxes I gave them"). Reset transform
    and let the box's own inline left/top position it exactly where calibrated. */
 body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:none;display:flex;align-items:center;justify-content:center}
-.dc-on-box{background:rgba(140,0,0,.85);border:1px solid rgba(255,100,100,.6);border-radius:3px;padding:1px 3px;font-size:10px;color:#ffaaaa;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:2px}
-.dc-flat-amt{font-size:10px;color:#ffcccc}
-.dc-odds-btn{font-size:calc(9px * var(--font-scale,1));background:rgba(200,0,0,.5);border:0.5px solid rgba(255,100,100,.4);border-radius:2px;color:#ff9999;padding:0 2px;cursor:pointer;line-height:1.3}
-.dc-odds-amt{font-size:9px;color:#ff6666}
-.dc-rm{font-size:9px;background:rgba(120,0,0,.6);border:none;color:#ff9999;cursor:pointer;padding:0 2px;border-radius:1px;line-height:1.3}
+.dc-on-box{background:rgba(140,0,0,.85);border:1px solid rgba(255,100,100,.6);border-radius:3px;padding:1px 3px;font-size:10px;color:var(--ink-bad);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:2px}
+.dc-flat-amt{font-size:10px;color:var(--ink-bad)}
+.dc-odds-btn{font-size:calc(9px * var(--font-scale,1));background:rgba(200,0,0,.5);border:0.5px solid rgba(255,100,100,.4);border-radius:2px;color:var(--ink-bad);padding:0 2px;cursor:pointer;line-height:1.3}
+.dc-odds-amt{font-size:9px;color:var(--ink-bad)}
+.dc-rm{font-size:9px;background:rgba(120,0,0,.6);border:none;color:var(--ink-bad);cursor:pointer;padding:0 2px;border-radius:1px;line-height:1.3}
 /* Lay cell in number box (right half of buy) */
 .nb-buy-wrap{display:flex;flex:1;border-bottom:0.5px solid rgba(255,255,255,.1)}
 .nb-buy-left{flex:1;background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
@@ -830,14 +831,14 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
 .nb-lay:hover{--sheen:rgba(255,255,255,.15)}
 .nb-lay.active{background:transparent}
 .nb-lay .nb-lbl{background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
-.nb-lay .nb-stk{color:#ff9999}
+.nb-lay .nb-stk{color:var(--ink-bad)}
 /* Phase 8: nb-puckbox-N -- not a bet spot (no click handler), purely the point-marker's real,
    calibratable landing target. Base view hides it (only meaningful once individually
    positioned in felt mode); a dashed circular "landing pad" graphic, same visual language as
    the rest of the felt's real-CSS bet cells (Hard Ways/Hop Bets etc), so the spot reads as
    intentional even with no puck sitting on it yet (come-out roll). */
 .nb-puckbox{display:none}
-.nb-lay .nb-pay{color:rgba(255,130,130,.35)}
+.nb-lay .nb-pay{color:rgba(var(--ink-bad-rgb),.35)}
 /* DC box uses .num-box styles, these are cleaned up */
 /* Field info text per mode */
 .field-info-crapless{display:block}
@@ -861,7 +862,7 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
 .rp-num.made,.rp-num.win{background:#1560d8}
 .rp-num.out{background:#b02020}
 .roll-pip.point-made .rp-sum{color:#66aaff}
-#bets-status-bar{font-size:15px;font-weight:700;color:rgba(255,200,0,.8);white-space:nowrap;flex-shrink:0}
+#bets-status-bar{font-size:15px;font-weight:700;color:rgba(var(--ink-warn-rgb),.8);white-space:nowrap;flex-shrink:0}
 #log-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:var(--ink-accent);font-size:26px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 /* ── BOTTOM BAR ── */
@@ -938,7 +939,7 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 .modal-btn.no-odds{background:rgba(80,80,80,.25);border-color:rgba(255,255,255,.18);margin-top:4px;width:100%}
 .modal-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:8px 10px;color:var(--ink);font-size:24px;outline:none;margin-bottom:8px;text-align:center;letter-spacing:.1em;text-transform:uppercase}
 .modal-input:focus{border-color:rgba(255,215,0,.5)}
-.modal-input-error{font-size:19px;color:#ff9a9a;margin-bottom:8px;min-height:13px;text-align:center}
+.modal-input-error{font-size:19px;color:var(--ink-bad);margin-bottom:8px;min-height:13px;text-align:center}
 
 /* ── FOCUS MODE ── */
 .fm-switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
@@ -1108,8 +1109,8 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 .info-section p{font-size:19px;color:rgba(var(--ink-rgb),.7);line-height:1.6}
 #modal-log .log-entries{max-height:50vh;overflow-y:auto;font-size:21px}
 #modal-log .log-entries p{padding:2px 0;border-bottom:0.5px solid rgba(255,255,255,.08);line-height:1.5;color:rgba(var(--ink-rgb),.75)}
-#modal-log .log-entries p.win{color:#7ee87e}
-#modal-log .log-entries p.lose{color:#f08080}
+#modal-log .log-entries p.win{color:var(--ink-good)}
+#modal-log .log-entries p.lose{color:var(--ink-bad)}
 #modal-log .log-entries p.info{color:var(--ink-accent)}
 /* Winner modal now lives in winner-modal.js (self-contained: injects its own <style> + DOM). */
 /* On/Off indicator: Standard craps uses the 3D sliding puck widget again (Deck: turn it
@@ -1602,7 +1603,7 @@ body.felt-mode.game-standard #felt-stage #dp-odds-cell{border-right:0.5px solid 
 body.felt-mode #felt-stage #pass-odds-cell.active::after,
 body.felt-mode.game-standard #felt-stage #dp-odds-cell.active::after{
   content:'▶';position:absolute;right:-9px;top:50%;transform:translateY(-50%);
-  font-size:12px;color:#ff5555;text-shadow:0 0 2px rgba(0,0,0,.8);z-index:6;pointer-events:none;
+  font-size:12px;color:var(--ink-bad);text-shadow:0 0 2px rgba(0,0,0,.8);z-index:6;pointer-events:none;
 }
 /* Phase 7 polish: #dp-bar12 (the "BAR 12" callout, Don't Pass loses on 12) was force-hidden
    here -- backwards, since Don't Pass is a real Standard-only bet (Crapless shows the
@@ -1694,8 +1695,8 @@ body.felt-mode #felt-stage #dp-main.has-oddscell .has-stack{left:39.47%}
 .swoop-stack.exit-down{top:120%;opacity:1}
 .swoop-stack.exit-up{top:-25%;opacity:0}
 .swoop-label{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:4px;font-size:13px;font-weight:800;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-.swoop-stack.win .swoop-label{color:#7eff9a}
-.swoop-stack.lose .swoop-label{color:#ff8a8a}
+.swoop-stack.win .swoop-label{color:var(--ink-good)}
+.swoop-stack.lose .swoop-label{color:var(--ink-bad)}
 
 /* ===== CHIP DRAG GHOST ===== */
 .chip-drag-ghost{position:fixed;width:44px;height:44px;pointer-events:none;z-index:300;transform:translate(-50%,-50%);filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));transition:transform .08s}
@@ -2115,7 +2116,10 @@ body[data-felt="classic"],.felt-classic{
   --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
   --sheen-on:rgba(255,255,255,.11);
   --active-ring:#ffd700;--active-glow:rgba(255,205,70,.55);
-  --ink:#ffffff;--ink-rgb:255,255,255;--ink-soft:rgba(255,255,255,.7);--ink-accent:#ffe066;--ink-accent-rgb:255,224,102;--ink-good:#7ee87e;
+  --ink:#ffffff;--ink-rgb:255,255,255;--ink-soft:rgba(255,255,255,.7);--ink-accent:#ffe066;--ink-accent-rgb:255,224,102;
+  --ink-good:#7ee87e;--ink-good-rgb:126,232,126;
+  --ink-bad:#ff9a9a;--ink-bad-rgb:255,154,154;
+  --ink-warn:#ffc850;--ink-warn-rgb:255,200,80;
   /* Verbatim originals -- this is the "unchanged" requirement, not an approximation. */
   --felt-bg: radial-gradient(ellipse at center, #1d6636 0%, #144d29 55%, #0a2f18 100%);
   --box-fill: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%) padding-box, var(--metal) border-box;
@@ -2139,7 +2143,14 @@ body[data-felt="classic"],.felt-classic{
      contrast on Ivory -- literally invisible -- until this line set colour directly. */
   --ink:#fff;--ink-rgb:255,255,255;color:#fff;
   --ink-accent:#ffd700;--ink-accent-rgb:255,215,0;
+  --ink-good:#7ee87e;--ink-good-rgb:126,232,126;
+  --ink-bad:#ff9a9a;--ink-bad-rgb:255,154,154;
+  --ink-warn:#ffc850;--ink-warn-rgb:255,200,80;
 }
+
+/* The two light boards take the darkened pass-line blue; #4a9eff on cream measures
+   about 2.7:1, which is under the 4.5 body-text bar. */
+body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-passline-dark)}
 </style>
 </head>
 <body>
@@ -2210,7 +2221,7 @@ body[data-felt="classic"],.felt-classic{
       <div class="modal-title">How to Play</div>
       <div class="info-section" style="margin-top:8px">
         <h3>Basic Craps — The Pass Line</h3>
-        <p>Place a Pass Line bet before the come-out roll. If the shooter rolls a <strong style="color:#7ee87e">7</strong>, you win even money. Any other number becomes <em>the Point</em>.<br><br>Once the Point is set, keep rolling. Hit <strong style="color:#7ee87e">the Point again</strong> and Pass Line wins. Roll a <strong style="color:#f08080">7</strong> before the Point and it's a seven-out — Pass Line loses. Back your Pass Line with Odds — a bet with no house edge.</p>
+        <p>Place a Pass Line bet before the come-out roll. If the shooter rolls a <strong style="color:var(--ink-good)">7</strong>, you win even money. Any other number becomes <em>the Point</em>.<br><br>Once the Point is set, keep rolling. Hit <strong style="color:var(--ink-good)">the Point again</strong> and Pass Line wins. Roll a <strong style="color:var(--ink-bad)">7</strong> before the Point and it's a seven-out — Pass Line loses. Back your Pass Line with Odds — a bet with no house edge.</p>
       </div>
       <div class="info-section">
         <h3>Two Modes</h3>
@@ -2431,7 +2442,7 @@ body[data-felt="classic"],.felt-classic{
     <div class="modal-box" style="max-width:640px">
       <div class="modal-title">Calibration Export</div>
       <div class="modal-sub">Copy this and send it back -- it's the exact array syntax used in the code.</div>
-      <textarea id="calib-export-text" readonly style="width:100%;height:320px;font-family:monospace;font-size:12px;background:#111;color:#0f0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px;margin:10px 0" onclick="this.select()"></textarea>
+      <textarea id="calib-export-text" readonly style="width:100%;height:320px;font-family:monospace;font-size:12px;background:#111;color:var(--ink-good);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px;margin:10px 0" onclick="this.select()"></textarea>
       <div style="display:flex;gap:8px">
         <button class="modal-btn" onclick="document.getElementById('calib-export-text').select();document.execCommand('copy')">Copy to Clipboard</button>
         <button class="modal-btn cancel" onclick="document.getElementById('modal-calib-export').classList.add('hidden')">Close</button>
@@ -2551,12 +2562,12 @@ body[data-felt="classic"],.felt-classic{
           </button>
           <div id="finances-dropdown" class="hidden">
             <button class="info-btn gold" id="redeem-btn-top" onclick="closeFinancesDropdown();openRedeemModal(false)">Redeem</button>
-            <button class="info-btn" id="cashout-btn" onclick="closeFinancesDropdown();cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
+            <button class="info-btn" id="cashout-btn" onclick="closeFinancesDropdown();cashOut()" style="border-color:rgba(100,200,100,.4);color:var(--ink-good)">Cash Out</button>
           </div>
         </div>
         <button class="info-btn" onclick="dNav('dailies.html')" style="flex:1">🗓️ Dailies</button>
       </div>
-<div class="hud-item" id="hud-lastwin-row"><div class="hud-lbl">Last Win<span id="hud-lastwin-info" class="info-i" title="">ⓘ</span></div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e;font-size:15px;line-height:1.25">—</div></div>
+<div class="hud-item" id="hud-lastwin-row"><div class="hud-lbl">Last Win<span id="hud-lastwin-info" class="info-i" title="">ⓘ</span></div><div class="hud-val" id="hud-lastwin" style="color:var(--ink-good);font-size:15px;line-height:1.25">—</div></div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(var(--ink-rgb),.7)">—</div></div>
         <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:var(--ink-accent)">$0</div></div>
@@ -2587,7 +2598,7 @@ body[data-felt="classic"],.felt-classic{
         </div>
         <div id="prop-block">
           <div id="prop-panel-label" class="fm-panel-label">PROPOSITION BETS</div>
-          <div class="bwrap"><div id="bet-any7" onclick="placeBet('any7')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('any7')" class="prop-bar" style="background:var(--box-fill-flat)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">SEVEN</div><div class="prop-bar-stk" id="stk-any7"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">5 for 1</span></div></div>
+          <div class="bwrap"><div id="bet-any7" onclick="placeBet('any7')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('any7')" class="prop-bar" style="background:var(--box-fill-flat)"><span class="prop-bar-odds" style="color:rgba(var(--ink-bad-rgb),.9)">5 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:var(--ink-bad)">SEVEN</div><div class="prop-bar-stk" id="stk-any7"></div></div><span class="prop-bar-odds" style="color:rgba(var(--ink-bad-rgb),.9)">5 for 1</span></div></div>
           <div class="horn-stack">
             <div class="horn-row" style="border-bottom:0.5px solid rgba(255,255,255,.1)">
               <div class="horn-cell" id="bet-aces" onclick="placeBet('aces')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('aces')"><span class="hc-dice"><img class="dice-combo-img" src="marble11.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><div class="hc-pay">31 for 1</div><div class="hc-stk" id="stk-aces"></div></div>
@@ -2601,7 +2612,7 @@ body[data-felt="classic"],.felt-classic{
               <div class="horn-cell" id="bet-yo" onclick="placeBet('yo')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('yo')"><span class="hc-dice"><img class="dice-combo-img" src="marble65.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><div class="hc-pay">16 for 1</div><div class="hc-stk" id="stk-yo"></div></div>
             </div>
           </div>
-          <div class="bwrap"><div id="bet-anyCraps" onclick="placeBet('anyCraps','bar')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('anyCraps','bar')" class="prop-bar" style="background:var(--box-fill-flat)"><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:#ff4444">ANY CRAPS</div><div class="prop-bar-stk" id="stk-anyCraps"></div></div><span class="prop-bar-odds" style="color:rgba(255,180,180,.9)">8 for 1</span></div></div>
+          <div class="bwrap"><div id="bet-anyCraps" onclick="placeBet('anyCraps','bar')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('anyCraps','bar')" class="prop-bar" style="background:var(--box-fill-flat)"><span class="prop-bar-odds" style="color:rgba(var(--ink-bad-rgb),.9)">8 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:var(--ink-bad)">ANY CRAPS</div><div class="prop-bar-stk" id="stk-anyCraps"></div></div><span class="prop-bar-odds" style="color:rgba(var(--ink-bad-rgb),.9)">8 for 1</span></div></div>
         </div>
       </div>
 
@@ -2860,9 +2871,9 @@ body[data-felt="classic"],.felt-classic{
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.51</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.52</span>
           </div>
-          <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
+          <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
           <button class="bar-btn" id="double-btn" onclick="doubleBet()">Double</button>
           <button class="bar-btn" id="repeat-btn" onclick="repeatLastBet()" disabled>Repeat</button>
@@ -4929,13 +4940,13 @@ function closeInfoModal(){document.getElementById('modal-info').classList.add('h
 FeltThemes.init({
   root:'body', key:'craps_felt', defaultId:'classic',
   mount:'#felt-mount', preview:'PASS',
-  // Still held back, but for a smaller reason than before. The ink pass converted the
-  // white (~91 refs) and gold (~35 refs) text to palette tokens, which is why the four
-  // dark boards now measure ZERO contrast regressions against Casino Green. Ivory and
-  // Rose remain unreadable because Craps also paints in semantic pastels -- #7ee87e
-  // win-green, #ff8a80/#ff4444 lose-red, pale pinks -- which are light-on-light on a
-  // cream ground (median 1.1:1 across 97 felt text nodes, vs 4.9:1 on green).
-  // Finishing these two means a --ink-good/--ink-bad pass over those semantic colours.
+  // Still held back. The semantic pass converted the win-green/lose-red/amber inks AND
+  // found the real culprit -- a legacy --color-text/--color-gold/--color-loss token layer
+  // that predated the palette and was handing out fixed white and gold underneath it.
+  // Routing those through the palette moved Ivory from 1.6:1 to 1.9:1 median contrast
+  // (16 nodes still worse than Casino Green, down from 19), which is real progress and
+  // still not shippable: 1.9:1 is the TYPICAL node, not a tail. Known stragglers are
+  // .gmode-btn/.gmode-sub and a handful of unclassed spans around 1.9-2.6.
   exclude:['ivory','rose'],
 });
 
@@ -8069,7 +8080,7 @@ function focusGroupRowHTML(g){
   // while Crapless is active, rather than offering a second, conflicting way to control them.
   if(g.craplessNote&&crapless){
     return '<div class="fm-group"><div class="fm-group-hdr" style="cursor:default">'
-      +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc" style="color:rgba(255,200,80,.8)">'+g.craplessNote+'</div></div>'
+      +'<div><div class="fm-group-name">'+g.name+'</div><div class="fm-group-desc" style="color:rgba(var(--ink-warn-rgb),.8)">'+g.craplessNote+'</div></div>'
       +'</div></div>';
   }
   // Don't Pass/Don't Come/Lay aren't offered in Crapless at all -- gray the row out and make
@@ -8099,7 +8110,7 @@ function renderFocusPanel(){
     document.getElementById('fm-group-list').innerHTML=
       '<div class="fm-group"><div class="fm-group-hdr" style="cursor:default">'
       +'<div><div class="fm-group-name">Street Craps</div>'
-      +'<div class="fm-group-desc" style="color:rgba(255,200,80,.8)">'
+      +'<div class="fm-group-desc" style="color:rgba(var(--ink-warn-rgb),.8)">'
       +'The board is just LINE and FADE — there are no other bet spots to show or hide.</div></div>'
       +'</div></div>';
   }else{

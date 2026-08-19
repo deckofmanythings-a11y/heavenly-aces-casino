@@ -39,6 +39,9 @@
   --ink:#2b1806;--ink-soft:rgba(43,24,6,.72);--ink-accent:#7a5c00;--ink-good:#145214;
   --ink-rgb:43,24,6;
   --ink-accent-rgb:122,92,0;
+  --ink-good:#145214;--ink-good-rgb:20,82,20;
+  --ink-bad:#8f1616;--ink-bad-rgb:143,22,22;
+  --ink-warn:#7a5200;--ink-warn-rgb:122,82,0;
 }
 /* 2. EMERALD & GOLD */
 [data-felt="emerald"],.felt-emerald{
@@ -55,6 +58,9 @@
   --ink:#f6edcd;--ink-soft:rgba(246,237,205,.80);--ink-accent:#ffd869;--ink-good:#8fe0a0;
   --ink-rgb:246,237,205;
   --ink-accent-rgb:255,216,105;
+  --ink-good:#8fe0a0;--ink-good-rgb:143,224,160;
+  --ink-bad:#ff9a9a;--ink-bad-rgb:255,154,154;
+  --ink-warn:#ffc850;--ink-warn-rgb:255,200,80;
 }
 /* 3. OBSIDIAN & GOLD */
 [data-felt="obsidian"],.felt-obsidian{
@@ -71,6 +77,9 @@
   --ink:#f2e8c9;--ink-soft:rgba(242,232,201,.78);--ink-accent:#ffd45e;--ink-good:#7fdc95;
   --ink-rgb:242,232,201;
   --ink-accent-rgb:255,212,94;
+  --ink-good:#7fdc95;--ink-good-rgb:127,220,149;
+  --ink-bad:#ff9a9a;--ink-bad-rgb:255,154,154;
+  --ink-warn:#ffc850;--ink-warn-rgb:255,200,80;
 }
 /* 4. SAPPHIRE & PLATINUM */
 [data-felt="sapphire"],.felt-sapphire{
@@ -87,6 +96,9 @@
   --ink:#eaf1fd;--ink-soft:rgba(234,241,253,.78);--ink-accent:#9fd4ff;--ink-good:#8ce0ad;
   --ink-rgb:234,241,253;
   --ink-accent-rgb:159,212,255;
+  --ink-good:#8ce0ad;--ink-good-rgb:140,224,173;
+  --ink-bad:#ff9a9a;--ink-bad-rgb:255,154,154;
+  --ink-warn:#ffc850;--ink-warn-rgb:255,200,80;
 }
 /* 5. BURGUNDY & BRASS */
 [data-felt="burgundy"],.felt-burgundy{
@@ -103,6 +115,9 @@
   --ink:#f9e6d5;--ink-soft:rgba(249,230,213,.78);--ink-accent:#ffcf85;--ink-good:#93dfa6;
   --ink-rgb:249,230,213;
   --ink-accent-rgb:255,207,133;
+  --ink-good:#93dfa6;--ink-good-rgb:147,223,166;
+  --ink-bad:#ff9a9a;--ink-bad-rgb:255,154,154;
+  --ink-warn:#ffc850;--ink-warn-rgb:255,200,80;
 }
 /* 6. ROSE & ROSE GOLD */
 [data-felt="rose"],.felt-rose{
@@ -119,6 +134,9 @@
   --ink:#43202a;--ink-soft:rgba(67,32,42,.72);--ink-accent:#9a5237;--ink-good:#1d5b34;
   --ink-rgb:67,32,42;
   --ink-accent-rgb:154,82,55;
+  --ink-good:#1d5b34;--ink-good-rgb:29,91,52;
+  --ink-bad:#8c1c28;--ink-bad-rgb:140,28,40;
+  --ink-warn:#8a4a10;--ink-warn-rgb:138,74,16;
 }
 
 /* ── PICKER CHROME ──────────────────────────────────────────────────────────
