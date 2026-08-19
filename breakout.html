@@ -9,6 +9,8 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="instructions.js?v=7"></script>
 <script src="weekly-events.js?v=2"></script>
+<link rel="stylesheet" href="felt-themes.css?v=6">
+<script src="felt-themes.js?v=6"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -69,8 +71,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
    printed rule lines, the shoe/discard trays, and both card regions -- is drawn
    directly in the wide-open remaining felt so hands can be as large as possible,
    per Deck's explicit ask. */
-#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#051209;padding:4px;container-type:size}
-#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background:radial-gradient(ellipse at center,#0f3324 0%,#081f16 70%,#051209 100%);container-type:size}
+#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:var(--felt-rail);padding:4px;container-type:size}
+#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background:radial-gradient(ellipse at center,var(--felt-1) 0%,var(--felt-2) 70%,var(--felt-4) 100%);container-type:size}
 
 /* Split into 3 (Breakout mode) or 1 (Fortune mode) independently-cropped modules --
    the 4 source PNGs turned out NOT to share one coordinate space (a direct overlay
@@ -508,6 +510,38 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   #action-row{width:100%;height:auto;flex:1}
   .action-btn{font-size:14px;padding:6px 4px}
 }
+
+/* ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+   The felt is CSS and themes freely. The bet-module ART IS NOT RECOLOURED: those
+   files carry brand marks -- the Ultimate Texas Hold'em logo here, PAIR UP and
+   SWEET 17 on Blackjack -- and a recoloured trademark reads as broken rather than
+   themed, the same reason Destroyer's FIRE button keeps its red on every palette.
+   The uploaded art is used exactly as supplied on all seven palettes.
+   The one concession is the two LIGHT boards, where pale outline circles printed
+   for a dark felt would otherwise vanish; those get a darkened copy of the same
+   art (tools/grade_module_art.py), brand marks left untouched inside it. */
+[data-felt="classic"],.felt-classic{
+  --theme-label:"Casino Green";--theme-scheme:dark;
+  --felt-1:#0f3324;--felt-2:#081f16;--felt-3:#0c2a1d;--felt-4:#051209;--felt-rail:#051209;
+  --vein-hi:rgba(140,220,175,.14);--vein-lo:rgba(4,18,9,.35);
+  --glow-hi:rgba(60,140,95,.40);--glow-lo:rgba(4,18,9,.55);
+  --edge-1:#061109;--edge-2:rgba(255,215,0,.15);--edge-3:#f2e6b8;--edge-4:#8a6a1c;--edge-glow:rgba(255,215,0,.12);
+  --metal:linear-gradient(155deg,#7d5a10 0%,#cfa73c 10%,#f7edc0 21%,#dbbb5e 33%,#ac8628 47%,#7d5a10 59%,#c5a338 73%,#efe1a8 85%,#9a761c 100%);
+  --box-1:#15462f;--box-2:#0f3324;--box-3:#0a2418;
+  --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:#ffd700;--active-glow:rgba(255,205,70,.55);
+  --ink:#ffffff;--ink-rgb:255,255,255;--ink-soft:rgba(255,255,255,.6);
+  --ink-accent:#ffe066;--ink-accent-rgb:255,224,102;--ink-good:#7ee87e;
+}
+
+/* Light-board art swap -- see the note in uth.html. side_bets/fortune are absent on
+   purpose: they are pure brand art (PAIR UP, SWEET 17, Fortune) and are used exactly
+   as uploaded on all seven palettes. */
+body[data-felt="ivory"] #dealer-module-art{content:url('dealer_bet_trim_ivory.png?v=1')}
+body[data-felt="rose"] #dealer-module-art{content:url('dealer_bet_trim_rose.png?v=1')}
+body[data-felt="ivory"] #player-module-art{content:url('player_bet_full_trim_ivory.png?v=1')}
+body[data-felt="rose"] #player-module-art{content:url('player_bet_full_trim_rose.png?v=1')}
 </style>
 </head>
 <body>
@@ -615,7 +649,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.33</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.34</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>
@@ -635,6 +669,7 @@ body{--chip:64px;--edge:calc(var(--chip)*0.16)}
         <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
+        <span id="felt-mount" style="display:flex;align-items:center"></span>
       </div>
       <div class="hud-grid">
         <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
@@ -999,6 +1034,16 @@ function handValueLabel(cards){
   if(v.bust)return'Bust ('+v.total+')';
   return(v.soft?'Soft ':'')+v.total;
 }
+
+// ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+// Felt themes via CSS; the bet-module art stays exactly as uploaded on the five dark
+// palettes and swaps to a darkened copy only on Ivory and Rose, where pale outline
+// circles printed for a dark felt would otherwise be invisible. Brand marks are never
+// recoloured -- see the BOARD COLOUR block in the stylesheet.
+FeltThemes.init({
+  root:'body', key:'breakout_felt', defaultId:'classic',
+  mount:'#felt-mount', preview:'BET',
+});
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function showTab(tab){_authMode=tab;document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('auth-btn').textContent=tab==='login'?'Log In':'Create Account';document.getElementById('auth-error').style.display='none';}
