@@ -2244,16 +2244,9 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
       </div>
     </div>
   </div>
-  <div class="modal-overlay hidden" id="modal-payoff">
-    <div class="modal-box" style="max-width:360px">
-      <div class="modal-title" style="margin-bottom:12px">Pay Off Buy-In?</div>
-      <div style="font-size:15px;line-height:1.5;margin-bottom:16px" id="payoff-text"></div>
-      <div style="display:flex;gap:8px">
-        <button class="modal-btn cancel" onclick="declinePayoff()">No, Cash Out Full Amount</button>
-        <button class="modal-btn" onclick="acceptPayoff()">Pay Off Buy-In</button>
-      </div>
-    </div>
-  </div>
+  <!-- The "Pay Off Buy-In?" modal lived here. It only existed to work around P&L treating
+       total_redeemed as a debt that cashing out never paid down; with total_cashed_out doing
+       that job, paying off would cost the player their buy-in and change P&L by nothing. -->
   <div class="modal-overlay hidden" id="modal-forfeit">
     <div class="modal-box" style="max-width:360px">
       <div class="modal-title" style="margin-bottom:12px">Forfeit Locked Bets?</div>
@@ -2871,7 +2864,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.52</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.53</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4530,12 +4523,13 @@ async function switchGameMode(mode){
       // Re-sync bankroll from the server's real value rather than trusting whatever the client
       // currently has -- defense in depth against the two tables' balances ever drifting apart
       // again (see the big comment on saveCleanState for how that happened before).
-      const{data:fresh}=await sb.from('players').select('bankroll,total_redeemed,net_pnl').eq('id',currentPlayer.id).maybeSingle();
+      const{data:fresh}=await sb.from('players').select('bankroll,total_redeemed,total_cashed_out,net_pnl').eq('id',currentPlayer.id).maybeSingle();
       if(fresh){
         G.bankroll=parseFloat(fresh.bankroll)||0;
-        G.startingBankroll=parseFloat(fresh.total_redeemed)||0;
         currentPlayer.bankroll=G.bankroll;
-        currentPlayer.total_redeemed=G.startingBankroll;
+        currentPlayer.total_redeemed=parseFloat(fresh.total_redeemed)||0;
+        currentPlayer.total_cashed_out=parseFloat(fresh.total_cashed_out)||0;
+        G.startingBankroll=currentPlayer.total_redeemed-currentPlayer.total_cashed_out;
       }
     }
     updateUI();
@@ -5047,7 +5041,10 @@ function startSession(player){
   G=makeInitialG();
   G.bankroll=parseFloat(player.bankroll)||0;
   G.freePlay=parseFloat(player.free_play_balance)||0;
-  G.startingBankroll=parseFloat(player.total_redeemed)||0;
+  // P&L basis = money the house fronted, less money already taken back off the table at the
+  // cage. Cashing out lowers total_redeemed's effect via total_cashed_out, so a redeem then
+  // cash out with no bets in between nets to $0 instead of showing the voucher as a loss.
+  G.startingBankroll=(parseFloat(player.total_redeemed)||0)-(parseFloat(player.total_cashed_out)||0);
   G.bankrollAfterLastRoll=G.bankroll;
   loadBullets(player.id);
   // Focus Mode now plays both buckets (same game_state shape as index.html) -- resume
@@ -5142,8 +5139,8 @@ async function redeemCode(){
   if(!data.ok){
     errEl.textContent=data.message||'Could not redeem code.';btn.disabled=false;btn.textContent='Redeem';return;
   }
-  G.bankroll=data.newBankroll;G.startingBankroll=data.newTotalRedeemed;G.bankrollAfterLastRoll=data.newBankroll;
-  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=data.newTotalRedeemed;
+  G.bankroll=data.newBankroll;G.startingBankroll=(data.newBasis!==undefined?data.newBasis:data.newTotalRedeemed);G.bankrollAfterLastRoll=data.newBankroll;
+  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=(data.totalRedeemedLifetime!==undefined?data.totalRedeemedLifetime:data.newTotalRedeemed);if(data.totalCashedOut!==undefined)currentPlayer.total_cashed_out=data.totalCashedOut;
   closeRedeemModal();addLog('Code redeemed! +'+fmt(data.value)+' added.','win');updateUI();
   btn.disabled=false;btn.textContent='Redeem';
 }
@@ -8615,47 +8612,38 @@ if(isDiscordActivity()){
 }
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
-// "Debt" here is G.startingBankroll (== total_redeemed: the cumulative buy-in money Deck has
-// fronted via redeem codes). If the player is cashing out MORE than that -- only possible with
-// a genuine profit, i.e. calcNet()>0 -- they can choose to pay that debt off using this ticket:
-// the voucher shrinks to just the profit portion (bankroll - debt) and is flagged as a
-// "Profit-only" voucher. Declining keeps the full ticket (face value = bankroll).
+// G.startingBankroll is the P&L basis: total_redeemed (buy-in money Deck has fronted) minus
+// total_cashed_out (money already taken back off the table at the cage). A cashout moves the
+// whole bankroll into total_cashed_out, so the basis drops by exactly what the ticket is
+// worth and calcNet() doesn't budge -- the same money, on a ticket instead of on the felt.
+// Redeeming that ticket later moves it back and again nets to zero.
 //
-// The Supabase cashout/redeem Edge Functions are the actual source of truth for all of this
-// (payoffDebt flag -> reduced amount, is_profit_only voucher flag, total_redeemed settlement) --
-// this just sends the intent and displays whatever the server actually decided. amount/
-// isProfitOnly/newTotalRedeemed all fall back to client-side computation if an older,
-// not-yet-updated server response is missing them, so this still degrades gracefully.
+// This used to be wrong: total_redeemed was treated as a debt a cashout never paid down, so
+// redeem-then-cash-out with no bets in between showed a loss the size of the whole voucher,
+// compounding every round trip. The "pay off your buy-in debt" modal existed to escape that,
+// shrinking the ticket to just the profit -- it's gone now that P&L is computed correctly,
+// since taking it would cost the player their buy-in and move P&L not at all. The server
+// ignores the old payoffDebt flag, so a stale cached page just gets a normal full cashout.
+//
+// The Supabase cashout Edge Function is the source of truth; this displays what it decided.
+// amount/newBasis fall back to client-side values if an older server response omits them.
 async function cashOut(){
   // G.bankroll is the PRACTICE bankroll while Practice Mode is on -- cashing it out would
   // hit the real /cashout endpoint with fake money. Switch back to real money first.
   if(G.practiceMode){addLog('Turn off Practice Mode before cashing out.','info');return;}
   if(G.bankroll<=0){addLog('Nothing to cash out.','info');return;}
-  const net=calcNet();
-  if(net>0&&G.bankroll>G.startingBankroll){
-    const debt=r2(G.startingBankroll);
-    const profit=r2(G.bankroll-G.startingBankroll);
-    document.getElementById('payoff-text').textContent=
-      'You have '+fmt(profit)+' in profit. Pay off your '+fmt(debt)+' buy-in debt using '+
-      'this cash out? Your ticket will be reduced to your '+fmt(profit)+' profit (a Profit-only voucher) '+
-      'and your Total Redeemed will reset to $0.00.';
-    document.getElementById('modal-payoff').classList.remove('hidden');
-    return;
-  }
-  doCashOut(false);
+  doCashOut();
 }
-function declinePayoff(){document.getElementById('modal-payoff').classList.add('hidden');doCashOut(false);}
-function acceptPayoff(){document.getElementById('modal-payoff').classList.add('hidden');doCashOut(true);}
-async function doCashOut(payoff){
+async function doCashOut(){
   const btn=document.getElementById('cashout-btn');if(btn)btn.disabled=true;
   const token=localStorage.getItem('craps_session');
-  const oldBankroll=G.bankroll,oldDebt=G.startingBankroll;
+  const oldBankroll=G.bankroll,oldBasis=G.startingBankroll;
   let data;
   try{
     const res=await fetch(FUNCTIONS_URL+'/cashout',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
-      body:JSON.stringify({session_token:token,payoffDebt:!!payoff})
+      body:JSON.stringify({session_token:token})
     });
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error.'};}
@@ -8664,19 +8652,18 @@ async function doCashOut(payoff){
   G.bankroll=0;
   if(currentPlayer)currentPlayer.bankroll=0;
   const code=data.code;
-  // isProfitOnly/amount/newTotalRedeemed come straight from the server when it's been updated
-  // to know about payoffDebt -- it's authoritative on whether payoff was actually valid (e.g.
-  // in case something changed between opening the modal and confirming). If isProfitOnly is
-  // missing from the response, that means an older server handled this request: it always
-  // returns the FULL bankroll as data.amount with no idea payoff was requested, so the
-  // reduction and debt settlement both have to happen here instead, as a fallback.
-  const serverKnowsPayoff=data.isProfitOnly!==undefined;
-  const isProfitOnly=serverKnowsPayoff?!!data.isProfitOnly:(payoff&&oldBankroll>oldDebt);
-  const amount=serverKnowsPayoff?parseFloat(data.amount):(isProfitOnly?r2(oldBankroll-oldDebt):parseFloat(data.amount));
-  const newDebt=data.newTotalRedeemed!==undefined?r2(data.newTotalRedeemed):r2(Math.max(0,oldDebt-oldBankroll+amount));
-  if(isProfitOnly)addLog('Paid off buy-in debt: ticket reduced to '+fmt(amount)+' profit-only.','info');
-  G.startingBankroll=newDebt;
-  if(currentPlayer)currentPlayer.total_redeemed=newDebt;
+  const isProfitOnly=!!data.isProfitOnly;
+  const amount=parseFloat(data.amount);
+  // newBasis is the honest name; newTotalRedeemed carries the same basis figure for pages
+  // cached from before the fix. Falling back to oldBasis-oldBankroll matches what the server
+  // does, so an older server response still leaves the HUD right.
+  const newBasis=data.newBasis!==undefined?r2(data.newBasis)
+    :(data.newTotalRedeemed!==undefined?r2(data.newTotalRedeemed):r2(oldBasis-oldBankroll));
+  G.startingBankroll=newBasis;
+  if(currentPlayer){
+    if(data.totalRedeemedLifetime!==undefined)currentPlayer.total_redeemed=parseFloat(data.totalRedeemedLifetime);
+    if(data.newTotalCashedOut!==undefined)currentPlayer.total_cashed_out=parseFloat(data.newTotalCashedOut);
+  }
   const now=new Date(data.created_at||Date.now());
   const dateStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'
     +now.getDate().toString().padStart(2,'0')+'/'

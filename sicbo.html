@@ -1054,7 +1054,7 @@ body{--chip:88px;--edge:calc(var(--chip)*0.16)}
 <div class="chip" data-val="500" onclick="selectChip(500)">$500</div>
           <div class="chip" data-val="1000" onclick="selectChip(1000)">$1000</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
-          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.0</span>
+          <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 0.4.1</span>
         </div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" onclick="clearBets()">Clear</button>
@@ -1280,8 +1280,8 @@ async function redeemCode(){
   if(!data.ok){
     errEl.textContent=data.message||'Could not redeem code.';btn.disabled=false;btn.textContent='Redeem';return;
   }
-  G.bankroll=data.newBankroll;G.startingBankroll=data.newTotalRedeemed;G.bankrollAfterLastRoll=data.newBankroll;
-  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=data.newTotalRedeemed;
+  G.bankroll=data.newBankroll;G.startingBankroll=(data.newBasis!==undefined?data.newBasis:data.newTotalRedeemed);G.bankrollAfterLastRoll=data.newBankroll;
+  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=(data.totalRedeemedLifetime!==undefined?data.totalRedeemedLifetime:data.newTotalRedeemed);if(data.totalCashedOut!==undefined)currentPlayer.total_cashed_out=data.totalCashedOut;
   closeRedeemModal();addLog('Code redeemed! +'+fmt(data.value)+' added.','win');updateUI();
   btn.disabled=false;btn.textContent='Redeem';
 }
@@ -1318,8 +1318,8 @@ async function redeemCode(){
   if(!data.ok){
     errEl.textContent=data.message||'Could not redeem code.';btn.disabled=false;btn.textContent='Redeem';return;
   }
-  G.bankroll=data.newBankroll;G.startingBankroll=data.newTotalRedeemed;G.bankrollAfterLastRoll=data.newBankroll;
-  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=data.newTotalRedeemed;
+  G.bankroll=data.newBankroll;G.startingBankroll=(data.newBasis!==undefined?data.newBasis:data.newTotalRedeemed);G.bankrollAfterLastRoll=data.newBankroll;
+  currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=(data.totalRedeemedLifetime!==undefined?data.totalRedeemedLifetime:data.newTotalRedeemed);if(data.totalCashedOut!==undefined)currentPlayer.total_cashed_out=data.totalCashedOut;
   closeRedeemModal();addLog('Code redeemed! +'+fmt(data.value)+' added.','win');updateUI();
   btn.disabled=false;btn.textContent='Redeem';
 }
@@ -1395,7 +1395,10 @@ function startSession(player){
   document.getElementById('top-bar-username')&&(document.getElementById('top-bar-username').textContent=player.username);
   G.bankroll=parseFloat(player.bankroll)||0;
   G.freePlay=parseFloat(player.free_play_balance)||0;
-  G.startingBankroll=parseFloat(player.total_redeemed)||0;
+  // P&L basis = money the house fronted, less money already taken back off the table at the
+  // cage. Cashing out lowers total_redeemed's effect via total_cashed_out, so a redeem then
+  // cash out with no bets in between nets to $0 instead of showing the voucher as a loss.
+  G.startingBankroll=(parseFloat(player.total_redeemed)||0)-(parseFloat(player.total_cashed_out)||0);
   // Restore lastBet snapshot from game_state.sicbo
   const gs=player.game_state||{};
   if(gs.sicbo&&gs.sicbo.lastBet){

@@ -8,8 +8,8 @@
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="instructions.js?v=7"></script>
-<link rel="stylesheet" href="felt-themes.css?v=5">
-<script src="felt-themes.js?v=5"></script>
+<link rel="stylesheet" href="felt-themes.css?v=6">
+<script src="felt-themes.js?v=6"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a12;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -853,7 +853,7 @@ Tap BEGIIN GAME to start the game.</div>
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="top-left">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.20</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.21</div>
       <div style="width:100%;display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="destroyer:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('destroyer')" title="How to play">i</button>
@@ -1505,8 +1505,8 @@ async function redeemCode(){
     data=await res.json();
   }catch(e){errEl.textContent='Network error. Try again.';btn.disabled=false;btn.textContent='Redeem';return;}
   if(!data.ok){errEl.textContent=data.message||'Could not redeem code.';btn.disabled=false;btn.textContent='Redeem';return;}
-  G.bankroll=data.newBankroll;G.startingBankroll=data.newTotalRedeemed;
-  if(currentPlayer){currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=data.newTotalRedeemed;}
+  G.bankroll=data.newBankroll;G.startingBankroll=(data.newBasis!==undefined?data.newBasis:data.newTotalRedeemed);
+  if(currentPlayer){currentPlayer.bankroll=data.newBankroll;currentPlayer.total_redeemed=(data.totalRedeemedLifetime!==undefined?data.totalRedeemedLifetime:data.newTotalRedeemed);if(data.totalCashedOut!==undefined)currentPlayer.total_cashed_out=data.totalCashedOut;}
   closeRedeemModal();addLog('Code redeemed! +'+fmt(data.value)+' added.','info');updateUI();
   btn.disabled=false;btn.textContent='Redeem';
 }
@@ -1519,7 +1519,10 @@ function startSession(player){
   document.getElementById('game-screen').style.display='flex';
   G.bankroll=parseFloat(player.bankroll)||0;
   G.freePlay=parseFloat(player.free_play_balance)||0;
-  G.startingBankroll=parseFloat(player.total_redeemed)||0;
+  // P&L basis = money the house fronted, less money already taken back off the table at the
+  // cage. Cashing out lowers total_redeemed's effect via total_cashed_out, so a redeem then
+  // cash out with no bets in between nets to $0 instead of showing the voucher as a loss.
+  G.startingBankroll=(parseFloat(player.total_redeemed)||0)-(parseFloat(player.total_cashed_out)||0);
   // Restore in-progress game if any
   const gs=(player.game_state||{}).destroyer;
   if(gs&&gs.phase==='firing'){
