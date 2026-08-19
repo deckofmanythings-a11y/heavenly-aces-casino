@@ -8,6 +8,8 @@
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="instructions.js?v=7"></script>
+<link rel="stylesheet" href="felt-themes.css?v=6">
+<script src="felt-themes.js?v=6"></script>
 <script src="three.min.js"></script>
 <script src="cannon.min.js"></script>
 <script src="roulette-wheel.js?v=44"></script>
@@ -280,6 +282,35 @@ body{--chip:82px;--edge:calc(var(--chip)*0.16)}
 @media (orientation:portrait){
   .sweep-inner{transform:rotate(-90deg)}
 }
+
+/* ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+   This board's art IS the layout, so each palette swaps in a colour-graded copy
+   (tools/grade_felt_art.py) rather than recolouring anything in CSS. The grade
+   shifts hue only inside the green band and preserves each pixel's luminance, so
+   red and black number cells are untouched -- they are roulette's colour
+   language, not decor -- and the green 0/00 cells hold their original lightness so
+   they stay distinct from the black cells on every palette.
+   Casino Green below is the uploaded art, unmodified. */
+[data-felt="classic"],.felt-classic{
+  --theme-label:"Casino Green";--theme-scheme:dark;
+  --felt-1:#1c7a44;--felt-2:#12572f;--felt-3:#176b3a;--felt-4:#0c3d21;--felt-rail:#0a2a14;
+  --vein-hi:rgba(140,220,175,.14);--vein-lo:rgba(4,18,9,.35);
+  --glow-hi:rgba(60,140,95,.40);--glow-lo:rgba(4,18,9,.55);
+  --edge-1:#061109;--edge-2:#c9a944;--edge-3:#f2e6b8;--edge-4:#8a6a1c;--edge-glow:rgba(255,215,0,.12);
+  --metal:linear-gradient(155deg,#7d5a10 0%,#cfa73c 10%,#f7edc0 21%,#dbbb5e 33%,#ac8628 47%,#7d5a10 59%,#c5a338 73%,#efe1a8 85%,#9a761c 100%);
+  --box-1:#15462f;--box-2:#0f3324;--box-3:#0a2418;
+  --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
+  --sheen-on:rgba(255,255,255,.11);
+  --active-ring:#ffd700;--active-glow:rgba(255,205,70,.55);
+  --ink:#ffffff;--ink-rgb:255,255,255;--ink-soft:rgba(255,255,255,.6);
+  --ink-accent:#ffe066;--ink-accent-rgb:255,224,102;--ink-good:#7ee87e;
+}
+body[data-felt="ivory"] #rl-panel{background-image:url('roulett_felt_ivory.webp?v=1')}
+body[data-felt="emerald"] #rl-panel{background-image:url('roulett_felt_emerald.webp?v=1')}
+body[data-felt="obsidian"] #rl-panel{background-image:url('roulett_felt_obsidian.webp?v=1')}
+body[data-felt="sapphire"] #rl-panel{background-image:url('roulett_felt_sapphire.webp?v=1')}
+body[data-felt="burgundy"] #rl-panel{background-image:url('roulett_felt_burgundy.webp?v=1')}
+body[data-felt="rose"] #rl-panel{background-image:url('roulett_felt_rose.webp?v=1')}
 </style>
 </head>
 <body>
@@ -338,7 +369,7 @@ body{--chip:82px;--edge:calc(var(--chip)*0.16)}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.47</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.48</div>
       <div style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="roulette:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('roulette')" title="How to play">i</button>
@@ -357,6 +388,7 @@ body{--chip:82px;--edge:calc(var(--chip)*0.16)}
         <button class="info-btn gold" onclick="openRedeemModal(false)">Redeem</button>
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
+        <span id="felt-mount" style="display:flex;align-items:center"></span>
         <button class="info-btn" onclick="showWheelView()">👁️ Show Wheel</button>
         <button class="info-btn" id="fret-calib-toggle" onclick="toggleFretCalib()">🎯 Frets</button>
       </div>
@@ -529,6 +561,14 @@ function closeCapModal(){document.getElementById('modal-cap').classList.add('hid
 function openLogModal(){document.getElementById('modal-log').classList.remove('hidden');}
 function closeLogModal(){document.getElementById('modal-log').classList.add('hidden');}
 function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.prepend(p);while(el.children.length>80)el.removeChild(el.lastChild);}
+
+// ── BOARD COLOUR ─────────────────────────────────────────────────────────────
+// The art is the board here, so palettes swap graded copies of it. See the BOARD
+// COLOUR block in the stylesheet for what the grade does and does not touch.
+FeltThemes.init({
+  root:'body', key:'roulette_felt', defaultId:'classic',
+  mount:'#felt-mount', preview:'RED',
+});
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function showTab(tab){_authMode=tab;document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('auth-btn').textContent=tab==='login'?'Log In':'Create Account';document.getElementById('auth-error').style.display='none';}
