@@ -19,8 +19,8 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
 <script src="instructions.js?v=7"></script>
-<link rel="stylesheet" href="felt-themes.css?v=2">
-<script src="felt-themes.js?v=2"></script>
+<link rel="stylesheet" href="felt-themes.css?v=5">
+<script src="felt-themes.js?v=5"></script>
 <style>
 /* ── DESIGN TOKENS (Phase 2 of the CSS-only felt re-skin) ──────────────────────
    Codifies the visual system pulled from Interblock's real Craps cabinet
@@ -128,20 +128,20 @@
   --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:var(--ink);position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
 
 /* ── AUTH ── */
 #auth-screen{display:none;align-items:center;justify-content:center;height:100vh;padding:20px}
 .auth-box{background:#1a1a1a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:28px 24px;width:100%;max-width:340px}
-.auth-box h1{font-size:34px;font-weight:700;color:#ffd700;margin-bottom:3px}
-.auth-box p{font-size:21px;color:rgba(255,255,255,.4);margin-bottom:20px}
+.auth-box h1{font-size:34px;font-weight:700;color:var(--ink-accent);margin-bottom:3px}
+.auth-box p{font-size:21px;color:rgba(var(--ink-rgb),.4);margin-bottom:20px}
 .auth-tabs{display:flex;margin-bottom:16px;border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
-.auth-tab{flex:1;padding:7px;text-align:center;font-size:23px;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);border:none}
-.auth-tab.active{background:rgba(255,215,0,.15);color:#ffd700}
+.auth-tab{flex:1;padding:7px;text-align:center;font-size:23px;cursor:pointer;background:transparent;color:rgba(var(--ink-rgb),.5);border:none}
+.auth-tab.active{background:rgba(255,215,0,.15);color:var(--ink-accent)}
 .auth-field{margin-bottom:12px}
-.auth-field label{display:block;font-size:19px;color:rgba(255,255,255,.5);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
-.auth-field input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:8px 10px;color:#fff;font-size:24px;outline:none}
+.auth-field label{display:block;font-size:19px;color:rgba(var(--ink-rgb),.5);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.auth-field input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:8px 10px;color:var(--ink);font-size:24px;outline:none}
 .auth-field input:focus{border-color:rgba(255,215,0,.5)}
 .auth-btn{width:100%;background:#c8a200;border:none;border-radius:7px;color:#111;font-size:24px;font-weight:700;padding:10px;cursor:pointer;margin-top:4px}
 .auth-btn:disabled{opacity:.5;cursor:not-allowed}
@@ -155,7 +155,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Left col header (matches left col width) */
 #left-col-header{width:24vw;min-width:160px;max-width:260px;flex-shrink:0;background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:3px}
-.mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);cursor:pointer;font-size:calc(19px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.6)}
+.mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);cursor:pointer;font-size:calc(19px * var(--font-scale,1));font-weight:700;color:rgba(var(--ink-rgb),.6)}
 /* Hardways/Hop Bets tab buttons: one row with name + $ value inline instead of stacked lines,
    so the button itself needs less height (Deck: "make them one row with both the name and
    $value") -- lets the shorter box sit closer to the art above it. */
@@ -170,8 +170,8 @@ body.felt-mode #felt-stage .mode-btn{font-size:calc(19px * var(--font-scale,1))!
    dynamic "$0.00" value, only 67x12px at small felt sizes) -- the shared 19px still wrapped/
    overflowed there even once correctly scaled. Own smaller size + nowrap safety net. */
 body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size:calc(15px * var(--font-scale,1))!important;white-space:nowrap}
-.mode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
-.mode-btn-amt{font-size:calc(17px * var(--font-scale,1));color:#ffd700;font-weight:600}
+.mode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:var(--ink)}
+.mode-btn-amt{font-size:calc(17px * var(--font-scale,1));color:var(--ink-accent);font-weight:600}
 
 /* Lucky Roller strip */
 #lucky-roller{flex:1;display:flex;align-items:stretch;background:rgba(0,0,0,.25);padding:3px 4px;gap:4px;border-right:1px solid rgba(255,255,255,.1)}
@@ -181,15 +181,15 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 .lr-bonus.has-bet{}
 .lr-bonus.closed{opacity:.4;pointer-events:none}
 .lr-header{background:rgba(0,0,0,.3);padding:4px 6px;text-align:center}
-.lr-title{font-size:34px;font-weight:700;color:#ffe066;display:block}
-.lr-pay{font-size:30px;color:rgba(255,255,255,.45);display:block}
+.lr-title{font-size:34px;font-weight:700;color:var(--ink-accent);display:block}
+.lr-pay{font-size:30px;color:rgba(var(--ink-rgb),.45);display:block}
 .lr-body{padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;justify-content:center}
 .lr-nums{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
-.lr-num{position:relative;width:32px;height:32px;border-radius:3px;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:rgba(255,255,255,.4);border:0.5px solid rgba(255,255,255,.15)}
-.lr-explain{font-size:11px;color:rgba(255,255,255,.45);display:block}
+.lr-num{position:relative;width:32px;height:32px;border-radius:3px;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:rgba(var(--ink-rgb),.4);border:0.5px solid rgba(255,255,255,.15)}
+.lr-explain{font-size:11px;color:rgba(var(--ink-rgb),.45);display:block}
 .lr-num.hit{background:transparent;color:#7ee87e;border-color:#7ee87e}
-.lr-stake{font-size:38px;font-weight:600;color:#ffd700;min-height:1.2em;line-height:1.2}
-.lr-note{font-size:15px;color:rgba(255,255,255,.4)}
+.lr-stake{font-size:38px;font-weight:600;color:var(--ink-accent);min-height:1.2em;line-height:1.2}
+.lr-note{font-size:15px;color:rgba(var(--ink-rgb),.4)}
 /* Removed site-wide (Sic-Bo/Roulette/Craps): right-click and drag-off already remove
    a bet, these corner buttons were redundant. display:none!important on each rather
    than deleting every creation/hover-reveal site (several, scattered across bonus
@@ -198,7 +198,7 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 /* Dice zone inside lucky roller */
 #dice-zone{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
 #dice-canvas-wrap{position:relative;flex-shrink:0}
-#dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:calc(26px * var(--font-scale,1));font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
+#dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:calc(26px * var(--font-scale,1));font-weight:700;color:var(--ink);text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
 .rollem-all-bar{border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;transition:background .12s;position:relative}
 .rollem-all-bar:hover{background:rgba(255,255,255,.08)}
 .rollem-all-bar.has-bet{}
@@ -206,9 +206,9 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 /* Info panel (upper right) */
 #info-panel{width:36vw;min-width:240px;max-width:420px;flex-shrink:0;background:rgba(0,0,0,.35);padding:4px 6px;display:flex;flex-direction:column;gap:3px;justify-content:space-between;position:relative}
 .info-row{display:flex;gap:4px;align-items:center}
-.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
+.info-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:4px;color:var(--ink);font-size:19px;padding:3px 6px;cursor:pointer;white-space:nowrap}
 .info-btn:hover{background:rgba(255,255,255,.2)}
-.info-btn.gold{border-color:rgba(255,215,0,.4);color:#ffd700}
+.info-btn.gold{border-color:rgba(255,215,0,.4);color:var(--ink-accent)}
 #finances-wrap{position:relative;flex:1;display:flex}
 #finances-btn{flex:1;display:flex;align-items:center;justify-content:space-between}
 #finances-caret{font-size:13px;opacity:.7;transition:transform .15s}
@@ -218,10 +218,10 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 #finances-dropdown .info-btn{width:100%}
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
 .hud-item{display:flex;flex-direction:column}
-.hud-lbl{font-size:17px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.hud-lbl{font-size:17px;color:rgba(var(--ink-rgb),.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
 .hud-val{font-size:19px;font-weight:600;line-height:1.3}
-.info-i{display:inline-block;margin-left:4px;font-size:.85em;color:rgba(255,255,255,.45);cursor:help;text-transform:none;letter-spacing:0}
-.info-i:hover{color:rgba(255,255,255,.85)}
+.info-i{display:inline-block;margin-left:4px;font-size:.85em;color:rgba(var(--ink-rgb),.45);cursor:help;text-transform:none;letter-spacing:0}
+.info-i:hover{color:rgba(var(--ink-rgb),.85)}
 
 
 /* ── PLAY AREA ── */
@@ -237,8 +237,8 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 .bb{background:var(--box-fill-lightest);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:calc(19px * var(--font-scale,1));padding:calc(3px * var(--font-scale,1)) calc(2px * var(--font-scale,1)) calc(2px * var(--font-scale,1));cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .bb:hover{background:rgba(255,255,255,.15)}
 .bb.active{}
-.bb .pay{font-size:15px;color:rgba(255,255,255,.4);display:block;margin-top:1px}
-.bb .stk{font-size:17px;color:#ffd700;display:block;min-height:1.2em;line-height:1.2}
+.bb .pay{font-size:15px;color:rgba(var(--ink-rgb),.4);display:block;margin-top:1px}
+.bb .stk{font-size:17px;color:var(--ink-accent);display:block;min-height:1.2em;line-height:1.2}
 /* Was min(36px,4vh) -- a viewport-HEIGHT-relative clamp, entirely decoupled from the felt's own
    WIDTH-driven --font-scale, so it didn't track the felt shrinking (Deck: "The dice images need
    to shrink as well"). calc(*scale) makes it track the same felt-width-driven factor as every
@@ -246,7 +246,7 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 .dp{font-size:calc(36px * var(--font-scale,1));line-height:1;display:block}
 .bwrap{position:relative;width:100%;min-height:0;min-width:0}
 .bwrap:hover .mbtn.vis{display:block}
-.mbtn{display:none;position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.5);border:0.5px solid rgba(255,255,255,.3);color:#fff;font-size:19px;line-height:12px;text-align:center;cursor:pointer;z-index:3;padding:0}
+.mbtn{display:none;position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:3px;background:rgba(0,0,0,.5);border:0.5px solid rgba(255,255,255,.3);color:var(--ink);font-size:19px;line-height:12px;text-align:center;cursor:pointer;z-index:3;padding:0}
 .mbtn:hover{background:rgba(180,0,0,.7)}
 
 /* One roll props */
@@ -289,14 +289,14 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
    Trimmed until the sum actually fits with margin. */
 body.felt-mode #felt-stage #bet-any7 .prop-bar-name,#bet-any7 .prop-bar-odds{font-size:calc(38px * var(--font-scale,1))!important}
 body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-odds{font-size:calc(28px * var(--font-scale,1))!important}
-.prop-bar-stk{font-size:17px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
+.prop-bar-stk{font-size:17px;color:var(--ink-accent);min-height:1.2em;line-height:1.2;text-align:center}
 .horn-stack{display:flex;flex-direction:column;flex:5;min-height:0;overflow:hidden}
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
 .horn-row.horn-mid-row{flex:1}
 .horn-cell{padding:calc(3px * var(--font-scale,1)) calc(2px * var(--font-scale,1));text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border-thin);background:var(--box-fill-lightest);position:relative;flex:1;min-height:0;overflow:hidden}
 .horn-cell:hover{background:rgba(255,255,255,.1)}
 .hc-dice{font-size:calc(36px * var(--font-scale,1));line-height:1}
-.hc-pay{font-size:14px;color:rgba(255,255,255,.5);margin-top:1px}
+.hc-pay{font-size:14px;color:rgba(var(--ink-rgb),.5);margin-top:1px}
 /* Font-size override from Calibrate Mode's font tool -- Aces/Ace2/Midnight/Yo (the four
    non-center Horn Bet cells) all got the same size. */
 #bet-aces .hc-pay,#bet-ace2 .hc-pay,#bet-midnight .hc-pay,#bet-yo .hc-pay{font-size:calc(24px * var(--font-scale,1))!important}
@@ -371,10 +371,10 @@ body.felt-portrait #felt-stage #bet-hop15 .dice-combo-img,
 body.felt-portrait #felt-stage #bet-hop46 .dice-combo-img{width:calc(160px * var(--font-scale,1))!important;height:calc(80px * var(--font-scale,1))!important}
 
 /* Hop bets */
-.hop-section-hdr{text-align:center;padding:2px;font-size:calc(15px * var(--font-scale,1));font-weight:700;color:rgba(255,255,255,.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
+.hop-section-hdr{text-align:center;padding:2px;font-size:calc(15px * var(--font-scale,1));font-weight:700;color:rgba(var(--ink-rgb),.55);background:var(--box-fill-darkest);letter-spacing:.05em;flex-shrink:0}
 .fm-panel-label{display:none}
 /* Deck's 4-tier green system: title/label bars (this + .hop-section-hdr above) are Darkest. */
-body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.7);font-size:calc(13px * var(--font-scale,1));line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
+body.felt-mode #felt-stage .fm-panel-label{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;letter-spacing:.06em;color:rgba(var(--ink-rgb),.7);font-size:calc(13px * var(--font-scale,1));line-height:1.25;white-space:normal;background:var(--box-fill-darkest);border-radius:var(--box-radius)}
 /* Font-size override from Calibrate Mode's font tool -- Deck only resized #hw-panel-label
    itself, hop-panel-label-1/2 keep the shared 13px above. */
 /* Deck: "HARD WAYS and PROPOSITION BETS are line breaking instead of shrinking." .fm-panel-label
@@ -445,10 +445,10 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 .prop-circle:hover{background:rgba(255,255,255,.15)}
 .prop-circle.active{}
 .circle-wrap{position:relative;display:flex;flex-direction:column;align-items:center}
-.circle-stk{font-size:14px;color:#ffd700;min-height:1.2em;line-height:1.2;text-align:center}
+.circle-stk{font-size:14px;color:var(--ink-accent);min-height:1.2em;line-height:1.2;text-align:center}
 .mbtn-circle{display:none!important}
 .sc-stack{display:flex;flex-direction:column;gap:3px;flex:1}
-.sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:#fff;font-size:calc(15px * var(--font-scale,1));padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
+.sc-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:3px;color:var(--ink);font-size:calc(15px * var(--font-scale,1));padding:3px 2px;cursor:pointer;text-align:center;width:100%;line-height:1.2}
 .sc-btn:hover{background:rgba(255,255,255,.2)}
 .sc-btn.on{background:rgba(100,200,100,.25);border-color:#7ee87e;color:#7ee87e}
 .sc-btn.locked{background:rgba(255,190,60,.25);border-color:#ffbe3c;color:#ffbe3c}
@@ -456,7 +456,7 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 #beton-btn{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 
 /* Quick toast for Bets On/Off lock feedback */
-#quick-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-14px);background:rgba(20,20,20,.92);border:0.5px solid rgba(255,190,60,.6);color:#ffe066;font-size:15px;font-weight:700;padding:8px 16px;border-radius:6px;z-index:100000;pointer-events:none;opacity:0;transition:opacity .2s ease,transform .2s ease;white-space:nowrap}
+#quick-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-14px);background:rgba(20,20,20,.92);border:0.5px solid rgba(255,190,60,.6);color:var(--ink-accent);font-size:15px;font-weight:700;padding:8px 16px;border-radius:6px;z-index:100000;pointer-events:none;opacity:0;transition:opacity .2s ease,transform .2s ease;white-space:nowrap}
 #quick-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Main right */
@@ -485,7 +485,7 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 .nb-place.active{}
 .nb-lbl{font-size:11px;display:block;letter-spacing:.04em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important;opacity:.6}
 .nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
-.nb-pay{font-size:calc(11px * var(--font-scale,1));color:rgba(255,255,255,.4);display:block}
+.nb-pay{font-size:calc(11px * var(--font-scale,1));color:rgba(var(--ink-rgb),.4);display:block}
 .off-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;background:rgba(0,0,0,.5)}
 .off-ov span{font-size:15px;font-weight:700;color:rgba(255,200,0,.95)}
 .num-box-wrap{position:relative}
@@ -494,7 +494,7 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 .come-on-box{background:rgba(0,140,65,.32);border:0.5px solid rgba(0,220,100,.45);border-radius:2px;padding:1px 2px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;justify-content:center;position:relative;margin-top:1px}
 .come-flat-amt{font-size:14px;font-weight:700;color:#7eff9a}
 .come-odds-btn{font-size:11px;background:rgba(0,90,40,.6);border:0.5px solid rgba(0,200,100,.4);border-radius:2px;color:#7eff9a;padding:1px 2px;cursor:pointer}
-.come-odds-amt{font-size:11px;color:#ffe066}
+.come-odds-amt{font-size:11px;color:var(--ink-accent)}
 /* Come/DC bet+odds chips sit side-by-side in the number box, per the Interblock reference
    (Come bet chip left, Come Odds chip right; Don't Come Odds chip left, DC bet chip right).
    DOM order is always flat-half then odds-half; .dc-on-box uses row-reverse to flip the
@@ -565,8 +565,8 @@ body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{he
    Field gets its own smaller one (Don't Pass isn't a .zone-name, see .dp-name below). */
 #come-bar .zone-name,#pass-bar .zone-name{font-size:calc(76px * var(--font-scale,1))!important}
 #field-bar .zone-name{font-size:calc(44px * var(--font-scale,1))!important}
-.zone-stk{font-size:19px;color:#ffd700;min-height:1.2em;line-height:1.2;margin-top:1px}
-.zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
+.zone-stk{font-size:19px;color:var(--ink-accent);min-height:1.2em;line-height:1.2;margin-top:1px}
+.zone-note{position:absolute;bottom:0;right:0;transform:translateX(35%);background:#b02020;color:var(--ink);font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:8;letter-spacing:.05em;white-space:nowrap;opacity:1}
 .zone-note:empty{display:none}
 .progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
 
@@ -575,15 +575,15 @@ body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{he
 #lowhigh-field-bar{flex:1;min-height:0}
 .lowhigh-half{flex:1;background:var(--box-fill);border:var(--box-border);border-radius:var(--box-radius)}
 .lowhigh-name{font-size:18px}
-.progressive-tier-row .prog-pay{color:#ffd700;font-weight:700}
+.progressive-tier-row .prog-pay{color:var(--ink-accent);font-weight:700}
 
 /* THE LIGHT: shared cross-game progressive. Position comes from FELT_LAYOUT (like every
    other felt element) -- this just styles what's inside the box. */
 #light-spot{cursor:pointer;border-radius:12%;transition:box-shadow .15s}
 #light-spot.active{}
-#stk-light{position:absolute;left:50%;top:78%;transform:translate(-50%,-50%);font-size:1.6cqh;font-weight:700;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:2}
-#light-streak-badge{display:none;position:absolute;left:50%;bottom:-6%;transform:translateX(-50%);background:#b02020;color:#fff;font-weight:800;font-size:11px;line-height:1.2;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap;z-index:3}
-#light-info-btn{position:absolute;right:2%;top:2%;width:18%;height:18%;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:9px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:4;padding:0}
+#stk-light{position:absolute;left:50%;top:78%;transform:translate(-50%,-50%);font-size:1.6cqh;font-weight:700;color:var(--ink-accent);text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:2}
+#light-streak-badge{display:none;position:absolute;left:50%;bottom:-6%;transform:translateX(-50%);background:#b02020;color:var(--ink);font-weight:800;font-size:11px;line-height:1.2;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap;z-index:3}
+#light-info-btn{position:absolute;right:2%;top:2%;width:18%;height:18%;border-radius:50%;background:rgba(0,0,0,.6);color:var(--ink-accent);border:1px solid rgba(255,215,0,.5);font-size:9px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:4;padding:0}
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
 
@@ -592,7 +592,7 @@ body.felt-mode #felt-stage .come-on-box,body.felt-mode #felt-stage .dc-on-box{he
    bigger .zone-bar-style cells, same treatment as everything else on the felt now. */
 #come-bar{flex:2;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);background:var(--box-fill-flat);border:var(--box-border)}
 #field-bar{flex:2;min-height:0;background:var(--box-fill-lightest);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:var(--box-radius);border:var(--box-border)}
-.field-info{font-size:15px;color:rgba(255,255,255,.5);margin-top:1px}
+.field-info{font-size:15px;color:rgba(var(--ink-rgb),.5);margin-top:1px}
 #pass-bar{display:flex;align-items:stretch;flex:2;min-height:0;border-radius:var(--box-radius);overflow:hidden;border:var(--box-border)}
 /* ── STREET CRAPS: asphalt + chalk ─────────────────────────────────────────────
    Street deliberately does NOT use the green-felt design tokens -- it's a game played on the
@@ -623,7 +623,7 @@ body.game-street #felt-stage .fm-art-img{display:none!important} /* no felt art 
 }
 .chalk-box:hover{background:rgba(255,255,255,.08);box-shadow:0 0 16px rgba(255,255,255,.3), inset 0 0 14px rgba(255,255,255,.08)}
 .chalk-box.active-bar{border-color:#fff;box-shadow:0 0 20px rgba(255,255,255,.45), inset 0 0 16px rgba(255,255,255,.12)}
-.chalk-label{font-family:'Permanent Marker','Caveat',cursive;color:rgba(255,255,255,.94);
+.chalk-label{font-family:'Permanent Marker','Caveat',cursive;color:rgba(var(--ink-rgb),.94);
   text-shadow:0 0 6px rgba(255,255,255,.35);line-height:1;white-space:nowrap}
 
 #street-line-bar,#street-fade-bar{display:none;padding:4px 6px}
@@ -647,7 +647,7 @@ body.game-street .street-pt{display:flex}
    never enters G.bets/G.bankroll or the server payload. */
 .street-house-stk{position:absolute;right:5%;bottom:4%;pointer-events:none;opacity:.9;transform:scale(.72);transform-origin:100% 100%}
 .street-house-tag{position:absolute;right:5%;top:3%;font-family:'Permanent Marker','Caveat',cursive;
-  font-size:calc(var(--chip)*0.17);color:rgba(255,255,255,.42);letter-spacing:.04em;pointer-events:none}
+  font-size:calc(var(--chip)*0.17);color:rgba(var(--ink-rgb),.42);letter-spacing:.04em;pointer-events:none}
 /* Street's board is ONLY those two bands. Everything else on the shared felt is hidden here in
    CSS rather than imperatively in applyGameMode(): FELT_LAYOUT is shared by all three modes and
    still positions all 44 of its entries for street, so hiding has to be declarative or a spot
@@ -742,9 +742,9 @@ body.game-street.felt-mode #felt-stage .street-pt .has-stack{top:66%}
 #pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
 #pass-odds-cell:hover{background:rgba(255,255,255,.12)}
 #pass-odds-cell.active{background:transparent}
-.odds-lbl{font-size:14px;color:rgba(255,255,255,.5);display:block}
+.odds-lbl{font-size:14px;color:rgba(var(--ink-rgb),.5);display:block}
 .odds-stk{font-size:17px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
-.odds-pay{font-size:14px;color:rgba(255,255,255,.4);display:block}
+.odds-pay{font-size:14px;color:rgba(var(--ink-rgb),.4);display:block}
 #pass-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;background:var(--box-fill-flat)}
 #pass-main:hover{background:rgba(255,255,255,.1)}
 #pass-main.active-bar{}
@@ -756,17 +756,17 @@ body.game-street.felt-mode #felt-stage .street-pt .has-stack{top:66%}
    Standard still switch in place (switchGameMode) since this page covers both; the other
    four games navigate away entirely. */
 #game-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0}
-.gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;transition:all .15s;line-height:1.3}
-.gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:#fff}
+.gmode-btn{flex:1;padding:3px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);cursor:pointer;font-size:14px;font-weight:700;color:rgba(var(--ink-rgb),.5);text-align:center;transition:all .15s;line-height:1.3}
+.gmode-btn.active{background:rgba(255,215,0,.18);border-color:#ffd700;color:var(--ink)}
 .gmode-btn:disabled{opacity:.35;cursor:not-allowed}
-.gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(255,255,255,.4);display:block}
-.gmode-btn.active .gmode-sub{color:rgba(255,215,0,.6)}
+.gmode-btn .gmode-sub{font-size:11px;font-weight:400;color:rgba(var(--ink-rgb),.4);display:block}
+.gmode-btn.active .gmode-sub{color:rgba(var(--ink-accent-rgb),.6)}
 /* Fibonacci press-progression cheat sheet, next to Home. Native title= can't hold a click-to-
    open state for touch users, so this is a small hand-rolled popover instead: CSS :hover shows
    it for mouse users, a JS-toggled .show class covers tap-to-open/tap-to-close on touch. */
 #fibo-wrap{position:relative;display:inline-flex;flex-shrink:0;cursor:pointer}
 #fibo-icon{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.3);display:block}
-#fibo-hint{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:9998;background:rgba(10,10,10,.95);border:1px solid rgba(255,215,0,.4);border-radius:6px;padding:8px 10px;font-size:12px;line-height:1.6;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+#fibo-hint{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:9998;background:rgba(10,10,10,.95);border:1px solid rgba(255,215,0,.4);border-radius:6px;padding:8px 10px;font-size:12px;line-height:1.6;color:var(--ink);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5)}
 #fibo-wrap{z-index:9998}
 #fibo-wrap:hover #fibo-hint,#fibo-hint.show{display:block}
 body.felt-mode #felt-stage #left-col-header #fibo-icon{width:calc(var(--chip)*0.55);height:calc(var(--chip)*0.55)}
@@ -774,7 +774,7 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 /* Don't Pass stub */
 #dont-pass-stub{display:none;flex:1;min-height:0;border-radius:4px;background:rgba(40,0,0,.3);border:0.5px solid rgba(255,80,80,.2);align-items:center;justify-content:center;flex-direction:column;opacity:.5;cursor:not-allowed}
 .dp-stub-name{font-size:16px;font-weight:900;letter-spacing:.08em;background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;opacity:.7}
-.dp-stub-note{font-size:11px;color:rgba(255,255,255,.3)}
+.dp-stub-note{font-size:11px;color:rgba(var(--ink-rgb),.3)}
 /* Don't Pass real bar */
 #dp-bar{display:none;flex:2;min-height:0;border-radius:var(--box-radius);background:var(--box-fill);border:var(--box-border);flex-direction:column;overflow:hidden}
 #dp-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .12s}
@@ -787,7 +787,7 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
    (dp-name/BAR+dice) so the row fits on one line with margin. */
 #dp-bar .dp-name{font-size:calc(42px * var(--font-scale,1))!important}
 .dp-stk{font-size:13px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
-.dp-note{font-size:9px;color:rgba(255,255,255,.35)}
+.dp-note{font-size:9px;color:rgba(var(--ink-rgb),.35)}
 /* display was 'none' (JS toggled it to 'block' once shown), never 'flex' -- unlike
    #pass-odds-cell (flex column, justify-content:center) above, so its lbl/stk/pay children
    just stacked in plain block flow. With .dp-odds-lbl left empty (see that comment) and
@@ -799,7 +799,7 @@ body.felt-mode #felt-stage #left-col-header #fibo-hint{font-size:calc(var(--chip
 #dp-odds-cell:hover{background:rgba(255,255,255,.12)}
 #dp-odds-cell.active{background:transparent}
 .dp-odds-lbl{font-size:9px;color:rgba(255,130,130,.5);display:block}
-.dp-odds-stk{font-size:11px;color:#ffd700;display:block;min-height:1.2em;line-height:1.2}
+.dp-odds-stk{font-size:11px;color:var(--ink-accent);display:block;min-height:1.2em;line-height:1.2}
 .dp-odds-pay{font-size:8px;color:rgba(255,130,130,.4);display:block}
 /* DC chip in number box */
 .dc-chip-box{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px}
@@ -850,7 +850,7 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
 .roll-pip{display:flex;flex-direction:column;flex-shrink:0;gap:2px}
 .roll-pip .rp-dice-row{display:flex;gap:2px}
 .roll-pip .rp-dice-row img{width:22px;height:22px;flex-shrink:0}
-.roll-pip .rp-num{background:#000;color:#fff;font-weight:800;font-size:15px;border-radius:3px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border:2px solid transparent}
+.roll-pip .rp-num{background:#000;color:var(--ink);font-weight:800;font-size:15px;border-radius:3px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border:2px solid transparent}
 .roll-pip.rp-first{flex-direction:row;height:100%;align-items:stretch;gap:3px}
 .roll-pip.rp-first .rp-dice-row{flex-direction:column;justify-content:center}
 .roll-pip.rp-first .rp-dice-row img{width:26px;height:26px}
@@ -861,7 +861,7 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
 .rp-num.out{background:#b02020}
 .roll-pip.point-made .rp-sum{color:#66aaff}
 #bets-status-bar{font-size:15px;font-weight:700;color:rgba(255,200,0,.8);white-space:nowrap;flex-shrink:0}
-#log-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:26px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#log-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:var(--ink-accent);font-size:26px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 /* ── BOTTOM BAR ── */
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
@@ -895,7 +895,7 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 .chip[data-val="1000"]{background-image:url('chip-blank-1000.webp');font-size:8px}
 .chip:hover{transform:scale(1.1)}
 .chip.sel{transform:scale(1.15);box-shadow:0 0 0 2px #ffd700}
-.bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
+.bar-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.25);border-radius:5px;color:var(--ink);font-size:17px;padding:4px 5px;cursor:pointer;white-space:nowrap;flex-shrink:0;height:30px}
 /* winner-modal.js's #wm-modal-winner is a full-viewport z-index:200 overlay shown for the whole
    payout sequence (coin waterfall + count-up + hold) -- without its own stacking above that,
    Repeat would be unreachable for that entire window even though repeating a bet needs nothing
@@ -917,8 +917,8 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 .modal-overlay.hidden{display:none}
 .modal-box{background:#1a3a28;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:14px 16px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
 .modal-box.dark{background:#1a1a2e;border-color:rgba(255,215,0,.2)}
-.modal-title{font-size:24px;font-weight:700;color:#ffe066;margin-bottom:3px}
-.modal-sub{font-size:19px;color:rgba(255,255,255,.5);margin-bottom:10px}
+.modal-title{font-size:24px;font-weight:700;color:var(--ink-accent);margin-bottom:3px}
+.modal-sub{font-size:19px;color:rgba(var(--ink-rgb),.5);margin-bottom:10px}
 /* Odds (place/come/lay) and Move modals need to be wider than the default modal-box so every
    option fits on a single row instead of wrapping to a second row -- column count varies by
    context (up to 6 lay-odds choices, or up to 10 numbers on crapless's move grid), so it's set
@@ -927,7 +927,7 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 #modal-move .modal-box{max-width:680px}
 .modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:6px}
 .modal-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:6px}
-.modal-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:#fff;font-size:21px;padding:7px 4px;cursor:pointer;text-align:center}
+.modal-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:5px;color:var(--ink);font-size:21px;padding:7px 4px;cursor:pointer;text-align:center}
 .modal-btn:hover{background:rgba(255,255,255,.22)}
 /* Lay-odds buttons carry a long "1x (lay $X → win $Y)" label -- shrunk so up to 6 of them
    still fit on one row inside #modal-odds's widened box instead of wrapping to two rows. */
@@ -935,7 +935,7 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 .modal-btn.disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
 .modal-btn.cancel{background:rgba(180,0,0,.2);border-color:rgba(255,80,80,.3);margin-top:4px;width:100%}
 .modal-btn.no-odds{background:rgba(80,80,80,.25);border-color:rgba(255,255,255,.18);margin-top:4px;width:100%}
-.modal-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:8px 10px;color:#fff;font-size:24px;outline:none;margin-bottom:8px;text-align:center;letter-spacing:.1em;text-transform:uppercase}
+.modal-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:8px 10px;color:var(--ink);font-size:24px;outline:none;margin-bottom:8px;text-align:center;letter-spacing:.1em;text-transform:uppercase}
 .modal-input:focus{border-color:rgba(255,215,0,.5)}
 .modal-input-error{font-size:19px;color:#ff9a9a;margin-bottom:8px;min-height:13px;text-align:center}
 
@@ -948,11 +948,11 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 .fm-switch input:checked+.fm-switch-track::before{transform:translateX(18px)}
 .fm-group{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:8px 10px}
 .fm-group-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
-.fm-group-name{font-weight:700;font-size:18px;color:#fff}
-.fm-group-desc{font-size:13px;color:rgba(255,255,255,.4);margin-top:1px}
+.fm-group-name{font-weight:700;font-size:18px;color:var(--ink)}
+.fm-group-desc{font-size:13px;color:rgba(var(--ink-rgb),.4);margin-top:1px}
 .fm-checkbox{width:20px;height:20px;accent-color:#ffd700;cursor:pointer;flex-shrink:0}
 .fm-numrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:0.5px solid rgba(255,255,255,.1)}
-.fm-numchip{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:3px 7px;font-size:15px;color:rgba(255,255,255,.8);cursor:pointer}
+.fm-numchip{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:3px 7px;font-size:15px;color:rgba(var(--ink-rgb),.8);cursor:pointer}
 .fm-numchip input{accent-color:#ffd700;cursor:pointer}
 /* Don't Pass/Don't Come/Lay grayed out while Crapless is active -- not offered in that mode,
    so the toggle has nothing to control (Deck: "gray out in Crapless"). */
@@ -1025,13 +1025,13 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
    never accidentally covered/blocked by one popping up mid-lesson. */
 #tutorial-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9000;
   width:min(92vw,460px);background:rgba(20,20,26,.97);border:1px solid rgba(255,255,255,.18);
-  border-radius:12px;padding:16px 18px;box-shadow:0 8px 30px rgba(0,0,0,.5);color:#fff}
+  border-radius:12px;padding:16px 18px;box-shadow:0 8px 30px rgba(0,0,0,.5);color:var(--ink)}
 #tutorial-box.hidden{display:none}
 #tutorial-box .tt-title{font-weight:700;font-size:18px;margin-bottom:6px}
-#tutorial-box .tt-body{font-size:14px;line-height:1.4;color:rgba(255,255,255,.85)}
+#tutorial-box .tt-body{font-size:14px;line-height:1.4;color:rgba(var(--ink-rgb),.85)}
 #tutorial-box .tt-btns{display:flex;gap:8px;margin-top:14px}
 #tutorial-box .tt-btns button{padding:8px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.25);
-  background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer}
+  background:rgba(255,255,255,.08);color:var(--ink);font-weight:700;cursor:pointer}
 #tutorial-box .tt-btns button:hover{background:rgba(255,255,255,.16)}
 #tutorial-box .tt-btns button:disabled{opacity:.4;cursor:not-allowed}
 #tutorial-box .tt-btns button.tt-continue{background:rgba(74,158,255,.35);border-color:rgba(120,180,255,.5)}
@@ -1061,19 +1061,19 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
    real value (confirmed on a brand-new account with zero prior calibrate-mode interaction). */
 #calib-toolbar.hidden{display:none!important}
 #tutorial-popup{background:#181820;border:1px solid rgba(255,255,255,.2);border-radius:14px;
-  padding:24px;width:min(90vw,420px);color:#fff;text-align:center}
+  padding:24px;width:min(90vw,420px);color:var(--ink);text-align:center}
 #tutorial-popup h3{margin:0 0 10px;font-size:20px}
-#tutorial-popup p{color:rgba(255,255,255,.75);font-size:14px;margin:0 0 18px}
+#tutorial-popup p{color:rgba(var(--ink-rgb),.75);font-size:14px;margin:0 0 18px}
 #tutorial-popup .tt-btns{display:flex;gap:10px;justify-content:center}
 #tutorial-popup button{padding:10px 18px;border-radius:8px;border:1px solid rgba(255,255,255,.25);
-  background:rgba(74,158,255,.35);color:#fff;font-weight:700;cursor:pointer}
+  background:rgba(74,158,255,.35);color:var(--ink);font-weight:700;cursor:pointer}
 #tutorial-popup button.tt-secondary{background:rgba(255,255,255,.08)}
 #tutorial-debug-panel{position:fixed;top:10px;right:10px;z-index:501;background:rgba(20,20,26,.97);
-  border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px;color:#fff;font-size:12px;
+  border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px;color:var(--ink);font-size:12px;
   width:220px}
 #tutorial-debug-panel.hidden{display:none}
 #tutorial-debug-panel select,#tutorial-debug-panel input{width:100%;margin-bottom:6px;box-sizing:border-box}
-#tutorial-debug-panel button{width:100%;margin-bottom:6px;padding:5px;border-radius:5px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
+#tutorial-debug-panel button{width:100%;margin-bottom:6px;padding:5px;border-radius:5px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:var(--ink);cursor:pointer}
 /* New art overlay layer -- positioned as % of the 3200x1800 BlankFelt.webp canvas, same
    convention as the baked-art panels in destroyer.html. Pure visual layout pass for now
    (pointer-events:none) so Deck can check scale/position before this gets wired to real
@@ -1103,13 +1103,13 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 .calib-nudge-btn:active{background:rgba(0,255,255,.5)}
 .modal-submit{width:100%;background:#c8a200;border:none;border-radius:6px;color:#111;font-size:24px;font-weight:700;padding:9px;cursor:pointer}
 .info-section{margin-bottom:12px}
-.info-section h3{font-size:19px;font-weight:700;color:#ffe066;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
-.info-section p{font-size:19px;color:rgba(255,255,255,.7);line-height:1.6}
+.info-section h3{font-size:19px;font-weight:700;color:var(--ink-accent);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.info-section p{font-size:19px;color:rgba(var(--ink-rgb),.7);line-height:1.6}
 #modal-log .log-entries{max-height:50vh;overflow-y:auto;font-size:21px}
-#modal-log .log-entries p{padding:2px 0;border-bottom:0.5px solid rgba(255,255,255,.08);line-height:1.5;color:rgba(255,255,255,.75)}
+#modal-log .log-entries p{padding:2px 0;border-bottom:0.5px solid rgba(255,255,255,.08);line-height:1.5;color:rgba(var(--ink-rgb),.75)}
 #modal-log .log-entries p.win{color:#7ee87e}
 #modal-log .log-entries p.lose{color:#f08080}
-#modal-log .log-entries p.info{color:#ffe066}
+#modal-log .log-entries p.info{color:var(--ink-accent)}
 /* Winner modal now lives in winner-modal.js (self-contained: injects its own <style> + DOM). */
 /* On/Off indicator: Standard craps uses the 3D sliding puck widget again (Deck: turn it
    back on for Standard). Crapless also has its own OFF puck (#puck-off-crapless) --
@@ -1124,7 +1124,7 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 .puck3d-face.puck3d-front{transform:rotateX(90deg) translateZ(var(--puck-half-t,8px));}
 .puck3d-face.puck3d-back{transform:rotateX(-90deg) translateZ(var(--puck-half-t,8px));}
 .puck3d-face-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-heavy);font-weight:900;font-size:16px;letter-spacing:.03em;border-radius:50%;}
-.puck-face-off{background:radial-gradient(circle at 35% 32%, #3a3a3a, #0a0a0a 72%);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);}
+.puck-face-off{background:radial-gradient(circle at 35% 32%, #3a3a3a, #0a0a0a 72%);color:var(--ink);text-shadow:0 1px 2px rgba(0,0,0,.8);}
 .puck-face-on{background:radial-gradient(circle at 35% 32%, #ffffff, #d8d8d8 72%);color:#111;}
 .puck3d-front .puck3d-face-img{transform:scale(-1,-1);}
 .puck3d-edge-seg{position:absolute;left:50%;top:50%;background:linear-gradient(90deg,#0a0a0a,#2a2a2a 50%,#0a0a0a);backface-visibility:hidden;}
@@ -1184,20 +1184,20 @@ body.tutorial-hide-chrome .chip:not([data-val="1"]){pointer-events:none!importan
 .voucher-footer{display:flex;justify-content:space-between;font-size:9px;color:#555;letter-spacing:.04em;margin-top:6px;padding-top:6px;border-top:1px solid #ccc}
 .voucher-btns{display:flex;gap:8px;margin-top:14px}
 .voucher-btn{flex:1;padding:9px;border-radius:5px;font-size:15px;font-weight:700;cursor:pointer;border:none;letter-spacing:.04em}
-.voucher-btn.print{background:#111;color:#fff}
+.voucher-btn.print{background:#111;color:var(--ink)}
 .voucher-btn.print:hover{background:#333}
 .voucher-btn.close{background:rgba(0,0,0,.08);color:#111;border:1px solid #ccc}
 .voucher-btn.close:hover{background:rgba(0,0,0,.15)}
 
 /* ── VOUCHER LIST IN REDEEM MODAL ── */
 .voucher-list{margin-bottom:12px}
-.voucher-list-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.voucher-list-empty{font-size:13px;color:rgba(255,255,255,.3);font-style:italic;margin-bottom:8px}
+.voucher-list-title{font-size:14px;font-weight:700;color:rgba(var(--ink-rgb),.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.voucher-list-empty{font-size:13px;color:rgba(var(--ink-rgb),.3);font-style:italic;margin-bottom:8px}
 .voucher-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:0.5px solid rgba(255,255,255,.15);border-radius:5px;padding:6px 8px;margin-bottom:4px}
-.voucher-row-amount{font-size:18px;font-weight:700;color:#ffd700;flex-shrink:0}
-.voucher-row-code{font-size:11px;color:rgba(255,255,255,.4);font-family:monospace;flex:1}
-.voucher-row-expiry{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
-.voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:#ffd700;font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
+.voucher-row-amount{font-size:18px;font-weight:700;color:var(--ink-accent);flex-shrink:0}
+.voucher-row-code{font-size:11px;color:rgba(var(--ink-rgb),.4);font-family:monospace;flex:1}
+.voucher-row-expiry{font-size:10px;color:rgba(var(--ink-rgb),.3);flex-shrink:0}
+.voucher-row-btn{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:4px;color:var(--ink-accent);font-size:13px;font-weight:700;padding:4px 10px;cursor:pointer;flex-shrink:0}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
 
 /* ===================== FELT MODE ===================== */
@@ -1379,12 +1379,12 @@ body.felt-portrait.game-standard #felt-stage #puck-off-dc{bottom:auto!important;
    export so it's left on the shared value. */
 body.felt-portrait.game-standard #felt-stage #come-bar .zone-name{font-size:45px!important}
 /* Deck: "Odds below the word PLACE should be in the same format as the word PLACE" -- .nb-pay
-   was plain dim white text (color:rgba(255,255,255,.4)) while .nb-lbl gets the bold gradient-
+   was plain dim white text (color:rgba(var(--ink-rgb),.4)) while .nb-lbl gets the bold gradient-
    clipped-text treatment above. Mirrors that exact treatment onto .nb-place's own .nb-pay
    (font-size deliberately left smaller -- "format" read as style, not size, matching the
    existing label/odds size hierarchy everywhere else on the felt). */
 body.felt-mode #felt-stage .nb-place .nb-pay{background:var(--text-grad-white)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:transparent!important;font-weight:800!important}
-body.felt-mode #felt-stage .pay{display:block!important;font-size:calc(16px * var(--font-scale,1))!important;font-weight:700!important;color:rgba(255,255,255,.65)!important}
+body.felt-mode #felt-stage .pay{display:block!important;font-size:calc(16px * var(--font-scale,1))!important;font-weight:700!important;color:rgba(var(--ink-rgb),.65)!important}
 /* Deck: "Make the font used for the numbers in the field box (2-3...11-12) be the same font
    size as the word Field." FIELD itself (.zone-name) is forced to 36px below (was only 16px
    here, much smaller). */
@@ -1395,7 +1395,7 @@ body.felt-mode #felt-stage .pay{display:block!important;font-size:calc(16px * va
    44) and 10px for field-info (was 15) leaves a -4px margin there; confirmed -9px margin at
    full scale (1600px window) too. Landscape only -- portrait's own separately-tuned values
    below are untouched. */
-body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:calc(28px * var(--font-scale,1))!important;color:rgba(255,255,255,.75)!important;font-weight:600!important}
+body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{display:block!important;font-size:calc(28px * var(--font-scale,1))!important;color:rgba(var(--ink-rgb),.75)!important;font-weight:600!important}
 body.felt-mode #felt-stage #field-bar .zone-name{font-size:calc(28px * var(--font-scale,1))!important}
 /* .field-info ("pays double" + dice icons below FIELD) had no felt-mode override at all --
    the icons were already scaled (see comboImg's calc() width/height), but the wrapping text
@@ -1434,7 +1434,7 @@ body.felt-mode #felt-stage .prop-circle{font-size:calc(23px * var(--font-scale,1
 
 /* readable stakes over the art */
 body.felt-mode #felt-stage .stk,body.felt-mode #felt-stage .nb-stk,body.felt-mode #felt-stage .hc-stk,
-body.felt-mode #felt-stage .prop-bar-stk,body.felt-mode #felt-stage .circle-stk,body.felt-mode #felt-stage .zone-stk{color:#ffd700;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.5)}
+body.felt-mode #felt-stage .prop-bar-stk,body.felt-mode #felt-stage .circle-stk,body.felt-mode #felt-stage .zone-stk{color:var(--ink-accent);font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.5)}
 /* internal proportions matched to the art */
 body.felt-mode #num-zone{display:flex;flex-direction:column;padding:0}
 body.felt-mode #puck-row-h{height:11%;padding:0;gap:2px}
@@ -1680,11 +1680,11 @@ body.felt-mode #felt-stage #dp-main.has-oddscell .has-stack{left:39.47%}
 .chip-stack .chip-amt,.chip-stack .chip-off{user-select:none;-webkit-user-select:none}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
-.chip-stack .chip-off{position:absolute;right:0;transform:translateX(35%);background:#b02020;color:#fff;font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
+.chip-stack .chip-off{position:absolute;right:0;transform:translateX(35%);background:#b02020;color:var(--ink);font-weight:800;font-size:calc(var(--chip)*0.30);line-height:1.1;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;letter-spacing:.05em;white-space:nowrap}
 /* A single lock emoji at the SAME nominal font-size as OFF's bold text still renders visibly
    smaller, since emoji glyphs carry their own internal padding within their em-box. Scaled up
    to compensate rather than matching the number literally. */
-.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
+.chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:var(--ink);font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
 
 /* ===== WIN/LOSS CHIP SWOOP ===== */
 #swoop-layer{position:fixed;inset:0;pointer-events:none;z-index:260;overflow:hidden}
@@ -1872,7 +1872,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-note{display:none!important}
    underneath) -- with explain gone, pay can just flow normally after title again, so that
    absolute-positioning hack (and the padding-top:19px that compensated for it) is gone too. */
 body.felt-mode #felt-stage #lucky-roller .lr-explain{display:none!important}
-body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800;color:rgba(255,255,255,.8);letter-spacing:.02em;line-height:1.1}
+body.felt-mode #felt-stage #lucky-roller .lr-title{display:block;font-weight:800;color:rgba(var(--ink-rgb),.8);letter-spacing:.02em;line-height:1.1}
 /* Deck: "can you format Low and High rolls exactly like Roll'em All?" -- .lr-header's own
    gap/padding/justify-content didn't match .rollem-all-bar's container style (0 gap vs 2px,
    1px 2px 0 padding vs 4px 6px, no justify-content vs center). Matched exactly. */
@@ -1915,7 +1915,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-body{position:absolute;inset:0;heig
    of the old per-digit pixel-scanned nth-child offsets (which were calibrated to match the
    now-deleted baked image and have nothing left to align to). */
 body.felt-mode #felt-stage #lucky-roller .lr-nums{height:auto;padding:0;display:flex;flex-wrap:wrap;align-content:center;gap:2px;justify-content:center}
-body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:calc(20px * var(--font-scale,1));height:calc(20px * var(--font-scale,1));font-size:calc(15px * var(--font-scale,1));line-height:calc(20px * var(--font-scale,1));font-weight:800;color:rgba(255,255,255,.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:0 2px}
+body.felt-mode #felt-stage #lucky-roller .lr-num{width:auto;min-width:calc(20px * var(--font-scale,1));height:calc(20px * var(--font-scale,1));font-size:calc(15px * var(--font-scale,1));line-height:calc(20px * var(--font-scale,1));font-weight:800;color:rgba(var(--ink-rgb),.85);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:3px;padding:0 2px}
 body.felt-mode #felt-stage #lucky-roller .lr-stake{font-size:calc(9px * var(--font-scale,1));min-height:1.2em;line-height:1.2}
 /* Portrait-only (Deck: "Can we make the Lucky Roller numbers and Lucky Roller text bigger?") --
    #lucky-roller's portrait box grew a lot in the latest calibration pass (a wide 1225x150 bar
@@ -1972,7 +1972,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-num.hit{background:transparent;box-
    twinkling glint anchored just outside the corner, since the pill itself is only ~20px --
    more than one sparkle glyph at this size reads as clutter, not sparkle. */
 body.felt-mode #felt-stage #lucky-roller .lr-num.hit::before{content:'';position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.9) 48%,rgba(255,255,255,.9) 52%,transparent 70%);background-size:250% 250%;background-position:-40% -40%;mix-blend-mode:overlay;pointer-events:none;animation:lrNumSheen 2.4s ease-in-out infinite}
-body.felt-mode #felt-stage #lucky-roller .lr-num.hit::after{content:'\2726';position:absolute;top:-0.4em;right:-0.4em;font-size:calc(10px * var(--font-scale,1));line-height:1;color:#fff;text-shadow:0 0 4px #fff,0 0 8px rgba(120,255,180,.9);pointer-events:none;animation:lrNumTwinkle 1.7s ease-in-out infinite}
+body.felt-mode #felt-stage #lucky-roller .lr-num.hit::after{content:'\2726';position:absolute;top:-0.4em;right:-0.4em;font-size:calc(10px * var(--font-scale,1));line-height:1;color:var(--ink);text-shadow:0 0 4px #fff,0 0 8px rgba(120,255,180,.9);pointer-events:none;animation:lrNumTwinkle 1.7s ease-in-out infinite}
 @keyframes lrNumSheen{0%{background-position:-40% -40%}55%,100%{background-position:140% 140%}}
 @keyframes lrNumTwinkle{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(25deg)}}
 
@@ -2025,7 +2025,7 @@ body.felt-mode.game-crapless #felt-stage .horn-cell.active{
   background:transparent!important;outline:none!important;box-shadow:none!important;border-color:transparent!important;
 }
 body.game-crapless .std-only{display:none}
-body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-align:center;letter-spacing:.03em;pointer-events:none}
+body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weight:700;color:rgba(var(--ink-rgb),.7);text-align:center;letter-spacing:.03em;pointer-events:none}
 #loss-ghost-layer{position:fixed;inset:0;z-index:150;pointer-events:none;overflow:visible}
 .loss-ghost{position:fixed;pointer-events:none;animation:lossGhostSweep 1s ease-in forwards}
 .loss-ghost .chip-stack{pointer-events:none}
@@ -2114,7 +2114,7 @@ body[data-felt="classic"],.felt-classic{
   --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
   --sheen-on:rgba(255,255,255,.11);
   --active-ring:#ffd700;--active-glow:rgba(255,205,70,.55);
-  --ink:#ffffff;--ink-soft:rgba(255,255,255,.7);--ink-accent:#ffe066;--ink-good:#7ee87e;
+  --ink:#ffffff;--ink-rgb:255,255,255;--ink-soft:rgba(255,255,255,.7);--ink-accent:#ffe066;--ink-accent-rgb:255,224,102;--ink-good:#7ee87e;
   /* Verbatim originals -- this is the "unchanged" requirement, not an approximation. */
   --felt-bg: radial-gradient(ellipse at center, #1d6636 0%, #144d29 55%, #0a2f18 100%);
   --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
@@ -2122,6 +2122,22 @@ body[data-felt="classic"],.felt-classic{
   --box-fill-lightest: linear-gradient(180deg, rgba(60,175,95,.5) 0%, rgba(32,115,62,.62) 100%);
   --box-fill-darkest: linear-gradient(180deg, rgba(5,24,14,.75) 0%, rgba(1,9,5,.86) 100%);
   --box-border-color: rgba(255,255,255,.4);
+}
+
+/* Chrome that is opaque-dark regardless of the board keeps a pale ink. Every other
+   panel on this page (#left-col, #info-panel, #bottom-bar, #bottom-section) is a
+   TRANSLUCENT black wash sitting on the felt, so it lightens with a light palette and
+   correctly wants the palette's own dark ink -- those are deliberately not listed.
+   Without this, switching to Ivory or Rose would leave modal and auth text dark on a
+   dark green box, which is the same unreadability the ink pass exists to remove, just
+   moved somewhere else. */
+#auth-screen,.modal-overlay,#tutorial-debug-panel,#calib-toolbar,#sb-calib-toolbar{
+  /* `color` as well as the tokens, not just the tokens. Re-pointing --ink only helps
+     elements that actually declare color:var(--ink); anything relying on INHERITED
+     colour still receives body's, which is the palette ink. Modal text measured 1.0
+     contrast on Ivory -- literally invisible -- until this line set colour directly. */
+  --ink:#fff;--ink-rgb:255,255,255;color:#fff;
+  --ink-accent:#ffd700;--ink-accent-rgb:255,215,0;
 }
 </style>
 </head>
@@ -2154,7 +2170,7 @@ body[data-felt="classic"],.felt-classic{
     <div class="modal-box dark" style="text-align:center">
       <div style="font-size:53px;margin-bottom:8px">🎰</div>
       <div class="modal-title" style="font-size:29px;text-align:center">Bankroll Capped at $100</div>
-      <div style="font-size:23px;color:rgba(255,255,255,.6);margin:10px 0 16px">You've hit the seed money limit. Get a code from Deck to uncap your account and keep your winnings.</div>
+      <div style="font-size:23px;color:rgba(var(--ink-rgb),.6);margin:10px 0 16px">You've hit the seed money limit. Get a code from Deck to uncap your account and keep your winnings.</div>
       <button class="modal-submit" onclick="closeCapModal();openRedeemModal(false)">Redeem a Code</button>
       <button class="modal-btn cancel" onclick="closeCapModal()" style="margin-top:8px">Maybe Later</button>
     </div>
@@ -2169,7 +2185,7 @@ body[data-felt="classic"],.felt-classic{
   </div>
   <div class="modal-overlay hidden" id="modal-move">
     <div class="modal-box" style="position:relative">
-      <button onclick="moveModalClose()" aria-label="Leave bets as is" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:16px;line-height:1;cursor:pointer">✕</button>
+      <button onclick="moveModalClose()" aria-label="Leave bets as is" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:var(--ink);font-size:16px;line-height:1;cursor:pointer">✕</button>
       <div class="modal-sub" id="modal-move-sub" style="margin-top:6px;margin-right:24px"></div>
       <div class="modal-grid-5" id="modal-move-grid"></div>
     </div>
@@ -2197,7 +2213,7 @@ body[data-felt="classic"],.felt-classic{
       </div>
       <div class="info-section">
         <h3>Two Modes</h3>
-        <p><strong style="color:#ffe066">Crapless Craps:</strong> Only a 7 wins on the come-out. Every other number (2–12) becomes the Point. Place or Buy all 10 numbers. No dark side.<br><br><strong style="color:#ffe066">Standard Craps:</strong> 7 or 11 wins on the come-out; 2, 3, or 12 loses. Box numbers are 4,5,6,8,9,10. Includes Don't Pass, Don't Come, and Lay bets.<br><br><strong style="color:#ffe066">Dark Side:</strong> Don't Pass wins when 2 or 3 rolls on come-out (12 is a push), and wins when the shooter sevens out. Don't Come works the same way after the point. Lay bets win when 7 comes before the number. Back DP/DC with Lay Odds for no-vig true odds.<br><br>DP and DC are not contract bets — you can remove them at any time, but Lay Odds will be wiped if you reduce the flat bet.</p>
+        <p><strong style="color:var(--ink-accent)">Crapless Craps:</strong> Only a 7 wins on the come-out. Every other number (2–12) becomes the Point. Place or Buy all 10 numbers. No dark side.<br><br><strong style="color:var(--ink-accent)">Standard Craps:</strong> 7 or 11 wins on the come-out; 2, 3, or 12 loses. Box numbers are 4,5,6,8,9,10. Includes Don't Pass, Don't Come, and Lay bets.<br><br><strong style="color:var(--ink-accent)">Dark Side:</strong> Don't Pass wins when 2 or 3 rolls on come-out (12 is a push), and wins when the shooter sevens out. Don't Come works the same way after the point. Lay bets win when 7 comes before the number. Back DP/DC with Lay Odds for no-vig true odds.<br><br>DP and DC are not contract bets — you can remove them at any time, but Lay Odds will be wiped if you reduce the flat bet.</p>
       </div>
       <button class="modal-btn cancel" onclick="closeInfoModal()">Close</button>
     </div>
@@ -2229,7 +2245,7 @@ body[data-felt="classic"],.felt-classic{
   <div class="modal-overlay hidden" id="modal-forfeit">
     <div class="modal-box" style="max-width:360px">
       <div class="modal-title" style="margin-bottom:12px">Forfeit Locked Bets?</div>
-      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">Your locked Pass Line, Come, and/or Lucky Roller bets can't be refunded once a point's been established. Leaving now forfeits <span id="forfeit-amount" style="color:#ffd700;font-weight:700"></span>. Everything else on the felt gets refunded as usual.</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">Your locked Pass Line, Come, and/or Lucky Roller bets can't be refunded once a point's been established. Leaving now forfeits <span id="forfeit-amount" style="color:var(--ink-accent);font-weight:700"></span>. Everything else on the felt gets refunded as usual.</div>
       <div style="display:flex;gap:8px">
         <button class="modal-btn cancel" onclick="cancelForfeitLeave()">Cancel</button>
         <button class="modal-btn" onclick="confirmForfeitLeave()">Forfeit &amp; Leave</button>
@@ -2242,19 +2258,19 @@ body[data-felt="classic"],.felt-classic{
       <div style="font-size:14px;line-height:1.5;margin-bottom:12px" id="bullets-intro">Convert part of your bankroll into equal-sized "bullets" -- a stop-loss mechanic where you pretend to have a smaller bankroll at the table. Your real Playable total doesn't change, only how much of it you're using right now.</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
         <div style="display:flex;gap:8px">
-          <label style="font-size:13px;color:rgba(255,255,255,.8);flex:1">Total to Convert
+          <label style="font-size:13px;color:rgba(var(--ink-rgb),.8);flex:1">Total to Convert
             <input type="number" id="bullets-total" min="0.01" step="0.01" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="onBulletsTotalInput()">
           </label>
-          <label style="font-size:13px;color:rgba(255,255,255,.8);flex:1">Amount per Bullet
+          <label style="font-size:13px;color:rgba(var(--ink-rgb),.8);flex:1">Amount per Bullet
             <input type="number" id="bullets-per" min="0.01" step="0.01" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="onBulletsPerInput()">
           </label>
         </div>
-        <label style="font-size:13px;color:rgba(255,255,255,.8)">Number of Bullets
+        <label style="font-size:13px;color:rgba(var(--ink-rgb),.8)">Number of Bullets
           <input type="number" id="bullets-count" min="1" step="1" class="modal-input" style="font-size:18px;letter-spacing:normal;text-transform:none;margin-top:4px;margin-bottom:0" oninput="onBulletsCountInput()">
         </label>
-        <label style="font-size:13px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:8px;cursor:pointer">
+        <label style="font-size:13px;color:rgba(var(--ink-rgb),.8);display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="bullets-hard" style="width:16px;height:16px;margin:0">
-          Hard Bullets <span style="color:rgba(255,255,255,.5);font-weight:400">-- everything outside the bullet is off-limits until you switch or end (unchecked = Soft: you can always dip into the rest of your bankroll)</span>
+          Hard Bullets <span style="color:rgba(var(--ink-rgb),.5);font-weight:400">-- everything outside the bullet is off-limits until you switch or end (unchecked = Soft: you can always dip into the rest of your bankroll)</span>
         </label>
       </div>
       <div class="modal-input-error" id="bullets-error" style="font-size:14px"></div>
@@ -2267,7 +2283,7 @@ body[data-felt="classic"],.felt-classic{
   <div class="modal-overlay hidden" id="modal-bullets-summary">
     <div class="modal-box" style="max-width:340px;text-align:center">
       <div class="modal-title" style="margin-bottom:12px">Bullets Session</div>
-      <div style="font-size:14px;color:rgba(255,255,255,.7);margin-bottom:4px" id="bullets-summary-label">Profit</div>
+      <div style="font-size:14px;color:rgba(var(--ink-rgb),.7);margin-bottom:4px" id="bullets-summary-label">Profit</div>
       <div style="font-size:32px;font-weight:700;margin-bottom:16px" id="bullets-summary-amount">$0.00</div>
       <button class="modal-btn" onclick="closeBulletsSummary()" style="width:100%">OK</button>
     </div>
@@ -2275,7 +2291,7 @@ body[data-felt="classic"],.felt-classic{
   <div class="modal-overlay hidden" id="modal-next-bullet">
     <div class="modal-box" style="max-width:360px">
       <div class="modal-title" style="margin-bottom:12px">Switch Bullets?</div>
-      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">This clears the felt back to a Come Out state before your next bullet starts -- same as Reset Point. All non-Contract bets will be returned. All Contract bets will be forfeited<span id="next-bullet-forfeit-wrap"> (<span id="next-bullet-amount" style="color:#ffd700;font-weight:700"></span>)</span>.</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">This clears the felt back to a Come Out state before your next bullet starts -- same as Reset Point. All non-Contract bets will be returned. All Contract bets will be forfeited<span id="next-bullet-forfeit-wrap"> (<span id="next-bullet-amount" style="color:var(--ink-accent);font-weight:700"></span>)</span>.</div>
       <div style="display:flex;gap:8px">
         <button class="modal-btn cancel" onclick="cancelNextBullet()">Cancel</button>
         <button class="modal-btn" onclick="confirmNextBullet()">Switch Bullets</button>
@@ -2285,7 +2301,7 @@ body[data-felt="classic"],.felt-classic{
   <div class="modal-overlay hidden" id="modal-reset-point">
     <div class="modal-box" style="max-width:360px">
       <div class="modal-title" style="margin-bottom:12px">Reset to Come Out?</div>
-      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">This resets the table to the state of a Come Out roll. All non-Contract bets will be returned. All Contract bets will be forfeited<span id="reset-point-forfeit-wrap"> (<span id="reset-point-amount" style="color:#ffd700;font-weight:700"></span>)</span>.</div>
+      <div style="font-size:15px;line-height:1.5;margin-bottom:16px">This resets the table to the state of a Come Out roll. All non-Contract bets will be returned. All Contract bets will be forfeited<span id="reset-point-forfeit-wrap"> (<span id="reset-point-amount" style="color:var(--ink-accent);font-weight:700"></span>)</span>.</div>
       <div style="display:flex;gap:8px">
         <button class="modal-btn cancel" onclick="cancelResetPoint()">Cancel</button>
         <button class="modal-btn" onclick="confirmResetPoint()">Reset Point</button>
@@ -2302,14 +2318,14 @@ body[data-felt="classic"],.felt-classic{
   <div class="modal-overlay hidden" id="modal-progressive">
     <div class="modal-box dark" style="max-height:80vh;overflow-y:auto">
       <div class="modal-title" style="text-align:center">💡 The Light</div>
-      <div style="text-align:center;font-size:15px;color:rgba(255,255,255,.6);margin-bottom:10px">A shared jackpot across every table. $5 to play, active for the whole shooter's turn.</div>
-      <div style="text-align:center;font-size:34px;font-weight:900;color:#ffd700;margin:10px 0" id="progressive-pool-display">$1,000.00</div>
-      <div style="font-size:14px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:14px">$2.50 of every $5 bet feeds the pool. The rest funds the fixed prizes below and the house.</div>
+      <div style="text-align:center;font-size:15px;color:rgba(var(--ink-rgb),.6);margin-bottom:10px">A shared jackpot across every table. $5 to play, active for the whole shooter's turn.</div>
+      <div style="text-align:center;font-size:34px;font-weight:900;color:var(--ink-accent);margin:10px 0" id="progressive-pool-display">$1,000.00</div>
+      <div style="font-size:14px;color:rgba(var(--ink-rgb),.5);text-align:center;margin-bottom:14px">$2.50 of every $5 bet feeds the pool. The rest funds the fixed prizes below and the house.</div>
       <div class="progressive-tier-row"><span>12 points in a row</span><span class="prog-pay">100% of pool</span></div>
       <div class="progressive-tier-row"><span>9 points in a row</span><span class="prog-pay">10% of pool</span></div>
       <div class="progressive-tier-row"><span>6 points in a row</span><span class="prog-pay">$15</span></div>
       <div class="progressive-tier-row"><span>4 points in a row</span><span class="prog-pay">$5</span></div>
-      <div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;margin-top:8px">Crapless needs fewer in a row (10/8/5/4) — its extra numbers are individually harder to make.</div>
+      <div style="font-size:12px;color:rgba(var(--ink-rgb),.4);text-align:center;margin-top:8px">Crapless needs fewer in a row (10/8/5/4) — its extra numbers are individually harder to make.</div>
       <button class="modal-btn cancel" onclick="closeProgressiveModal()" style="margin-top:12px">Close</button>
     </div>
   </div>
@@ -2322,8 +2338,8 @@ body[data-felt="classic"],.felt-classic{
 
       <div id="fm-practice-row" style="display:flex;align-items:center;justify-content:space-between;background:rgba(74,158,255,.12);border:1px solid rgba(74,158,255,.4);border-radius:8px;padding:10px 12px;margin-bottom:12px">
         <div>
-          <div style="font-weight:700;color:#fff">Practice Mode</div>
-          <div style="font-size:13px;color:rgba(255,255,255,.5)" id="fm-practice-sub">Off — wagers your real bankroll</div>
+          <div style="font-weight:700;color:var(--ink)">Practice Mode</div>
+          <div style="font-size:13px;color:rgba(var(--ink-rgb),.5)" id="fm-practice-sub">Off — wagers your real bankroll</div>
         </div>
         <label class="fm-switch">
           <input type="checkbox" id="fm-practice-toggle" onchange="toggleFocusPractice(this.checked)">
@@ -2387,10 +2403,10 @@ body[data-felt="classic"],.felt-classic{
 
   <!-- CALIBRATION MODE: drag/resize every bet target directly on the real felt instead of
        eyeballing screenshots and reporting pixel offsets back and forth. See calibXxx() funcs. -->
-  <div id="calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#fff;flex-wrap:wrap;max-width:94vw">
+  <div id="calib-toolbar" class="hidden" style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(0,0,0,.9);border:1px solid rgba(0,255,255,.5);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);flex-wrap:wrap;max-width:94vw">
     <span id="calib-toolbar-handle" onpointerdown="calibToolbarStartDrag(event)" title="Drag to move this toolbar" style="cursor:move;color:#0ff;font-weight:700;padding:2px 4px;margin:-2px -4px -2px -6px;-webkit-user-select:none;user-select:none">⠿</span>
     <span style="color:#0ff;font-weight:700">CALIBRATE MODE</span>
-    <span id="calib-selected" style="min-width:220px;color:rgba(255,255,255,.7)">Click a box to select it, drag to move, corner handle to resize</span>
+    <span id="calib-selected" style="min-width:220px;color:rgba(var(--ink-rgb),.7)">Click a box to select it, drag to move, corner handle to resize</span>
     <div id="calib-nudge" style="display:grid;grid-template-columns:22px 22px 22px;grid-template-rows:22px 22px 22px;gap:2px">
       <div></div><button class="calib-nudge-btn" onclick="calibNudge(0,-1)" title="Up 5px">▲</button><div></div>
       <button class="calib-nudge-btn" onclick="calibNudge(-1,0)" title="Left 5px">◀</button><div></div><button class="calib-nudge-btn" onclick="calibNudge(1,0)" title="Right 5px">▶</button>
@@ -2398,7 +2414,7 @@ body[data-felt="classic"],.felt-classic{
     </div>
     <div id="calib-font" style="display:flex;flex-direction:column;align-items:center;gap:1px">
       <button class="calib-nudge-btn" onclick="calibFontNudge(1)" title="Font size up 1px">▲</button>
-      <span id="calib-font-size" style="font-size:11px;color:rgba(255,255,255,.7);min-width:34px;text-align:center">--px</span>
+      <span id="calib-font-size" style="font-size:11px;color:rgba(var(--ink-rgb),.7);min-width:34px;text-align:center">--px</span>
       <button class="calib-nudge-btn" onclick="calibFontNudge(-1)" title="Font size down 1px">▼</button>
     </div>
     <!-- The two 3D Outcome Dice (#dice-zone, showing the last roll's result) have no normal
@@ -2441,7 +2457,7 @@ body[data-felt="classic"],.felt-classic{
         </div>
       </div>
       <div id="focus-settings-row" style="display:flex;gap:3px;width:100%;padding:3px 3px 0">
-        <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:#fff">
+        <button class="mode-btn" id="focus-settings-btn" onclick="openFocusPanel()" style="flex:1;background:rgba(74,158,255,.15);border-color:#4a9eff;color:var(--ink)">
           <span>⚙ FOCUS SETTINGS</span>
         </button>
       </div>
@@ -2522,7 +2538,7 @@ body[data-felt="classic"],.felt-classic{
     <!-- Info Panel (upper right) -->
     <div id="info-panel">
       <div class="info-row">
-        <span id="top-bar-username" onclick="navigateAway('index.html')" style="font-size:19px;font-weight:700;color:#ffe066;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
+        <span id="top-bar-username" onclick="navigateAway('index.html')" style="font-size:19px;font-weight:700;color:var(--ink-accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Back to menu"></span>
         <button class="info-btn" id="mute-voices-btn" onclick="toggleMuteVoices()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0" title="Mute Voices">🔊</button>
         <button class="info-btn" id="info-modal-btn" onclick="openInfoModal()" style="font-size:21px;font-weight:700;width:24px;padding:2px 0">ⓘ</button>
         <span id="felt-mount" style="display:flex;align-items:center"></span>
@@ -2541,9 +2557,9 @@ body[data-felt="classic"],.felt-classic{
       </div>
 <div class="hud-item" id="hud-lastwin-row"><div class="hud-lbl">Last Win<span id="hud-lastwin-info" class="info-i" title="">ⓘ</span></div><div class="hud-val" id="hud-lastwin" style="color:#7ee87e;font-size:15px;line-height:1.25">—</div></div>
       <div class="hud-grid">
-        <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(255,255,255,.7)">—</div></div>
-        <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:#ffe066">$0</div></div>
-        <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:#ffd700">$0</div></div>
+        <div class="hud-item"><div class="hud-lbl">Last Bet</div><div class="hud-val" id="hud-lastbet" style="color:rgba(var(--ink-rgb),.7)">—</div></div>
+        <div class="hud-item"><div class="hud-lbl">Playable</div><div class="hud-val" id="hud-bankroll" style="color:var(--ink-accent)">$0</div></div>
+        <div class="hud-item"><div class="hud-lbl">Bet</div><div class="hud-val" id="hud-bet" style="color:var(--ink-accent)">$0</div></div>
       </div>
       <div id="bullets-row" style="display:none;align-items:center;gap:3px;flex-wrap:wrap"></div>
 
@@ -2686,7 +2702,7 @@ body[data-felt="classic"],.felt-classic{
           </div>
           <div class="zone-bar" id="field-bar" onclick="placeBet('field')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('field')">
             <div style="text-align:center">
-              <div style="font-size:15px;color:rgba(255,255,255,.55)">2 · 3 · 4 · 9 · 10 · 11 · 12</div>
+              <div style="font-size:15px;color:rgba(var(--ink-rgb),.55)">2 · 3 · 4 · 9 · 10 · 11 · 12</div>
               <div class="zone-name" style="font-size:40px">FIELD</div>
               <div class="zone-stk" id="stk-field"></div>
               <div class="field-info field-info-crapless" id="field-info-crapless"></div>
@@ -2704,14 +2720,14 @@ body[data-felt="classic"],.felt-classic{
             <div class="zone-bar lowhigh-half" id="lowfield-bar" onclick="placeBet('lowfield')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('lowfield')">
               <div style="text-align:center">
                 <div class="zone-name lowhigh-name">LOW FIELD</div>
-                <div style="font-size:13px;color:rgba(255,255,255,.55)">2 · 3 · 4</div>
+                <div style="font-size:13px;color:rgba(var(--ink-rgb),.55)">2 · 3 · 4</div>
                 <div class="zone-stk" id="stk-lowfield"></div>
               </div>
             </div>
             <div class="zone-bar lowhigh-half" id="highfield-bar" onclick="placeBet('highfield')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('highfield')">
               <div style="text-align:center">
                 <div class="zone-name lowhigh-name">HIGH FIELD</div>
-                <div style="font-size:13px;color:rgba(255,255,255,.55)">10 · 11 · 12</div>
+                <div style="font-size:13px;color:rgba(var(--ink-rgb),.55)">10 · 11 · 12</div>
                 <div class="zone-stk" id="stk-highfield"></div>
               </div>
             </div>
@@ -2843,7 +2859,7 @@ body[data-felt="classic"],.felt-classic{
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em">Ver. 1.0.49</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.50</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4912,10 +4928,13 @@ function closeInfoModal(){document.getElementById('modal-info').classList.add('h
 FeltThemes.init({
   root:'body', key:'craps_felt', defaultId:'classic',
   mount:'#felt-mount', preview:'PASS',
-  // Ivory and Rose are held back until Craps' felt ink is themeable. Its labels are
-  // hard-coded white in ~100 declarations, 22 of them inline in the markup where no
-  // stylesheet can reach them, so both light boards currently render unreadable.
-  // Delete this line once that pass is done -- the palettes then appear on their own.
+  // Still held back, but for a smaller reason than before. The ink pass converted the
+  // white (~91 refs) and gold (~35 refs) text to palette tokens, which is why the four
+  // dark boards now measure ZERO contrast regressions against Casino Green. Ivory and
+  // Rose remain unreadable because Craps also paints in semantic pastels -- #7ee87e
+  // win-green, #ff8a80/#ff4444 lose-red, pale pinks -- which are light-on-light on a
+  // cream ground (median 1.1:1 across 97 felt text nodes, vs 4.9:1 on green).
+  // Finishing these two means a --ink-good/--ink-bad pass over those semantic colours.
   exclude:['ivory','rose'],
 });
 
@@ -5349,7 +5368,7 @@ function buildStrip(){
       +'</span>'
       // No margin-top here: as an inline style it beats the felt-mode stake rule's margin:0,
       // and on the now-absolutely-centered chip anchor it read as a 1px off-center error.
-      +'<div id="stk-dc-wait" style="font-size:13px;color:#ffd700;min-height:1.2em;line-height:1.2"></div>';
+      +'<div id="stk-dc-wait" style="font-size:13px;color:var(--ink-accent);min-height:1.2em;line-height:1.2"></div>';
     dcBox.appendChild(dcMid);
     dcWrap.appendChild(dcBox);strip.appendChild(dcWrap);
   }

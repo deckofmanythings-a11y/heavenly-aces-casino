@@ -37,6 +37,8 @@
   --sheen-on:rgba(255,255,255,.45);
   --active-ring:rgba(255,214,90,.95);--active-glow:rgba(255,198,60,.60);
   --ink:#2b1806;--ink-soft:rgba(43,24,6,.72);--ink-accent:#7a5c00;--ink-good:#145214;
+  --ink-rgb:43,24,6;
+  --ink-accent-rgb:122,92,0;
 }
 /* 2. EMERALD & GOLD */
 [data-felt="emerald"],.felt-emerald{
@@ -51,6 +53,8 @@
   --sheen-on:rgba(255,255,255,.11);
   --active-ring:rgba(255,220,110,.95);--active-glow:rgba(255,205,70,.55);
   --ink:#f6edcd;--ink-soft:rgba(246,237,205,.80);--ink-accent:#ffd869;--ink-good:#8fe0a0;
+  --ink-rgb:246,237,205;
+  --ink-accent-rgb:255,216,105;
 }
 /* 3. OBSIDIAN & GOLD */
 [data-felt="obsidian"],.felt-obsidian{
@@ -65,6 +69,8 @@
   --sheen-on:rgba(255,255,255,.10);
   --active-ring:rgba(255,214,90,.95);--active-glow:rgba(255,198,60,.55);
   --ink:#f2e8c9;--ink-soft:rgba(242,232,201,.78);--ink-accent:#ffd45e;--ink-good:#7fdc95;
+  --ink-rgb:242,232,201;
+  --ink-accent-rgb:255,212,94;
 }
 /* 4. SAPPHIRE & PLATINUM */
 [data-felt="sapphire"],.felt-sapphire{
@@ -79,6 +85,8 @@
   --sheen-on:rgba(255,255,255,.12);
   --active-ring:rgba(190,225,255,.95);--active-glow:rgba(130,190,255,.55);
   --ink:#eaf1fd;--ink-soft:rgba(234,241,253,.78);--ink-accent:#9fd4ff;--ink-good:#8ce0ad;
+  --ink-rgb:234,241,253;
+  --ink-accent-rgb:159,212,255;
 }
 /* 5. BURGUNDY & BRASS */
 [data-felt="burgundy"],.felt-burgundy{
@@ -93,6 +101,8 @@
   --sheen-on:rgba(255,255,255,.11);
   --active-ring:rgba(255,208,120,.95);--active-glow:rgba(255,180,90,.55);
   --ink:#f9e6d5;--ink-soft:rgba(249,230,213,.78);--ink-accent:#ffcf85;--ink-good:#93dfa6;
+  --ink-rgb:249,230,213;
+  --ink-accent-rgb:255,207,133;
 }
 /* 6. ROSE & ROSE GOLD */
 [data-felt="rose"],.felt-rose{
@@ -107,6 +117,8 @@
   --sheen-on:rgba(255,255,255,.5);
   --active-ring:rgba(255,180,150,.95);--active-glow:rgba(255,150,120,.55);
   --ink:#43202a;--ink-soft:rgba(67,32,42,.72);--ink-accent:#9a5237;--ink-good:#1d5b34;
+  --ink-rgb:67,32,42;
+  --ink-accent-rgb:154,82,55;
 }
 
 /* ── PICKER CHROME ──────────────────────────────────────────────────────────
