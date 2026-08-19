@@ -43,7 +43,7 @@
   /* Bet-box cell treatment: thin lighter-green border over a darker-green fill
      with a subtle top-to-bottom inner gradient (not flat) -- e.g. the
      Place/Buy number cells' lighter "BUY" strip vs. darker numeral body. */
-  --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
+  --box-fill: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%) padding-box, var(--metal) border-box;
   /* calc(*var(--font-scale,1)) here (and on every other fixed-px padding/border in this file
      that sits inside a box whose TEXT now scales with the felt): a border/padding that stays a
      constant px while its box shrinks eats a proportionally LARGER share of a small box than a
@@ -60,14 +60,15 @@
      thicker than intended relative to the shrunk box. round(down,...,1px) floors to a whole
      px instead, so it visibly thins out faster than the font does; max(1px,...) keeps it from
      disappearing to 0 at extreme scale. */
-  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
+  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid transparent;
   /* Same color/opacity as --box-border, just 2px instead of 4px -- on the small prop-bet cells
      (Horn Bet, Seven, Any Craps, Aces/Ace2/Midnight/Yo) a 4px border eats a much bigger share
      of the box's own small footprint than it does on Pass Line/Come/Field/number boxes, which
      read as visibly thicker there even though the token value is identical everywhere (Deck:
      "the borders on the Horn bets, Seven, Any Craps seem extra thick"). */
-  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
+  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid transparent;
   --box-border-color: rgba(255,255,255,.4);
+  --sheen: transparent;
   --box-radius: 4px;
 
   /* Deck's 4-tier green system: Lightest (Horn Bet/2-3-11-12, Field, Place, Buy, Hardways,
@@ -78,9 +79,9 @@
      be gradient unless otherwise noted, including bg, boxes, and fonts") -- same overall
      tone/alpha as the old flat values, just split top-lighter/bottom-darker like --box-fill
      above already was. */
-  --box-fill-flat: linear-gradient(180deg, rgba(14,60,34,.55) 0%, rgba(6,35,20,.68) 100%);
-  --box-fill-lightest: linear-gradient(180deg, rgba(60,175,95,.5) 0%, rgba(32,115,62,.62) 100%);
-  --box-fill-darkest: linear-gradient(180deg, rgba(5,24,14,.75) 0%, rgba(1,9,5,.86) 100%);
+  --box-fill-flat: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(14,60,34,.55) 0%, rgba(6,35,20,.68) 100%) padding-box, var(--metal) border-box;
+  --box-fill-lightest: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(60,175,95,.5) 0%, rgba(32,115,62,.62) 100%) padding-box, var(--metal) border-box;
+  --box-fill-darkest: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(5,24,14,.75) 0%, rgba(1,9,5,.86) 100%) padding-box, var(--metal) border-box;
 
   /* Typography: heavy bold sans for numerals/most labels; a script/italic face
      specifically for spelled-out "Six"/"Nine" (NUM_DEFS already emits these as
@@ -124,8 +125,8 @@
    same formula here, at #felt-stage (where --font-scale actually lives), makes the var()
    resolve against the real local value instead of the root fallback. */
 #felt-stage{
-  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
-  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid var(--box-border-color);
+  --box-border: max(1px, round(down, calc(3px * var(--font-scale,1)), 1px)) solid transparent;
+  --box-border-thin: max(1px, round(down, calc(1px * var(--font-scale,1)), 1px)) solid transparent;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:var(--ink);position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -177,7 +178,7 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 #lucky-roller{flex:1;display:flex;align-items:stretch;background:rgba(0,0,0,.25);padding:3px 4px;gap:4px;border-right:1px solid rgba(255,255,255,.1)}
 .lr-bonus-wrap{position:relative;flex-shrink:0}
 .lr-bonus{border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);cursor:pointer;height:100%;display:flex;flex-direction:column;transition:background .12s}
-.lr-bonus:hover{background:rgba(255,255,255,.08)}
+.lr-bonus:hover{--sheen:rgba(255,255,255,.08)}
 .lr-bonus.has-bet{}
 .lr-bonus.closed{opacity:.4;pointer-events:none}
 .lr-header{background:rgba(0,0,0,.3);padding:4px 6px;text-align:center}
@@ -200,7 +201,7 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 #dice-canvas-wrap{position:relative;flex-shrink:0}
 #dice-sum-overlay{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:calc(26px * var(--font-scale,1));font-weight:700;color:var(--ink);text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s}
 .rollem-all-bar{border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;transition:background .12s;position:relative}
-.rollem-all-bar:hover{background:rgba(255,255,255,.08)}
+.rollem-all-bar:hover{--sheen:rgba(255,255,255,.08)}
 .rollem-all-bar.has-bet{}
 
 /* Info panel (upper right) */
@@ -235,7 +236,7 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
 /* Hard Ways grid */
 .hw-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex:4;min-height:0}
 .bb{background:var(--box-fill-lightest);border:var(--box-border);border-radius:var(--box-radius);color:var(--color-text);font-size:calc(19px * var(--font-scale,1));padding:calc(3px * var(--font-scale,1)) calc(2px * var(--font-scale,1)) calc(2px * var(--font-scale,1));cursor:pointer;text-align:center;transition:background .12s;position:relative;width:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.bb:hover{background:rgba(255,255,255,.15)}
+.bb:hover{--sheen:rgba(255,255,255,.15)}
 .bb.active{}
 .bb .pay{font-size:15px;color:rgba(var(--ink-rgb),.4);display:block;margin-top:1px}
 .bb .stk{font-size:17px;color:var(--ink-accent);display:block;min-height:1.2em;line-height:1.2}
@@ -258,7 +259,7 @@ body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{font-size
    A ::after redraws just the border in its own positioned+z-indexed layer, which always
    paints above static in-flow children regardless of how far their text overflows. */
 .prop-bar::after,.horn-cell::after{content:'';position:absolute;inset:0;border:inherit;border-radius:inherit;pointer-events:none;z-index:3}
-.prop-bar:hover{background:rgba(255,255,255,.08)}
+.prop-bar:hover{--sheen:rgba(255,255,255,.08)}
 /* white-space:nowrap on both -- "5 for 1" x2 plus "SEVEN"/"ANY CRAPS" genuinely don't fit
    #bet-any7/#bet-anyCraps's calibrated width at their calibrated font size, confirmed via
    Range.getClientRects() at EVERY window size including full/scale=1 (not a --font-scale
@@ -294,7 +295,7 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 .horn-row{display:flex;flex:2;min-height:0;overflow:hidden}
 .horn-row.horn-mid-row{flex:1}
 .horn-cell{padding:calc(3px * var(--font-scale,1)) calc(2px * var(--font-scale,1));text-align:center;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;border:var(--box-border-thin);background:var(--box-fill-lightest);position:relative;flex:1;min-height:0;overflow:hidden}
-.horn-cell:hover{background:rgba(255,255,255,.1)}
+.horn-cell:hover{--sheen:rgba(255,255,255,.1)}
 .hc-dice{font-size:calc(36px * var(--font-scale,1));line-height:1}
 .hc-pay{font-size:14px;color:rgba(var(--ink-rgb),.5);margin-top:1px}
 /* Font-size override from Calibrate Mode's font tool -- Aces/Ace2/Midnight/Yo (the four
@@ -302,7 +303,7 @@ body.felt-mode #felt-stage #bet-anyCraps .prop-bar-name,#bet-anyCraps .prop-bar-
 #bet-aces .hc-pay,#bet-ace2 .hc-pay,#bet-midnight .hc-pay,#bet-yo .hc-pay{font-size:calc(24px * var(--font-scale,1))!important}
 .hc-stk{font-size:15px;color:var(--color-gold);min-height:1.2em;line-height:1.2}
 .horn-center{background:var(--box-fill-lightest);flex:1;flex-direction:row;gap:6px}
-.horn-center:hover{background:rgba(255,255,255,.18)}
+.horn-center:hover{--sheen:rgba(255,255,255,.18)}
 .horn-center-name{font-size:21px;font-weight:900;letter-spacing:.05em;font-family:var(--font-heavy);background:var(--text-grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 /* Font-size override from Calibrate Mode's font tool -- re-measured live at font-scale=0.421,
    "HORN BET" was wrapping to 2 lines instead of shrinking (39px calibrated was too wide for
@@ -442,7 +443,7 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 .circles-row{display:flex;gap:3px;align-items:center;flex:1}
 .circle-stack{display:flex;flex-direction:column;gap:3px;align-items:center}
 .prop-circle{width:36px;height:36px;border-radius:50%;background:var(--box-fill-flat);border:1.5px solid rgba(255,255,255,.25);color:var(--color-text);font-family:var(--font-heavy);font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;position:relative;flex-shrink:0}
-.prop-circle:hover{background:rgba(255,255,255,.15)}
+.prop-circle:hover{--sheen:rgba(255,255,255,.15)}
 .prop-circle.active{}
 .circle-wrap{position:relative;display:flex;flex-direction:column;align-items:center}
 .circle-stk{font-size:14px;color:var(--ink-accent);min-height:1.2em;line-height:1.2;text-align:center}
@@ -476,12 +477,12 @@ body.felt-portrait #felt-stage .roll-pip:not(.rp-first) .rp-num{height:calc(80px
 .num-box{border:var(--box-border);border-radius:var(--box-radius);overflow:hidden;background:var(--box-fill-flat);display:flex;flex-direction:column;height:100%}
 .num-box.is-point{border:2px solid #fff;box-shadow:0 0 5px rgba(255,255,255,.4)}
 .nb-buy{background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
-.nb-buy:hover{background:rgba(255,255,255,.15)}
-.nb-buy.active{background:transparent}
+.nb-buy:hover{--sheen:rgba(255,255,255,.15)}
+.nb-buy.active{background:linear-gradient(transparent,transparent) padding-box,var(--metal) border-box}
 .nb-mid{background:transparent;border-bottom:0.5px solid rgba(255,255,255,.1);text-align:center;padding:1px;font-size:40px;font-weight:700;font-family:var(--font-heavy);color:var(--color-text);flex:3;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
 .nb-num-word{font-family:var(--font-script);font-style:italic}
 .nb-place{background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
-.nb-place:hover{background:rgba(255,255,255,.1)}
+.nb-place:hover{--sheen:rgba(255,255,255,.1)}
 .nb-place.active{}
 .nb-lbl{font-size:11px;display:block;letter-spacing:.04em;background:var(--text-grad-white);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important;opacity:.6}
 .nb-stk{font-size:15px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
@@ -740,13 +741,13 @@ body.game-street.felt-mode #felt-stage #street-line-bar .has-stack,
 body.game-street.felt-mode #felt-stage #street-fade-bar .has-stack,
 body.game-street.felt-mode #felt-stage .street-pt .has-stack{top:66%}
 #pass-odds-cell{background:var(--box-fill-flat);border-right:0.5px solid rgba(255,255,255,.15);padding:3px 5px;cursor:pointer;text-align:center;width:144px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;transition:background .12s}
-#pass-odds-cell:hover{background:rgba(255,255,255,.12)}
+#pass-odds-cell:hover{--sheen:rgba(255,255,255,.12)}
 #pass-odds-cell.active{background:transparent}
 .odds-lbl{font-size:14px;color:rgba(var(--ink-rgb),.5);display:block}
 .odds-stk{font-size:17px;color:var(--color-gold);display:block;min-height:1.2em;line-height:1.2}
 .odds-pay{font-size:14px;color:rgba(var(--ink-rgb),.4);display:block}
 #pass-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;background:var(--box-fill-flat)}
-#pass-main:hover{background:rgba(255,255,255,.1)}
+#pass-main:hover{--sheen:rgba(255,255,255,.1)}
 #pass-main.active-bar{}
 
 /* ── GAME MODE TOGGLE ── */
@@ -823,10 +824,10 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
 /* Lay cell in number box (right half of buy) */
 .nb-buy-wrap{display:flex;flex:1;border-bottom:0.5px solid rgba(255,255,255,.1)}
 .nb-buy-left{flex:1;background:var(--box-fill-lightest);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
-.nb-buy-left:hover{background:rgba(255,255,255,.15)}
+.nb-buy-left:hover{--sheen:rgba(255,255,255,.15)}
 .nb-buy-left.active{background:transparent}
 .nb-lay{flex:1;background:rgba(255,255,255,.07);border:var(--box-border);padding:1px 2px;cursor:pointer;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;transition:background .12s}
-.nb-lay:hover{background:rgba(255,255,255,.15)}
+.nb-lay:hover{--sheen:rgba(255,255,255,.15)}
 .nb-lay.active{background:transparent}
 .nb-lay .nb-lbl{background:var(--text-grad-red);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
 .nb-lay .nb-stk{color:#ff9999}
@@ -1236,7 +1237,7 @@ body.felt-mode #felt-stage .bwrap>.bb,body.felt-mode #felt-stage .bwrap>.prop-ba
 body.felt-mode #felt-stage .bb:hover,body.felt-mode #felt-stage .nb-buy:hover,body.felt-mode #felt-stage .nb-place:hover,
 body.felt-mode #felt-stage .horn-cell:hover,body.felt-mode #felt-stage .prop-circle:hover,body.felt-mode #felt-stage .zone-bar:hover,
 body.felt-mode #felt-stage .nb-buy-left:hover,body.felt-mode #felt-stage .nb-lay:hover,
-body.felt-mode #felt-stage .prop-bar:hover,body.felt-mode #felt-stage #pass-main:hover{background:rgba(255,255,255,.10)!important}
+body.felt-mode #felt-stage .prop-bar:hover,body.felt-mode #felt-stage #pass-main:hover{--sheen:rgba(255,255,255,.10)!important}
 body.felt-mode #felt-stage .bb.active,body.felt-mode #felt-stage .nb-buy.active,body.felt-mode #felt-stage .nb-place.active,
 body.felt-mode #felt-stage .horn-cell.active,body.felt-mode #felt-stage .prop-circle.active,body.felt-mode #felt-stage .zone-bar.active-bar,
 body.felt-mode #felt-stage .nb-buy-left.active,body.felt-mode #felt-stage .nb-lay.active,
@@ -1591,7 +1592,7 @@ body.felt-mode.game-standard #felt-stage #dp-bar{display:flex;flex-direction:row
 body.felt-mode.game-standard #felt-stage #dp-odds-cell{flex:0 0 17.4%;position:relative;order:-1}
 body.felt-mode.game-standard #felt-stage #dp-main{flex:1;position:relative}
 body.felt-mode.game-standard #felt-stage #dp-main:hover,
-body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{background:rgba(255,255,255,.10)}
+body.felt-mode.game-standard #felt-stage #dp-odds-cell:hover{--sheen:rgba(255,255,255,.10)}
 body.felt-mode.game-standard #felt-stage #dp-odds-cell{border-right:0.5px solid rgba(255,255,255,.15)}
 /* Odds-chip-into-base-bet arrow, shown only once an odds chip is actually placed (.active is
    toggled by updateUI() alongside the odds stake amount) -- matches the reference's red arrow
@@ -1845,7 +1846,7 @@ body.felt-mode #felt-stage #lucky-roller .lr-bonus-wrap.felt-lr{z-index:2}
 body.felt-mode #felt-stage #lucky-roller #bnums-low.felt-lr,
 body.felt-mode #felt-stage #lucky-roller #bnums-high.felt-lr{z-index:2}
 body.felt-mode #felt-stage #lucky-roller .lr-bonus,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar{background:var(--box-fill);border:var(--box-border);width:100%;height:100%;border-radius:6px}
-body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{background:rgba(255,255,255,.10)}
+body.felt-mode #felt-stage #lucky-roller .lr-bonus:hover,body.felt-mode #felt-stage #lucky-roller .rollem-all-bar:hover{--sheen:rgba(255,255,255,.10)}
 /* Each low/all/high box measures ~55x39px on a full-size felt -- the base view's title+pay text
    (34px/30px) and the Roll'em All bar's inline style="font-size:30px/28px/38px" (set directly in
    the HTML, so it beats any stylesheet rule short of !important) were both sized for a much
@@ -2090,10 +2091,10 @@ body.felt-mode #felt-stage .odds-lbl-new{display:block;font-size:11px;font-weigh
    byte-identical to what it rendered before it became themeable. */
 body[data-felt]{
   --felt-bg: radial-gradient(ellipse at center, var(--felt-1) 0%, var(--felt-2) 55%, var(--felt-4) 100%);
-  --box-fill:          linear-gradient(180deg, var(--box-1) 0%, var(--box-3) 100%);
-  --box-fill-flat:     linear-gradient(180deg, var(--box-2) 0%, var(--box-3) 100%);
-  --box-fill-lightest: linear-gradient(180deg, var(--box-1) 0%, var(--box-2) 100%);
-  --box-fill-darkest:  linear-gradient(180deg, var(--felt-4) 0%, var(--edge-1) 100%);
+  --box-fill: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, var(--box-1) 0%, var(--box-3) 100%) padding-box, var(--metal) border-box;
+  --box-fill-flat: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, var(--box-2) 0%, var(--box-3) 100%) padding-box, var(--metal) border-box;
+  --box-fill-lightest: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, var(--box-1) 0%, var(--box-2) 100%) padding-box, var(--metal) border-box;
+  --box-fill-darkest: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, var(--felt-4) 0%, var(--edge-1) 100%) padding-box, var(--metal) border-box;
   --box-border-color: var(--edge-4);
 }
 /* The light boards need dark box edges; a white hairline vanishes on cream. */
@@ -2117,10 +2118,10 @@ body[data-felt="classic"],.felt-classic{
   --ink:#ffffff;--ink-rgb:255,255,255;--ink-soft:rgba(255,255,255,.7);--ink-accent:#ffe066;--ink-accent-rgb:255,224,102;--ink-good:#7ee87e;
   /* Verbatim originals -- this is the "unchanged" requirement, not an approximation. */
   --felt-bg: radial-gradient(ellipse at center, #1d6636 0%, #144d29 55%, #0a2f18 100%);
-  --box-fill: linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%);
-  --box-fill-flat: linear-gradient(180deg, rgba(14,60,34,.55) 0%, rgba(6,35,20,.68) 100%);
-  --box-fill-lightest: linear-gradient(180deg, rgba(60,175,95,.5) 0%, rgba(32,115,62,.62) 100%);
-  --box-fill-darkest: linear-gradient(180deg, rgba(5,24,14,.75) 0%, rgba(1,9,5,.86) 100%);
+  --box-fill: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(20,70,40,.55) 0%, rgba(8,40,22,.75) 100%) padding-box, var(--metal) border-box;
+  --box-fill-flat: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(14,60,34,.55) 0%, rgba(6,35,20,.68) 100%) padding-box, var(--metal) border-box;
+  --box-fill-lightest: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(60,175,95,.5) 0%, rgba(32,115,62,.62) 100%) padding-box, var(--metal) border-box;
+  --box-fill-darkest: linear-gradient(var(--sheen),var(--sheen)) padding-box, linear-gradient(180deg, rgba(5,24,14,.75) 0%, rgba(1,9,5,.86) 100%) padding-box, var(--metal) border-box;
   --box-border-color: rgba(255,255,255,.4);
 }
 
@@ -2859,7 +2860,7 @@ body[data-felt="classic"],.felt-classic{
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.50</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.51</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
