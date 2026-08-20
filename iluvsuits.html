@@ -445,7 +445,7 @@ body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.we
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.26</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.27</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="iluvsuits:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('iluvsuits')" title="How to play">i</button>
@@ -931,11 +931,17 @@ async function refreshTierLimits(tier){
     _tierLimitsTier=tier;
   }catch(e){console.warn('[tier limits] fetch threw, keeping defaults:',e&&e.message);}
 }
-// Play can reach 3x Ante (raiseMultiplier's own max, for a 6-7 card flush) -- capping
-// it at the flat MAX_BET would mean a player betting the real table max on Ante could
-// never fully raise it, so Play gets its own ceiling: 3x the table max, not the table
-// max itself.
-const PLAY_MAX_BET=MAX_BET*3;
+// Play has NO table max of its own, by design. Its size is never freely chosen: it's
+// Ante times a multiple the hand itself dictates (raiseMultiplier -- 3x on a 6-7 card
+// flush, 2x on 5, else 1x), and Ante is already held to MAX_BET as it's staged, so Play
+// can't exceed 3x the table max no matter what. The server agrees: roll-iluvsuits bounds
+// playBet to [ante, ante*raiseMultiplier] off the ante it validated at deal time.
+//
+// Play used to carry its own ceiling of MAX_BET*3, which was the bug: a const evaluated
+// at load time, when MAX_BET is still the pre-login $300 default, and never recomputed
+// once refreshTierLimits() raised MAX_BET for the player's real tier. Any tier-1+ player
+// who staked an Ante over $300 had every raise button disabled and Fold as their only
+// legal action. Affordability is the only thing that gates a raise now.
 function placeBet(key){
   if(G.phase!=='betting')return;
   // Free Play counts toward what a player can stage -- roll-iluvsuits already validates
@@ -1040,7 +1046,7 @@ function updateRaiseButtonStates(){
   opts.forEach(mult=>{
     const btn=document.getElementById(RAISE_BTN_ID[mult]);if(!btn)return;
     const amt=r2(G.locked.ante*mult);
-    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll+G.freePlay&&amt<=PLAY_MAX_BET);
+    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll+G.freePlay);
   });
 }
 function doRaise(mult){
@@ -1049,7 +1055,7 @@ function doRaise(mult){
   const btn=document.getElementById(RAISE_BTN_ID[mult]);
   if(btn&&btn.disabled)return;
   const amt=r2(G.locked.ante*mult);
-  if(amt<=0||amt>G.bankroll+G.freePlay||amt>PLAY_MAX_BET)return;
+  if(amt<=0||amt>G.bankroll+G.freePlay)return;
   G.playBet=amt;
   G.bankroll=r2(G.bankroll-amt);
   updateUI();
