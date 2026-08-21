@@ -385,7 +385,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.29</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.30</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="paigow:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('paigow')" title="How to play">i</button>
@@ -393,7 +393,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
     </div>
     <div id="status-zone">
       <div id="status-phase">Place Your Ante</div>
-      <div id="status-sub">Fortune and The Light are optional side bets on your own 7-card hand.</div>
+      <div id="status-sub">Fortune, Ace High, and The Light are optional side bets.</div>
     </div>
     <div id="info-panel">
       <div class="info-row">
@@ -464,6 +464,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
         <div class="bet-spot" id="fortune-spot" onclick="placeBet('fortune')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('fortune')">
           <button class="paytable-info-btn" data-icalib="paigow:fortune" data-icalib-unit="px" onclick="event.stopPropagation();openPaytable('fortune')" title="Fortune Paytable">i</button>
           <span id="stk-fortune"></span>
+        </div>
+      </div>
+      <div class="bet-spot-wrap">
+        <div class="bet-spot-name">Ace High</div>
+        <div class="bet-spot" id="acehigh-spot" onclick="placeBet('acehigh')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('acehigh')">
+          <button class="paytable-info-btn" data-icalib="paigow:acehigh" data-icalib-unit="px" onclick="event.stopPropagation();openPaytable('acehigh')" title="Ace High Paytable">i</button>
+          <span id="stk-acehigh"></span>
         </div>
       </div>
       <div class="bet-spot-wrap">
@@ -579,10 +586,10 @@ const FN_HEADERS={'Content-Type':'application/json','Authorization':'Bearer '+SU
 function makeInitialG(){
   return {
     bankroll:0,freePlay:0,startingBankroll:0,chip:25,
-    bets:{ante:0,fortune:0},lightOn:false,
+    bets:{ante:0,fortune:0,acehigh:0},lightOn:false,
     phase:'betting', // betting|arranging|selecting|done
     hand:null,       // {playerCards,dealerCards,dealerLow,dealerHigh}
-    locked:{ante:0,fortune:0,light:false},
+    locked:{ante:0,fortune:0,acehigh:0,light:false},
     selectedLow:[],
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
     history:[],
@@ -594,7 +601,7 @@ let G=makeInitialG();
 let currentPlayer=null,_authMode='login';
 
 function tBets(){
-  const betsTotal=(G.bets.ante||0)+(G.bets.fortune||0)+(G.lightOn?5:0);
+  const betsTotal=(G.bets.ante||0)+(G.bets.fortune||0)+(G.bets.acehigh||0)+(G.lightOn?5:0);
   return r2(betsTotal);
 }
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
@@ -787,7 +794,7 @@ function startSession(player){
   if(gs.paigow&&gs.paigow.phase==='arranging'){
     // Resume an abandoned hand from a previous session (refresh mid-decision) rather
     // than strand the already-committed Ante/Fortune/Light.
-    G.locked={ante:gs.paigow.ante,fortune:gs.paigow.fortune,light:gs.paigow.light};
+    G.locked={ante:gs.paigow.ante,fortune:gs.paigow.fortune,acehigh:gs.paigow.aceHigh||0,light:gs.paigow.light};
     G.hand={playerCards:gs.paigow.playerCards,dealerCards:gs.paigow.dealerCards,dealerLow:null,dealerHigh:null};
     G.phase='selecting';G.selectedLow=[];
     const dealerSplit=setHouseWayClient(gs.paigow.dealerCards);
@@ -922,8 +929,8 @@ function removeBet(key){
 }
 function clearBets(){
   if(G.phase!=='betting')return;
-  const ret=r2((G.bets.ante||0)+(G.bets.fortune||0)+(G.lightOn?LIGHT_BET:0));
-  G.bets={ante:0,fortune:0};G.lightOn=false;G.bankroll=r2(G.bankroll+ret);
+  const ret=r2((G.bets.ante||0)+(G.bets.fortune||0)+(G.bets.acehigh||0)+(G.lightOn?LIGHT_BET:0));
+  G.bets={ante:0,fortune:0,acehigh:0};G.lightOn=false;G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
 function toggleLight(){
@@ -943,11 +950,11 @@ function repeatLastBet(){
   }
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
-  const cost=r2((snap.ante||0)+(snap.fortune||0)+(snap.light?LIGHT_BET:0));
+  const cost=r2((snap.ante||0)+(snap.fortune||0)+(snap.acehigh||0)+(snap.light?LIGHT_BET:0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
-  G.bets.ante=snap.ante||0;G.bets.fortune=snap.fortune||0;
+  G.bets.ante=snap.ante||0;G.bets.fortune=snap.fortune||0;G.bets.acehigh=snap.acehigh||0;
   if(snap.light)G.lightOn=true;
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
@@ -977,6 +984,11 @@ const PAYTABLE_CONTENT={
     ['Straight Flush','50 to 1'],['Four of a Kind','25 to 1'],['Full House','5 to 1'],['Flush','4 to 1'],
     ['Three of a Kind','3 to 1'],['Straight','2 to 1'],
   ],note:'Optional side bet on your own best 7-card hand, independent of the Ante. Loses on two pair or worse. Five Aces = all four real Aces plus the Joker.'},
+  acehigh:{title:'Ace High',rows:[
+    ['Dealer & Player both Ace High','25 to 1'],
+    ['Dealer Ace High (with the Joker)','10 to 1'],
+    ['Dealer Ace High','7 to 1'],
+  ],note:'Optional side bet that the dealer\'s House-way High hand comes out a bare Ace High (no pair) -- the very hand that pushes your Ante. The 25:1 top prize needs your own House-way High hand to be a bare Ace High too. Loses whenever the dealer isn\'t Ace High. No King-high prize.'},
 };
 function openPaytable(key){
   const p=PAYTABLE_CONTENT[key];if(!p)return;
@@ -1131,25 +1143,26 @@ async function dealHand(){
   const ante=G.bets.ante||0;
   if(ante<=0){addLog('Place an Ante bet before dealing.','info');return;}
   const fortune=G.bets.fortune||0;
+  const aceHigh=G.bets.acehigh||0;
   const light=!!G.lightOn;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll-paigow',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,fortune,light})});
+    const res=await fetch(FUNCTIONS_URL+'/roll-paigow',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,fortune,aceHigh,light})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
   if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
   playSfx(SFX_CARD_SHUFFLE);
-  G.locked={ante:data.ante,fortune:data.fortune,light:data.light};
-  G.lastBetSnapshot={ante:data.ante,fortune:data.fortune,light:!!data.light};
+  G.locked={ante:data.ante,fortune:data.fortune,acehigh:data.aceHigh||0,light:data.light};
+  G.lastBetSnapshot={ante:data.ante,fortune:data.fortune,acehigh:data.aceHigh||0,light:!!data.light};
   G.hand={playerCards:data.playerCards,dealerCards:data.dealerCards,dealerLow:data.dealerLow,dealerHigh:data.dealerHigh};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-  G.bets={ante:0,fortune:0};
+  G.bets={ante:0,fortune:0,acehigh:0};
   G.selectedLow=[];
   G.phase='selecting';
   document.getElementById('repeat-btn').disabled=false;
@@ -1299,14 +1312,15 @@ function finishHand(data){
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   G.lastWin=data.payout||0;
-  G.lastBetDisplay=r2(G.locked.ante+G.locked.fortune+(G.locked.light?LIGHT_BET:0));
+  G.lastBetDisplay=r2(G.locked.ante+G.locked.fortune+G.locked.acehigh+(G.locked.light?LIGHT_BET:0));
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
   const histLabel=data.result==='win'?'WIN':data.result==='push'?'PUSH':'LOSE';
   let playerDesc='High: '+playerHighDesc+', Low: '+playerLowDesc;
   if(data.houseSet)playerDesc+=' (house-set)';
   if(G.locked.fortune>0)playerDesc+=data.fortunePayout>0?' — Fortune hit!':' — Fortune: no win';
   if(G.locked.light)playerDesc+=data.progressiveTier?' — THE LIGHT: '+data.progressiveTier.toUpperCase()+'!':' — THE LIGHT: no prize';
-  const dealerDesc='High: '+dealerHighDesc+', Low: '+dealerLowDesc;
+  let dealerDesc='High: '+dealerHighDesc+', Low: '+dealerLowDesc;
+  if(G.locked.acehigh>0)dealerDesc+=data.aceHighPayout>0?' — Ace High hit!':' — Ace High: no win';
   G.history.unshift({result:data.result,payout:data.payout,label:histLabel,playerDesc,dealerDesc});
   if(G.history.length>20)G.history.length=20;
   G.phase='done';
@@ -1327,7 +1341,7 @@ function finishHand(data){
   },550);
 }
 function resetToBetScreen(){
-  G.phase='betting';G.hand=null;G.locked={ante:0,fortune:0,light:false};G.selectedLow=[];
+  G.phase='betting';G.hand=null;G.locked={ante:0,fortune:0,acehigh:0,light:false};G.selectedLow=[];
   G.cardEls.dealer.forEach(slot=>Cards.reset(slot.card));
   G.cardEls.player.forEach(slot=>Cards.reset(slot.card));
   clearTags(G.cardEls.dealer);clearTags(G.cardEls.player);
@@ -1354,7 +1368,7 @@ function renderActionButtons(){
 }
 function updateStatusZone(){
   const map={
-    betting:['Place Your Ante','Fortune and The Light are optional side bets on your own 7-card hand.'],
+    betting:['Place Your Ante','Fortune, Ace High, and The Light are optional side bets.'],
     selecting:['Pick Your Low Hand','Click 2 of your own cards to hold as the Low hand, or Set House Way to let the dealer do it for you.'],
     done:['Showdown','']
   };
@@ -1392,15 +1406,19 @@ function updateUI(){
   const locked=G.phase!=='betting';
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
   const fortuneAmt=locked?G.locked.fortune:(G.bets.fortune||0);
+  const acehighAmt=locked?G.locked.acehigh:(G.bets.acehigh||0);
   // Reset the per-render Free Play allowance before the first spot claims any of it --
   // see _fpRemainingForRender's own comment below for why this is an estimate.
   _fpRemainingForRender=(window.FreePlayBadge&&FreePlayBadge.getBalance())||0;
   applyChipStackVisual('stk-ante',anteAmt,locked);
   applyChipStackVisual('stk-fortune',fortuneAmt,locked);
+  applyChipStackVisual('stk-acehigh',acehighAmt,locked);
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('ante-spot').classList.toggle('locked',locked);
   document.getElementById('fortune-spot').classList.toggle('active',fortuneAmt>0);
   document.getElementById('fortune-spot').classList.toggle('locked',locked);
+  document.getElementById('acehigh-spot').classList.toggle('active',acehighAmt>0);
+  document.getElementById('acehigh-spot').classList.toggle('locked',locked);
   // The Light: a staged $5 stake shows like any other spot pre-deal (a real chip
   // image, not just text), then the chip sweeps away and lightON.webp takes over
   // once dealt (G.locked.light) -- same convention as uth.html/breakout.html.
@@ -1545,9 +1563,9 @@ function spawnWinPair(elId,amt){
   },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+100);
 }
 // Bet-name -> stake-element-id table, matched against roll-paigow's exact log-line
-// prefixes (Ante:/Fortune:), same win|pays / lost / push keyword convention addLog()
-// already uses for line coloring.
-function paiGowGhostChecks(){return [[/^Ante:/,'ante'],[/^Fortune:/,'fortune']];}
+// prefixes (Ante:/Fortune:/Ace High:), same win|pays / lost / push keyword convention
+// addLog() already uses for line coloring.
+function paiGowGhostChecks(){return [[/^Ante:/,'ante'],[/^Fortune:/,'fortune'],[/^Ace High:/,'acehigh']];}
 function spawnPaiGowGhosts(rawLog){
   paiGowGhostChecks().forEach(([re,key])=>{
     const line=rawLog.find(l=>re.test(l));
