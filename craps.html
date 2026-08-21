@@ -3024,7 +3024,7 @@ const HARD_NUMS=new Set([4,6,8,10]);
 const LOW_NUMS=[2,3,4,5,6],HIGH_NUMS=[8,9,10,11,12],ALL_BONUS=[2,3,4,5,6,8,9,10,11,12];
 const CONTRACT=new Set(['pass','passodds']);
 
-function getRepeatable(){return new Set(['pass','dp','field','lowfield','highfield','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n])]);}
+function getRepeatable(){return new Set(['pass','dp','field','lowfield','highfield','any7','horn','aces','ace2','midnight','yo','anyCraps','cande','eleven','hard4','hard6','hard8','hard10',...Object.keys(HOP_MAP),...ALL_NUMS.flatMap(n=>['place'+n,'buy'+n,'lay'+n])]);}
 let REPEATABLE=getRepeatable();
 // ── GAME MODE SWITCHING ───────────────────────────────────────────────────────
 // Phase 6 (CSS-only re-skin): FELT_IMG (BlankFelt.webp per mode/tab -- all four combinations
@@ -5802,9 +5802,16 @@ function renderChipStacks(){
     const cell=el.closest('.nb-buy,.nb-buy-left,.nb-place');
     const isOdds=el.id==='stk-passodds'||el.id==='stk-dpodds';
     const isHardway=/^stk-hard(4|6|8|10)$/.test(el.id);
+    // Lay and Don't Pass are DON'T-SIDE: working on the come-out by default (server resolves them
+    // there via actDont -- a come-out 7 wins the lay and the DP resolves regardless of the
+    // toggle), so they must not wear an OFF badge on the come-out. During the point they follow
+    // the toggle like everything else (globalOff). Odds only exist behind a point, so they're
+    // always point-phase and keep plain globalOff.
+    const comeOut=G.phase==='comeout';
     if(cell){off=globalOff;}
-    else if(/^stk-lay\d+$/.test(el.id)){off=globalOff;}
-    else if(el.id==='stk-dp'||isOdds){off=globalOff;}
+    else if(/^stk-lay\d+$/.test(el.id)){off=comeOut?false:globalOff;}
+    else if(el.id==='stk-dp'){off=comeOut?false:globalOff;}
+    else if(isOdds){off=globalOff;}
     else if(isHardway){off=globalOff;}
     // Deck: Buy, Place, Odds, and Hardways bets should be real money at all times --
     // Hardways are neither a one-roll proposition nor a contract bet, so they're
