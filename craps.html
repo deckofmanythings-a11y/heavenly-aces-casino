@@ -1737,6 +1737,19 @@ body.felt-mode #felt-stage #info-panel #info-modal-btn{font-size:calc(var(--chip
 body.felt-mode #felt-stage #info-panel #top-bar-username{font-size:calc(var(--chip)*0.34)!important}
 body.felt-mode #felt-stage #info-panel .info-row:nth-child(2) .info-btn{font-size:calc(var(--chip)*0.30)!important;padding:calc(var(--chip)*0.06) calc(var(--chip)*0.11)!important}
 body.felt-mode #felt-stage #info-panel .bullet-icon{width:calc(var(--chip)*0.12)!important}
+/* Bullets HUD click fix: while a bullets session is active #bullets-row is the last child of
+   #info-panel, whose felt-mode box is a FIXED height (FELT_LAYOUT: 82.50/0.70/17.00/20.50, so
+   its bottom sits at 21.20% of the felt). Standard's #num-zone starts at 22.22% and the two boxes
+   overlap on the right (x 82.50->87.16%), so the extra row overflows the panel straight into the
+   top-right number boxes. Those are .felt-abs z-index:5 (see ~line 1554) while #info-panel is only
+   the base .felt-abs z-index:2, so the number box silently ate the click on the "use next bullet"
+   icon -- exactly the #line-mode-toggle vs #num-zone bug fixed at ~line 1755. Fix: raise the whole
+   panel above the number boxes so its icons win the hit-test, and make the row itself
+   click-transparent so the number boxes in the gaps between icons stay clickable -- only the
+   actionable "next" icon opts back in via inline pointer-events:auto in renderBullets(). Both
+   boxes are always the same % of the felt, so this holds at every resolution/orientation. */
+body.felt-mode #felt-stage #info-panel{z-index:6}
+#bullets-row{pointer-events:none}
 body.felt-mode #felt-stage #left-col-header .mode-btn{font-size:calc(var(--chip)*0.28);padding:calc(var(--chip)*0.07) calc(var(--chip)*0.1)}
 /* Calibrate Mode font tool: #line-mode-toggle -> 27px. Its buttons are .mode-btn (a column
    flex with align-items:center, which only centers horizontally -- no justify-content, so text
@@ -2864,7 +2877,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.54</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.55</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4465,7 +4478,9 @@ function renderBullets(){
   for(let i=0;i<G.bulletCount;i++){
     const isCurrent=i===G.bulletIndex,isSpent=i<G.bulletIndex,isNext=i===G.bulletIndex+1;
     const style=isSpent?'opacity:.28;filter:grayscale(1)':isCurrent?'opacity:1;filter:drop-shadow(0 0 4px #ffd700)':'opacity:.55';
-    html+='<img class="bullet-icon" src="bullet.webp" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="width:18px;height:auto;cursor:'+(isNext?'pointer':'default')+';'+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
+    // #bullets-row is pointer-events:none (so it never blocks the number boxes it can overflow
+    // onto in felt mode); the clickable "next" icon opts back in with pointer-events:auto.
+    html+='<img class="bullet-icon" src="bullet.webp" title="Bullet '+(i+1)+(isCurrent?' (active)':isNext?' -- click to use next':'')+'" style="width:18px;height:auto;cursor:'+(isNext?'pointer':'default')+';'+(isNext?'pointer-events:auto;':'')+style+'"'+(isNext?' onclick="nextBullet()"':'')+'>';
   }
   row.innerHTML=html;
 }
