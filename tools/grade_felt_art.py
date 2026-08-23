@@ -6,11 +6,12 @@ THE RULE: SHIFT HUE, PRESERVE LUMINANCE
 Only pixels already in the GREEN band are retinted, and each keeps its own
 brightness. Two consequences, both deliberate:
 
-  * Roulette's red and black number cells are outside the band and are never
-    touched. They are the game's colour language, not decor -- a themed roulette
-    layout that recolours red/black would be unreadable as roulette. The green
-    0/00 cells shift hue but hold their original lightness, so they stay distinct
-    from the black cells on every palette, including the near-black one.
+  * Roulette's red, black AND green number cells are all preserved -- they are
+    the game's colour language, not decor. Red/black sit outside the hue band and
+    are never touched. The green 0/00 cells DO sit inside the band (they are the
+    same green as the felt), so they are protected by an explicit keep-region over
+    the 0/00 column instead: on every palette a 0 or 00 stays casino green, exactly
+    as it must on a real wheel, no matter what colour the surrounding felt becomes.
 
   * A themed felt stays a FELT. Ivory does not turn the table cream; it turns it
     tan, at the same depth as the original green. That matters because I Luv Suits
@@ -23,8 +24,8 @@ chips and black outlines pass through untouched. Saturated non-green ink -- the
 blue ANTE/PLAY chips, the red heart in the logo, gold lettering -- is outside the
 hue band and likewise survives.
 
-The I Luv Suits brand mark additionally carries a rectangular keep-region, given
-in fractions of the image so it survives a re-export at another size.
+Keep-regions (the roulette 0/00 column, the I Luv Suits brand mark) are given in
+fractions of the image so they survive a re-export at another size.
 """
 import numpy as np
 from PIL import Image
@@ -43,7 +44,8 @@ PALETTES = {
 }
 
 JOBS = [
-    dict(src='roulett_felt.webp', keep=None),
+    dict(src='roulett_felt.webp', keep=(0.0, 0.0, 0.083, 0.615)),   # green 0/00 column
+
     dict(src='iLuvSuits_Felt.webp', keep=(0.71, 0.14, 0.98, 0.34)),   # I LOVE SUITS mark
     dict(src='iLuvSuits_port.webp', keep=None),
 ]
