@@ -264,7 +264,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
         <p style="margin-top:8px"><b>💰 Moneybags.</b> Land <b>6 or more</b> moneybags anywhere to start the <b>House</b> feature.</p>
         <p style="margin-top:8px"><b>🛖 Build the Houses.</b> Locked positions become <b>Houses</b>, and each one's <b>value is hidden</b>. Land on a house again and it <b>upgrades its material — Straw → Wood → Brick</b>. New houses give <b>3 more respins</b>; the sturdier the material, the richer the hidden prize (Brick holds the jackpots).</p>
         <p style="margin-top:8px"><b>🐺 Huff &amp; Puff.</b> When the respins run out, the <b>Big Bad Wolf blows every house down</b>, revealing each hidden value one by one. You collect them all.</p>
-        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~95.8%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
+        <p style="margin-top:8px"><b>🌕 Free Games.</b> Land <b>3 or more Full Moons</b> to win <b>Free Spins</b> (3 = 6, 4 = 10, 5 = 15). During Free Games moneybags land far more often — the <b>House feature triggers much more</b> — and <b>every win is doubled (×2)</b>. Land 3+ Moons again to retrigger.</p>
+        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~95.7%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
       </div>
       <button class="modal-btn cancel" onclick="closeHelp()" style="margin-top:8px">Close</button>
     </div>
@@ -273,7 +274,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.0</div>
       <div class="hdr-btns">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="openHelp()" title="How to play">i</button>
@@ -404,9 +405,9 @@ const JP_ORDER=['GRAND','MAJOR','MINOR','MINI'];
 // Symbol art. Swap these glyphs for <img> tiles when real art lands — nothing else changes.
 const SYM_ART={
   wolf:{glyph:'🐺',name:'Wolf'}, pig:{glyph:'🐷'}, brick:{glyph:'🧱'}, stick:{glyph:'🪵'}, straw:{glyph:'🌾'},
-  A:{card:'A'}, K:{card:'K'}, Q:{card:'Q'}, J:{card:'J'}, T:{card:'10'}, COIN:{coin:true},
+  A:{card:'A'}, K:{card:'K'}, Q:{card:'Q'}, J:{card:'J'}, T:{card:'10'}, COIN:{coin:true}, scatter:{glyph:'🌕',name:'Full Moon',scatter:true},
 };
-const REEL_SYMS=['wolf','pig','brick','stick','straw','A','K','Q','J','T','COIN'];
+const REEL_SYMS=['wolf','pig','brick','stick','straw','A','K','Q','J','T','COIN','scatter'];
 
 // ── STATE ──────────────────────────────────────────────────────────────────────
 let G={bankroll:0,freePlay:0,startingBankroll:0,bet:25,lastWin:0,lastBetDisplay:0,rollHistory:[]};
@@ -628,7 +629,7 @@ function renderHistory(){
   (G.rollHistory||[]).forEach(h=>{
     const pip=document.createElement('div');
     const won=(h.win||0)>0;pip.className='roll-pip '+((h.bonus||h.fg)?'b':(won?'w':'l'));
-    pip.textContent=h.bonus?'🐺'+(h.win||0).toFixed(0)+'×':(won?(h.win||0).toFixed(0)+'×':'—');
+    pip.textContent=h.fg?'🌕'+(h.win||0).toFixed(0)+'×':(h.bonus?'🐺'+(h.win||0).toFixed(0)+'×':(won?(h.win||0).toFixed(0)+'×':'—'));
     wrap.appendChild(pip);
   });
 }
