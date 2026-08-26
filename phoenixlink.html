@@ -103,6 +103,17 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #bonus-banner .bb-inner{font-size:min(9vh,9vw);font-weight:900;letter-spacing:.08em;color:#ffcf3f;
   text-shadow:0 0 24px rgba(255,90,20,.8),0 3px 6px #000;animation:bpop .5s ease}
 @keyframes bpop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
+/* scatter highlight (3+ = free games) */
+.cell.scat{box-shadow:0 0 0 2px #ffef7a,0 0 18px rgba(255,120,40,.75);z-index:2}
+.cell.scat .sym{transform:scale(1.14)}
+/* free-games HUD (top-left, so it can coexist with the hold-and-spin HUD) */
+#freegames-hud{position:absolute;top:6px;left:8px;z-index:19;display:none;flex-direction:column;gap:0;
+  background:rgba(20,4,4,.86);border:1px solid rgba(255,215,0,.55);border-radius:10px;padding:4px 10px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+#freegames-hud.show{display:flex}
+#freegames-hud .fg-title{font-size:13px;font-weight:900;letter-spacing:.06em;color:#ffcf3f}
+#freegames-hud .fg-line{font-size:13px;color:#fff}
+#freegames-hud .fg-line b{color:#ffd700}
+#freegames-hud .fg-total{font-size:14px;color:#7ee87e;font-weight:800}
 
 /* ── BOTTOM ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100dvh * 2.4 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,215,0,.15)}
@@ -244,7 +255,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
         <p style="margin-top:8px"><b>🔥 Fire Orbs.</b> Land <b>6 or more</b> fire orbs anywhere and the <b>Hold &amp; Spin</b> feature begins.</p>
         <p style="margin-top:8px"><b>Hold &amp; Spin.</b> The orbs lock in place, each holding a credit value or a jackpot. You get <b>3 respins</b> — every new orb that lands <b>resets the respins to 3</b>. When respins run out, you collect the total of every orb on screen.</p>
         <p style="margin-top:8px"><b>Fill all 15 positions</b> to win the <b>GRAND</b> jackpot on top of everything collected.</p>
-        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~95.3%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
+        <p style="margin-top:8px"><b>🏮 Free Games.</b> Land <b>3 or more Lanterns</b> to win <b>Free Spins</b> (3 = 8, 4 = 12, 5 = 20). During Free Games the reels are packed with fire orbs — the <b>Hold &amp; Spin triggers far more often</b> — and <b>every win is doubled (×2)</b>. Land 3+ Lanterns again to retrigger more spins.</p>
+        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~94.6%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
       </div>
       <button class="modal-btn cancel" onclick="closeHelp()" style="margin-top:8px">Close</button>
     </div>
@@ -253,7 +265,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.0</div>
       <div class="hdr-btns">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="openHelp()" title="How to play">i</button>
@@ -290,6 +302,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
         <span class="bh-title">HOLD &amp; SPIN</span>
         <span class="bh-respins">Respins <b id="bh-respins">3</b></span>
         <span class="bh-total" id="bh-total"></span>
+      </div>
+      <div id="freegames-hud">
+        <span class="fg-title">FREE GAMES ×<span id="fg-mult">2</span></span>
+        <span class="fg-line">Spin <b id="fg-spin">1</b> / <span id="fg-of">8</span></span>
+        <span class="fg-total" id="fg-total">0×</span>
       </div>
       <div id="bonus-banner"><div class="bb-inner" id="bb-inner"></div></div>
     </div>
@@ -379,9 +396,9 @@ const JP_ORDER=['GRAND','MAJOR','MINOR','MINI'];
 // Symbol art. Swap these glyphs for <img> tiles when real art lands — nothing else changes.
 const SYM_ART={
   WILD:{glyph:'🦅',name:'Phoenix'}, dragon:{glyph:'🐉'}, tiger:{glyph:'🐯'}, koi:{glyph:'🐟'}, turtle:{glyph:'🐢'},
-  A:{card:'A'}, K:{card:'K'}, Q:{card:'Q'}, J:{card:'J'}, T:{card:'10'}, COIN:{coin:true},
+  A:{card:'A'}, K:{card:'K'}, Q:{card:'Q'}, J:{card:'J'}, T:{card:'10'}, COIN:{coin:true}, scatter:{glyph:'🏮',name:'Scatter',scatter:true},
 };
-const REEL_SYMS=['WILD','dragon','tiger','koi','turtle','A','K','Q','J','T','COIN'];
+const REEL_SYMS=['WILD','dragon','tiger','koi','turtle','A','K','Q','J','T','COIN','scatter'];
 
 // ── STATE ──────────────────────────────────────────────────────────────────────
 let G={bankroll:0,freePlay:0,startingBankroll:0,bet:25,lastWin:0,lastBetDisplay:0,rollHistory:[]};
@@ -602,8 +619,8 @@ function renderHistory(){
   const wrap=document.getElementById('roll-history');if(!wrap)return;wrap.innerHTML='';
   (G.rollHistory||[]).forEach(h=>{
     const pip=document.createElement('div');
-    const won=(h.win||0)>0;pip.className='roll-pip '+(h.bonus?'b':(won?'w':'l'));
-    pip.textContent=h.bonus?'🔥'+(h.win||0).toFixed(0)+'×':(won?(h.win||0).toFixed(0)+'×':'—');
+    const won=(h.win||0)>0;pip.className='roll-pip '+((h.bonus||h.fg)?'b':(won?'w':'l'));
+    pip.textContent=h.fg?'🏮'+(h.win||0).toFixed(0)+'×':(h.bonus?'🔥'+(h.win||0).toFixed(0)+'×':(won?(h.win||0).toFixed(0)+'×':'—'));
     wrap.appendChild(pip);
   });
 }
@@ -637,8 +654,12 @@ async function doSpin(){
   await spinAnim.settle(o.grid);           // snap reels to the server grid, reel by reel
   await wait(120);
   highlightWins(o.grid,o.wins);            // flash base 243-ways wins
+  const scatterTrig=(o.scatterCount||0)>=3;
+  if(scatterTrig)highlightScatters(o.grid); // flash the scatters that will start free games
   if(o.baseWin>0){addLog('Base win '+o.baseWin.toFixed(2)+'× = '+fmt(o.baseWin*G.lastBetDisplay),'win');await wait(650);}
-  if(o.bonus){await runBonus(o.bonus);}     // play out the hold-and-spin frames
+  else if(scatterTrig){await wait(650);}
+  if(o.bonus){await runBonus(o.bonus);}     // play out the base hold-and-spin frames
+  if(o.freeGames){await runFreeGamesAnim(o.freeGames);} // then the free-games session
   applyResult(data);
 }
 
@@ -660,7 +681,11 @@ function animateReelsRolling(){
   }
   return {stop,settle};
 }
-function clearHighlights(){document.querySelectorAll('.cell').forEach(c=>c.classList.remove('win','dim','locked'));}
+function clearHighlights(){document.querySelectorAll('.cell').forEach(c=>c.classList.remove('win','dim','locked','scat'));}
+function highlightScatters(grid){
+  for(let i=0;i<grid.length;i++){if(grid[i]==='scatter'){cellEl(i%REELS,Math.floor(i/REELS)).classList.add('scat');}}
+  sfx('trigger');
+}
 function highlightWins(grid,wins){
   if(!wins||!wins.length)return;
   const winCells=new Set();
@@ -738,6 +763,39 @@ async function showBanner(text){
   inner.innerHTML=text;b.classList.add('show');await wait(950);b.classList.remove('show');await wait(120);
 }
 
+// ── FREE GAMES animation (replays the server's free-spin rounds) ───────────────────
+async function runFreeGamesAnim(fg){
+  sfx('trigger');
+  await showBanner('FREE GAMES!');
+  await showBanner(fg.spinsAwarded+' FREE SPINS');
+  const hud=document.getElementById('freegames-hud');
+  // "of" starts at the initial award and grows as retriggers land, so retriggers aren't spoiled.
+  let planned=fg.spinsAwarded - fg.rounds.reduce((a,r)=>a+(r.retriggered||0),0);
+  document.getElementById('fg-mult').textContent=fg.multiplier;
+  document.getElementById('fg-of').textContent=planned;
+  document.getElementById('fg-total').textContent='0×';
+  hud.classList.add('show');
+  let total=0;
+  for(let i=0;i<fg.rounds.length;i++){
+    const rd=fg.rounds[i];
+    document.getElementById('fg-spin').textContent=(i+1);
+    clearHighlights();
+    const anim=animateReelsRolling();
+    await anim.settle(rd.grid);
+    await wait(80);
+    highlightWins(rd.grid,rd.wins);
+    if((rd.scatters||0)>=3)highlightScatters(rd.grid);
+    if(rd.bonus){await runBonus(rd.bonus);}   // a hold-and-spin fired on this free spin
+    total+=rd.spinWin;
+    document.getElementById('fg-total').textContent=total.toFixed(0)+'×';
+    if(rd.spinWin>0)sfx('win');
+    if(rd.retriggered){planned+=rd.retriggered;document.getElementById('fg-of').textContent=planned;await showBanner('+'+rd.retriggered+' FREE SPINS!');}
+    await wait(rd.bonus?300:(rd.spinWin>0?560:360));
+  }
+  await showBanner('FREE GAMES WIN '+fg.win.toFixed(0)+'×');
+  hud.classList.remove('show');
+}
+
 // ── APPLY RESULT (bankroll comes wholesale from the server) ────────────────────────
 function applyResult(data){
   G.bankroll=data.newBankroll;
@@ -746,11 +804,14 @@ function applyResult(data){
   if(data.tier!==undefined)refreshTierLimits(data.tier);
   const o=data.outcome;
   G.lastWin=data.returned;
-  const histRow={win:o.totalWin,bonus:!!o.bonus,jackpots:o.bonus?o.bonus.jackpotsHit:[]};
+  const histRow={win:o.totalWin,bonus:!!o.bonus,fg:!!o.freeGames,jackpots:o.bonus?o.bonus.jackpotsHit:[]};
   G.rollHistory=[histRow,...(G.rollHistory||[])].slice(0,20);
   if(o.bonus){
     const jptxt=o.bonus.jackpotsHit&&o.bonus.jackpotsHit.length?(' ['+o.bonus.jackpotsHit.join(', ')+']'):'';
     addLog('HOLD & SPIN collected '+o.bonus.win.toFixed(0)+'× = '+fmt(o.bonus.win*G.lastBetDisplay)+jptxt,'win');
+  }
+  if(o.freeGames){
+    addLog('FREE GAMES: '+o.freeGames.spinsAwarded+' spins ×'+o.freeGames.multiplier+' → '+o.freeGames.win.toFixed(0)+'× = '+fmt(o.freeGames.win*G.lastBetDisplay),'win');
   }
   if(data.returned>0){addLog('Total returned '+fmt(data.returned),'win');}
   else{addLog('No win — '+fmtS(G.lastBetDisplay)+' spin','lose');}
