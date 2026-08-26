@@ -7,6 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
+<script src="slot-reels.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0505;color:#fff;position:fixed;width:100%;-webkit-user-select:none;user-select:none}
@@ -265,7 +266,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.1</div>
       <div class="hdr-btns">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="openHelp()" title="How to play">i</button>
@@ -663,23 +664,10 @@ async function doSpin(){
   applyResult(data);
 }
 
-// Reels rolling controller: returns {stop, settle(grid)}.
+// Reels rolling controller: realistic top-to-bottom scrolling reels via the shared
+// slot-reels.js module. Returns {stop, settle(grid)}.
 function animateReelsRolling(){
-  const timers=[];
-  for(let reel=0;reel<REELS;reel++){
-    const t=setInterval(()=>{for(let row=0;row<ROWS;row++)paintSymbol(cellEl(reel,row),REEL_SYMS[Math.floor(Math.random()*REEL_SYMS.length)]);},60);
-    timers.push(t);
-  }
-  function stop(){timers.forEach(t=>clearInterval(t));}
-  async function settle(grid){
-    for(let reel=0;reel<REELS;reel++){
-      await wait(reel===0?260:170);
-      clearInterval(timers[reel]);
-      for(let row=0;row<ROWS;row++)paintSymbol(cellEl(reel,row),grid[row*REELS+reel]);
-      sfx('stop');
-    }
-  }
-  return {stop,settle};
+  return SlotReels.spin(document.getElementById('reels'),{REELS,ROWS,REEL_SYMS,paint:paintSymbol,onReelStop:()=>sfx('stop')});
 }
 function clearHighlights(){document.querySelectorAll('.cell').forEach(c=>c.classList.remove('win','dim','locked','scat'));}
 function highlightScatters(grid){
