@@ -85,10 +85,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
   box-shadow:0 0 14px rgba(255,200,60,.6),inset 0 0 10px rgba(255,245,200,.6);
   color:#4a3400;font-weight:900;font-size:min(3.8vh,3.4vw);text-shadow:0 1px 0 rgba(255,255,255,.4)}
 .coin-orb.jp{background:radial-gradient(circle at 38% 30%,#fff2c0,#ffd24a 45%,#c9a300 80%,#6a5200);font-size:min(2.5vh,2.2vw)}
-/* HOUSE coin — the Big Bad Wolf blows these down to double their value (compounds). */
+/* HOUSE coins — built with a material tier (straw/wood/brick); the wolf reveals values. */
 .cell.house{background:radial-gradient(120% 120% at 50% 30%,#3a1c08,#160a03)}
-.coin-orb.house{background:radial-gradient(circle at 38% 30%,#ffd9a0,#e08a3c 45%,#8a4a12 82%,#3a1e06);
-  box-shadow:0 0 14px rgba(255,150,60,.55),inset 0 0 10px rgba(255,220,170,.5);font-size:min(3.4vh,3vw)}
+.coin-orb.house{box-shadow:0 0 14px rgba(255,150,60,.5),inset 0 0 10px rgba(255,220,170,.45);font-size:min(3.4vh,3vw)}
+.coin-orb.house.mat-straw{background:radial-gradient(circle at 38% 30%,#fff0c0,#e6c76a 45%,#b89030 82%,#6a5010)}
+.coin-orb.house.mat-wood{background:radial-gradient(circle at 38% 30%,#eacaa2,#b3803f 45%,#7a4e1c 82%,#3a2408)}
+.coin-orb.house.mat-brick{background:radial-gradient(circle at 38% 30%,#ffb6a0,#d24e34 45%,#8a2a16 82%,#3a0e06);box-shadow:0 0 16px rgba(255,80,50,.6),inset 0 0 10px rgba(255,200,180,.5)}
+.cell.house.mat-wood{background:radial-gradient(120% 120% at 50% 30%,#2e1c08,#140c03)}
+.cell.house.mat-brick{background:radial-gradient(120% 120% at 50% 30%,#3a1408,#160603)}
 .cell.win .sym{transform:scale(1.12)}
 .cell.win{box-shadow:0 0 0 2px #ffd700,0 0 16px rgba(255,215,0,.6);z-index:2}
 .cell.dim .sym{opacity:.16}
@@ -257,11 +261,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="modal-title" style="margin-bottom:8px">How to play Huff n' Puff</div>
       <div class="help-body">
         <p><b>243 Ways.</b> Match symbols on adjacent reels starting from the left — position on the reel doesn't matter. The <b>Wolf</b> is Wild and substitutes for all pay symbols.</p>
-        <p style="margin-top:8px"><b>💰 Moneybags.</b> Land <b>6 or more</b> moneybags anywhere and the <b>Hold &amp; Spin</b> feature begins.</p>
-        <p style="margin-top:8px"><b>Hold &amp; Spin.</b> The moneybags lock in place, each holding a credit value or a jackpot. You get <b>3 respins</b> — every new one that lands <b>resets the respins to 3</b>. When respins run out, you collect the total on screen.</p>
-        <p style="margin-top:8px"><b>🏠 Houses &amp; the Big Bad Wolf.</b> Some locks are <b>Houses</b>. On any respin the <b>Big Bad Wolf</b> may huff and puff and <b>blow every house down — doubling all house values (×2)</b>. The wolf can blow again and again, so a house can pile up huge.</p>
-        <p style="margin-top:8px"><b>Fill all 15 positions</b> to win the <b>GRAND</b> jackpot on top of everything collected.</p>
-        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~95.7%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
+        <p style="margin-top:8px"><b>💰 Moneybags.</b> Land <b>6 or more</b> moneybags anywhere to start the <b>House</b> feature.</p>
+        <p style="margin-top:8px"><b>🛖 Build the Houses.</b> Locked positions become <b>Houses</b>, and each one's <b>value is hidden</b>. Land on a house again and it <b>upgrades its material — Straw → Wood → Brick</b>. New houses give <b>3 more respins</b>; the sturdier the material, the richer the hidden prize (Brick holds the jackpots).</p>
+        <p style="margin-top:8px"><b>🐺 Huff &amp; Puff.</b> When the respins run out, the <b>Big Bad Wolf blows every house down</b>, revealing each hidden value one by one. You collect them all.</p>
+        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~95.8%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
       </div>
       <button class="modal-btn cancel" onclick="closeHelp()" style="margin-top:8px">Close</button>
     </div>
@@ -270,7 +273,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.0</div>
       <div class="hdr-btns">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="openHelp()" title="How to play">i</button>
@@ -693,35 +696,43 @@ function highlightWins(grid,wins){
   if(winCells.size)sfx('win');
 }
 
-// ── HOLD & SPIN animation (drives entirely off server-decided frames) ──────────────
+// ── HOUSE-BUILD animation (build phase, then the wolf reveals) ──────────────────────
+// Server frames: build frames (no `reveal`) show houses by MATERIAL with values hidden;
+// reveal frames (`reveal` = cell index) uncover one house's value at a time.
 async function runBonus(bonus){
   sfx('trigger');
-  // Banner
-  await showBanner('HOLD &amp; SPIN');
-  // Enter bonus mode: dim everything, blank the grid.
+  await showBanner('BUILD THE HOUSES');
   document.querySelectorAll('.cell').forEach(c=>{c.classList.remove('win');paintBlank(c);});
   const hud=document.getElementById('bonus-hud');hud.classList.add('show');
   document.getElementById('bh-total').textContent='';
-  for(let i=0;i<bonus.frames.length;i++){
-    const f=bonus.frames[i];
-    if(i>0){
-      // brief "spin" on still-empty cells (locked orbs persist; blanks re-roll visually)
-      await spinEmpties(500);
-    }
-    // reveal this frame's board
+  const buildFrames=bonus.frames.filter(f=>f.reveal===undefined);
+  const revealFrames=bonus.frames.filter(f=>f.reveal!==undefined);
+  // BUILD PHASE — houses lock and upgrade material (straw→wood→brick); values stay hidden.
+  for(let i=0;i<buildFrames.length;i++){
+    const f=buildFrames[i];
+    if(i>0)await spinEmpties(450);
     renderBonusFrame(f);
     document.getElementById('bh-respins').textContent=f.respinsLeft;
-    if(f.newlyLocked&&f.newlyLocked.length){sfx('lock');}
-    if(f.wolf){sfx('trigger');await showBanner('HUFF &amp; PUFF!');} // wolf blew — houses just doubled
-    if(f.note){await showBanner(f.note.replace('!',''));}
-    await wait(i===0?700:560);
+    if(f.newlyLocked&&f.newlyLocked.length)sfx('lock');
+    if(f.upgraded&&f.upgraded.length){sfx('win');f.upgraded.forEach(idx=>{const o=cellEl(idx%REELS,Math.floor(idx/REELS)).querySelector('.coin-orb');if(o)o.style.animation='bpop .4s ease';});}
+    if(f.note)await showBanner(f.note.replace('!',''));
+    await wait(i===0?700:520);
   }
-  // Tally up
-  const totalX=bonus.win;
-  document.getElementById('bh-total').textContent='COLLECT '+totalX.toFixed(0)+'×';
-  sfx('collect');
-  await wait(900);
-  document.getElementById('bonus-hud').classList.remove('show');
+  // REVEAL PHASE — the Big Bad Wolf blows the houses down, uncovering each value.
+  sfx('trigger');await showBanner('HUFF &amp; PUFF!');
+  let running=0;
+  for(const f of revealFrames){
+    renderBonusFrame(f);
+    const idx=f.reveal;const cell=cellEl(idx%REELS,Math.floor(idx/REELS));
+    cell.classList.add('win');
+    const coin=f.grid[idx];running+=coin.value;
+    document.getElementById('bh-total').textContent='COLLECT '+running.toFixed(0)+'×';
+    sfx(coin.jackpot?'collect':'lock');
+    await wait(340);cell.classList.remove('win');
+  }
+  document.getElementById('bh-total').textContent='COLLECT '+bonus.win.toFixed(0)+'×';
+  sfx('collect');await wait(900);
+  hud.classList.remove('show');
 }
 const _bonusLocked=new Set();
 function isLocked(c){return _bonusLocked.has(c);}
@@ -734,16 +745,26 @@ function renderBonusFrame(f){
     else{cell.className='cell';cell.innerHTML='';}
   }
 }
+const MAT_GLYPH={straw:'🛖',wood:'🏠',brick:'🧱'};
+const MAT_NAME={straw:'STRAW',wood:'WOOD',brick:'BRICK'};
 function paintCoin(cell,coin,fresh){
-  cell.className='cell coin locked'+(coin.house?' house':'');
+  const mat=coin.material||'straw';
+  cell.className='cell coin locked house mat-'+mat;
   cell.innerHTML='';
   const orb=document.createElement('div');
-  orb.className='coin-orb'+(coin.jackpot?' jp':'')+(coin.house?' house':'');
-  orb.textContent=coin.jackpot?coin.jackpot:(coin.house?'🏠':'💰');
-  cell.appendChild(orb);
   const v=document.createElement('div');v.className='coin-val';
-  v.textContent=fmtS(coin.value*G.lastBetDisplay);
-  cell.appendChild(v);
+  if(coin.hidden){
+    // A built house: show its material only — the value is hidden until the wolf reveals it.
+    orb.className='coin-orb house mat-'+mat;
+    orb.textContent=MAT_GLYPH[mat];
+    v.textContent=MAT_NAME[mat];v.style.color='rgba(255,255,255,.85)';v.style.fontSize='min(2vh,1.8vw)';
+  }else{
+    // Revealed house (or jackpot).
+    orb.className='coin-orb'+(coin.jackpot?' jp':(' house mat-'+mat));
+    orb.textContent=coin.jackpot?coin.jackpot:MAT_GLYPH[mat];
+    v.textContent=fmtS(coin.value*G.lastBetDisplay);
+  }
+  cell.appendChild(orb);cell.appendChild(v);
   if(fresh){orb.style.animation='bpop .4s ease';}
 }
 async function spinEmpties(ms){

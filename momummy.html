@@ -108,6 +108,15 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #bonus-banner .bb-inner{font-size:min(9vh,9vw);font-weight:900;letter-spacing:.08em;color:#ffcf3f;
   text-shadow:0 0 24px rgba(255,90,20,.8),0 3px 6px #000;animation:bpop .5s ease}
 @keyframes bpop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
+/* Collect & Spin: the board grows 5x3 → 5x5. Reserve the full 5 rows during the bonus and
+   light rows up as the tomb grows; the cabinet goes square so 5x5 cells stay legible. */
+#cabinet.collect{aspect-ratio:1/1}
+.cell.inactive{opacity:.3;background:radial-gradient(120% 120% at 50% 30%,#0e1a16,#060d0a)!important;box-shadow:inset 0 0 14px rgba(0,0,0,.6)}
+#collect-meter{position:absolute;top:6px;left:8px;z-index:19;display:none;flex-direction:column;gap:2px;background:rgba(8,28,22,.86);border:1px solid rgba(120,220,160,.55);border-radius:8px;padding:4px 9px;min-width:96px}
+#collect-meter.show{display:flex}
+#collect-meter .cm-label{font-size:11px;font-weight:800;letter-spacing:.06em;color:#9fe8c0}
+#collect-meter .cm-bar{height:6px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
+#collect-meter .cm-fill{height:100%;width:0;background:linear-gradient(90deg,#4fcf8a,#a6ff8f);transition:width .3s}
 
 /* ── BOTTOM ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100dvh * 2.4 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,215,0,.15)}
@@ -246,11 +255,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="modal-title" style="margin-bottom:8px">How to play Mo' Mummy</div>
       <div class="help-body">
         <p><b>243 Ways.</b> Match symbols on adjacent reels starting from the left — position on the reel doesn't matter. The <b>Scarab</b> is Wild and substitutes for all pay symbols.</p>
-        <p style="margin-top:8px"><b>☥ Golden Urns.</b> Land <b>6 or more</b> urns anywhere and the <b>Tomb Spins</b> feature begins.</p>
-        <p style="margin-top:8px"><b>Tomb Spins.</b> The urns lock in place, each holding a credit value or a jackpot. You get <b>3 respins</b> — every new urn that lands <b>resets the respins to 3</b>.</p>
-        <p style="margin-top:8px"><b>🧟 Mummies.</b> Some locks are Mummies. A Mummy holds no value of its own — instead <b>each Mummy multiplies your entire urn collection</b> when you cash out (1 Mummy = ×2, 2 Mummies = ×3, and so on). Jackpot urns pay their fixed amount and aren't multiplied.</p>
-        <p style="margin-top:8px"><b>Fill all 15 positions</b> to win the <b>GRAND</b> jackpot on top of everything collected.</p>
-        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~95.8%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
+        <p style="margin-top:8px"><b>☥ Golden Urns.</b> Land <b>6 or more</b> urns anywhere to start <b>Collect &amp; Spin</b>.</p>
+        <p style="margin-top:8px"><b>Collect &amp; Spin.</b> Urns lock in place, each holding a credit value or a jackpot, and respin. Every new urn <b>resets the respins</b> and fills the <b>power-up meter</b>.</p>
+        <p style="margin-top:8px"><b>🏛️ The Growing Tomb.</b> Each time the meter fills, the <b>board grows a row — from 5×3 up to 5×5</b> — and adds respins. A bigger tomb means more urns. When the respins run out, the <b>Mummy collects every urn on the board</b>.</p>
+        <p style="margin-top:8px"><b>Fill the full 5×5 tomb</b> to win the <b>GRAND</b> jackpot on top of everything collected.</p>
+        <p style="margin-top:8px;color:rgba(255,255,255,.55)">RTP ~95.3%. All spins are resolved on the server — the reels only ever show a result already decided.</p>
       </div>
       <button class="modal-btn cancel" onclick="closeHelp()" style="margin-top:8px">Close</button>
     </div>
@@ -259,14 +268,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.0</div>
       <div class="hdr-btns">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="openHelp()" title="How to play">i</button>
       </div>
     </div>
     <div id="center-col">
-      <div id="machine-title">MO' MUMMY<span class="sub">TOMB SPINS</span></div>
+      <div id="machine-title">MO' MUMMY<span class="sub">COLLECT &amp; SPIN</span></div>
       <div id="jackpot-ladder"></div>
     </div>
     <div id="info-panel">
@@ -293,9 +302,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
     <div id="cabinet">
       <div id="reels"></div>
       <div id="bonus-hud">
-        <span class="bh-title">TOMB SPINS</span>
+        <span class="bh-title">COLLECT &amp; SPIN</span>
         <span class="bh-respins">Respins <b id="bh-respins">3</b></span>
         <span class="bh-total" id="bh-total"></span>
+      </div>
+      <div id="collect-meter">
+        <div class="cm-label">TOMB <span id="meter-rows">5×3</span></div>
+        <div class="cm-bar"><div id="meter-fill" class="cm-fill"></div></div>
       </div>
       <div id="bonus-banner"><div class="bb-inner" id="bb-inner"></div></div>
     </div>
@@ -669,64 +682,85 @@ function highlightWins(grid,wins){
   if(winCells.size)sfx('win');
 }
 
-// ── HOLD & SPIN animation (drives entirely off server-decided frames) ──────────────
+// ── COLLECT & SPIN animation (growing board) ───────────────────────────────────────
+// The board reserves 5 rows for the whole feature; rows light up (activate) as the tomb
+// grows. A power-up meter fills as coins land; when it fills the board grows a row. At the
+// end the mummy collects every coin on the grown board. Frames carry rows/meter/grew.
+const MAX_ROWS=5;
 async function runBonus(bonus){
   sfx('trigger');
-  // Banner
-  await showBanner('TOMB SPINS');
-  // Enter bonus mode: dim everything, blank the grid.
+  await showBanner('COLLECT &amp; SPIN');
+  setCollectRows(MAX_ROWS);                    // build the full 5-row board up front
   document.querySelectorAll('.cell').forEach(c=>{c.classList.remove('win');paintBlank(c);});
   const hud=document.getElementById('bonus-hud');hud.classList.add('show');
+  const meter=document.getElementById('collect-meter');if(meter)meter.classList.add('show');
   document.getElementById('bh-total').textContent='';
   for(let i=0;i<bonus.frames.length;i++){
     const f=bonus.frames[i];
-    if(i>0){
-      // brief "spin" on still-empty cells (locked orbs persist; blanks re-roll visually)
-      await spinEmpties(500);
-    }
-    // reveal this frame's board
     renderBonusFrame(f);
+    updateMeter(f);
     document.getElementById('bh-respins').textContent=f.respinsLeft;
-    if(f.newlyLocked&&f.newlyLocked.length){sfx('lock');}
-    if(f.note){await showBanner(f.note.replace('!',''));}
-    await wait(i===0?700:560);
+    if(f.newlyLocked&&f.newlyLocked.length)sfx('lock');
+    if(f.grew){sfx('trigger');await showBanner('THE TOMB GROWS!');}
+    if(f.note)await showBanner(f.note.replace('!',''));
+    await wait(i===0?700:520);
   }
-  // Tally up. If mummies landed, celebrate the multiplier first — each mummy multiplies
-  // the whole collection (server already baked this into bonus.win; this is just flourish).
-  const finalGrid=bonus.frames[bonus.frames.length-1].grid;
-  const mummies=finalGrid.filter(c=>c&&c.collector).length;
-  if(mummies>0){await showBanner((mummies===1?'MUMMY':mummies+' MUMMIES')+' ×'+(1+mummies));}
+  // The mummy sweeps the grown board and collects everything.
+  await showBanner('THE MUMMY COLLECTS');
+  document.querySelectorAll('.cell.coin').forEach(c=>c.classList.add('win'));
   document.getElementById('bh-total').textContent='COLLECT '+bonus.win.toFixed(0)+'×';
   sfx('collect');
-  await wait(900);
-  document.getElementById('bonus-hud').classList.remove('show');
+  await wait(1000);
+  if(meter)meter.classList.remove('show');
+  hud.classList.remove('show');
+  resetCollectRows();                          // shrink back to 5x3 for the next base spin
+}
+// Grow/shrink the reel DOM to n rows (adds/removes .cell nodes + a square cabinet).
+function setCollectRows(n){
+  document.getElementById('cabinet').classList.add('collect');
+  const reels=document.getElementById('reels');
+  for(let reel=0;reel<REELS;reel++){
+    const col=reels.children[reel];
+    while(col.children.length<n){const cell=document.createElement('div');cell.className='cell';cell.id='c-'+reel+'-'+col.children.length;col.appendChild(cell);}
+    col.style.gridTemplateRows='repeat('+n+',1fr)';
+  }
+}
+function resetCollectRows(){
+  document.getElementById('cabinet').classList.remove('collect');
+  const reels=document.getElementById('reels');
+  for(let reel=0;reel<REELS;reel++){
+    const col=reels.children[reel];
+    while(col.children.length>ROWS)col.removeChild(col.lastChild);
+    col.style.gridTemplateRows='';
+  }
+}
+function updateMeter(f){
+  const bar=document.getElementById('meter-fill');if(bar&&f.meterMax)bar.style.width=Math.round(100*(f.meter||0)/f.meterMax)+'%';
+  const rl=document.getElementById('meter-rows');if(rl)rl.textContent=REELS+'×'+(f.rows||ROWS);
 }
 const _bonusLocked=new Set();
 function isLocked(c){return _bonusLocked.has(c);}
 function paintBlank(cell){cell.className='cell';cell.innerHTML='';cell.style.background='';}
+// Collect-aware: `activeRows` rows are live; rows below the current tomb height are inactive.
 function renderBonusFrame(f){
   _bonusLocked.clear();
-  for(let row=0;row<ROWS;row++)for(let reel=0;reel<REELS;reel++){
-    const idx=row*REELS+reel;const cell=cellEl(reel,row);const coin=f.grid[idx];
+  const activeRows=f.rows||ROWS;
+  for(let row=0;row<MAX_ROWS;row++)for(let reel=0;reel<REELS;reel++){
+    const cell=cellEl(reel,row);if(!cell)continue;
+    if(row>=activeRows){cell.className='cell inactive';cell.innerHTML='';continue;}
+    const idx=row*REELS+reel;const coin=f.grid[idx];
     if(coin){_bonusLocked.add(idx);paintCoin(cell,coin,f.newlyLocked&&f.newlyLocked.includes(idx));}
     else{cell.className='cell';cell.innerHTML='';}
   }
 }
 function paintCoin(cell,coin,fresh){
   cell.className='cell coin locked';cell.innerHTML='';
-  const orb=document.createElement('div');
+  const orb=document.createElement('div');orb.className='coin-orb'+(coin.jackpot?' jp':'');
+  orb.textContent=coin.jackpot?coin.jackpot:'☥';
+  cell.appendChild(orb);
   const v=document.createElement('div');v.className='coin-val';
-  if(coin.collector){
-    // A mummy: no face value of its own — it multiplies the whole collection at the end.
-    cell.classList.add('mummy');
-    orb.className='coin-orb mummy';orb.textContent='🧟';
-    v.textContent='MUMMY';v.style.color='#8fffab';
-  }else{
-    orb.className='coin-orb'+(coin.jackpot?' jp':'');
-    orb.textContent=coin.jackpot?coin.jackpot:'☥';
-    v.textContent=fmtS(coin.value*G.lastBetDisplay);
-  }
-  cell.appendChild(orb);cell.appendChild(v);
+  v.textContent=fmtS(coin.value*G.lastBetDisplay);
+  cell.appendChild(v);
   if(fresh){orb.style.animation='bpop .4s ease';}
 }
 async function spinEmpties(ms){
