@@ -178,6 +178,7 @@ const TASK_META={
   breakout:{icon:'🂡',label:'Play one Breakout Blackjack hand'},
   roulette:{icon:'🎡',label:'Make one Roulette bet'},
   paigow:{icon:'🀄',label:'Play one Pai Gow hand'},
+  slots:{icon:'🔥',label:'Spin a Slot machine'},
 };
 // Where each task's GO button sends the player -- craps has no single canonical page
 // (Standard/Crapless are both craps.html with a mode query param), so it lands on
@@ -191,6 +192,7 @@ const GAME_URL={
   breakout:'breakout.html',
   roulette:'roulette.html',
   paigow:'paigow.html',
+  slots:'phoenixlink.html',
 };
 // Mirrors supabase/functions/_shared/dailies.ts computeTier() exactly -- display only,
 // the server is authoritative for the actual tier value (players.tier).
@@ -259,6 +261,7 @@ const QUEST_META={
   breakout:{game:'Breakout Blackjack',label:'Win a Breakout Blackjack round',sub:'Win any hand — pays as if you’d bet $100 on it.'},
   roulette:{game:'Roulette',label:'Win a single-number bet',sub:'Land a straight-up bet on the exact number — pays as if you’d bet $100 on it.'},
   paigow:{game:'Face Up Pai Gow',label:'Win an Ace High side bet',sub:'Hit the Ace High side bet — pays as if you’d bet $100 on it.'},
+  slots:{game:'Phoenix Link',label:'Trigger the Hold & Spin',sub:'Land 6+ fire orbs to start the feature — pays $2,500 Free Play.'},
 };
 
 function render(dailies,freePlayBalance,tier,username){
