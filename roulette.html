@@ -151,7 +151,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
      directly inside .bet-cell) so THAT gets its own direct rotation instead -- scoped to
      `.bet-cell>` so it doesn't ALSO fire on the .cell-label nested inside .cell-text, which
      would double-rotate it. */
-  .cell-text,.bet-cell>.cell-label,.cell-stk,.mbtn-corner{transform:rotate(-90deg)}
+  .cell-text,.bet-cell>.cell-label,.rt-cell>.cell-label,.cell-stk,.mbtn-corner{transform:rotate(-90deg)}
   .dolly-marker{transform:translate(-50%,-72%) rotate(-90deg)}
 }
 
@@ -258,6 +258,41 @@ body{--chip:82px;--edge:calc(var(--chip)*0.16)}
 @media (orientation:portrait){
   .has-stack{transform:translate(-50%,-50%) rotate(-90deg)}
 }
+
+/* Payout pill -- the winnings this staked bet pays if it hits (stake x odds), in a tight rounded
+   box directly below the chip stack. Rendered by renderChipStacks so it tracks the stake live;
+   lives INSIDE .has-stack, which is already centered on the cell and, in portrait, counter-rotated
+   to upright -- so top:100% reads as "just below the chip" on screen in both orientations. Never
+   appears on the settlement sweep clones (those are built from chipStackHTML alone). */
+.pay-pill{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:calc(var(--chip)*0.06);
+  background:rgba(6,18,10,.92);border:1px solid rgba(255,215,0,.6);border-radius:calc(var(--chip)*0.13);
+  padding:calc(var(--chip)*0.015) calc(var(--chip)*0.11);font-size:calc(var(--chip)*0.2);line-height:1.15;
+  font-weight:800;color:#ffe680;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;
+  font-family:'Cinzel',Georgia,serif}
+
+/* ── RACETRACK VIEW -- an alternate betting surface toggled by the 🏁 button: the 38 numbers in
+   physical WHEEL order (RouletteWheel.WHEEL_ORDER) laid out around an oval, each a straight bet.
+   It's an opaque overlay filling #rl-panel, built once then attached/detached by setRacetrack();
+   while it's up, the grid's own bet containers are removed from the DOM so the stk-* ids stay
+   unique and every shared helper (updateUI/renderChipStacks/the settlement sweep) keeps working
+   unchanged. Geometry is a stadium (two straights + two semicircle ends), computed in the felt's
+   intrinsic 1919x594 px space then written as % so it scales + rotates with the panel exactly like
+   the grid cells do -- in portrait the wide oval becomes a tall one, which suits the taller frame. */
+#rl-racetrack{position:absolute;inset:0;background:radial-gradient(ellipse 78% 128% at 50% 50%,#0f4b2c 0%,#06240f 84%)}
+.rt-band{position:absolute;border-radius:9999px;background:linear-gradient(180deg,#1a6e3d,#0c3d21);
+  box-shadow:inset 0 0 0 3px rgba(255,215,0,.5),0 6px 20px rgba(0,0,0,.5);pointer-events:none}
+.rt-infield{position:absolute;border-radius:9999px;background:radial-gradient(ellipse at 50% 40%,#0c3f24,#07260f);
+  box-shadow:inset 0 0 0 2px rgba(255,215,0,.32);pointer-events:none}
+.rt-cell{position:absolute;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  border-radius:50%;border:2px solid rgba(255,255,255,.28);box-shadow:0 2px 5px rgba(0,0,0,.55);
+  font-weight:700;font-size:min(28px,3.4cqw);color:#fff;letter-spacing:.01em;
+  text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 4px rgba(0,0,0,.7);user-select:none;transition:filter .1s}
+.rt-cell .cell-label{display:inline-block;pointer-events:none}
+.rt-cell:hover{filter:brightness(1.2)}
+.rt-cell.active{border-color:#ffd700;box-shadow:0 0 0 3px rgba(255,215,0,.85),0 2px 6px rgba(0,0,0,.6)}
+.rt-red{background:radial-gradient(circle at 38% 30%,#e24d4d,#9e1414)}
+.rt-black{background:radial-gradient(circle at 38% 30%,#3c3c3c,#101010)}
+.rt-green{background:radial-gradient(circle at 38% 30%,#2fa75d,#0a6a2f)}
 
 /* ── SETTLEMENT SWEEP ──
    Flying chip clones for the dealer sequence that runs once the table is back (see
@@ -369,7 +404,7 @@ body[data-felt="rose"] #rl-panel{background-image:url('roulett_felt_rose.webp?v=
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.50</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.51</div>
       <div style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="roulette:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('roulette')" title="How to play">i</button>
@@ -389,6 +424,7 @@ body[data-felt="rose"] #rl-panel{background-image:url('roulett_felt_rose.webp?v=
         <button class="info-btn" id="cashout-btn" onclick="cashOut()" style="border-color:rgba(100,200,100,.4);color:#7ee87e">Cash Out</button>
         <button class="info-btn" onclick="dNav('dailies.html')">🗓️ Dailies</button>
         <span id="felt-mount" style="display:flex;align-items:center"></span>
+        <button class="info-btn" id="rt-toggle" onclick="toggleRacetrack()">🏁 Racetrack</button>
         <button class="info-btn" onclick="showWheelView()">👁️ Show Wheel</button>
         <button class="info-btn" id="fret-calib-toggle" onclick="toggleFretCalib()">🎯 Frets</button>
       </div>
@@ -949,6 +985,67 @@ function buildTable(){
   col21.appendChild(outCell('col3','2:1',null,{left:RL_SLIVER_X[0],top:RL_ROW_Y[2],width:sliverW,height:RL_ROW_Y[3]-RL_ROW_Y[2]},'2:1 (1,4..34)'));
 }
 
+// ── RACETRACK VIEW ─────────────────────────────────────────────────────────────
+// Numbers in physical wheel order around an oval, each a straight bet (Deck: a toggle to the
+// racetrack layout). Reuses every shared bet helper unchanged by keeping the stk-* ids unique:
+// the grid's bet containers are detached from the DOM while the racetrack is attached, so there
+// is never a second element carrying the same id. Geometry is a stadium (straights + semicircle
+// ends) placed by even arc-length, computed in the felt's intrinsic 1919x594 px space then written
+// as % (matching buildTable's own convention) so it scales/rotates with the panel automatically.
+const RT_FALLBACK_ORDER=['0',28,9,26,30,11,7,20,32,17,5,22,34,15,3,24,36,13,1,'00',27,10,25,29,12,8,19,31,18,6,21,33,16,4,23,35,14,2].map(String);
+const RT_GRID_IDS=['zero-col','num-grid','col21-strip','dozens-row','evens-row'];
+let rtOn=false,rtNode=null,rtGridStash=null;
+function buildRacetrack(){
+  if(rtNode)return rtNode;
+  const W=1919,H=594,cx=W/2,cy=H/2,R=225,hl=665,Ro=283,Ri=167,D=94;
+  const arc=Math.PI*R,P=4*hl+2*arc,pctX=v=>(v/W*100)+'%',pctY=v=>(v/H*100)+'%';
+  // arc-length s (from top-centre, clockwise) -> [x,y] on the stadium centreline
+  const pointAt=s=>{
+    if(s<hl)return[cx+s,cy-R]; s-=hl;
+    if(s<arc){const a=-Math.PI/2+(s/arc)*Math.PI;return[cx+hl+R*Math.cos(a),cy+R*Math.sin(a)];} s-=arc;
+    if(s<2*hl)return[cx+hl-s,cy+R]; s-=2*hl;
+    if(s<arc){const a=Math.PI/2+(s/arc)*Math.PI;return[cx-hl+R*Math.cos(a),cy+R*Math.sin(a)];} s-=arc;
+    return[cx-hl+s,cy-R];
+  };
+  const rt=document.createElement('div');rt.id='rl-racetrack';
+  const stadium=(cls,x0,x1,y0,y1)=>{const d=document.createElement('div');d.className=cls;d.style.left=pctX(x0);d.style.top=pctY(y0);d.style.width=pctX(x1-x0);d.style.height=pctY(y1-y0);return d;};
+  rt.appendChild(stadium('rt-band',cx-hl-Ro,cx+hl+Ro,cy-Ro,cy+Ro));
+  rt.appendChild(stadium('rt-infield',cx-hl-Ri,cx+hl+Ri,cy-Ri,cy+Ri));
+  const order=(window.RouletteWheel&&RouletteWheel.WHEEL_ORDER)||RT_FALLBACK_ORDER;
+  order.forEach((num,i)=>{
+    const p=pointAt(i*(P/order.length)),key='straight-'+num;
+    const d=document.createElement('div');
+    d.className='rt-cell rt-'+pocketColor(num);
+    d.dataset.key=key;
+    d.style.left=pctX(p[0]-D/2);d.style.top=pctY(p[1]-D/2);d.style.width=pctX(D);d.style.height=pctY(D);
+    d.onclick=()=>placeBet(key);
+    d.oncontextmenu=e=>{e.preventDefault();removeBet(key);};
+    d.innerHTML='<span class="cell-label">'+num+'</span><span class="cell-stk" id="stk-'+key+'"></span>';
+    rt.appendChild(d);
+  });
+  rtNode=rt;return rt;
+}
+function toggleRacetrack(){setRacetrack(!rtOn);}
+function setRacetrack(on){
+  if(on===rtOn)return;
+  if(spinning||(window.RouletteWheel&&RouletteWheel.isSpinning()))return; // never reshuffle the DOM mid-settlement
+  const panel=document.getElementById('rl-panel'),dolly=document.getElementById('dolly-marker');
+  clearDolly();
+  if(on){
+    rtGridStash=RT_GRID_IDS.map(id=>document.getElementById(id)).filter(Boolean);
+    rtGridStash.forEach(n=>n.remove());
+    panel.insertBefore(buildRacetrack(),dolly);
+  }else{
+    if(rtNode)rtNode.remove();
+    if(rtGridStash)rtGridStash.forEach(n=>panel.insertBefore(n,dolly));
+    rtGridStash=null;
+  }
+  rtOn=on;
+  const btn=document.getElementById('rt-toggle');
+  if(btn)btn.innerHTML=on?'▦ Grid':'🏁 Racetrack';
+  updateUI();
+}
+
 // ── WHEEL VISUAL ──────────────────────────────────────────────────────────────
 // Real physics wheel+ball (see roulette-wheel.js) -- same forced-landing architecture
 // as the craps/sic-bo dice cloche: it never decides the outcome, it's forced onto
@@ -1024,8 +1121,12 @@ const ZERO_RECT={'0':{left:0.104,top:0.168,width:8.234,height:31.229},'00':{left
 // settlement sweep both need. Same two sources buildTable itself uses: inline styles for every
 // generated cell, ZERO_RECT for the two hand-authored zero cells.
 function cellRectPct(key){
-  const zr=ZERO_RECT[key.startsWith('straight-')?key.slice(9):''];
-  if(zr)return zr;
+  // On the racetrack the 0/00 cells are ordinary inline-positioned cells (fall through to the
+  // query below); ZERO_RECT only describes their fixed spot on the grid's left column.
+  if(!rtOn){
+    const zr=ZERO_RECT[key.startsWith('straight-')?key.slice(9):''];
+    if(zr)return zr;
+  }
   // Plain [data-key], NOT '.bet-cell[data-key]': the dozens, columns and even-money spots are
   // built by outCell as '.out-cell', so a .bet-cell-scoped lookup silently misses every one of
   // them (and they are the most commonly bet spots on the table).
@@ -1037,10 +1138,10 @@ function cellRectPct(key){
 function placeDolly(pocket){
   const dolly=document.getElementById('dolly-marker');
   if(!dolly)return;
-  let r=ZERO_RECT[pocket];
+  let r=rtOn?null:ZERO_RECT[pocket]; // on the racetrack 0/00 are inline-positioned like any cell
   if(!r){
-    const cell=document.querySelector('.bet-cell[data-key="straight-'+pocket+'"]');
-    if(!cell)return;
+    const cell=document.querySelector('[data-key="straight-'+pocket+'"]');
+    if(!cell||!cell.style.left)return;
     r={left:parseFloat(cell.style.left),top:parseFloat(cell.style.top),width:parseFloat(cell.style.width),height:parseFloat(cell.style.height)};
   }
   dolly.style.left=(r.left+r.width/2)+'%';
@@ -1304,6 +1405,13 @@ function chipStackHTML(amt,isFP){
   h+='</span>';
   return h;
 }
+// The winnings this stake pays if it hits (stake x odds), shown in a pill under the chip. Kept out
+// of chipStackHTML on purpose so the settlement sweep clones (which reuse chipStackHTML) never get
+// one -- only the live table cells, via renderChipStacks, do.
+function payPillHTML(win){
+  const t=Number.isInteger(win)?win.toLocaleString('en-US'):win.toFixed(2);
+  return '<span class="pay-pill">$'+t+'</span>';
+}
 // Freeplay eligibility per spot is a client-side estimate, not the server's real accounting
 // (that only happens on resolve) -- each spot is checked in DOM order against a running
 // balance that depletes as earlier spots claim it, so the total labeled FP$ across the table
@@ -1317,7 +1425,9 @@ function renderChipStacks(){
     if(!(amt>0)){el.classList.remove('has-stack');return;}
     const isFP=amt<=fpRemaining;
     if(isFP)fpRemaining-=amt;
-    el.innerHTML=chipStackHTML(amt,isFP);
+    const cell=el.closest('[data-key]');
+    const win=cell?amt*rlPayoutMult(cell.dataset.key):0;
+    el.innerHTML=chipStackHTML(amt,isFP)+(win>0?payPillHTML(win):'');
     el.classList.add('has-stack');
   });
 }
