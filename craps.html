@@ -1859,6 +1859,23 @@ body.info-panel-open #info-panel-modal{display:flex}
    the chips + ROLL + bet controls need -- hide both in portrait/compact. */
 body.felt-compact #hud-pnl,
 body.felt-compact #ver-wrap{display:none!important}
+/* The board-colour picker (#modal-felt, built by felt-themes.js) is a .modal-overlay at z-index:100,
+   but the Info Panel modal it's launched from sits at 320 -- so the swatches opened behind it. Raise
+   it above the panel. Global (harmless elsewhere; it's a top-level user-triggered modal). */
+#modal-felt{z-index:340!important}
+/* $500/$1000 pushed the ten-chip tray right up against ROLL on-device. Shrink the tray chips on
+   narrow screens so all ten sit clear of the ROLL button (ROLL is a flex sibling of #bottom-bar). */
+body.felt-compact #bottom-bar .chip{width:calc(var(--chip)*0.82)!important;height:calc(var(--chip)*0.82)!important}
+/* Top-left header (HOME + game selector): it was centred inside a box narrower than its content, so
+   the HOME button spilled off the LEFT screen edge (showing only "ME"). Hug the top-left, size to
+   content, left-align so nothing clips off-screen, and give it a tidy panel background. */
+body.felt-compact #felt-stage #left-col-header{left:4px!important;width:auto!important;max-width:64vw!important;
+  align-items:flex-start!important;padding:4px 7px!important;background:rgba(0,0,0,.5)!important;
+  border:1px solid rgba(255,255,255,.14)!important;border-radius:9px!important;gap:4px!important}
+body.felt-compact #felt-stage #left-col-header #game-mode-toggle{width:auto!important;justify-content:flex-start!important}
+body.felt-compact #felt-stage #left-col-header .gmode-btn-home{width:auto!important;min-width:0!important;
+  font-size:12px!important;padding:6px 9px!important;white-space:nowrap!important;line-height:1.1!important;
+  display:flex!important;align-items:center!important}
 /* Number-box strip labels (BUY/LAY/PLACE) are 16px/10px literal in a ~25px cell, so they clip to
    BU/LA/PLA. Shrink to fit; id-level selectors included so the per-number felt-portrait overrides
    (e.g. #nb-lay-10) don't win over these. */
@@ -2984,7 +3001,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.63</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.64</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
