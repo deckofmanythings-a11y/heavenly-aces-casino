@@ -1824,6 +1824,15 @@ body.felt-compact #felt-stage #bet-hard4 .dice-combo-img,
 body.felt-compact #felt-stage #bet-hard6 .dice-combo-img,
 body.felt-compact #felt-stage #bet-hard8 .dice-combo-img,
 body.felt-compact #felt-stage #bet-hard10 .dice-combo-img{width:1.4em!important;height:0.7em!important}
+/* Info-panel is only ~17% (~57px) of the felt wide -- too narrow for the Last Win/Bet/Playable/
+   Bet HUD, which spills over the number row. Deck's call: widen it on narrow screens (it can only
+   grow leftward, over the mostly-empty top-right area above the number row). Its left/width are
+   set inline from FELT_LAYOUT, so override with !important. */
+body.felt-compact #felt-stage #info-panel{left:66%!important;width:33%!important}
+/* Deck: on narrow screens the P&L (least-vital) and the Ver tag just eat bottom-bar space that
+   the chips + ROLL + bet controls need -- hide both in portrait/compact. */
+body.felt-compact #hud-pnl,
+body.felt-compact #ver-wrap{display:none!important}
 /* Bottom section now sits below the felt (inside #play-area, not reparented into
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
    the felt's own bottom edge instead of overlaid on top of the art. */
@@ -2898,8 +2907,8 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
           <button class="bar-btn" id="undo-btn" onclick="clearLastBet()" title="Undo last bet action">Clear Last Bet</button>
         </div>
         <div class="bb-row">
-          <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.56</span>
+          <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.57</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3836,7 +3845,11 @@ const BOTTOM_SECTION_RATIO=0.13;
 // only the internal split between empty space above the felt and #bottom-section's own height
 // moves. Landscape untouched (no top border, matches this whole feature's portrait-only scope).
 const BOTTOM_SECTION_RATIO_PORTRAIT=0.24;
-const PORTRAIT_TOP_BORDER_RATIO=0.12;
+// Was 0.12 -- a deliberate empty band above the portrait felt. Deck: that gap under the Discord
+// header is wasted space. The portrait felt is height-constrained with horizontal headroom, so
+// shrinking this band lets the felt grow up into it (bigger, more readable) instead of sitting
+// below dead space. Kept a hair of breathing room rather than 0.
+const PORTRAIT_TOP_BORDER_RATIO=0.02;
 function curBottomSectionRatio(){ return feltPortrait?BOTTOM_SECTION_RATIO_PORTRAIT:BOTTOM_SECTION_RATIO; }
 function curTopBorderRatio(){ return feltPortrait?PORTRAIT_TOP_BORDER_RATIO:0; }
 // ── RESPONSIVE FONT SCALE ─────────────────────────────────────────────────────
