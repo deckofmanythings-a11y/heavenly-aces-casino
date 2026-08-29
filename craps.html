@@ -1824,11 +1824,28 @@ body.felt-compact #felt-stage #bet-hard4 .dice-combo-img,
 body.felt-compact #felt-stage #bet-hard6 .dice-combo-img,
 body.felt-compact #felt-stage #bet-hard8 .dice-combo-img,
 body.felt-compact #felt-stage #bet-hard10 .dice-combo-img{width:1.4em!important;height:0.7em!important}
-/* Info-panel is only ~17% (~57px) of the felt wide -- too narrow for the Last Win/Bet/Playable/
-   Bet HUD, which spills over the number row. Deck's call: widen it on narrow screens (it can only
-   grow leftward, over the mostly-empty top-right area above the number row). Its left/width are
-   set inline from FELT_LAYOUT, so override with !important. */
-body.felt-compact #felt-stage #info-panel{left:66%!important;width:33%!important}
+/* Info-panel as a MODAL on narrow screens (Deck): the always-on panel is too cramped in the felt
+   corner and overlaps the Lucky Roller. So in felt-compact we HIDE the inline panel and surface a
+   small "Info Panel" button (#info-panel-btn) that floats the panel, sized to its content, above
+   the felt. Desktop keeps the inline panel untouched. */
+body.felt-compact #felt-stage #info-panel{display:none}
+#info-panel-btn{display:none}
+body.felt-compact #info-panel-btn{display:block;position:fixed;right:6px;z-index:315;
+  font-size:12px;font-weight:700;letter-spacing:.02em;padding:5px 10px;border-radius:7px;
+  background:rgba(0,0,0,.62);border:1px solid rgba(255,215,0,.5);color:var(--ink-accent);
+  cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+#info-panel-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:318}
+body.info-panel-open #info-panel-backdrop{display:block}
+/* When open, float the (still-live, not cloned) panel centered above the felt, sized to content.
+   --chip is bumped here so the HUD renders at a comfortable size in the roomy modal rather than
+   the tiny felt-corner size. left/width/height/transform use !important to beat the inline
+   FELT_LAYOUT positioning enterFeltMode() stamps on it. */
+body.felt-compact.info-panel-open #felt-stage #info-panel{display:flex!important;
+  position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;
+  width:auto!important;min-width:250px;max-width:92vw!important;height:auto!important;max-height:86vh!important;
+  overflow:auto!important;z-index:320!important;--chip:34px;justify-content:flex-start!important;gap:8px!important;
+  background:rgba(15,18,24,.98)!important;border:1px solid rgba(255,255,255,.25)!important;border-radius:12px!important;
+  padding:14px!important;box-shadow:0 12px 44px rgba(0,0,0,.6)!important}
 /* Deck: on narrow screens the P&L (least-vital) and the Ver tag just eat bottom-bar space that
    the chips + ROLL + bet controls need -- hide both in portrait/compact. */
 body.felt-compact #hud-pnl,
@@ -2958,7 +2975,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.61</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.62</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -2971,6 +2988,11 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
     <button id="roll-btn" onclick="rollDice()">ROLL</button>
   </div>
 
+  <!-- Narrow-screen trigger + backdrop for the Info Panel modal (see the felt-compact CSS). The
+       button's top is set in sizeFeltStage() so it clears the Discord header; the backdrop closes
+       the panel on an outside tap. -->
+  <div id="info-panel-backdrop" onclick="closeInfoPanel()"></div>
+  <button id="info-panel-btn" onclick="toggleInfoPanel()">Info Panel</button>
 
   <!-- CASHOUT VOUCHER MODAL -->
   <div id="modal-cashout" class="hidden">
@@ -4017,8 +4039,16 @@ function sizeFeltStage(){
     bs.style.left=left+'px';bs.style.top=(top+topBorderH+h)+'px';
     bs.style.width=w+'px';bs.style.height=bsH+'px';
   }
+  // Park the "Info Panel" button just below the reserved top band so it clears the Discord header.
+  const ipb=document.getElementById('info-panel-btn'); if(ipb) ipb.style.top=(topInset+6)+'px';
   sizeDiceZone();
 }
+// Info Panel modal (narrow screens only -- see the felt-compact CSS). The panel itself is the real,
+// live #info-panel element (not a clone), so updateUI() keeps its numbers current whether it's open
+// or not; we just toggle a body class that floats it centered over the felt.
+function openInfoPanel(){ document.body.classList.add('info-panel-open'); try{ updateUI&&updateUI(); }catch(e){} }
+function closeInfoPanel(){ document.body.classList.remove('info-panel-open'); try{ closeFinancesDropdown&&closeFinancesDropdown(); }catch(e){} }
+function toggleInfoPanel(){ document.body.classList.contains('info-panel-open')?closeInfoPanel():openInfoPanel(); }
 // Shrinks the 3D dice (rendered into #dice-canvas, sitting in #dice-zone) whenever they'd
 // otherwise get close enough to a neighboring panel to overlap it. Originally checked gap
 // against #bnums-low/#bnums-high (back when #dice-zone sat between them) -- Deck's drag-tool
