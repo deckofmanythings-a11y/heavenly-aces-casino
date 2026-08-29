@@ -1802,6 +1802,28 @@ body.felt-compact #felt-stage #left-col-header .gmode-sub{display:none}
 .gmode-btn-home .gmode-sub{font-size:13px!important}
 body.felt-mode #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.36)!important}
 body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:calc(var(--chip)*0.45)!important}
+/* ===== NARROW-SCREEN (felt-compact) PORTRAIT OVERFLOW FIXES =====
+   The portrait felt's numeral/label sizes are literal px calibrated at a wider reference, so on a
+   phone-narrow felt they overflow their boxes. Everything below only binds under felt-compact
+   (w<520), so desktop/tablet are untouched. Values verified in a 375px preview. */
+/* Spelled-out number words ("Six"/"Nine") are much wider than a single digit at the same size --
+   the felt-portrait rules pin them to 42px/30px literal, which spills a rotated word across its
+   neighbours on a narrow felt. Shrink them to fit the box width here. */
+body.felt-compact.game-standard #felt-stage #nb-numberbox-6 .nb-num-word,
+body.felt-compact.game-standard #felt-stage #nb-numberbox-9 .nb-num-word{font-size:22px!important}
+/* Digits are fine width-wise but "10" (two glyphs) is tight -- trim it a touch on narrow. */
+body.felt-compact.game-standard #felt-stage #nb-numberbox-10 .nb-num-digit{font-size:44px!important}
+/* HUD (Last Win / Last Bet) sizes off --chip*0.72 (=18px at --chip 25), too big for the ~57px
+   info-panel box so it wraps and spills over the number row. Trim label + value on narrow. */
+body.felt-compact #felt-stage #info-panel .hud-lbl{font-size:calc(var(--chip)*0.40)!important}
+body.felt-compact #felt-stage #info-panel .hud-val{font-size:calc(var(--chip)*0.34)!important}
+/* Hard Ways marble dice are 2em -- too large on a narrow felt, shoving the "N for 1" odds line
+   out of the cell. The bet cells are reparented straight into #felt-stage in felt mode (not left
+   inside #panel-hw), so target them by id. Shrink the dice so the odds text fits. */
+body.felt-compact #felt-stage #bet-hard4 .dice-combo-img,
+body.felt-compact #felt-stage #bet-hard6 .dice-combo-img,
+body.felt-compact #felt-stage #bet-hard8 .dice-combo-img,
+body.felt-compact #felt-stage #bet-hard10 .dice-combo-img{width:1.4em!important;height:0.7em!important}
 /* Bottom section now sits below the felt (inside #play-area, not reparented into
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
    the felt's own bottom edge instead of overlaid on top of the art. */
@@ -2877,7 +2899,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.55</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.56</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3863,7 +3885,14 @@ function sizeFeltStage(){
   // INDICATORS CSS comment above), and every other bet type deliberately shares this same
   // flat size rather than getting its own larger multiplier.
   st.style.width=w+'px';st.style.height=h+'px';
-  const chipPx=Math.max(16,Math.round(h*0.0424));
+  // --chip drives the felt chip stacks AND all the felt-mode chrome that sizes off it
+  // (info-panel/HUD, the HOME/i/Fibonacci header, bar buttons, bullet pips, the chip tray).
+  // The 16px floor keeps it readable on big screens, but a phone felt is only ~200px tall so
+  // the natural chip is ~9px -- flooring THAT to 16 made every chrome element ~2x too big for
+  // its shrunken box, which is the portrait overflow/overlap. On a narrow felt use a much
+  // smaller floor so the chrome scales down with the felt. Desktop is unaffected: h is large
+  // there, so h*0.0424 (~30px) already wins and the floor never binds.
+  const chipPx=Math.max(w<520?9:16,Math.round(h*0.0424));
   st.style.setProperty('--chip',chipPx+'px');
   // Chip Row (#bottom-bar .chip) lives in #bottom-section, a SIBLING of #felt-stage, not a
   // descendant -- so setting --chip only on #felt-stage (above) never reaches it, and it was
@@ -6222,6 +6251,14 @@ function updatePuck3D(target,state,fitEl){
   if(fitEl){
     const fr=fitEl.getBoundingClientRect();
     if(fr.width&&fr.height)scale=Math.min(fr.width,fr.height)/(PUCK_RADIUS*2);
+  } else {
+    // No explicit fit target: the puck's fixed 60px (2*PUCK_RADIUS) looks right at the desktop
+    // felt size (--chip~30) but is enormous on a phone-shrunk felt, swallowing the Lay column /
+    // DON'T PASS / COME. Track --chip so the puck stays ~2x a felt chip at every size; the puck
+    // was authored as exactly 2x chip on desktop (60px vs 30px), so chip/PUCK_RADIUS preserves
+    // that ratio. Capped at 1 so desktop/tablet never grow past the original 60px.
+    const chip=parseFloat(getComputedStyle(document.body).getPropertyValue('--chip'))||PUCK_RADIUS;
+    scale=Math.min(1,chip/PUCK_RADIUS);
   }
   const effR=PUCK_RADIUS*scale;
   let px,py;
