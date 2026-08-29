@@ -1833,6 +1833,31 @@ body.felt-compact #felt-stage #info-panel{left:66%!important;width:33%!important
    the chips + ROLL + bet controls need -- hide both in portrait/compact. */
 body.felt-compact #hud-pnl,
 body.felt-compact #ver-wrap{display:none!important}
+/* Number-box strip labels (BUY/LAY/PLACE) are 16px/10px literal in a ~25px cell, so they clip to
+   BU/LA/PLA. Shrink to fit; id-level selectors included so the per-number felt-portrait overrides
+   (e.g. #nb-lay-10) don't win over these. */
+body.felt-compact.game-standard #felt-stage #nb-buy-4 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-buy-5 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-buy-6 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-buy-8 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-buy-9 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-buy-10 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-lay-4 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-lay-5 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-lay-6 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-lay-8 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-lay-9 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-lay-10 .nb-lbl{font-size:10px!important;letter-spacing:-0.3px!important}
+body.felt-compact.game-standard #felt-stage #nb-place-4 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-place-5 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-place-6 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-place-8 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-place-9 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-place-10 .nb-lbl{font-size:8px!important;letter-spacing:-0.3px!important}
+/* Lucky Roller: the five hit-number pills barely overflow their ~80px row so "12" wraps to a
+   second line -- shrink the pills and forbid wrapping so all five sit on one line. */
+body.felt-compact #felt-stage #lucky-roller .lr-nums{flex-wrap:nowrap!important}
+body.felt-compact #felt-stage #lucky-roller .lr-num{font-size:8px!important;padding:0 1px!important}
+/* Lucky Roller bet boxes: the 16px header/odds text clips inside the ~51px box ("Roll'em All"->
+   "ll'em A", "31 for 1"->"31 for"). Shrink the box's text so it fits. */
+body.felt-compact #felt-stage #lucky-roller .lr-bonus .lr-title,
+body.felt-compact #felt-stage #lucky-roller .lr-bonus .lr-explain,
+body.felt-compact #felt-stage #lucky-roller .lr-bonus .lr-pay,
+body.felt-compact #felt-stage #lucky-roller .rollem-all-bar{font-size:8px!important;line-height:1.15!important}
+/* HOME button was wider (50px) than its cramped left-header (46px), clipping "HOME" to "ME".
+   Shrink its text/padding so it fits inside the header. */
+body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:9px!important;padding:2px 1px!important;line-height:1.05!important}
 /* Bottom section now sits below the felt (inside #play-area, not reparented into
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
    the felt's own bottom edge instead of overlaid on top of the art. */
@@ -2908,7 +2933,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.57</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.58</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
