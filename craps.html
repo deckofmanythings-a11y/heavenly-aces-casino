@@ -1858,6 +1858,31 @@ body.felt-compact #felt-stage #lucky-roller .rollem-all-bar{font-size:8px!import
 /* HOME button was wider (50px) than its cramped left-header (46px), clipping "HOME" to "ME".
    Shrink its text/padding so it fits inside the header. */
 body.felt-compact #felt-stage #left-col-header .gmode-btn-home{font-size:9px!important;padding:2px 1px!important;line-height:1.05!important}
+/* "Roll'em All" is a .rollem-all-bar, NOT inside .lr-bonus, so the Lucky Roller text shrink above
+   missed it -- its 14px title/odds clip ("oll'em A / 156 for"). Shrink its text too. */
+body.felt-compact.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-title,
+body.felt-compact.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-explain,
+body.felt-compact.felt-portrait #felt-stage #lucky-roller .rollem-all-bar .lr-pay{font-size:8px!important;line-height:1.15!important}
+/* PLACE (5 chars) still clipped its final E at 8px on a real device -- drop to 7px. */
+body.felt-compact.game-standard #felt-stage #nb-place-4 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-place-5 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-place-6 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-place-8 .nb-lbl,
+body.felt-compact.game-standard #felt-stage #nb-place-9 .nb-lbl,body.felt-compact.game-standard #felt-stage #nb-place-10 .nb-lbl{font-size:7px!important}
+/* Hard Ways odds ".pay" is a literal 18px in portrait -- too big for the cell, spilling past the
+   frame. Shrink it. */
+body.felt-compact #felt-stage #bet-hard4 .pay,
+body.felt-compact #felt-stage #bet-hard6 .pay,
+body.felt-compact #felt-stage #bet-hard8 .pay,
+body.felt-compact #felt-stage #bet-hard10 .pay{font-size:11px!important;line-height:1!important}
+/* Hardways/Hop Bets tab buttons: the "$0.00" amount is a literal 11px that overflows the ~49px
+   pill past its frame. Scale it with the felt and clip anything that still overhangs. */
+body.felt-compact #felt-stage #tab-hw .mode-btn-amt,
+body.felt-compact #felt-stage #tab-hop .mode-btn-amt{font-size:calc(11px * var(--font-scale,1))!important}
+body.felt-compact #felt-stage #tab-hw,
+body.felt-compact #felt-stage #tab-hop{overflow:hidden!important}
+/* HORN BET label overflows its center cell -- shrink. */
+body.felt-compact #felt-stage .horn-center-name{font-size:10px!important;line-height:1!important}
+/* Deck: drop the Focus Settings control in the portrait/compact view. */
+body.felt-compact #felt-stage #focus-settings-row{display:none!important}
 /* Bottom section now sits below the felt (inside #play-area, not reparented into
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
    the felt's own bottom edge instead of overlaid on top of the art. */
@@ -2933,7 +2958,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.58</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.59</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3913,10 +3938,20 @@ function sizeFeltStage(){
   // centered "top" position in #play-area -- doesn't change, only the internal split between
   // "blank space above the felt" and "#bottom-section's own height" does.
   const bsRatio=curBottomSectionRatio(), topBorderRatio=curTopBorderRatio();
+  // Reserve the top safe area on narrow screens. In a Discord mobile Activity, env(safe-area-
+  // inset-top) is populated by Discord to include BOTH the device notch AND Discord's own header
+  // (the "Leave" bar), so honouring it keeps the felt/HUD from sliding up under those controls --
+  // the regression from dropping the old fixed top band. In a plain browser env() is 0, so this
+  // is a no-op there (desktop/preview unaffected). Measured off a probe since JS can't read env().
+  let topInset=0;
+  if(W<520){
+    try{const pr=document.createElement('div');pr.style.cssText='position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden';document.body.appendChild(pr);topInset=Math.round(pr.getBoundingClientRect().height);pr.remove();}catch(e){}
+  }
+  const availH=Math.max(0,H-topInset);
   let w=W,h=w*FM_CANVAS_H/FM_CANVAS_W,groupH=h*(1+topBorderRatio+bsRatio);
-  if(groupH>H){h=H/(1+topBorderRatio+bsRatio);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=H;}
+  if(groupH>availH){h=availH/(1+topBorderRatio+bsRatio);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=availH;}
   const bsH=h*bsRatio, topBorderH=h*topBorderRatio;
-  const left=(W-w)/2,top=(H-groupH)/2;
+  const left=(W-w)/2,top=topInset+(availH-groupH)/2;
   st.style.left=left+'px';st.style.top=(top+topBorderH)+'px';st.style.transform='none';
   // 0.0424 sized so a staked chip stack lands at ~85% of the Buy/Place/Lay number tiles'
   // own height -- those are the shortest bet spots on this felt (see the CHIP STACK BET
