@@ -2958,7 +2958,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.59</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.60</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3900,6 +3900,10 @@ const BOTTOM_SECTION_RATIO_PORTRAIT=0.24;
 // shrinking this band lets the felt grow up into it (bigger, more readable) instead of sitting
 // below dead space. Kept a hair of breathing room rather than 0.
 const PORTRAIT_TOP_BORDER_RATIO=0.02;
+// Fixed px band reserved at the top ONLY inside a Discord mobile Activity, to clear Discord's
+// overlaid header/Leave bar (which env(safe-area-inset-top) does not report). Tune if the felt
+// still tucks under the bar (raise) or leaves a gap below it (lower).
+const DISCORD_TOP_INSET=110;
 function curBottomSectionRatio(){ return feltPortrait?BOTTOM_SECTION_RATIO_PORTRAIT:BOTTOM_SECTION_RATIO; }
 function curTopBorderRatio(){ return feltPortrait?PORTRAIT_TOP_BORDER_RATIO:0; }
 // ── RESPONSIVE FONT SCALE ─────────────────────────────────────────────────────
@@ -3945,7 +3949,15 @@ function sizeFeltStage(){
   // is a no-op there (desktop/preview unaffected). Measured off a probe since JS can't read env().
   let topInset=0;
   if(W<520){
-    try{const pr=document.createElement('div');pr.style.cssText='position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden';document.body.appendChild(pr);topInset=Math.round(pr.getBoundingClientRect().height);pr.remove();}catch(e){}
+    let envTop=0;
+    try{const pr=document.createElement('div');pr.style.cssText='position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden';document.body.appendChild(pr);envTop=Math.round(pr.getBoundingClientRect().height);pr.remove();}catch(e){}
+    // Discord's mobile Activity overlays its own header (the "Leave" bar) ON TOP of the app
+    // viewport and, unlike a normal notch, does NOT report it through env(safe-area-inset-top)
+    // (measured 0 on-device -- content hid behind it). So when we're actually inside a Discord
+    // Activity, reserve a fixed band to clear that header. Gated on isDiscordActivity() so a plain
+    // phone browser keeps NO extra top gap. DISCORD_TOP_INSET is tunable if the bar height differs.
+    const discordHeader = (typeof isDiscordActivity==='function' && isDiscordActivity()) ? DISCORD_TOP_INSET : 0;
+    topInset = Math.max(envTop, discordHeader);
   }
   const availH=Math.max(0,H-topInset);
   let w=W,h=w*FM_CANVAS_H/FM_CANVAS_W,groupH=h*(1+topBorderRatio+bsRatio);
