@@ -887,9 +887,12 @@ body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;f
 /* Landscape phone: keep the single flattened row but let it WRAP so ten chips + controls never
    overflow into ROLL; chips are floored to 24px (see below) so they stay readable in one line. */
 body.felt-mobile:not(.felt-portrait) #bottom-bar{flex-wrap:wrap;align-content:center;gap:3px 5px;padding:2px 5px}
-/* Landscape: the roll-history strip sat at the very top UNDER the HOME box and was too short to read
-   the past rolls. Shift it clear of HOME (left) and grow its height into the gap above Lucky Roller. */
-body.felt-mobile:not(.felt-portrait) #felt-stage #history-strip{left:18%!important;top:1%!important;width:60%!important;height:8.5%!important}
+/* Landscape: the roll-history strip sat at the very top UNDER the HOME box. Shift it clear of HOME
+   (left); keep it modest in height so it clears the Lucky Roller pills below it. */
+body.felt-mobile:not(.felt-portrait) #felt-stage #history-strip{left:18%!important;top:0.5%!important;width:60%!important;height:6.5%!important}
+/* Landscape: nudge the whole Lucky Roller (the pill strip + its Low/Roll'em/High boxes, which are
+   anchored to it) DOWN so the pills clear the roll history and sit closer to their bet boxes. */
+body.felt-mobile:not(.felt-portrait) #felt-stage #lucky-roller{top:11.5%!important}
 .chip{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp');}
@@ -3009,7 +3012,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.68</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.69</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
