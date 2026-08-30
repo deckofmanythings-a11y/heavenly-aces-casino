@@ -882,8 +882,11 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
    BOTTOM_SECTION_RATIO_PORTRAIT provides. Measured live after this fix: the packed stack
    already fills 236 of 238px (chip size itself scales with felt height, same as everywhere
    else on the felt) -- essentially zero leftover gap, so the ratio didn't need trimming too. */
-body.felt-mobile #bottom-bar{flex-direction:column;justify-content:center;gap:2px;padding:1px 4px}
-body.felt-mobile #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;flex:0 0 auto;width:100%;flex-wrap:wrap}
+body.felt-portrait #bottom-bar{flex-direction:column;justify-content:center;gap:2px;padding:1px 4px}
+body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;flex:0 0 auto;width:100%;flex-wrap:wrap}
+/* Landscape phone: keep the single flattened row but let it WRAP so ten chips + controls never
+   overflow into ROLL; chips are floored to 24px (see below) so they stay readable in one line. */
+body.felt-mobile:not(.felt-portrait) #bottom-bar{flex-wrap:wrap;align-content:center;gap:3px 5px;padding:2px 5px}
 .chip{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp');}
@@ -3003,7 +3006,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.65</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.66</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4010,7 +4013,9 @@ function sizeFeltStage(){
     // (measured 0 on-device -- content hid behind it). So when we're actually inside a Discord
     // Activity, reserve a fixed band to clear that header. Gated on isDiscordActivity() so a plain
     // phone browser keeps NO extra top gap. DISCORD_TOP_INSET is tunable if the bar height differs.
-    const discordHeader = (typeof isDiscordActivity==='function' && isDiscordActivity()) ? DISCORD_TOP_INSET : 0;
+    // Discord shows a FULL top bar only in PORTRAIT; in landscape its chrome is just small corner
+    // icons, so no top band is needed there (reserving one only created a wasted top margin).
+    const discordHeader = (H>W && typeof isDiscordActivity==='function' && isDiscordActivity()) ? DISCORD_TOP_INSET : 0;
     topInset = Math.max(envTop, discordHeader);
   }
   const availH=Math.max(0,H-topInset);
@@ -4035,7 +4040,7 @@ function sizeFeltStage(){
     // above) the felt's own height is small, so the default 0.13 bottom-section ratio collapses the
     // bar to ~49px -- far too little for the multi-row chip tray + controls. Give it a bigger slice
     // there so the bottom bar is usable; desktop/tablet landscape keep the tuned 0.13.
-    const eBs = mobile ? 0.30 : bsRatio;
+    const eBs = mobile ? 0.16 : bsRatio;
     let groupH=W*FM_CANVAS_H/FM_CANVAS_W*(1+topBorderRatio+eBs);
     w=W; h=w*FM_CANVAS_H/FM_CANVAS_W;
     if(groupH>availH){h=availH/(1+topBorderRatio+eBs);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=availH;}
