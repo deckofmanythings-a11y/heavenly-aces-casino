@@ -882,8 +882,8 @@ body.felt-mode #felt-stage .dc-chip-box.felt-abs{top:auto;left:auto;transform:no
    BOTTOM_SECTION_RATIO_PORTRAIT provides. Measured live after this fix: the packed stack
    already fills 236 of 238px (chip size itself scales with felt height, same as everywhere
    else on the felt) -- essentially zero leftover gap, so the ratio didn't need trimming too. */
-body.felt-portrait #bottom-bar{flex-direction:column;justify-content:center;gap:2px;padding:1px 4px}
-body.felt-portrait #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;flex:0 0 auto;width:100%}
+body.felt-mobile #bottom-bar{flex-direction:column;justify-content:center;gap:2px;padding:1px 4px}
+body.felt-mobile #bottom-bar .bb-row{display:flex;align-items:center;gap:3px;flex:0 0 auto;width:100%;flex-wrap:wrap}
 .chip{width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp');}
@@ -1830,9 +1830,9 @@ body.felt-compact #felt-stage #bet-hard10 .dice-combo-img{width:1.4em!important;
    Being OUT of #felt-stage, the panel sheds every tiny felt-corner rule and renders at its
    comfortable, tappable base sizes -- no per-element un-cramping needed. Desktop keeps the inline
    panel untouched. */
-body.felt-compact #felt-stage #info-panel{display:none}
+body.felt-mobile #felt-stage #info-panel{display:none}
 #info-panel-btn{display:none}
-body.felt-compact #info-panel-btn{display:block;position:fixed;right:8px;z-index:315;
+body.felt-mobile #info-panel-btn{display:block;position:fixed;right:8px;z-index:315;
   font-size:14px;font-weight:700;letter-spacing:.02em;padding:9px 14px;border-radius:9px;
   background:rgba(0,0,0,.66);border:1px solid rgba(255,215,0,.55);color:var(--ink-accent);
   cursor:pointer;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.5)}
@@ -1857,25 +1857,27 @@ body.info-panel-open #info-panel-modal{display:flex}
 #info-panel-modal #info-panel .hud-grid{gap:14px!important}
 /* Deck: on narrow screens the P&L (least-vital) and the Ver tag just eat bottom-bar space that
    the chips + ROLL + bet controls need -- hide both in portrait/compact. */
-body.felt-compact #hud-pnl,
-body.felt-compact #ver-wrap{display:none!important}
+body.felt-mobile #hud-pnl,
+body.felt-mobile #ver-wrap{display:none!important}
 /* The board-colour picker (#modal-felt, built by felt-themes.js) is a .modal-overlay at z-index:100,
    but the Info Panel modal it's launched from sits at 320 -- so the swatches opened behind it. Raise
    it above the panel. Global (harmless elsewhere; it's a top-level user-triggered modal). */
 #modal-felt{z-index:340!important}
 /* $500/$1000 pushed the ten-chip tray right up against ROLL on-device. Shrink the tray chips on
    narrow screens so all ten sit clear of the ROLL button (ROLL is a flex sibling of #bottom-bar). */
-body.felt-compact #bottom-bar .chip{width:calc(var(--chip)*0.82)!important;height:calc(var(--chip)*0.82)!important}
+body.felt-mobile #bottom-bar .chip{width:max(24px,calc(var(--chip)*0.82))!important;height:max(24px,calc(var(--chip)*0.82))!important}
 /* Top-left header (HOME + game selector): it was centred inside a box narrower than its content, so
    the HOME button spilled off the LEFT screen edge (showing only "ME"). Hug the top-left, size to
    content, left-align so nothing clips off-screen, and give it a tidy panel background. */
-body.felt-compact #felt-stage #left-col-header{left:4px!important;width:auto!important;max-width:64vw!important;
+body.felt-mobile #felt-stage #left-col-header{left:4px!important;width:auto!important;max-width:64vw!important;
   align-items:flex-start!important;padding:4px 7px!important;background:rgba(0,0,0,.5)!important;
   border:1px solid rgba(255,255,255,.14)!important;border-radius:9px!important;gap:4px!important}
-body.felt-compact #felt-stage #left-col-header #game-mode-toggle{width:auto!important;justify-content:flex-start!important}
-body.felt-compact #felt-stage #left-col-header .gmode-btn-home{width:auto!important;min-width:0!important;
+body.felt-mobile #felt-stage #left-col-header #game-mode-toggle{width:auto!important;justify-content:flex-start!important}
+body.felt-mobile #felt-stage #left-col-header .gmode-btn-home{width:auto!important;min-width:0!important;
   font-size:12px!important;padding:6px 9px!important;white-space:nowrap!important;line-height:1.1!important;
   display:flex!important;align-items:center!important}
+/* Hide the "Choose a game" subtitle under HOME on mobile (both orientations). */
+body.felt-mobile #felt-stage #left-col-header .gmode-sub{display:none!important}
 /* Number-box strip labels (BUY/LAY/PLACE) are 16px/10px literal in a ~25px cell, so they clip to
    BU/LA/PLA. Shrink to fit; id-level selectors included so the per-number felt-portrait overrides
    (e.g. #nb-lay-10) don't win over these. */
@@ -1924,8 +1926,8 @@ body.felt-compact #felt-stage #tab-hw,
 body.felt-compact #felt-stage #tab-hop{overflow:hidden!important}
 /* HORN BET label overflows its center cell -- shrink. */
 body.felt-compact #felt-stage .horn-center-name{font-size:10px!important;line-height:1!important}
-/* Deck: drop the Focus Settings control in the portrait/compact view. */
-body.felt-compact #felt-stage #focus-settings-row{display:none!important}
+/* Deck: drop the Focus Settings control in the mobile view (either orientation). */
+body.felt-mobile #felt-stage #focus-settings-row{display:none!important}
 /* Bottom section now sits below the felt (inside #play-area, not reparented into
    #felt-stage) -- position is fully computed in sizeFeltStage(), placed flush against
    the felt's own bottom edge instead of overlaid on top of the art. */
@@ -3001,7 +3003,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.64</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.65</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -3990,13 +3992,17 @@ function sizeFeltStage(){
   // centered "top" position in #play-area -- doesn't change, only the internal split between
   // "blank space above the felt" and "#bottom-section's own height" does.
   const bsRatio=curBottomSectionRatio(), topBorderRatio=curTopBorderRatio();
-  // Reserve the top safe area on narrow screens. In a Discord mobile Activity, env(safe-area-
-  // inset-top) is populated by Discord to include BOTH the device notch AND Discord's own header
-  // (the "Leave" bar), so honouring it keeps the felt/HUD from sliding up under those controls --
-  // the regression from dropping the old fixed top band. In a plain browser env() is 0, so this
-  // is a no-op there (desktop/preview unaffected). Measured off a probe since JS can't read env().
+  // PHONE detection covering BOTH orientations: a portrait phone is narrow (W<520), a landscape
+  // phone is short (H<520); desktop/tablet are large in both. felt-compact (W<520) alone missed
+  // landscape phones, so all the mobile chrome fixes are keyed on this instead. felt-compact is
+  // kept for the portrait-canvas-specific text-fit fixes.
+  const mobile = W<520 || H<520;
+  // Reserve the top safe area on phones. In a Discord mobile Activity, Discord overlays its own
+  // header (the "Leave" bar) and does NOT report it via env(safe-area-inset-top) (measured 0), so
+  // content hid behind it; reserve a fixed band there. In a plain browser env() is 0 and this is a
+  // no-op (desktop/preview unaffected). Measured off a probe since JS can't read env().
   let topInset=0;
-  if(W<520){
+  if(mobile){
     let envTop=0;
     try{const pr=document.createElement('div');pr.style.cssText='position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden';document.body.appendChild(pr);envTop=Math.round(pr.getBoundingClientRect().height);pr.remove();}catch(e){}
     // Discord's mobile Activity overlays its own header (the "Leave" bar) ON TOP of the app
@@ -4024,11 +4030,16 @@ function sizeFeltStage(){
     if(h>availForFelt){ h=availForFelt; w=h*FM_CANVAS_W/FM_CANVAS_H; } // only height-cap if it truly won't fit
     top=topInset;
   }else{
-    // Landscape/desktop: unchanged aspect-locked contain-fit of felt+chrome as one centered group.
-    let groupH=W*FM_CANVAS_H/FM_CANVAS_W*(1+topBorderRatio+bsRatio);
+    // Landscape/desktop: aspect-locked contain-fit of felt+chrome as one centered group. On a
+    // landscape PHONE (mobile here means short, since the portrait/narrow case took the branch
+    // above) the felt's own height is small, so the default 0.13 bottom-section ratio collapses the
+    // bar to ~49px -- far too little for the multi-row chip tray + controls. Give it a bigger slice
+    // there so the bottom bar is usable; desktop/tablet landscape keep the tuned 0.13.
+    const eBs = mobile ? 0.30 : bsRatio;
+    let groupH=W*FM_CANVAS_H/FM_CANVAS_W*(1+topBorderRatio+eBs);
     w=W; h=w*FM_CANVAS_H/FM_CANVAS_W;
-    if(groupH>availH){h=availH/(1+topBorderRatio+bsRatio);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=availH;}
-    bsH=h*bsRatio; topBorderH=h*topBorderRatio;
+    if(groupH>availH){h=availH/(1+topBorderRatio+eBs);w=h*FM_CANVAS_W/FM_CANVAS_H;groupH=availH;}
+    bsH=h*eBs; topBorderH=h*topBorderRatio;
     top=topInset+(availH-groupH)/2;
   }
   const left=(W-w)/2;
@@ -4061,6 +4072,10 @@ function sizeFeltStage(){
   // Below this width, #info-panel's fixed-percentage box (see FELT_LAYOUT) gets too narrow for
   // "Cash Out"/"Log Out" as text at any readable size -- see the body.felt-compact CSS rules.
   document.body.classList.toggle('felt-compact',w<520);
+  // felt-mobile (either-orientation phone) drives the mobile chrome fixes (info-panel modal, hidden
+  // Focus Settings / P&L / Ver, tidy HOME, shrunk chip tray). Uses viewport dims so it catches a
+  // short landscape phone as well as a narrow portrait one.
+  document.body.classList.toggle('felt-mobile',mobile);
   if(bs){
     bs.style.left=left+'px';bs.style.top=(top+topBorderH+h)+'px';
     bs.style.width=w+'px';bs.style.height=bsH+'px';
