@@ -13,6 +13,18 @@
 <script src="felt-themes.js?v=6"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* Discord Activity safe area — reserve space for Discord's overlaid controls bar so it never
+   covers the UI: a top band in portrait, a right strip in landscape (matches craps.html's
+   budgeted DISCORD_TOP_INSET 60 / DISCORD_RIGHT_INSET 100). Only inside a Discord Activity
+   (.discord is set on <html> at load) and only on phone-sized screens, where Discord overlays
+   the bar. box-sizing is border-box, so on the family's flex-column #game-screen the padding
+   shrinks the play area with no overflow; a plain browser is unaffected. */
+@media (orientation:portrait) and (max-width:520px){
+  html.discord #game-screen, html.discord #auth-screen{padding-top:max(env(safe-area-inset-top,0px),60px)}
+}
+@media (orientation:landscape) and (max-height:520px){
+  html.discord #game-screen, html.discord #auth-screen{padding-right:max(env(safe-area-inset-right,0px),100px)}
+}
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
 
@@ -649,7 +661,7 @@ body[data-felt="rose"] #player-module-art{content:url('player_bet_full_trim_rose
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.35</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.0.36</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="breakout:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('breakout')" title="How to play">i</button>
@@ -917,7 +929,7 @@ function dNav(url){
   window.location.href=url;
 }
 if(isDiscordActivity()){
-  const CS_ATTR={click:'onclick',contextmenu:'oncontextmenu',input:'oninput',change:'onchange'};
+  document.documentElement.classList.add('discord'); const CS_ATTR={click:'onclick',contextmenu:'oncontextmenu',input:'oninput',change:'onchange'};
   Object.keys(CS_ATTR).forEach(type=>{
     document.addEventListener(type,function(e){
       const attr=CS_ATTR[type];
