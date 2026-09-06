@@ -34,7 +34,9 @@
     document.head.appendChild(s);
   }
 
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Fast Spin: when window.__FAST is set (a 2nd press during resolution), waits resolve
+  // instantly so the whole spin snaps to its result.
+  const wait = (ms) => (window.__FAST ? Promise.resolve() : new Promise((r) => setTimeout(r, ms)));
   const randSym = (syms) => syms[(Math.random() * syms.length) | 0];
 
   function makeTile(paint, sym, cellH) {
@@ -116,8 +118,19 @@
       });
     }
 
-    async function settle(grid) {
+    function snap(grid) {
+      // Fast Spin: drop all strips and paint every resting cell to the final grid at once.
       for (let reel = 0; reel < REELS; reel++) {
+        const cells = state[reel].reelEl.querySelectorAll('.cell:not(.reel-tile)');
+        for (let row = 0; row < ROWS; row++) if (cells[row]) paint(cells[row], grid[row * REELS + reel]);
+        removeStrip(state[reel]);
+      }
+      if (onReelStop) onReelStop();
+    }
+    async function settle(grid) {
+      if (window.__FAST) { snap(grid); return; }
+      for (let reel = 0; reel < REELS; reel++) {
+        if (window.__FAST) { snap(grid); return; } // fast-forward pressed mid-settle
         await wait(reel === 0 ? 180 : 140);    // left-to-right stagger
         await landReel(state[reel], [grid[reel], grid[REELS + reel], grid[2 * REELS + reel]]);
         // Hand the result to the page's resting cells, then drop the strip.

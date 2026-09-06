@@ -7,7 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
-<script src="slot-reels.js?v=1"></script>
+<script src="slot-reels.js?v=2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* Discord Activity safe area — reserve space for Discord's overlaid controls bar so it never
@@ -293,7 +293,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.2</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.3.3</div>
       <div class="hdr-btns">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" onclick="openHelp()" title="How to play">i</button>
@@ -417,7 +417,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{fetch:(ur
 const r2=n=>Math.round(n*100)/100;
 const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtS=n=>'$'+Math.abs(n).toFixed(0);
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const wait=ms=>((typeof window!=="undefined"&&window.__FAST)?Promise.resolve():new Promise(r=>setTimeout(r,ms)));
 
 // ── MACHINE (display mirror of server machines.ts — art + jackpot values only; the
 //    server is the source of truth for every payout) ──────────────────────────────
@@ -646,7 +646,7 @@ function updateUI(){
   const net=calcNet();const pnl=document.getElementById('hud-pnl');
   pnl.textContent=(net>=0?'+':'−')+fmt(net);pnl.style.color=net>=0?'#7ee87e':'#f08080';
   updateChipTray();refreshJackpotLadder();renderHistory();
-  document.getElementById('spin-btn').disabled=spinning||(G.bankroll+G.freePlay)<MIN_BET;
+  {const _sb=document.getElementById('spin-btn');_sb.textContent=spinning?'SKIP':'SPIN';_sb.disabled=!spinning&&(G.bankroll+G.freePlay)<MIN_BET;}
 }
 function renderHistory(){
   const wrap=document.getElementById('roll-history');if(!wrap)return;wrap.innerHTML='';
@@ -660,15 +660,14 @@ function renderHistory(){
 
 // ── SPIN ───────────────────────────────────────────────────────────────────────────
 async function doSpin(){
-  if(spinning)return;
+  if(spinning){window.__FAST=true;return;} // 2nd press = Fast Spin: skip the animation to the result
   const bet=G.bet;
   if(bet<MIN_BET-0.001||bet>MAX_BET+0.001){addLog('Bet must be $'+MIN_BET+'–$'+MAX_BET+'.','info');return;}
   if(bet>r2(G.bankroll+G.freePlay)+0.001){addLog('Not enough to bet '+fmtS(bet)+'. Redeem a code.','info');checkBroke();return;}
-  spinning=true;
+  spinning=true;window.__FAST=false;
   G.lastBetDisplay=bet;
   // optimistic: take the bet locally for a responsive HUD; server is authority on the result.
   updateUI();
-  document.getElementById('spin-btn').disabled=true;
   clearHighlights();
   const token=localStorage.getItem('craps_session');
   const spinAnim=animateReelsRolling(); // start reels rolling immediately
