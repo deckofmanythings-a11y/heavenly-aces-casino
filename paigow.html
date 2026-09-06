@@ -397,7 +397,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   <!-- TOP ROW -->
   <div id="top-row">
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.31</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center;padding-top:2px">Ver. 0.0.32</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="paigow:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('paigow')" title="How to play">i</button>
@@ -997,9 +997,9 @@ const PAYTABLE_CONTENT={
     ['Three of a Kind','3 to 1'],['Straight','2 to 1'],
   ],note:'Optional side bet on your own best 7-card hand, independent of the Ante. Loses on two pair or worse. Five Aces = all four real Aces plus the Joker.'},
   acehigh:{title:'Ace High',rows:[
-    ['Dealer & Player both Ace High','25 to 1'],
-    ['Dealer Ace High (with the Joker)','10 to 1'],
-    ['Dealer Ace High','7 to 1'],
+    ['Dealer & Player both Ace High','40 to 1'],
+    ['Dealer Ace High (with the Joker)','15 to 1'],
+    ['Dealer Ace High','5 to 1'],
   ],note:'Optional side bet that the dealer\'s House-way High hand comes out a bare Ace High (no pair) -- the very hand that pushes your Ante. The 25:1 top prize needs your own House-way High hand to be a bare Ace High too. Loses whenever the dealer isn\'t Ace High. No King-high prize.'},
 };
 function openPaytable(key){
@@ -1123,6 +1123,14 @@ function setHouseWayClient(cards7){
       const nonTrip=sortDescClient(withoutCards(cards7,trips.cards));
       result={low:nonTrip.slice(0,2),high:[...trips.cards,...nonTrip.slice(2,4)]};
     }
+  }else if(pairs.length>=3){
+    // Three pairs: highest pair goes to the Low hand (the other two pairs make Two Pair
+    // in High). Must precede the two-pair branch, which only looks at the top two pairs
+    // and would otherwise strand the highest pair (e.g. AA) in the High hand. Mirrors
+    // roll-paigow's setHouseWay.
+    const low=pairs[0].cards;
+    const high=withoutCards(cards7,low);
+    result={low,high};
   }else if(pairs.length>=2){
     const[p0,p1]=pairs;
     if(p0.rank>=7){
