@@ -465,7 +465,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="djwild:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('djwild')" title="How to play">i</button>
@@ -1209,7 +1209,12 @@ const ACTION_BTN_IDS=['btn-deal','btn-fold','btn-bet'];
 const PHASE_BUTTONS={betting:['btn-deal'],dealt:['btn-fold','btn-bet'],showdown:[]};
 function renderActionButtons(){
   const show=new Set(PHASE_BUTTONS[G.phase]||[]);
-  ACTION_BTN_IDS.forEach(id=>{document.getElementById(id).style.display=show.has(id)?'':'none';});
+  // Clear any stale disabled state from an in-flight commitDecision on the previous
+  // hand (which disables Fold/Bet to block a double-submit and never re-enables them,
+  // since they get hidden at showdown). Without this, Fold stays disabled from the 2nd
+  // hand on -- only a reload rebuilt the DOM and cleared it. updateBetButtonState()
+  // below then re-refines only the Bet button by affordability.
+  ACTION_BTN_IDS.forEach(id=>{const el=document.getElementById(id);el.style.display=show.has(id)?'':'none';el.disabled=false;});
   updateBetButtonState();
 }
 
