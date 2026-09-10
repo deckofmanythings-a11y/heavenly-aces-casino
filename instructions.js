@@ -291,15 +291,16 @@ var INSTRUCTIONS_DATA = {
     },
     { heading:'Blind Payout', body:
       '<h3><span class="bet-name">Blind</span></h3>'
-      +'<p>Only pays when you win, and pushes (returns your stake) on a win below a Straight. The stronger your hand, the bigger the multiplier:</p>'
+      +'<p>Only pays when you win, and pushes (returns your stake) on a win of three of a kind or less. The stronger your hand, the bigger the multiplier:</p>'
       +'<ul>'
-      +'<li>Five of a Kind — <span class="odds">200:1</span></li>'
+      +'<li>Five Wilds — <span class="odds">1,000:1</span></li>'
       +'<li>Royal Flush — <span class="odds">50:1</span></li>'
-      +'<li>Straight Flush — <span class="odds">15:1</span></li>'
-      +'<li>Four of a Kind — <span class="odds">5:1</span></li>'
-      +'<li>Full House — <span class="odds">4:1</span></li>'
-      +'<li>Flush — <span class="odds">3:1</span></li>'
-      +'<li>Straight — <span class="odds">2:1</span></li>'
+      +'<li>Five of a Kind — <span class="odds">10:1</span></li>'
+      +'<li>Straight Flush — <span class="odds">9:1</span></li>'
+      +'<li>Four of a Kind — <span class="odds">4:1</span></li>'
+      +'<li>Full House — <span class="odds">3:1</span></li>'
+      +'<li>Flush — <span class="odds">2:1</span></li>'
+      +'<li>Straight — <span class="odds">1:1</span></li>'
       +'<li>Anything else (win) — Push</li>'
       +'</ul>'
     },

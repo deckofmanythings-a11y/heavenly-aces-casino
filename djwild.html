@@ -7,7 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
-<script src="instructions.js?v=9"></script>
+<script src="instructions.js?v=10"></script>
 <link rel="stylesheet" href="felt-themes.css?v=6">
 <script src="felt-themes.js?v=6"></script>
 <style>
@@ -475,7 +475,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.0</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.1</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="djwild:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('djwild')" title="How to play">i</button>
@@ -1097,9 +1097,9 @@ const PAYTABLE_CONTENT={
   ],note:'Optional side bet on your own hand, independent of the dealer and of a fold. A hand is "Natural" only when NO wild card is used to make it (an unused deuce still counts natural); it pays whichever reading — natural or wild — is higher. Deuces & the Joker are wild. Loses below three of a kind.'},
   ante:{title:'Ante & Bet',rows:[],note:'Ante and Bet each pay 1 to 1 on a win, push on a tie, and lose on a loss. There is NO dealer qualifier — the dealer\'s hand always plays. Blind always matches your Ante and locks in with it at Deal.'},
   blind:{title:'Blind',rows:[
-    ['Five of a Kind','200 to 1'],['Royal Flush','50 to 1'],['Straight Flush','15 to 1'],['Four of a Kind','5 to 1'],
-    ['Full House','4 to 1'],['Flush','3 to 1'],['Straight','2 to 1'],['All other','Push'],
-  ],note:'Only paid on an outright player win over the dealer — pushes on a win below a straight. Deuces & the Joker are wild.'},
+    ['Five Wilds','1,000 to 1'],['Royal Flush','50 to 1'],['Five of a Kind','10 to 1'],['Straight Flush','9 to 1'],
+    ['Four of a Kind','4 to 1'],['Full House','3 to 1'],['Flush','2 to 1'],['Straight','1 to 1'],['All other','Push'],
+  ],note:'Only paid on an outright player win over the dealer — pushes on a win of three of a kind or less. Deuces & the Joker are wild.'},
   bet:{title:'Bet',rows:[
     ['Raise','2x your Ante'],
   ],note:'After seeing your five cards, either Fold (losing Ante & Blind) or make the Bet — always exactly 2x your Ante. The Bet pays 1 to 1 vs. the dealer, win/push/lose.'},
