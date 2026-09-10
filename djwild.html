@@ -7,7 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
-<script src="instructions.js?v=8"></script>
+<script src="instructions.js?v=9"></script>
 <link rel="stylesheet" href="felt-themes.css?v=6">
 <script src="felt-themes.js?v=6"></script>
 <style>
@@ -83,7 +83,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background:radial-gradient(ellipse at center,var(--felt-1) 0%,var(--felt-2) 70%,var(--felt-4) 100%);container-type:size}
 
 /* DJ Wild logo emblem -- decorative, left of the bet-spot row. */
-#djwild-logo{position:absolute;left:1.5%;top:33%;width:23%;height:32%;object-fit:contain;pointer-events:none;user-select:none;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+#djwild-logo{position:absolute;left:0.5%;top:34%;width:17%;height:30%;object-fit:contain;pointer-events:none;user-select:none;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 
 /* Static felt-printed text, drawn directly on the open felt -- an engraved-serif
    Google Font stands in for real printed felt type. */
@@ -92,7 +92,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #dealers-hand-label{left:25%;top:1%;width:50%;font-size:2.6cqh}
 #players-hand-label{left:25%;top:63.5%;width:50%;font-size:2.6cqh}
 /* "Deuces & the Joker are wild" printed reminder + "No dealer qualifier" note. */
-#wild-note-label{left:15%;top:29.6%;width:70%;font-size:1.7cqh;color:#ffd700;font-weight:700;letter-spacing:.02em}
+/* Static instruction line -- sits in the open mid-band ABOVE the bet circles, clear of
+   the dealer's live hand-read (#dealer-hand-name at ~29%) which lands under the cards. */
+#wild-note-label{left:15%;top:34.5%;width:70%;font-size:1.7cqh;color:#ffd700;font-weight:700;letter-spacing:.02em}
 
 /* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows.
    Five cards each, dealer top / player bottom, centered. */
@@ -114,26 +116,30 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .panel-spot.inert{cursor:not-allowed}
 .bet-circle{aspect-ratio:1;border:0.4cqh solid rgba(255,224,102,.5);background:radial-gradient(circle at 50% 32%,rgba(255,255,255,.10),rgba(0,0,0,.30));box-shadow:inset 0 0 1.4cqh rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.4);z-index:2}
 .bet-circle.active{border-color:var(--active-ring,#ffd700);box-shadow:inset 0 0 1.4cqh rgba(0,0,0,.45),0 0 1.6cqh var(--active-glow,rgba(255,205,70,.55))}
-.bc-label{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:'Cinzel',serif;font-weight:800;color:#ffe066;font-size:2cqh;letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;z-index:1}
-#trips-spot{left:25%;top:40%;width:11%;--chip:9.6cqh}
-#ante-spot{left:38%;top:40%;width:11%;--chip:9.6cqh}
-#blind-spot{left:51%;top:40%;width:11%;--chip:9.6cqh}
-#bet-spot{left:64%;top:40%;width:11%;--chip:9.6cqh}
+.bc-label{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:'Cinzel',serif;font-weight:800;color:#ffe066;font-size:1.9cqh;line-height:1.05;letter-spacing:.03em;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;z-index:1}
+/* Five spots between the logo (left) and The Light (right): Trips / Bad Beat side bets,
+   then the mandatory Ante / Blind / Bet trio. */
+#trips-spot{left:19%;top:40%;width:10%;--chip:8.7cqh}
+#badbeat-spot{left:32%;top:40%;width:10%;--chip:8.7cqh}
+#ante-spot{left:45%;top:40%;width:10%;--chip:8.7cqh}
+#blind-spot{left:58%;top:40%;width:10%;--chip:8.7cqh}
+#bet-spot{left:71%;top:40%;width:10%;--chip:8.7cqh}
 /* Circle-i payout-table buttons at the top-right of each bet circle -- opens
    #modal-paytable with the matching table (see openPaytable()/PAYTABLE_CONTENT). */
 .paytable-info-btn{position:absolute;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1.5px solid rgba(255,215,0,.6);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0;font-weight:800;width:3.6%;aspect-ratio:1}
-#trips-info{left:33.5%;top:37.5%}
-#ante-info{left:46.5%;top:37.5%}
-#blind-info{left:59.5%;top:37.5%}
-#bet-info{left:72.5%;top:37.5%}
+#trips-info{left:25.8%;top:37.5%}
+#badbeat-info{left:38.8%;top:37.5%}
+#ante-info{left:51.8%;top:37.5%}
+#blind-info{left:64.8%;top:37.5%}
+#bet-info{left:77.8%;top:37.5%}
 /* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. lightOFF.webp
    sits idle over open felt on the right and swaps for lightON.webp once the round's
    dealt with the light on -- see updateUI(). */
-#light-off-img,#light-on-img,#light-spot{left:78%;top:33%;width:20.5%;height:32%}
-#light-spot{--chip:9cqh}
+#light-off-img,#light-on-img,#light-spot{left:82.5%;top:34%;width:16.5%;height:30%}
+#light-spot{--chip:8cqh}
 #light-off-img,#light-on-img{position:absolute;object-fit:contain;pointer-events:none}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
-#light-info-btn{position:absolute;left:94.5%;top:30%;width:3.6%;aspect-ratio:1;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+#light-info-btn{position:absolute;left:96%;top:31%;width:3.6%;aspect-ratio:1;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
 /* Sweep-to-lit: the $5 chip at #light-spot vanishes and lightON.webp fades/pops in. */
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
@@ -325,24 +331,28 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #djwild-logo{left:33%;top:11.7%;width:34%;height:5.5%}
   #dealers-hand-label{left:5%;top:17.4%;width:90%;font-size:1.5cqh}
   #dealer-region{left:3%;top:19.4%;width:94%;height:9.5%;justify-content:center}
-  #dealer-hand-name{top:28.8%;font-size:1.5cqh}
-  #wild-note-label{left:3%;top:31%;width:94%;font-size:1.1cqh}
+  #dealer-hand-name{top:29.3%;font-size:1.5cqh}
+  /* The wild reminder is dropped in portrait -- the status banner already states it, and
+     there's no clean room for it between the dealer read and the (now five) bet circles. */
+  #wild-note-label{display:none}
   #players-hand-label{left:5%;top:57%;width:90%;font-size:1.5cqh}
   #player-region{left:3%;top:59%;width:94%;height:9.5%;justify-content:center}
   #player-hand-name{top:68.6%;font-size:1.5cqh}
 
   .card-row{--pc-w:7cqh}
 
-  /* Bet circles: single centered row of four. */
-  #trips-spot{left:5%;top:34.5%;width:20%;--chip:5cqh}
-  #ante-spot{left:28%;top:34.5%;width:20%;--chip:5cqh}
-  #blind-spot{left:51%;top:34.5%;width:20%;--chip:5cqh}
-  #bet-spot{left:74%;top:34.5%;width:20%;--chip:5cqh}
-  .bc-label{font-size:1.5cqh}
-  #trips-info{left:21.5%;top:32.3%;width:5.5%}
-  #ante-info{left:44.5%;top:32.3%;width:5.5%}
-  #blind-info{left:67.5%;top:32.3%;width:5.5%}
-  #bet-info{left:90.5%;top:32.3%;width:5.5%}
+  /* Bet circles: single centered row of five (Trips, Bad Beat, Ante, Blind, Bet). */
+  #trips-spot{left:1%;top:34.5%;width:18%;--chip:4.3cqh}
+  #badbeat-spot{left:20%;top:34.5%;width:18%;--chip:4.3cqh}
+  #ante-spot{left:39%;top:34.5%;width:18%;--chip:4.3cqh}
+  #blind-spot{left:58%;top:34.5%;width:18%;--chip:4.3cqh}
+  #bet-spot{left:77%;top:34.5%;width:18%;--chip:4.3cqh}
+  .bc-label{font-size:1.3cqh}
+  #trips-info{left:14.5%;top:32.5%;width:4.8%}
+  #badbeat-info{left:33.5%;top:32.5%;width:4.8%}
+  #ante-info{left:52.5%;top:32.5%;width:4.8%}
+  #blind-info{left:71.5%;top:32.5%;width:4.8%}
+  #bet-info{left:90.5%;top:32.5%;width:4.8%}
 
   /* The Light: centered band below the bet row. */
   #light-off-img,#light-on-img,#light-spot{left:34%;top:45%;width:32%;height:10%}
@@ -465,7 +475,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.1</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.2.0</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
         <button class="info-circle-btn" data-icalib="djwild:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('djwild')" title="How to play">i</button>
@@ -523,6 +533,11 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
         <span class="panel-spot-stk" id="stk-trips"></span>
       </div>
       <button class="paytable-info-btn" id="trips-info" onclick="event.stopPropagation();openPaytable('trips')" title="Trips Paytable">i</button>
+      <div class="panel-spot bet-circle" id="badbeat-spot" onclick="placeBet('badbeat')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('badbeat')">
+        <span class="bc-label">BAD<br>BEAT</span>
+        <span class="panel-spot-stk" id="stk-badbeat"></span>
+      </div>
+      <button class="paytable-info-btn" id="badbeat-info" onclick="event.stopPropagation();openPaytable('badbeat')" title="Two-Way Bad Beat Paytable">i</button>
       <div class="panel-spot bet-circle" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
         <span class="bc-label">ANTE</span>
         <span class="panel-spot-stk" id="stk-ante"></span>
@@ -671,11 +686,11 @@ const FN_HEADERS={'Content-Type':'application/json','Authorization':'Bearer '+SU
 function makeInitialG(){
   return {
     bankroll:0,freePlay:0,startingBankroll:0,chip:25,
-    bets:{ante:0,trips:0,progressive:0},
+    bets:{ante:0,trips:0,badbeat:0,progressive:0},
     betBet:0,        // the committed Bet (2x Ante), staged locally on BET before the server confirms
     phase:'betting', // betting|dealt|showdown
     hand:null,       // {playerCards,dealerCards}
-    locked:{ante:0,blind:0,trips:0,progressive:false},
+    locked:{ante:0,blind:0,trips:0,badbeat:0,progressive:false},
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
     history:[],
     cardEls:null,
@@ -866,7 +881,7 @@ function startSession(player){
   if(gs.djwild&&gs.djwild.phase==='dealt'){
     // An abandoned hand from a previous session (refresh mid-decision): resume at the
     // Fold/Bet decision rather than lose the already-committed Ante/Blind/Trips.
-    G.locked={ante:gs.djwild.ante,blind:gs.djwild.blind,trips:gs.djwild.trips,progressive:gs.djwild.progressive};
+    G.locked={ante:gs.djwild.ante,blind:gs.djwild.blind,trips:gs.djwild.trips,badbeat:gs.djwild.badbeat,progressive:gs.djwild.progressive};
     G.hand={playerCards:gs.djwild.playerCards,dealerCards:null};
     G.phase='dealt';
     document.getElementById('dealer-row').classList.add('active');
@@ -1025,8 +1040,8 @@ function removeBet(key){
 }
 function clearBets(){
   if(G.phase!=='betting')return;
-  const ret=r2((G.bets.ante||0)*2+(G.bets.trips||0)+(G.bets.progressive||0));
-  G.bets={ante:0,trips:0,progressive:0};G.bankroll=r2(G.bankroll+ret);
+  const ret=r2((G.bets.ante||0)*2+(G.bets.trips||0)+(G.bets.badbeat||0)+(G.bets.progressive||0));
+  G.bets={ante:0,trips:0,badbeat:0,progressive:0};G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
 
@@ -1065,15 +1080,21 @@ async function openProgressiveModal(){
 }
 function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
 // Paytables shown via ⓘ buttons next to each bet spot, same pattern as breakout.html's
-// PAYTABLE_CONTENT/openPaytable(). Numbers match tripsMultiplier()/blindMultiplier() in
-// roll-djwild's index.ts exactly (Trips: 5oak 200, Royal 50, SF 20, Quads 8, FH 5,
-// Flush 4, Straight 3, Trips 3, else lose. Blind: 5oak 200, Royal 50, SF 15, Quads 5,
-// FH 4, Flush 3, Straight 2, else push).
+// PAYTABLE_CONTENT/openPaytable(). Numbers match roll-djwild's index.ts exactly.
+// Trips is the Wizard of Odds "90-25-6" table with separate Natural / With-Wild columns
+// (three-column row: [hand, natural, wild]). Blind is the original approved table.
 const PAYTABLE_CONTENT={
-  trips:{title:'Trips',rows:[
-    ['Five of a Kind','200 to 1'],['Royal Flush','50 to 1'],['Straight Flush','20 to 1'],['Four of a Kind','8 to 1'],
-    ['Full House','5 to 1'],['Flush','4 to 1'],['Straight','3 to 1'],['Three of a Kind','3 to 1'],
-  ],note:'Optional side bet on your own 5-card hand, independent of the dealer and of a fold. Loses on anything less than three of a kind. Deuces & the Joker are wild.'},
+  trips:{title:'Trips',cols:['Hand','Natural','With Wild'],rows:[
+    ['Five Wilds','—','2,000 to 1'],
+    ['Royal Flush','1,000 to 1','100 to 1'],
+    ['Five of a Kind','—','100 to 1'],
+    ['Straight Flush','200 to 1','30 to 1'],
+    ['Four of a Kind','90 to 1','6 to 1'],
+    ['Full House','40 to 1','5 to 1'],
+    ['Flush','25 to 1','4 to 1'],
+    ['Straight','20 to 1','3 to 1'],
+    ['Three of a Kind','6 to 1','1 to 1'],
+  ],note:'Optional side bet on your own hand, independent of the dealer and of a fold. A hand is "Natural" only when NO wild card is used to make it (an unused deuce still counts natural); it pays whichever reading — natural or wild — is higher. Deuces & the Joker are wild. Loses below three of a kind.'},
   ante:{title:'Ante & Bet',rows:[],note:'Ante and Bet each pay 1 to 1 on a win, push on a tie, and lose on a loss. There is NO dealer qualifier — the dealer\'s hand always plays. Blind always matches your Ante and locks in with it at Deal.'},
   blind:{title:'Blind',rows:[
     ['Five of a Kind','200 to 1'],['Royal Flush','50 to 1'],['Straight Flush','15 to 1'],['Four of a Kind','5 to 1'],
@@ -1082,12 +1103,22 @@ const PAYTABLE_CONTENT={
   bet:{title:'Bet',rows:[
     ['Raise','2x your Ante'],
   ],note:'After seeing your five cards, either Fold (losing Ante & Blind) or make the Bet — always exactly 2x your Ante. The Bet pays 1 to 1 vs. the dealer, win/push/lose.'},
+  badbeat:{title:'Two-Way Bad Beat',rows:[
+    ['Royal Flush','299 to 1'],['Five of a Kind','299 to 1'],['Straight Flush','299 to 1'],['Four of a Kind','299 to 1'],
+    ['Full House','200 to 1'],['Flush','100 to 1'],['Straight','50 to 1'],['Three of a Kind','15 to 1'],
+  ],note:'Wins when BOTH you and the dealer make three of a kind or better and you do not tie — it pays on the LOWER (beaten) hand, whether that hand is yours or the dealer\'s. A tie loses. In action even if you fold.'},
 };
 function openPaytable(key){
   const p=PAYTABLE_CONTENT[key];if(!p)return;
   document.getElementById('paytable-title').textContent=p.title;
-  document.getElementById('paytable-body').innerHTML=
-    p.rows.map(r=>'<div class="progressive-tier-row"><span>'+r[0]+'</span><span class="prog-pay">'+r[1]+'</span></div>').join('')
+  let html='';
+  if(p.cols){
+    html+='<div class="progressive-tier-row" style="font-weight:700;color:#ffe066"><span style="flex:1">'+p.cols[0]+'</span><span style="width:33%;text-align:right">'+p.cols[1]+'</span><span style="width:33%;text-align:right">'+p.cols[2]+'</span></div>';
+    html+=p.rows.map(r=>'<div class="progressive-tier-row"><span style="flex:1">'+r[0]+'</span><span style="width:33%;text-align:right;color:#ffd700;font-weight:700">'+r[1]+'</span><span class="prog-pay" style="width:33%;text-align:right">'+r[2]+'</span></div>').join('');
+  }else{
+    html+=p.rows.map(r=>'<div class="progressive-tier-row"><span>'+r[0]+'</span><span class="prog-pay">'+r[1]+'</span></div>').join('');
+  }
+  document.getElementById('paytable-body').innerHTML=html
     +'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:10px">'+p.note+'</div>';
   document.getElementById('modal-paytable').classList.remove('hidden');
 }
@@ -1106,11 +1137,11 @@ function repeatLastBet(){
   }
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
-  const cost=r2((snap.ante||0)*2+(snap.trips||0)+(snap.progressive?PROGRESSIVE_BET:0));
+  const cost=r2((snap.ante||0)*2+(snap.trips||0)+(snap.badbeat||0)+(snap.progressive?PROGRESSIVE_BET:0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
-  G.bets.ante=snap.ante||0;G.bets.trips=snap.trips||0;
+  G.bets.ante=snap.ante||0;G.bets.trips=snap.trips||0;G.bets.badbeat=snap.badbeat||0;
   if(snap.progressive)G.bets.progressive=PROGRESSIVE_BET;
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
@@ -1239,25 +1270,26 @@ async function dealHand(){
   const betLeg=r2(ante*2);
   if(G.bankroll+G.freePlay<betLeg-0.01){addLog('Not enough bankroll left to cover the Bet (2x Ante = '+fmt(betLeg)+'). Lower your Ante/Trips or add funds.','info');return;}
   const trips=G.bets.trips||0;
+  const badbeat=G.bets.badbeat||0;
   const progressive=(G.bets.progressive||0)>0;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll-djwild',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,trips,progressive})});
+    const res=await fetch(FUNCTIONS_URL+'/roll-djwild',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,trips,badbeat,progressive})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
   if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
   playSfx(SFX_CARD_SHUFFLE);
-  G.locked={ante:data.ante,blind:data.blind,trips:data.trips,progressive:data.progressive};
-  G.lastBetSnapshot={ante:data.ante,trips:data.trips,progressive:!!data.progressive};
+  G.locked={ante:data.ante,blind:data.blind,trips:data.trips,badbeat:data.badbeat,progressive:data.progressive};
+  G.lastBetSnapshot={ante:data.ante,trips:data.trips,badbeat:data.badbeat,progressive:!!data.progressive};
   G.hand={playerCards:data.playerCards,dealerCards:null};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-  G.bets={ante:0,trips:0,progressive:0};
+  G.bets={ante:0,trips:0,badbeat:0,progressive:0};
   G.betBet=0;
   G.phase='dealt';
   document.getElementById('dealer-row').classList.add('active');
@@ -1336,7 +1368,7 @@ function finishHand(data){
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
     if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
     G.lastWin=data.payout||0;
-    G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.betAmt||0));
+    G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(G.locked.badbeat||0)+(data.betAmt||0));
     if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
     const histLabel=data.folded?'Fold':categoryName(playerFinal);
     let playerDesc=data.folded?'Folded':describeScoreFull(playerFinal);
@@ -1367,7 +1399,7 @@ function finishHand(data){
   revealDealerCards(data.dealerCards,()=>{showHandNames();afterReveal();});
 }
 function resetToBetScreen(){
-  G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0,progressive:false};G.betBet=0;
+  G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0,badbeat:0,progressive:false};G.betBet=0;
   hideUndealtSlots();
   document.getElementById('dealer-row').classList.remove('active');
   document.getElementById('player-row').classList.remove('active');
@@ -1410,13 +1442,16 @@ function updateUI(){
   const locked=G.phase!=='betting';
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
   const tripsAmt=locked?G.locked.trips:(G.bets.trips||0);
+  const badbeatAmt=locked?(G.locked.badbeat||0):(G.bets.badbeat||0);
   document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
   document.getElementById('stk-blind').textContent=anteAmt?fmt(anteAmt):'';
   document.getElementById('stk-trips').textContent=tripsAmt?fmt(tripsAmt):'';
+  document.getElementById('stk-badbeat').textContent=badbeatAmt?fmt(badbeatAmt):'';
   document.getElementById('stk-bet').textContent=G.betBet?fmt(G.betBet):'';
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('blind-spot').classList.toggle('active',anteAmt>0);
   document.getElementById('trips-spot').classList.toggle('active',tripsAmt>0);
+  document.getElementById('badbeat-spot').classList.toggle('active',badbeatAmt>0);
   document.getElementById('bet-spot').classList.toggle('active',G.betBet>0);
   // The Light: a staged $5 stake shows like any other spot pre-deal, then the chip
   // sweeps away and lightON.webp takes over once dealt (G.locked.progressive) --
@@ -1524,6 +1559,7 @@ function renderChipStacks(){
   // visual update stays silent rather than doubling up Ante's chip sound.
   applyChipStackVisual('stk-blind',contractLocked,true);
   applyChipStackVisual('stk-trips',contractLocked);
+  applyChipStackVisual('stk-badbeat',contractLocked);
   applyChipStackVisual('stk-bet',G.phase==='showdown');
   // The Light: real chip stack while staged (pre-deal), same as Ante/Trips -- its own
   // updateUI() block already blanks the text once locked, so there's nothing left to render
@@ -1617,7 +1653,7 @@ function spawnChipGhost(el,opts){
 // THE LIGHT is intentionally left out here -- its own $5 stake is swept separately at
 // deal-time, and its win lines report a payout with no stake left on the felt to pair against.
 function djGhostChecks(){
-  return [[/^Ante:/,'ante'],[/^Blind:/,'blind'],[/^Trips:/,'trips'],[/^Bet/,'bet']];
+  return [[/^Ante:/,'ante'],[/^Blind:/,'blind'],[/^Trips:/,'trips'],[/^Two-Way Bad Beat/,'badbeat'],[/^Bet/,'bet']];
 }
 // Real dealer-style payout: a fresh stack holding ONLY the profit amount drops in from the top
 // of the screen, settles just barely touching the wager it's paying against, holds a beat,
