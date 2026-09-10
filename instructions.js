@@ -281,6 +281,45 @@ var INSTRUCTIONS_DATA = {
       +'<p>Flat $5 side bet on your final hand. Royal Flush wins the whole pool, Straight Flush wins 10% of the pool, Four of a Kind pays $75, Full House pays $10.</p>'
     }
   ] },
+  djwild: { title: '🃏 DJ Wild Stud Poker', pages: [
+    { body:
+      '<h3>The Core Loop</h3>'
+      +'<p>Place an <span class="bet-name">Ante</span> — a matching <span class="bet-name">Blind</span> bet locks in automatically alongside it. You and the dealer each get <b>5 cards</b> from a 53-card deck (52 + one Joker).</p>'
+      +'<p><b>Deuces and the Joker are fully wild</b> — five wild cards in all (the "DJ": Deuces &amp; Joker). A wild card becomes whatever card makes your best hand, so a brand-new hand tops out at <b>Five of a Kind</b>, which beats even a Royal Flush.</p>'
+      +'<p>After you see your five cards, either <b>Fold</b> (forfeiting your Ante &amp; Blind) or make the <span class="bet-name">Bet</span> — always exactly <span class="odds">2×</span> your Ante.</p>'
+      +'<p>There is <b>no dealer qualifier</b> — the dealer\'s hand always plays. If you beat the dealer, Ante and Bet each pay 1 to 1 and the Blind pays per the table. Tie the dealer and everything pushes. Lose and you lose Ante, Bet, and Blind.</p>'
+    },
+    { heading:'Blind Payout', body:
+      '<h3><span class="bet-name">Blind</span></h3>'
+      +'<p>Only pays when you win, and pushes (returns your stake) on a win below a Straight. The stronger your hand, the bigger the multiplier:</p>'
+      +'<ul>'
+      +'<li>Five of a Kind — <span class="odds">200:1</span></li>'
+      +'<li>Royal Flush — <span class="odds">50:1</span></li>'
+      +'<li>Straight Flush — <span class="odds">15:1</span></li>'
+      +'<li>Four of a Kind — <span class="odds">5:1</span></li>'
+      +'<li>Full House — <span class="odds">4:1</span></li>'
+      +'<li>Flush — <span class="odds">3:1</span></li>'
+      +'<li>Straight — <span class="odds">2:1</span></li>'
+      +'<li>Anything else (win) — Push</li>'
+      +'</ul>'
+    },
+    { heading:'Trips & The Light', body:
+      '<h3><span class="bet-name">Trips</span> (optional side bet)</h3>'
+      +'<p>Pays on your own 5-card hand regardless of the dealer or a fold. Needs three of a kind or better:</p>'
+      +'<ul>'
+      +'<li>Five of a Kind — <span class="odds">200:1</span></li>'
+      +'<li>Royal Flush — <span class="odds">50:1</span></li>'
+      +'<li>Straight Flush — <span class="odds">20:1</span></li>'
+      +'<li>Four of a Kind — <span class="odds">8:1</span></li>'
+      +'<li>Full House — <span class="odds">5:1</span></li>'
+      +'<li>Flush — <span class="odds">4:1</span></li>'
+      +'<li>Straight — <span class="odds">3:1</span></li>'
+      +'<li>Three of a Kind — <span class="odds">3:1</span></li>'
+      +'</ul>'
+      +'<h3><span class="bet-name">The Light</span> (progressive jackpot)</h3>'
+      +'<p>Flat $5 side bet on your own hand. Royal Flush wins the whole pool, Straight Flush wins 10% of the pool, Five of a Kind pays $300, Four of a Kind pays $75, Full House pays $10.</p>'
+    }
+  ] },
   iluvsuits: { title: '♠️ I ❤️ Suits', pages: [
     { body:
       '<h3>The Core Loop</h3>'

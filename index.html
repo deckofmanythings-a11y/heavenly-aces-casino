@@ -9,7 +9,7 @@
 <script src="audio-settings.js?v=1"></script>
 <script src="weekly-events.js?v=2"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
-<script src="instructions.js?v=7"></script>
+<script src="instructions.js?v=8"></script>
 <style>
 /* Matches the tier cards' own engraved-serif title font -- see dailies.html for the same
    pattern (this is where the "print the username on the card" idea started). */
@@ -260,6 +260,13 @@ input,textarea{-webkit-user-select:text;user-select:text}
       <div class="lt-icon">🀄</div>
       <div class="lt-label">PAI GOW</div>
       <div class="lt-sub">Face Up, Set Your Own Way</div>
+    </div>
+    <div class="lobby-tile" onclick="dNav('djwild.html')">
+      <button class="info-circle-btn" data-icalib="index:tile" data-icalib-box=".lobby-tile" onclick="showInstr(event,'djwild')" title="How to play">i</button>
+      <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>
+      <div class="lt-icon">🃏</div>
+      <div class="lt-label">DJ WILD</div>
+      <div class="lt-sub">Deuces &amp; Joker Wild Stud</div>
     </div>
     <div class="lobby-tile" onclick="dNav('phoenixlink.html')">
       <div class="status-badge status-alpha" onclick="toggleBadgeTip(event,this)">Alpha<span class="sb-tip">Alpha — early development, expect issues</span></div>

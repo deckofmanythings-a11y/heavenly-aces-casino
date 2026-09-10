@@ -179,6 +179,7 @@ const TASK_META={
   roulette:{icon:'🎡',label:'Make one Roulette bet'},
   paigow:{icon:'🀄',label:'Play one Pai Gow hand'},
   slots:{icon:'🔥',label:'Spin a Slot machine'},
+  djwild:{icon:'🃏',label:'Make one DJ Wild bet'},
 };
 // Where each task's GO button sends the player -- craps has no single canonical page
 // (Standard/Crapless are both craps.html with a mode query param), so it lands on
@@ -193,6 +194,7 @@ const GAME_URL={
   roulette:'roulette.html',
   paigow:'paigow.html',
   slots:'phoenixlink.html',
+  djwild:'djwild.html',
 };
 // Mirrors supabase/functions/_shared/dailies.ts computeTier() exactly -- display only,
 // the server is authoritative for the actual tier value (players.tier).
@@ -262,6 +264,7 @@ const QUEST_META={
   roulette:{game:'Roulette',label:'Win a single-number bet',sub:'Land a straight-up bet on the exact number — pays as if you’d bet $100 on it.'},
   paigow:{game:'Face Up Pai Gow',label:'Win an Ace High side bet',sub:'Hit the Ace High side bet — pays as if you’d bet $100 on it.'},
   slots:{game:'Phoenix Link',label:'Trigger the Hold & Spin',sub:'Land 6+ fire orbs to start the feature — pays $2,500 Free Play.'},
+  djwild:{game:'DJ Wild Stud Poker',label:'Win the Trips bonus bet',sub:'Three of a kind or better — pays as if you’d bet $100 on it.'},
 };
 
 function render(dailies,freePlayBalance,tier,username){

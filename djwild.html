@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Heavenly Aces I ❤️ Suits Poker</title>
+<title>Heavenly Aces DJ Wild Stud Poker</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
@@ -27,7 +27,7 @@
 html,body{height:100%;height:100dvh;overflow:hidden;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fff;position:fixed;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
 
-/* ── AUTH (ported wholesale from sicbo/craps/uth) ── */
+/* ── AUTH (ported wholesale from sicbo/craps) ── */
 #auth-screen{display:none;align-items:center;justify-content:center;height:100vh;padding:20px}
 .auth-box{background:#1a1a1a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:28px 24px;width:100%;max-width:340px}
 .auth-box h1{font-size:34px;font-weight:700;color:#ffd700;margin-bottom:3px}
@@ -67,82 +67,80 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .hud-lbl{font-size:17px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;line-height:1}
 .hud-val{font-size:19px;font-weight:600;line-height:1.3}
 
-/* Status zone */
+/* Status zone (replaces the dice-canvas of the dice games with a phase/result readout) */
 #status-zone{flex:1;background:rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;gap:4px;padding:4px}
 #status-phase{font-size:min(30px,4.4vw);font-weight:800;letter-spacing:.05em;color:#ffd700;text-transform:uppercase}
 #status-sub{font-size:min(18px,3vw);color:rgba(255,255,255,.55);text-align:center;line-height:1.3}
 
 /* ── TABLE AREA / FELT PANEL ── */
-/* Baked-art panel: iLuvSuits_Felt.webp has the Ante/Play/Flush Rush/Super Flush Rush
-   circles, both paytables, and the dealer-qualify line printed directly into the art.
-   Every interactive/informational element below is a %-positioned overlay measured
-   directly off the art's own 3200x1800 pixels (see panel-art skill reference) --
-   don't eyeball these, they came from ffmpeg+flood-fill pixel analysis. */
-#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:#0a2218;padding:4px;container-type:size}
-/* Contain-fit sizing (the CSS-only equivalent of an <img>'s object-fit:contain): width
-   and height are each the SMALLER of "fill this axis" vs. "what the other axis being
-   full would imply", so the panel always shrinks to fit both directions and never
-   distorts. A naive width:100%+max-height:100% (the previous approach) pins width at
-   the full container width regardless of aspect ratio, so on a viewport wider than
-   16:9 the derived height gets clamped by max-height while width stays put -- the box
-   ends up wider than 16:9 and background-size:100% 100% stretches the art to match. */
-#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background-image:url('iLuvSuits_Felt.webp');background-size:100% 100%;background-repeat:no-repeat;container-type:size}
+/* Plain CSS felt, no baked full-table art. DJ Wild's bet spots are drawn as CSS
+   circles directly on the felt (no baked bet-module image), the DJ Wild logo art
+   sits on the left as a decorative emblem, and The Light bulb art sits on the right.
+   Everything is positioned as %-of-#table-panel so it scales with the felt. */
+#table-area{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;background:var(--felt-rail);padding:4px;container-type:size}
+/* Contain-fit sizing (object-fit:contain equivalent) -- see iluvsuits.html for why
+   width:100%+max-height:100% stretches the art at wide aspect ratios. */
+#table-panel{position:relative;aspect-ratio:3200/1800;width:min(100cqw,177.78cqh);height:min(100cqh,56.25cqw);margin:auto;background:radial-gradient(ellipse at center,var(--felt-1) 0%,var(--felt-2) 70%,var(--felt-4) 100%);container-type:size}
 
-/* Card rows -- hidden (but space-reserving) until a hand is dealt. Cards are
-   absolutely positioned within their row (not flex) so the "sweat" reveal can
-   slide each one individually from a shared stack spot out into a fanned hand --
-   see sweatReveal() in the script below. */
-.card-region{position:absolute;display:flex;flex-direction:column;align-items:stretch;gap:0.6cqh}
-#dealer-region{left:5%;top:1%;width:90%;height:28%;justify-content:flex-start}
-#player-region{left:2%;top:34%;width:52%;height:26%;justify-content:center}
-.card-row{position:relative;width:100%;height:calc(var(--pc-w)*1.447);--pc-w:15cqh;opacity:0;transition:opacity .3s}
+/* DJ Wild logo emblem -- decorative, left of the bet-spot row. */
+#djwild-logo{position:absolute;left:1.5%;top:33%;width:23%;height:32%;object-fit:contain;pointer-events:none;user-select:none;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+
+/* Static felt-printed text, drawn directly on the open felt -- an engraved-serif
+   Google Font stands in for real printed felt type. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
+.felt-label{position:absolute;text-align:center;font-family:'Cinzel',serif;color:#ffe066;font-weight:800;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;z-index:2}
+#dealers-hand-label{left:25%;top:1%;width:50%;font-size:2.6cqh}
+#players-hand-label{left:25%;top:63.5%;width:50%;font-size:2.6cqh}
+/* "Deuces & the Joker are wild" printed reminder + "No dealer qualifier" note. */
+#wild-note-label{left:15%;top:29.6%;width:70%;font-size:1.7cqh;color:#ffd700;font-weight:700;letter-spacing:.02em}
+
+/* Card rows -- faded in/out (not display-toggled) so the felt panel never re-flows.
+   Five cards each, dealer top / player bottom, centered. */
+.card-region{position:absolute;display:flex;align-items:center;gap:1.5cqh}
+#dealer-region{left:12%;top:5%;width:76%;height:23%;flex-direction:row;justify-content:center}
+#player-region{left:12%;top:68%;width:76%;height:23%;flex-direction:row;justify-content:center}
+.card-row{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.4cqh;--pc-w:13cqh;opacity:0;transition:opacity .3s}
 .card-row.active{opacity:1}
-.card-row .pc-card{position:absolute;top:0;left:0;transition:left .5s cubic-bezier(.4,.2,.2,1)}
-/* Cards not part of the player's shown-off result on a Play (see applyDiscardVisual) --
-   same grayscale+dim treatment as a swept chip-ghost, just held in place instead of
-   sliding away, since discarding here is about de-emphasizing, not removing. */
-.pc-card.discarded{filter:grayscale(1) brightness(.55);opacity:.6;transition:filter .5s ease-out,opacity .5s ease-out}
-.panel-hand-text{font-size:2.3cqh;color:#ffd700;font-weight:700;text-align:center;min-height:2.8cqh;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+/* Live hand-strength text, centered under each card row. */
+.crl-hand{position:absolute;left:12%;width:76%;text-align:center;font-size:2.3cqh;color:#ffd700;font-weight:700;min-height:2.8cqh;white-space:nowrap;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+#dealer-hand-name{top:29.3%}
+#player-hand-name{top:92%}
 
-/* Bet-spot overlays -- invisible hit-regions positioned exactly over the printed
-   circles. The circle art + label ("ANTE","PLAY",etc) is baked in; a chip stack
-   dropped on top covers the label the same way a real chip covers felt lettering. */
+/* Bet spots -- CSS circles drawn on the felt. TRIPS / ANTE / BLIND / BET in a
+   centered row; a chip stack dropped on a spot covers its label the way a real chip
+   covers felt lettering. */
 .panel-spot{position:absolute;border-radius:50%;cursor:pointer}
 .panel-spot.locked{cursor:default}
 .panel-spot.inert{cursor:not-allowed}
-.panel-spot.active{}
-#ante-spot{left:56.88%;top:56.11%;width:5.31%;height:9.45%;--chip:8.5cqh}
-#play-spot{left:56.79%;top:68.11%;width:5.31%;height:9.45%;--chip:8.5cqh}
-#flushrush-spot{left:56.77%;top:44.30%;width:5.31%;height:9.45%;--chip:8.5cqh}
-#superflushrush-spot{left:63.80%;top:39.66%;width:5.31%;height:9.45%;--chip:8.5cqh}
+.bet-circle{aspect-ratio:1;border:0.4cqh solid rgba(255,224,102,.5);background:radial-gradient(circle at 50% 32%,rgba(255,255,255,.10),rgba(0,0,0,.30));box-shadow:inset 0 0 1.4cqh rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.4);z-index:2}
+.bet-circle.active{border-color:var(--active-ring,#ffd700);box-shadow:inset 0 0 1.4cqh rgba(0,0,0,.45),0 0 1.6cqh var(--active-glow,rgba(255,205,70,.55))}
+.bc-label{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:'Cinzel',serif;font-weight:800;color:#ffe066;font-size:2cqh;letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;z-index:1}
+#trips-spot{left:25%;top:40%;width:11%;--chip:9.6cqh}
+#ante-spot{left:38%;top:40%;width:11%;--chip:9.6cqh}
+#blind-spot{left:51%;top:40%;width:11%;--chip:9.6cqh}
+#bet-spot{left:64%;top:40%;width:11%;--chip:9.6cqh}
+/* Circle-i payout-table buttons at the top-right of each bet circle -- opens
+   #modal-paytable with the matching table (see openPaytable()/PAYTABLE_CONTENT). */
+.paytable-info-btn{position:absolute;border-radius:50%;background:rgba(0,0,0,.6);color:#ffd700;border:1.5px solid rgba(255,215,0,.6);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0;font-weight:800;width:3.6%;aspect-ratio:1}
+#trips-info{left:33.5%;top:37.5%}
+#ante-info{left:46.5%;top:37.5%}
+#blind-info{left:59.5%;top:37.5%}
+#bet-info{left:72.5%;top:37.5%}
+/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. lightOFF.webp
+   sits idle over open felt on the right and swaps for lightON.webp once the round's
+   dealt with the light on -- see updateUI(). */
+#light-off-img,#light-on-img,#light-spot{left:78%;top:33%;width:20.5%;height:32%}
+#light-spot{--chip:9cqh}
+#light-off-img,#light-on-img{position:absolute;object-fit:contain;pointer-events:none}
 .panel-spot-stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.8cqh;font-weight:700;color:#ffd700}
-/* THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt has no
-   baked-in bulb art (unlike UTH's), so both lightOFF.webp (idle) and lightON.webp (lit,
-   post-deal) are placed as floating overlays -- positioned in the open gap between the
-   Super Flush Rush circle and the I Luv Suits logo (per Deck's direction), sized to
-   match the other circle spots. */
-#light-off-img,#light-on-img{left:73.5%;top:37.1%;width:5.28%;height:9.39%}
-#light-spot{left:73.15%;top:36.48%;width:5.98%;height:10.63%;--chip:8.5cqh}
-/* Explicit z-index required: light-off-img/light-on-img carry their own positive
-   z-index, which paints above any sibling left at the default z-index:auto
-   regardless of DOM order -- without this, the $5 chip label underneath got
-   covered by the bulb art. */
-#light-spot{z-index:6}
-#light-info-btn{position:absolute;left:79.4%;top:38.6%;width:2.4%;height:4.3%;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+#light-info-btn{position:absolute;left:94.5%;top:30%;width:3.6%;aspect-ratio:1;border-radius:50%;background:rgba(0,0,0,.55);color:#ffd700;border:1px solid rgba(255,215,0,.5);font-size:1.6cqh;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;padding:0}
+/* Sweep-to-lit: the $5 chip at #light-spot vanishes and lightON.webp fades/pops in. */
 @keyframes lightUpPulse{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
 #light-on-img.lit-in{animation:lightUpPulse .6s ease-out}
-.progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
-.progressive-tier-row .prog-pay{color:#ffd700;font-weight:700}
 
-/* Contract-bet lock badge -- ported wholesale from craps' chip-lock convention (built
-   into the chip-stack markup itself, see chipStackHTML()) rather than a separately
-   floating element, which kept landing on the wrong ancestor box. */
+/* Contract-bet lock badge -- ported wholesale from craps/I Luv Suits' chip-lock
+   convention (built into the chip-stack markup itself, see chipStackHTML()). */
 .chip-stack .chip-lock{position:absolute;right:0;bottom:0;transform:translateX(35%);background:#b02020;color:#fff;font-size:calc(var(--chip)*0.25);line-height:1;padding:1px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.7);z-index:7;white-space:nowrap}
-
-/* Brief celebratory pulse for a bet spot that just hit (e.g. Super Flush Rush) --
-   distinct from the persistent .active glow used while a bet is simply staked. */
-@keyframes panel-spot-hit-pulse{0%,100%{box-shadow:0 0 0 0.3cqh rgba(255,215,0,.5)}50%{box-shadow:0 0 0 1.6cqh rgba(255,215,0,.9)}}
-.panel-spot.spot-hit{animation:panel-spot-hit-pulse .6s ease-in-out 3}
 
 /* ── BOTTOM SECTION ── */
 #bottom-section{display:flex;flex-direction:row;flex-shrink:0;height:calc(100vh * 2 / 16);height:calc(100dvh * 2 / 16);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
@@ -164,7 +162,14 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .log-line.lose{color:#f08080}
 #log-btn-uth{width:22px;height:22px;border-radius:50%;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #bottom-bar{display:flex;align-items:center;gap:3px;padding:2px 4px;background:rgba(0,0,0,.45);flex:1;min-height:0}
-.chip{width:52px;height:52px;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
+.nav-btn{background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;padding:3px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+/* Sized in vh (not fixed px) to track the felt's own cqh-based --chip size as the viewport
+   resizes -- #table-area/#bets-module's whole chain scales with vh in this layout (see
+   #top-row/#bottom-section's calc(100vh*N/16) heights), so 5.64vh lands within a fraction of
+   a px of the felt spots' chip diameter across a wide range of window sizes, verified at
+   900px, 1200px, and 750px viewport heights. Was a flat 52px, visibly mismatched (~52 vs
+   ~50.7px measured) -- new scope for this pass, not checked before. */
+.chip{width:5.64vh;height:5.64vh;border-radius:50%;font-size:15px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:transform .1s;flex-shrink:0;color:#111;background:transparent center/100% 100% no-repeat;text-shadow:0 0 3px #fff,0 0 5px #fff}
 .chip[data-val="1"]{background-image:url('chip-blank-1.webp')}
 .chip[data-val="2"]{background-image:url('chip-blank-2.webp')}
 .chip[data-val="3"]{background-image:url('chip-blank-3.webp')}
@@ -188,18 +193,20 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bar-btn:disabled{opacity:.35;cursor:not-allowed}
 #hud-pnl{font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px}
 
-/* Action buttons (Deal / Fold / Raise) -- share the same DOM slot, up to 4 visible at once
-   (Fold + 1X/2X/3X for a 6-or-7-card flush). #action-row sits beside #bottom-left (flex:1)
-   inside #bottom-section, so if this row's width tracked its own content, #bottom-left would
-   shrink/grow as the button count changed (1 to 4, depending on flush strength) and everything
-   inside it -- including the Repeat button -- would visibly shift. Fixed width (sized for the
-   widest case, Fold+1X+2X+3X) keeps #bottom-left's available space constant regardless of hand;
-   .action-btn's flex:1 then just spreads however many buttons are visible evenly. */
-#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch;width:min(480px,68vw)}
+/* Action buttons (Deal / Check / Fold / Raise) -- share the same DOM slot, one subset visible per
+   phase (1 button betting, up to 3 preflop). #action-row sits beside #bottom-left (flex:1) inside
+   #bottom-section, so if this row's width tracked its own content, #bottom-left would shrink/grow
+   as the phase's button count changed and everything inside it -- including the Repeat button --
+   would visibly shift. Fixed width (sized for the widest phase, preflop's 3 buttons) keeps
+   #bottom-left's available space constant regardless of phase; .action-btn's flex:1 then just
+   spreads however many buttons are visible across that fixed width evenly. */
+#action-row{display:flex;flex-direction:row;flex-shrink:0;align-self:stretch;width:min(340px,46vw)}
 .action-btn{background:linear-gradient(180deg,#ffe066 0%,#c8a200 100%);border:none;border-radius:0;color:#111;font-size:min(22px,3.2vw);font-weight:900;padding:6px 14px;cursor:pointer;flex:1;letter-spacing:.05em;box-shadow:inset -2px 0 0 #7a5c00;text-shadow:0 1px 0 rgba(255,255,255,.3);transition:all .1s;align-self:stretch;border-left:2px solid #7a5c00}
 .action-btn:hover{background:linear-gradient(180deg,#fff0a0 0%,#e6bb00 100%)}
 .action-btn:active{filter:brightness(.9)}
 .action-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.action-btn.secondary{background:linear-gradient(180deg,#e8e8e8 0%,#a8a8a8 100%);box-shadow:inset -2px 0 0 #666;border-left-color:#666}
+.action-btn.secondary:hover{background:linear-gradient(180deg,#fff 0%,#ccc 100%)}
 .action-btn.danger{background:linear-gradient(180deg,#ff8a80 0%,#b71c1c 100%);box-shadow:inset -2px 0 0 #7a0000;border-left-color:#7a0000;color:#fff}
 .action-btn.danger:hover{background:linear-gradient(180deg,#ffb0a8 0%,#d32f2f 100%)}
 
@@ -222,8 +229,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
 #modal-log .log-entries p.win{color:#7ee87e}
 #modal-log .log-entries p.lose{color:#f08080}
 #modal-log .log-entries p.info{color:#ffe066}
+.progressive-tier-row{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:15px}
+.progressive-tier-row .prog-pay{color:#ffd700;font-weight:700}
 
-/* Bet-box chip stacks -- ported wholesale from craps/sicbo/uth */
+/* Bet-box chip stacks -- ported wholesale from craps/sicbo/I Luv Suits */
 body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .has-stack{position:absolute;left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:var(--chip);min-height:0;pointer-events:none;z-index:6;display:block}
 .chip-stack{position:relative;display:block;width:100%;user-select:none;-webkit-user-select:none}
@@ -232,11 +241,12 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .chip-stack .chip-img{position:absolute;left:0;width:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .chip-stack .chip-amt{position:absolute;left:0;width:100%;height:var(--chip);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;pointer-events:none}
 
-/* Win/loss chip-ghost sweep -- ported wholesale from craps/sicbo/uth.
+/* Win/loss chip-ghost sweep -- ported wholesale from craps/sicbo.
    z-index MUST beat WinnerModal's own #wm-modal-winner overlay (z-index:200, see
-   winner-modal.js) -- the same class of bug found in craps (cloche-dice.js's 9999 overlay)
-   and UTH (WinnerModal itself, 200 vs the old 150 here) -- any ghost still animating when
-   the modal opens would otherwise render entirely underneath it. */
+   winner-modal.js) -- WinnerModal.show() fires in the SAME synchronous block as
+   spawnUthGhosts() with no delay, so a ghost below 200 renders entirely underneath the
+   celebration overlay for its whole ~1.5s lifecycle (found and fixed the same class of bug
+   in craps first, there caused by a different overlay -- cloche-dice.js's dice-roll layer). */
 .chip-ghost{position:fixed;z-index:10000;pointer-events:none;filter:none;opacity:1;transition:filter .35s ease-out}
 .chip-ghost.dim{filter:grayscale(1) brightness(.55)}
 .chip-ghost.sweep{transform:translateY(-130vh);opacity:0;transition:transform .55s ease-in,opacity .55s ease-in}
@@ -284,24 +294,16 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
 .voucher-row-btn:hover{background:rgba(255,215,0,.3)}
 
 /* ══════════════ PORTRAIT MODE ══════════════
-   Same approach as uth.html's portrait mode: iLuvSuits_port.webp is a full-screen
-   background (top ~6% and bottom ~21% reserved as UI bands), with felt/cards/bet-circles
-   in the middle. Bet-spot positions were measured directly off the art via pixel
-   clustering (not eyeballed); dealer/player card-region positions are placed in the open
-   felt per Deck's direction (dealer above the baked "DEALER QUALIFIES..." text, player in
-   the open gap between that text and the bet-circle cluster) since this art has no
-   labeled reference boxes the way uth_port_card_and_ui_areas.webp did. See the
-   IS_PORTRAIT-branched fan-geometry constants in the script for why --pc-w here must
-   stay in sync with CARD_W_CQH in JS -- this game's 7-card fan positions are computed
-   once in JS from that constant, unlike uth.html's pure-CSS margin trick. */
+   Same CSS-circle felt as landscape, restacked for a tall panel: dealer 5 cards up
+   top, the DJ Wild logo as a slim banner, a single row of four bet circles, The Light
+   below them, and the player's 5 cards near the bottom. Secondary info-panel actions
+   (Redeem/Cash Out/Dailies/Log Out) and the mode-toggle have no room in the 6% header
+   band and are hidden here rather than crammed in. */
 @media (orientation:portrait){
   #game-screen{position:relative}
 
   /* Discord's mobile Activity sheet draws its own drag-handle/title/Leave bar as an
-     overlay on top of the page rather than pushing content down -- top:0 here would
-     land username/balance directly underneath it, hidden. 44px is an estimate of that
-     overlay's height pending live confirmation; nudge if it's still covered or leaves
-     too big a gap. */
+     overlay on top of the page -- 44px clears it so the header isn't hidden. */
   #top-row{position:absolute;top:44px;left:0;right:0;height:6.03dvh;flex-direction:row;border-bottom:none;z-index:2}
   #left-col-header{display:none}
   #info-panel{width:100%;max-width:none;min-width:0;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:2px 10px}
@@ -309,60 +311,69 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   #info-panel .hud-grid{display:flex;gap:10px}
   #info-panel .hud-item:not(:has(#hud-bankroll)){display:none}
 
-  #status-zone{position:fixed;flex:none;width:auto;height:auto;top:27.7dvh;left:8dvw;right:8dvw;background:rgba(0,0,0,.6);border:1px solid rgba(255,215,0,.25);border-radius:6px;padding:3px 8px;z-index:3}
+  /* Phase/status readout floats as a banner over the open felt in the gap between the
+     dealer's cards and the bet row. */
+  #status-zone{position:fixed;flex:none;width:auto;height:auto;top:72.5dvh;left:8dvw;right:8dvw;background:rgba(0,0,0,.6);border:1px solid rgba(255,215,0,.25);border-radius:6px;padding:3px 8px;z-index:3}
   #status-phase{font-size:14px}
   #status-sub{display:none}
 
   #table-area{position:absolute;inset:0;padding:0;z-index:1}
-  #table-panel{background-image:url('iLuvSuits_port.webp');aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
+  #table-panel{aspect-ratio:375/812;width:min(100cqw,46.18cqh);height:min(100cqh,216.53cqw)}
 
-  /* Shifted down from the original measured position -- the header's own 44px push (to
-     clear Discord's chrome overlay) ate into the top of this zone, and the baked
-     "DEALER QUALIFIES..." text below is a fixed art position that can't move to
-     compensate, so this zone gets less vertical room than before. --pc-w:8cqh cards
-     (94px tall at this game's 1.447 aspect multiplier) still fit within the smaller
-     13.5% band with room for the hand-strength text under them. */
-  #dealer-region{left:7.5%;top:11.7%;width:85%;height:13.5%}
-  #player-region{left:7.5%;top:29%;width:85%;height:22%}
-  .card-row{--pc-w:8cqh}
+  /* Vertical budget: the header overlays the top ~12% and the bottom bar the bottom
+     ~21%, so all felt content lives between ~12% and ~78%. */
+  #djwild-logo{left:33%;top:11.7%;width:34%;height:5.5%}
+  #dealers-hand-label{left:5%;top:17.4%;width:90%;font-size:1.5cqh}
+  #dealer-region{left:3%;top:19.4%;width:94%;height:9.5%;justify-content:center}
+  #dealer-hand-name{top:28.8%;font-size:1.5cqh}
+  #wild-note-label{left:3%;top:31%;width:94%;font-size:1.1cqh}
+  #players-hand-label{left:5%;top:57%;width:90%;font-size:1.5cqh}
+  #player-region{left:3%;top:59%;width:94%;height:9.5%;justify-content:center}
+  #player-hand-name{top:68.6%;font-size:1.5cqh}
 
-  #flushrush-spot{left:43.17%;top:58.36%;width:11.54%;height:5.33%}
-  #ante-spot{left:43.40%;top:64.99%;width:11.08%;height:5.12%}
-  #play-spot{left:43.40%;top:71.52%;width:11.08%;height:5.12%}
-  #superflushrush-spot{left:56.23%;top:55.28%;width:13.15%;height:5.83%}
-  /* THE LIGHT: portrait felt has the Super Flush Rush circle and the logo nearly
-     touching corner-to-corner, so there's no real gap between them -- placed just
-     above that cluster instead, biased toward the logo side. */
-  #light-off-img,#light-on-img{left:65%;top:45%;width:14%;height:7%}
-  #light-spot{left:64.08%;top:44.54%;width:15.85%;height:7.92%}
-  #light-info-btn{left:79.5%;top:45.5%;width:5%;height:2.5%}
+  .card-row{--pc-w:7cqh}
+
+  /* Bet circles: single centered row of four. */
+  #trips-spot{left:5%;top:34.5%;width:20%;--chip:5cqh}
+  #ante-spot{left:28%;top:34.5%;width:20%;--chip:5cqh}
+  #blind-spot{left:51%;top:34.5%;width:20%;--chip:5cqh}
+  #bet-spot{left:74%;top:34.5%;width:20%;--chip:5cqh}
+  .bc-label{font-size:1.5cqh}
+  #trips-info{left:21.5%;top:32.3%;width:5.5%}
+  #ante-info{left:44.5%;top:32.3%;width:5.5%}
+  #blind-info{left:67.5%;top:32.3%;width:5.5%}
+  #bet-info{left:90.5%;top:32.3%;width:5.5%}
+
+  /* The Light: centered band below the bet row. */
+  #light-off-img,#light-on-img,#light-spot{left:34%;top:45%;width:32%;height:10%}
+  #light-spot{--chip:5.5cqh}
+  #light-info-btn{left:64%;top:44.5%;width:5.5%}
 
   #bottom-section{position:absolute;bottom:0;left:0;right:0;height:21.31dvh;flex-direction:column;z-index:2}
   #bottom-left{flex:1;height:auto}
   #history-strip{display:none}
   #bottom-bar{flex-wrap:nowrap;gap:2px;padding:2px 3px}
   .chip[data-val="2"],.chip[data-val="3"],.chip[data-val="10"],.chip[data-val="50"]{display:none}
-  .chip{width:42px;height:42px;font-size:12px}
+  /* Same vh-tracking approach as landscape's .chip rule -- verified at 900px and 750px
+     viewport heights, holds to ~3.90vh both times. Was a flat 42px vs felt's ~35.1px. */
+  .chip{width:3.9vh;height:3.9vh;font-size:12px}
   .bar-btn{font-size:13px;padding:3px 5px;height:24px}
-  #sweat-speed-btn{display:none}
   #hud-pnl{font-size:15px;padding:0 2px}
   #action-row{width:100%;height:auto;flex:1}
 }
 
 /* ── BOARD COLOUR ─────────────────────────────────────────────────────────────
-   This board's art IS the layout, so each palette swaps in a colour-graded copy
-   (tools/grade_felt_art.py) rather than recolouring anything in CSS. The grade
-   shifts hue only inside the green band and preserves each pixel's luminance, so
-   the table stays a FELT rather than turning cream. That matters: the gold rules
-   text and white paytables are baked into the photograph, and lifting the ground to a
-   light tone would make both vanish with no stylesheet able to reach them.
-   Casino Green below is the uploaded art, unmodified. */
+   The felt is CSS and themes freely. The DJ Wild logo emblem and The Light bulb art
+   are NOT recoloured: they carry brand marks, and a recoloured trademark reads as
+   broken rather than themed (same reason Destroyer's FIRE button keeps its red on
+   every palette). The bet-spot circles are plain CSS, so they theme via the palette
+   tokens (--active-ring/--active-glow) below like every other felt element. */
 [data-felt="classic"],.felt-classic{
   --theme-label:"Casino Green";--theme-scheme:dark;
-  --felt-1:#1c7a44;--felt-2:#12572f;--felt-3:#176b3a;--felt-4:#0c3d21;--felt-rail:#0a2a14;
+  --felt-1:#0f3324;--felt-2:#081f16;--felt-3:#0c2a1d;--felt-4:#051209;--felt-rail:#0a2218;
   --vein-hi:rgba(140,220,175,.14);--vein-lo:rgba(4,18,9,.35);
   --glow-hi:rgba(60,140,95,.40);--glow-lo:rgba(4,18,9,.55);
-  --edge-1:#061109;--edge-2:#c9a944;--edge-3:#f2e6b8;--edge-4:#8a6a1c;--edge-glow:rgba(255,215,0,.12);
+  --edge-1:#061109;--edge-2:rgba(255,215,0,.15);--edge-3:#f2e6b8;--edge-4:#8a6a1c;--edge-glow:rgba(255,215,0,.12);
   --metal:linear-gradient(155deg,#7d5a10 0%,#cfa73c 10%,#f7edc0 21%,#dbbb5e 33%,#ac8628 47%,#7d5a10 59%,#c5a338 73%,#efe1a8 85%,#9a761c 100%);
   --box-1:#15462f;--box-2:#0f3324;--box-3:#0a2418;
   --box-shade:rgba(0,0,0,.34);--drop-shade:rgba(0,0,0,.42);
@@ -371,20 +382,7 @@ body{--chip:70px;--edge:calc(var(--chip)*0.16)}
   --ink:#ffffff;--ink-rgb:255,255,255;--ink-soft:rgba(255,255,255,.6);
   --ink-accent:#ffe066;--ink-accent-rgb:255,224,102;--ink-good:#7ee87e;
 }
-body[data-felt="ivory"] #table-panel{background-image:url('iLuvSuits_Felt_ivory.webp?v=1')}
-body[data-felt="emerald"] #table-panel{background-image:url('iLuvSuits_Felt_emerald.webp?v=1')}
-body[data-felt="obsidian"] #table-panel{background-image:url('iLuvSuits_Felt_obsidian.webp?v=1')}
-body[data-felt="sapphire"] #table-panel{background-image:url('iLuvSuits_Felt_sapphire.webp?v=1')}
-body[data-felt="burgundy"] #table-panel{background-image:url('iLuvSuits_Felt_burgundy.webp?v=1')}
-body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.webp?v=1')}
-@media (orientation:portrait){
-  body[data-felt="ivory"] #table-panel{background-image:url('iLuvSuits_port_ivory.webp?v=1')}
-  body[data-felt="emerald"] #table-panel{background-image:url('iLuvSuits_port_emerald.webp?v=1')}
-  body[data-felt="obsidian"] #table-panel{background-image:url('iLuvSuits_port_obsidian.webp?v=1')}
-  body[data-felt="sapphire"] #table-panel{background-image:url('iLuvSuits_port_sapphire.webp?v=1')}
-  body[data-felt="burgundy"] #table-panel{background-image:url('iLuvSuits_port_burgundy.webp?v=1')}
-  body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_port_rose.webp?v=1')}
-}
+
 </style>
 </head>
 <body>
@@ -392,7 +390,7 @@ body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.we
 <!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
-    <h1>🃏 Heavenly Aces I ❤️ Suits</h1>
+    <h1>🃏 Heavenly Aces DJ Wild</h1>
     <p>Hosted by Deck</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Log In</button>
@@ -445,11 +443,21 @@ body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.we
       <div style="text-align:center;font-size:15px;color:rgba(255,255,255,.6);margin-bottom:10px">A shared jackpot across every table. $5 to play.</div>
       <div style="text-align:center;font-size:34px;font-weight:900;color:#ffd700;margin:10px 0" id="progressive-pool-display">$1,000.00</div>
       <div style="font-size:14px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:14px">$2.50 of every $5 bet feeds the pool. The rest funds the fixed prizes below and the house.</div>
-      <div class="progressive-tier-row"><span>7-Card Straight Flush</span><span class="prog-pay">100% of pool</span></div>
-      <div class="progressive-tier-row"><span>6-Card Straight Flush</span><span class="prog-pay">10% of pool</span></div>
-      <div class="progressive-tier-row"><span>5-Card Straight Flush</span><span class="prog-pay">$75</span></div>
-      <div class="progressive-tier-row"><span>4-Card Straight Flush</span><span class="prog-pay">$10</span></div>
+      <div class="progressive-tier-row"><span>Royal Flush</span><span class="prog-pay">100% of pool</span></div>
+      <div class="progressive-tier-row"><span>Straight Flush</span><span class="prog-pay">10% of pool</span></div>
+      <div class="progressive-tier-row"><span>Five of a Kind</span><span class="prog-pay">$300</span></div>
+      <div class="progressive-tier-row"><span>Four of a Kind</span><span class="prog-pay">$75</span></div>
+      <div class="progressive-tier-row"><span>Full House</span><span class="prog-pay">$10</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:8px">Paid on your own 5-card hand (Deuces & the Joker are wild), win or lose.</div>
       <button class="modal-btn cancel" onclick="closeProgressiveModal()" style="margin-top:12px">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="modal-paytable">
+    <div class="modal-box dark" style="max-height:80vh;overflow-y:auto">
+      <div class="modal-title" style="text-align:center" id="paytable-title">Paytable</div>
+      <div id="paytable-body"></div>
+      <button class="modal-btn cancel" onclick="closePaytable()" style="margin-top:12px">Close</button>
     </div>
   </div>
 
@@ -457,16 +465,16 @@ body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.we
   <div id="top-row">
     <!-- Game Selector -->
     <div id="left-col-header">
-      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.28</div>
+      <div id="version-tag" style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.04em;text-align:center">Ver. 0.1.0</div>
       <div id="game-mode-toggle" style="display:flex;align-items:center;gap:4px">
         <button class="gmode-btn gmode-btn-home" onclick="dNav('index.html')" style="flex:1">🏠 HOME<span class="gmode-sub">Choose a game</span></button>
-        <button class="info-circle-btn" data-icalib="iluvsuits:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('iluvsuits')" title="How to play">i</button>
+        <button class="info-circle-btn" data-icalib="djwild:header" data-icalib-box="#game-screen" onclick="GameInstructions.open('djwild')" title="How to play">i</button>
       </div>
     </div>
     <!-- Status zone -->
     <div id="status-zone">
       <div id="status-phase">Place Your Ante</div>
-      <div id="status-sub">Flush Rush and Super Flush Rush are optional side bets.</div>
+      <div id="status-sub">Blind bet auto-matches your Ante. Trips is optional.</div>
     </div>
     <!-- Info panel -->
     <div id="info-panel">
@@ -492,37 +500,54 @@ body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.we
   <div id="table-area">
     <div id="table-panel">
 
+      <img id="djwild-logo" src="djwild_logo.webp" alt="DJ Wild Stud Poker">
+
       <div class="card-region" id="dealer-region">
         <div class="card-row" id="dealer-row"></div>
-        <span class="panel-hand-text" id="dealer-hand-name"></span>
       </div>
       <div class="card-region" id="player-region">
         <div class="card-row" id="player-row"></div>
-        <span class="panel-hand-text" id="player-hand-name"></span>
       </div>
 
-      <div class="panel-spot" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
+      <span class="felt-label" id="dealers-hand-label">Dealer's Hand</span>
+      <span class="felt-label" id="players-hand-label">Player's Hand</span>
+      <span class="crl-hand" id="dealer-hand-name"></span>
+      <span class="crl-hand" id="player-hand-name"></span>
+      <span class="felt-label" id="wild-note-label">Deuces &amp; the Joker are wild &nbsp;•&nbsp; Dealer always plays — no qualifier</span>
+
+      <!-- Bet spots: CSS circles drawn directly on the felt. Ante & Blind lock together
+           at Deal; the Bet (2x Ante) is committed by the BET action button, not staged
+           here (its circle just shows the resulting chip). Trips is an optional side bet. -->
+      <div class="panel-spot bet-circle" id="trips-spot" onclick="placeBet('trips')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('trips')">
+        <span class="bc-label">TRIPS</span>
+        <span class="panel-spot-stk" id="stk-trips"></span>
+      </div>
+      <button class="paytable-info-btn" id="trips-info" onclick="event.stopPropagation();openPaytable('trips')" title="Trips Paytable">i</button>
+      <div class="panel-spot bet-circle" id="ante-spot" onclick="placeBet('ante')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('ante')">
+        <span class="bc-label">ANTE</span>
         <span class="panel-spot-stk" id="stk-ante"></span>
       </div>
-      <div class="panel-spot" id="flushrush-spot" onclick="placeBet('flushRush')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('flushRush')">
-        <span class="panel-spot-stk" id="stk-flushrush"></span>
+      <button class="paytable-info-btn" id="ante-info" onclick="event.stopPropagation();openPaytable('ante')" title="Ante Rules">i</button>
+      <div class="panel-spot bet-circle locked" id="blind-spot">
+        <span class="bc-label">BLIND</span>
+        <span class="panel-spot-stk" id="stk-blind"></span>
       </div>
-      <div class="panel-spot" id="superflushrush-spot" onclick="placeBet('superFlushRush')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('superFlushRush')">
-        <span class="panel-spot-stk" id="stk-superflushrush"></span>
+      <button class="paytable-info-btn" id="blind-info" onclick="event.stopPropagation();openPaytable('blind')" title="Blind Paytable">i</button>
+      <div class="panel-spot bet-circle inert" id="bet-spot">
+        <span class="bc-label">BET</span>
+        <span class="panel-spot-stk" id="stk-bet"></span>
       </div>
-      <div class="panel-spot inert" id="play-spot">
-        <span class="panel-spot-stk" id="stk-play"></span>
-      </div>
+      <button class="paytable-info-btn" id="bet-info" onclick="event.stopPropagation();openPaytable('bet')" title="Bet Rules">i</button>
 
-      <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. This felt
-           has no baked-in bulb art, so lightOFF.webp sits idle over open felt and swaps
-           for lightON.webp once the round's dealt with the light on -- see updateUI(). -->
+      <!-- THE LIGHT: shared cross-game progressive, flat $5, no chip choice. lightOFF.webp
+           sits idle over open felt and swaps for lightON.webp once the round's dealt with
+           the light on -- see updateUI(). -->
       <div class="panel-spot" id="light-spot" onclick="toggleProgressive()" oncontextmenu="event.preventDefault();event.stopPropagation();toggleProgressive()" title="The Light — $5 progressive jackpot bet">
         <span class="panel-spot-stk" id="stk-light"></span>
       </div>
-      <img id="light-off-img" src="lightOFF.webp" alt="" style="position:absolute;pointer-events:none;z-index:4">
-      <img id="light-on-img" src="lightON.webp" alt="" style="display:none;position:absolute;pointer-events:none;z-index:5">
-      <button id="light-info-btn" data-icalib="iluvsuits:light" data-icalib-unit="pct" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
+      <img id="light-off-img" src="lightOFF.webp" alt="" style="z-index:1">
+      <img id="light-on-img" src="lightON.webp" alt="" style="display:none;z-index:2">
+      <button id="light-info-btn" onclick="event.stopPropagation();openProgressiveModal()" title="The Light — Progressive Paytable">i</button>
 
     </div>
   </div>
@@ -545,7 +570,6 @@ body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.we
         <div class="chip" data-val="100" onclick="selectChip(100)">$100</div>
 <div class="chip" data-val="500" onclick="selectChip(500)">$500</div>
           <div class="chip" data-val="1000" onclick="selectChip(1000)">$1000</div>
-        <button class="bar-btn" id="sweat-speed-btn" onclick="cycleSweatSpeed()" title="Cycles Slow/Normal/Fast">Sweat: Normal</button>
         <div style="flex:1"></div>
         <span id="hud-pnl" style="font-size:21px;font-weight:700;color:#7ee87e;flex-shrink:0;padding:0 4px">+$0.00</span>
         <button class="bar-btn danger" id="clear-btn" onclick="clearBets()">Clear</button>
@@ -555,9 +579,7 @@ body[data-felt="rose"] #table-panel{background-image:url('iLuvSuits_Felt_rose.we
     <div id="action-row">
       <button class="action-btn" id="btn-deal" onclick="dealHand()">DEAL</button>
       <button class="action-btn danger" id="btn-fold" onclick="doFold()" style="display:none">FOLD</button>
-      <button class="action-btn" id="btn-raise-1x" onclick="doRaise(1)" style="display:none">1X</button>
-      <button class="action-btn" id="btn-raise-2x" onclick="doRaise(2)" style="display:none">2X</button>
-      <button class="action-btn" id="btn-raise-3x" onclick="doRaise(3)" style="display:none">3X</button>
+      <button class="action-btn" id="btn-bet" onclick="doBet()" style="display:none">BET 2X</button>
     </div>
   </div>
 
@@ -608,12 +630,29 @@ if(isDiscordActivity()){
       if(!el)return;
       const code=el.getAttribute(attr);
       if(!code)return;
-      let stopped=false;const origStop=e.stopPropagation.bind(e);
-      e.stopPropagation=function(){stopped=true;origStop();};
-      Object.defineProperty(e,'currentTarget',{value:el,configurable:true});
-      try{new Function('event',code).call(el,e);}
+      // Wrap `e` in a disposable Proxy instead of mutating the real Event object's own shape
+      // (the old code did Object.defineProperty(e,'currentTarget',...) + reassigned
+      // e.stopPropagation on every single tap, then tried to undo it in a finally block).
+      // Shadowing an accessor inherited from Event.prototype with an own data property forces
+      // a native/host object into a non-default internal shape -- on Chromium that's just
+      // wasteful, but on WebKit a native Event mutated this way, combined with the app code
+      // it invokes touching other live DOM elements in the same tick, was never fully released
+      // even after this listener returns (confirmed: this is Discord-only code, since
+      // isDiscordActivity() gates it, and Discord was the one context where the slowdown kept
+      // recurring after the WinnerModal coin-animation fix). The proxy is a plain, ordinary
+      // object with no ties to the native Event's internals, so it carries none of that risk --
+      // `e` itself is never touched.
+      let stopped=false;
+      const proxy=new Proxy(e,{
+        get(target,prop){
+          if(prop==='currentTarget')return el;
+          if(prop==='stopPropagation')return function(){stopped=true;target.stopPropagation();};
+          const v=Reflect.get(target,prop,target);
+          return typeof v==='function'?v.bind(target):v;
+        }
+      });
+      try{new Function('event',code).call(el,proxy);}
       catch(err){console.error('Discord CSP inline-handler shim error ('+type+'):',err);}
-      finally{e.stopPropagation=origStop;delete e.currentTarget;}
       if(stopped)e.stopImmediatePropagation();
     });
   });
@@ -632,11 +671,11 @@ const FN_HEADERS={'Content-Type':'application/json','Authorization':'Bearer '+SU
 function makeInitialG(){
   return {
     bankroll:0,freePlay:0,startingBankroll:0,chip:25,
-    bets:{ante:0,flushRush:0,superFlushRush:0,progressive:0},
-    playBet:0,       // staged locally in the Play spot, only sent to the server on PLAY
+    bets:{ante:0,trips:0,progressive:0},
+    betBet:0,        // the committed Bet (2x Ante), staged locally on BET before the server confirms
     phase:'betting', // betting|dealt|showdown
-    hand:null,       // {playerHand:[7 cards], dealerHand:null|[7 cards]}
-    locked:{ante:0,flushRush:0,superFlushRush:0,progressive:false},
+    hand:null,       // {playerCards,dealerCards}
+    locked:{ante:0,blind:0,trips:0,progressive:false},
     lastWin:0,lastBetDisplay:0,lastBetSnapshot:null,
     history:[],
     cardEls:null,
@@ -645,18 +684,15 @@ function makeInitialG(){
 }
 let G=makeInitialG();
 let currentPlayer=null,_authMode='login';
-// Deal/sweat animation lifecycle guards -- see dealHand() and the visibilitychange
-// handler below for how these prevent overlapping deals and stalled-tab reveals.
-let dealAnimInProgress=false;
-let pendingDealTimeouts=[];
-// Warm the image cache for every card face as soon as the script loads -- well before
-// the first deal is even possible (needs auth + a placed Ante) -- so the sweat reveal
-// never has to fetch+decode a face image on the fly mid-animation. Guarded so a stale
-// cached cards.js (missing preloadAll) degrades to "no preload" instead of aborting
-// this entire script and leaving the page blank.
-try{Cards.preloadAll();}catch(e){console.error('Cards.preloadAll failed:',e);}
 
-function tBets(){return r2(Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0)+G.playBet);}
+// Blind always mirrors Ante 1:1 but has no entry of its own in G.bets, so its cost has
+// to be added in here explicitly while still staging (once dealt, G.bets is cleared and
+// the locked Ante/Blind/Trips live in G.locked instead, outside tBets' job).
+function tBets(){
+  const betsTotal=Object.values(G.bets).reduce((a,b)=>r2(a+(b||0)),0);
+  const blindMirror=G.phase==='betting'?(G.bets.ante||0):0;
+  return r2(betsTotal+blindMirror+G.betBet);
+}
 function calcNet(){return r2(G.bankroll+tBets()-G.startingBankroll);}
 function checkBroke(){if(G.bankroll<=0&&tBets()===0)setTimeout(()=>openRedeemModal(true),300);}
 
@@ -667,110 +703,104 @@ function closeLogModal(){document.getElementById('modal-log').classList.add('hid
 function addLog(t,c){const el=document.getElementById('log');const p=document.createElement('p');p.className=c||'';p.textContent=t;el.prepend(p);while(el.children.length>80)el.removeChild(el.lastChild);}
 
 // ── HAND EVALUATION (display only -- the server is authoritative for payouts; this
-// mirrors roll-iluvsuits' evaluator so the hand banners can update without a round
-// trip). Ranking: most cards of one suit wins; ties broken by that suit's ranks.
-// A bare 2-card flush ("Rainbow") is the worst possible 7-card hand -- guaranteed by
-// the pigeonhole principle, so it's not a rare edge case -- and Deck's house rules
-// only let a player Fold on it, no Play option. ──────────────────────────────────
+// mirrors roll-uth's evaluator so the "your hand" banner can update live as cards
+// are revealed, without waiting on a round trip) ─────────────────────────────────
 const RANK_NAME={14:'Ace',13:'King',12:'Queen',11:'Jack',10:'10',9:'9',8:'8',7:'7',6:'6',5:'5',4:'4',3:'3',2:'2'};
-const SUITS=['S','H','D','C'];
-function compareRankArrays(a,b){
-  const len=Math.max(a.length,b.length);
-  for(let i=0;i<len;i++){const av=a[i]||0,bv=b[i]||0;if(av!==bv)return av-bv;}
+const RANK_PLURAL={14:'Aces',13:'Kings',12:'Queens',11:'Jacks',10:'10s',9:'9s',8:'8s',7:'7s',6:'6s',5:'5s',4:'4s',3:'3s',2:'2s'};
+// The five wilds: the Joker (cards.js sentinel {r:0,s:'JK'}) and every deuce.
+function isWild(c){return c.s==='JK'||c.r===2;}
+// evaluate5 scores five CONCRETE cards (bestWild5 resolves wilds before calling it).
+// cat: 9=Five of a Kind 8=Straight Flush 7=Quads 6=Full House 5=Flush 4=Straight
+//      3=Trips 2=Two Pair 1=Pair 0=High Card.
+function evaluate5(cards){
+  const ranks=cards.map(c=>c.r).sort((a,b)=>b-a);
+  const suits=cards.map(c=>c.s);
+  const isFlush=suits.every(s=>s===suits[0]);
+  const uniq=Array.from(new Set(ranks)).sort((a,b)=>b-a);
+  let straightHigh=0;
+  if(uniq.length===5){
+    if(uniq[0]-uniq[4]===4)straightHigh=uniq[0];
+    else if(uniq.join(',')==='14,5,4,3,2')straightHigh=5;
+  }
+  const counts={};
+  for(const r of ranks)counts[r]=(counts[r]||0)+1;
+  const groups=Object.entries(counts).map(([r,c])=>({r:+r,c})).sort((a,b)=>b.c-a.c||b.r-a.r);
+  if(groups[0].c===5)return{cat:9,kick:[groups[0].r]};
+  if(straightHigh&&isFlush)return{cat:8,kick:[straightHigh]};
+  if(groups[0].c===4)return{cat:7,kick:[groups[0].r,groups[1].r]};
+  if(groups[0].c===3&&groups[1].c===2)return{cat:6,kick:[groups[0].r,groups[1].r]};
+  if(isFlush)return{cat:5,kick:ranks};
+  if(straightHigh)return{cat:4,kick:[straightHigh]};
+  if(groups[0].c===3)return{cat:3,kick:[groups[0].r,...groups.slice(1).map(g=>g.r)]};
+  if(groups[0].c===2&&groups[1].c===2)return{cat:2,kick:[groups[0].r,groups[1].r,groups[2].r]};
+  if(groups[0].c===2)return{cat:1,kick:[groups[0].r,...groups.slice(1).map(g=>g.r)]};
+  return{cat:0,kick:ranks};
+}
+function compareScore(a,b){
+  if(a.cat!==b.cat)return a.cat-b.cat;
+  const len=Math.max(a.kick.length,b.kick.length);
+  for(let i=0;i<len;i++){const av=a.kick[i]||0,bv=b.kick[i]||0;if(av!==bv)return av-bv;}
   return 0;
 }
-function evalHand(cards){
-  const bySuit={S:[],H:[],D:[],C:[]};
-  cards.forEach(c=>bySuit[c.s].push(c.r));
-  let bestSuit='S',bestCount=0;
-  for(const s of SUITS){
-    const ranks=bySuit[s].slice().sort((a,b)=>b-a);
-    if(ranks.length>bestCount){bestCount=ranks.length;bestSuit=s;}
-    else if(ranks.length===bestCount&&ranks.length>0){
-      const cur=bySuit[bestSuit].slice().sort((a,b)=>b-a);
-      if(compareRankArrays(ranks,cur)>0)bestSuit=s;
-    }
+// Best hand a 5-card holding can make given its wilds -- mirrors roll-djwild's
+// bestWild5 exactly (display only; the server is authoritative for payouts). Candidate
+// suits are limited to the natural cards' own suits (a flush can only complete in a
+// suit the naturals share; suit is irrelevant otherwise); 4+ wilds are five of a kind.
+function bestWild5(cards){
+  const wilds=cards.filter(isWild),naturals=cards.filter(c=>!isWild(c));
+  if(wilds.length===0)return evaluate5(naturals);
+  if(wilds.length>=4){const t=naturals.length?Math.max(...naturals.map(c=>c.r)):14;return{cat:9,kick:[t]};}
+  const suitSet=[...new Set(naturals.map(c=>c.s))];
+  const cand=[];for(const s of suitSet)for(let r=2;r<=14;r++)cand.push({r,s});
+  let best=null;
+  const assign=(i,ch)=>{if(i===wilds.length){const sc=evaluate5(naturals.concat(ch));if(!best||compareScore(sc,best)>0)best=sc;return;}for(const c of cand)assign(i+1,ch.concat([c]));};
+  assign(0,[]);return best;
+}
+function isRoyal(score){return score.cat===8&&score.kick[0]===14;}
+const CAT_NAMES=['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush','Five of a Kind'];
+function categoryName(score){return isRoyal(score)?'Royal Flush':CAT_NAMES[score.cat];}
+function describeScore(score){
+  const k=score.kick;
+  switch(score.cat){
+    case 9: return 'Five of a Kind, '+RANK_PLURAL[k[0]];
+    case 8: return isRoyal(score)?'Royal Flush':'Straight Flush, '+RANK_NAME[k[0]]+' High';
+    case 7: return 'Four of a Kind, '+RANK_PLURAL[k[0]];
+    case 6: return 'Full House, '+RANK_PLURAL[k[0]]+' over '+RANK_PLURAL[k[1]];
+    case 5: return 'Flush, '+RANK_NAME[k[0]]+' High';
+    case 4: return 'Straight, '+RANK_NAME[k[0]]+' High';
+    case 3: return 'Three of a Kind, '+RANK_PLURAL[k[0]];
+    case 2: return 'Two Pair, '+RANK_PLURAL[k[0]]+' and '+RANK_PLURAL[k[1]];
+    case 1: return 'Pair of '+RANK_PLURAL[k[0]];
+    default: return RANK_NAME[k[0]]+' High';
   }
-  const ranks=bySuit[bestSuit].slice().sort((a,b)=>b-a);
-  return{count:bestCount,ranks,suit:bestSuit};
 }
-function compareHands(h1,h2){
-  if(h1.count!==h2.count)return h1.count-h2.count;
-  return compareRankArrays(h1.ranks,h2.ranks);
-}
-function dealerQualifies(score){
-  if(score.count>3)return true;
-  if(score.count===3)return score.ranks[0]>=9;
-  return false;
-}
-function isRainbow(score){return score.count===2;}
-function raiseMultiplier(count){if(count>=6)return 3;if(count===5)return 2;return 1;}
-function describeHandTier(score){
-  if(isRainbow(score))return 'Rainbow, No Flush';
-  return score.count+'-Card Flush, '+RANK_NAME[score.ranks[0]]+' High';
-}
-// Adds the remaining ranks as a kicker suffix -- a flush's rank is fully determined by every
-// card in it (compareHands walks the whole ranks array), not just the high card, so two
-// same-count-same-high-card flushes can still differ deeper in. Used for the history pip's
-// hover tooltip, not the on-felt live display (which stays as describeHandTier()).
-function describeHandTierFull(score){
-  if(isRainbow(score))return 'Rainbow, No Flush';
-  const rest=score.ranks.slice(1);
-  return score.count+'-Card Flush, '+RANK_NAME[score.ranks[0]]+' High'+(rest.length?' ('+rest.map(r=>RANK_NAME[r]).join('-')+' kicker)':'');
-}
-// Mirrors roll-iluvsuits' maxStraightFlushLen exactly (same per-suit consecutive-rank
-// scan, same ace-low wheel handling) but also remembers which suit/ranks made up the
-// winning run, so applyDiscardVisual() can tell which specific cards to spare even
-// when that run lives in a different suit than the best (biggest-count) flush.
-function bestStraightFlushInfo(cards){
-  const bySuit={S:[],H:[],D:[],C:[]};
-  cards.forEach(c=>bySuit[c.s].push(c.r));
-  let best={suit:null,len:0,ranks:[]};
-  for(const s of SUITS){
-    const rawSet=new Set(bySuit[s]);
-    const hasAce=rawSet.has(14);
-    if(hasAce)rawSet.add(1);
-    const sorted=Array.from(rawSet).sort((a,b)=>a-b);
-    let runStart=0;
-    for(let i=1;i<=sorted.length;i++){
-      if(i<sorted.length&&sorted[i]===sorted[i-1]+1)continue;
-      const runLen=i-runStart;
-      if(runLen>best.len){
-        const ranks=sorted.slice(runStart,i).map(r=>(r===1&&hasAce)?14:r);
-        best={suit:s,len:runLen,ranks};
-      }
-      runStart=i;
-    }
+// Kicker suffix for categories whose named parts don't fully capture the hand.
+function describeScoreKicker(score){
+  const k=score.kick;
+  switch(score.cat){
+    case 7: return k[1]?', '+RANK_NAME[k[1]]+' kicker':'';
+    case 5: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    case 3: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    case 2: return k[2]?', '+RANK_NAME[k[2]]+' kicker':'';
+    case 1: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    case 0: return k.length>1?' ('+k.slice(1).map(r=>RANK_NAME[r]).join('-')+' kicker)':'';
+    default: return '';
   }
-  return best;
 }
-// Discard (grey out in place) whichever of the player's 7 cards aren't needed to show
-// off the result of a Play: the best-hand flush's own suit always stays. If Super Flush
-// Rush was bet and a qualifying (3+) straight flush run exists -- even in a suit that
-// isn't the best hand -- those cards stay too, so there's still visual proof of what
-// just got paid on. Everything else fades.
-function applyDiscardVisual(playerFinal){
-  const cards=G.hand.playerHand;
-  const keep=new Set();
-  cards.forEach((c,i)=>{if(c.s===playerFinal.suit)keep.add(i);});
-  if((G.locked.superFlushRush||0)>0){
-    const sf=bestStraightFlushInfo(cards);
-    if(sf.suit&&sf.len>=3){
-      cards.forEach((c,i)=>{if(c.s===sf.suit&&sf.ranks.includes(c.r))keep.add(i);});
-    }
-  }
-  G.cardEls.player.forEach((el,i)=>{if(!keep.has(i))el.classList.add('discarded');});
-}
+function describeScoreFull(score){return describeScore(score)+describeScoreKicker(score);}
 function updateLiveHandDisplay(){
   if(!G.hand)return;
-  document.getElementById('player-hand-name').textContent=describeHandTier(evalHand(G.hand.playerHand));
+  const el=document.getElementById('player-hand-name');
+  if(G.phase==='dealt'||G.phase==='showdown'){el.textContent=describeScore(bestWild5(G.hand.playerCards));}
 }
 
 // ── BOARD COLOUR ─────────────────────────────────────────────────────────────
-// The art is the board here, so palettes swap graded copies of it. See the BOARD
-// COLOUR block in the stylesheet for what the grade does and does not touch.
+// Felt themes via CSS; the bet-module art stays exactly as uploaded on the five dark
+// palettes and swaps to a darkened copy only on Ivory and Rose, where pale outline
+// circles printed for a dark felt would otherwise be invisible. Brand marks are never
+// recoloured -- see the BOARD COLOUR block in the stylesheet.
 FeltThemes.init({
-  root:'body', key:'iluvsuits_felt', defaultId:'classic',
+  root:'body', key:'djwild_felt', defaultId:'classic',
   mount:'#felt-mount', preview:'ANTE',
 });
 
@@ -824,20 +854,24 @@ function startSession(player){
   G=makeInitialG();
   buildCardSlots();
   G.bankroll=parseFloat(player.bankroll)||0;
+  // Real bankroll and Free Play are two separate pools -- see the placeBet()/dealHand()
+  // gating comments below for why both count toward what a player can actually stage.
   G.freePlay=parseFloat(player.free_play_balance)||0;
   // P&L basis = money the house fronted, less money already taken back off the table at the
   // cage. Cashing out lowers total_redeemed's effect via total_cashed_out, so a redeem then
   // cash out with no bets in between nets to $0 instead of showing the voucher as a loss.
   G.startingBankroll=(parseFloat(player.total_redeemed)||0)-(parseFloat(player.total_cashed_out)||0);
   const gs=player.game_state||{};
-  if(gs.iluvsuits&&gs.iluvsuits.phase==='dealt'){
+  if(gs.djwild&&gs.djwild.lastBetSnapshot){G.lastBetSnapshot=gs.djwild.lastBetSnapshot;document.getElementById('repeat-btn').disabled=false;}
+  if(gs.djwild&&gs.djwild.phase==='dealt'){
     // An abandoned hand from a previous session (refresh mid-decision): resume at the
-    // decision point rather than lose track of the already-committed Ante/side bets.
-    G.locked={ante:gs.iluvsuits.ante,flushRush:gs.iluvsuits.flushRush,superFlushRush:gs.iluvsuits.superFlushRush};
-    G.hand={playerHand:gs.iluvsuits.playerHand,dealerHand:null};
+    // Fold/Bet decision rather than lose the already-committed Ante/Blind/Trips.
+    G.locked={ante:gs.djwild.ante,blind:gs.djwild.blind,trips:gs.djwild.trips,progressive:gs.djwild.progressive};
+    G.hand={playerCards:gs.djwild.playerCards,dealerCards:null};
     G.phase='dealt';
-    renderHandCardsStatic();
-    onHandFullyRevealed();
+    document.getElementById('dealer-row').classList.add('active');
+    document.getElementById('player-row').classList.add('active');
+    renderHandCardsStatic();updateLiveHandDisplay();
   }
   renderActionButtons();updateUI();
 }
@@ -922,10 +956,9 @@ function updateChipTray(){
 const _updateUI_chipwrap=updateUI;
 updateUI=function(){_updateUI_chipwrap.apply(this,arguments);updateChipTray();};
 
-// ── PRE-DEAL BET ACTIONS ───────────────────────────────────────────────────────
-// Table limits (per player tier -- $1/$300 default, see tier_bet_limits). Mirrors the
-// server-authoritative check in roll-iluvsuits; this is UX only, the server rejects
-// independently.
+// ── TABLE LIMITS (per player tier -- $1/$300 default, see tier_bet_limits) ────
+// Mirrors the server-authoritative check in roll-uth; this is UX only (clamp +
+// message before the request even goes out), the server rejects independently.
 // `let`, not `const`: these are only pre-login defaults. The real per-spot limits are the
 // player's TIER row in tier_bet_limits (admin-editable; live values 50/300/1000/2500/10000/
 // 30000 for tiers 0-5), which the server enforces on every request. Clamping against a
@@ -944,50 +977,63 @@ async function refreshTierLimits(tier){
   }catch(e){console.warn('[tier limits] fetch threw, keeping defaults:',e&&e.message);}
 }
 // Play has NO table max of its own, by design. Its size is never freely chosen: it's
-// Ante times a multiple the hand itself dictates (raiseMultiplier -- 3x on a 6-7 card
-// flush, 2x on 5, else 1x), and Ante is already held to MAX_BET as it's staged, so Play
-// can't exceed 3x the table max no matter what. The server agrees: roll-iluvsuits bounds
-// playBet to [ante, ante*raiseMultiplier] off the ante it validated at deal time.
+// Ante times the current street's multiple (STREET_MULT -- 4x preflop, 2x flop, 1x
+// river), and Ante is already held to MAX_BET as it's staged, so Play can't exceed 4x
+// the table max no matter what. The server agrees: roll-uth bounds playBet to
+// [ante, ante*STREET_MULT[street]] off the ante it validated at deal time.
 //
-// Play used to carry its own ceiling of MAX_BET*3, which was the bug: a const evaluated
+// Play used to carry its own ceiling of MAX_BET*4, which was the bug: a const evaluated
 // at load time, when MAX_BET is still the pre-login $300 default, and never recomputed
 // once refreshTierLimits() raised MAX_BET for the player's real tier. Any tier-1+ player
 // who staked an Ante over $300 had every raise button disabled and Fold as their only
 // legal action. Affordability is the only thing that gates a raise now.
+
+// ── PRE-DEAL BET ACTIONS (ante/trips only -- blind always mirrors ante) ──────
+// Ante's matching Blind (always equal, never staged separately) has to be reserved
+// from the bankroll right along with it, or a player can stage more Ante than they
+// can actually afford once Blind is added at deal time.
+function anteReserveMult(key){return key==='ante'?2:1;}
 function placeBet(key){
   if(G.phase!=='betting')return;
-  // Free Play counts toward what a player can stage -- roll-iluvsuits already validates
-  // against realBankroll+free_play.balance combined server-side. G.bankroll can go
-  // negative here while Free Play covers the gap; it self-corrects once the server
-  // responds with the real newBankroll.
+  // Free Play counts toward what a player can stage -- the server (roll-uth) already
+  // validates against realBankroll+free_play.balance combined and draws from Free Play
+  // first at resolution, so a $0-bankroll player with a Free Play balance shouldn't be
+  // blocked from betting here before the request even reaches the server. G.bankroll
+  // itself still deducts as before (see below) and can go negative while Free Play is
+  // covering the gap -- it self-corrects the moment the server responds with the real
+  // newBankroll, since the server did the actual accounting.
   if(!(G.bankroll+G.freePlay)){addLog('No bankroll. Redeem a code to continue.','info');checkBroke();return;}
   const cur=G.bets[key]||0;
   if(cur>=MAX_BET){addLog('Table max is '+fmt(MAX_BET)+' per spot.','info');return;}
-  const a=r2(Math.min(G.chip,G.bankroll+G.freePlay,MAX_BET-cur));
+  const mult=anteReserveMult(key);
+  const room=r2((G.bankroll+G.freePlay)/mult);
+  const capRoom=r2(MAX_BET-cur);
+  const a=r2(Math.min(G.chip,room,capRoom));
+  if(a<=0){addLog('Not enough bankroll to also cover the matching Blind bet.','info');return;}
   G.bets[key]=r2(cur+a);
-  G.bankroll=r2(G.bankroll-a);
+  G.bankroll=r2(G.bankroll-a*mult);
   updateUI();
 }
 function removeBet(key){
   if(G.phase!=='betting')return;
   const c=G.bets[key]||0;if(!c)return;
+  const mult=anteReserveMult(key);
   const rv=r2(Math.min(G.chip,c));
   G.bets[key]=r2(c-rv);
-  G.bankroll=r2(G.bankroll+rv);
+  G.bankroll=r2(G.bankroll+rv*mult);
   updateUI();
 }
 function clearBets(){
   if(G.phase!=='betting')return;
-  let ret=0;
-  for(const k in G.bets)ret=r2(ret+G.bets[k]);
-  G.bets={ante:0,flushRush:0,superFlushRush:0,progressive:0};G.bankroll=r2(G.bankroll+ret);
+  const ret=r2((G.bets.ante||0)*2+(G.bets.trips||0)+(G.bets.progressive||0));
+  G.bets={ante:0,trips:0,progressive:0};G.bankroll=r2(G.bankroll+ret);
   updateUI();
 }
 
 // ── THE LIGHT (shared cross-game progressive) ─────────────────────────────────
 // Flat $5, no chip-denomination choice -- a single toggle, not a stackable stake like
-// Ante/side bets. See progressive_jackpot table + roll-iluvsuits' tier evaluation for
-// the server-authoritative side of this.
+// Ante/Trips. See progressive_jackpot table + roll-uth's tier evaluation for the
+// server-authoritative side of this.
 const PROGRESSIVE_BET=5;
 function toggleProgressive(){
   if(G.phase!=='betting')return;
@@ -1001,11 +1047,11 @@ function toggleProgressive(){
   }
   updateUI();
 }
-// G.progressivePool only ever gets a live value from a deal/resolve response -- it
-// resets to the makeInitialG() default on every page load/session, so the modal would
-// keep showing that stale default until the player actually played a hand. Refetch the
-// real, server-persisted total directly (progressive_jackpot has no RLS restricting
-// reads) any time the modal opens, rather than trusting whatever's currently in memory.
+// G.progressivePool only ever gets a live value from a deal/resolve response -- it resets
+// to the makeInitialG() default on every page load/session, so the modal would keep
+// showing that stale default until the player actually played a hand. Refetch the real,
+// server-persisted total directly (progressive_jackpot has no RLS restricting reads) any
+// time the modal opens, rather than trusting whatever's currently in memory.
 async function refreshProgressivePool(){
   const{data,error}=await sb.from('progressive_jackpot').select('pool_amount').eq('id',1).single();
   if(error||!data)return;
@@ -1018,8 +1064,39 @@ async function openProgressiveModal(){
   document.getElementById('progressive-pool-display').textContent=fmt(G.progressivePool||1000);
 }
 function closeProgressiveModal(){document.getElementById('modal-progressive').classList.add('hidden');}
-// Tracks the pending post-round loss-sweep delay (see showMainPayout() above) so
-// repeatLastBet() can cancel it and fast-forward straight to the betting screen.
+// Paytables shown via ⓘ buttons next to each bet spot, same pattern as breakout.html's
+// PAYTABLE_CONTENT/openPaytable(). Numbers match tripsMultiplier()/blindMultiplier() in
+// roll-djwild's index.ts exactly (Trips: 5oak 200, Royal 50, SF 20, Quads 8, FH 5,
+// Flush 4, Straight 3, Trips 3, else lose. Blind: 5oak 200, Royal 50, SF 15, Quads 5,
+// FH 4, Flush 3, Straight 2, else push).
+const PAYTABLE_CONTENT={
+  trips:{title:'Trips',rows:[
+    ['Five of a Kind','200 to 1'],['Royal Flush','50 to 1'],['Straight Flush','20 to 1'],['Four of a Kind','8 to 1'],
+    ['Full House','5 to 1'],['Flush','4 to 1'],['Straight','3 to 1'],['Three of a Kind','3 to 1'],
+  ],note:'Optional side bet on your own 5-card hand, independent of the dealer and of a fold. Loses on anything less than three of a kind. Deuces & the Joker are wild.'},
+  ante:{title:'Ante & Bet',rows:[],note:'Ante and Bet each pay 1 to 1 on a win, push on a tie, and lose on a loss. There is NO dealer qualifier — the dealer\'s hand always plays. Blind always matches your Ante and locks in with it at Deal.'},
+  blind:{title:'Blind',rows:[
+    ['Five of a Kind','200 to 1'],['Royal Flush','50 to 1'],['Straight Flush','15 to 1'],['Four of a Kind','5 to 1'],
+    ['Full House','4 to 1'],['Flush','3 to 1'],['Straight','2 to 1'],['All other','Push'],
+  ],note:'Only paid on an outright player win over the dealer — pushes on a win below a straight. Deuces & the Joker are wild.'},
+  bet:{title:'Bet',rows:[
+    ['Raise','2x your Ante'],
+  ],note:'After seeing your five cards, either Fold (losing Ante & Blind) or make the Bet — always exactly 2x your Ante. The Bet pays 1 to 1 vs. the dealer, win/push/lose.'},
+};
+function openPaytable(key){
+  const p=PAYTABLE_CONTENT[key];if(!p)return;
+  document.getElementById('paytable-title').textContent=p.title;
+  document.getElementById('paytable-body').innerHTML=
+    p.rows.map(r=>'<div class="progressive-tier-row"><span>'+r[0]+'</span><span class="prog-pay">'+r[1]+'</span></div>').join('')
+    +'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:10px">'+p.note+'</div>';
+  document.getElementById('modal-paytable').classList.remove('hidden');
+}
+function closePaytable(){document.getElementById('modal-paytable').classList.add('hidden');}
+// Tracks whichever post-round presentation delay (ghosts/modal-open delay, or the flat
+// loss-path delay) is currently pending -- see commitDecision's afterReveal() above.
+// repeatLastBet() cancels it to fast-forward straight to the betting screen, since the
+// round is already fully resolved server-side; the delay exists only for the player to
+// watch the animation, not because anything is still in flight.
 let postRoundTimer=null;
 function repeatLastBet(){
   if(G.phase==='showdown'){
@@ -1029,450 +1106,117 @@ function repeatLastBet(){
   }
   if(G.phase!=='betting'||!G.lastBetSnapshot)return;
   const snap=G.lastBetSnapshot;
-  const cost=r2((snap.ante||0)+(snap.flushRush||0)+(snap.superFlushRush||0)+(snap.progressive||0));
+  const cost=r2((snap.ante||0)*2+(snap.trips||0)+(snap.progressive?PROGRESSIVE_BET:0));
   if(cost<=0){addLog('Nothing to repeat.','info');return;}
   if(cost>G.bankroll+G.freePlay){addLog('Not enough bankroll (need '+fmt(cost)+').','info');return;}
   clearBets();
-  G.bets.ante=snap.ante||0;G.bets.flushRush=snap.flushRush||0;G.bets.superFlushRush=snap.superFlushRush||0;G.bets.progressive=snap.progressive||0;
+  G.bets.ante=snap.ante||0;G.bets.trips=snap.trips||0;
+  if(snap.progressive)G.bets.progressive=PROGRESSIVE_BET;
   G.bankroll=r2(G.bankroll-cost);
   updateUI();
 }
 
-// ── RAISE (post-deal, fixed-preset buttons -- the cap is set by the player's own
-// flush strength via raiseMultiplier(): 1X only for a 3/4-card flush, up to 2X for a
-// 5-card flush, up to 3X for a 6-or-7-card flush. A Rainbow/2-card-flush hand has no
-// Play option at all. Clicking a preset immediately stakes that exact amount and
-// commits in one step, no freeform chip staging.) ──────────────────────────────────
-const RAISE_BTN_ID={1:'btn-raise-1x',2:'btn-raise-2x',3:'btn-raise-3x'};
-function raiseOptions(){
-  if(!G.hand||G.phase!=='dealt')return[];
-  const score=evalHand(G.hand.playerHand);
-  if(isRainbow(score))return[];
-  const cap=raiseMultiplier(score.count);
-  const opts=[];for(let m=1;m<=cap;m++)opts.push(m);
-  return opts;
-}
-function updateRaiseButtonStates(){
-  const opts=raiseOptions();
-  Object.values(RAISE_BTN_ID).forEach(id=>{const btn=document.getElementById(id);if(btn)btn.disabled=false;});
-  opts.forEach(mult=>{
-    const btn=document.getElementById(RAISE_BTN_ID[mult]);if(!btn)return;
-    const amt=r2(G.locked.ante*mult);
-    btn.disabled=!(G.locked.ante>0&&amt<=G.bankroll+G.freePlay);
-  });
-}
-function doRaise(mult){
-  const opts=raiseOptions();
-  if(!opts.includes(mult))return;
-  const btn=document.getElementById(RAISE_BTN_ID[mult]);
-  if(btn&&btn.disabled)return;
-  const amt=r2(G.locked.ante*mult);
-  if(amt<=0||amt>G.bankroll+G.freePlay)return;
-  G.playBet=amt;
-  G.bankroll=r2(G.bankroll-amt);
-  updateUI();
-  commitDecision('play',amt);
-}
-// Brief celebratory pulse on a bet spot that just hit (e.g. a Super Flush Rush win) --
-// separate from the persistent .active glow a staked spot always shows.
-function flashSpotHit(id){
-  const el=document.getElementById(id);
-  if(!el)return;
-  el.classList.remove('spot-hit');
-  void el.offsetWidth;
-  el.classList.add('spot-hit');
-  setTimeout(()=>el.classList.remove('spot-hit'),2000);
+// ── BET / FOLD (post-deal, single decision) ──────────────────────────────────
+// After the player's five cards are revealed they either Fold (losing Ante & Blind)
+// or make the Bet -- always exactly 2x the Ante, committed in one step. The server
+// (roll-djwild) fixes the Bet at 2x Ante regardless of what the client sends.
+function betAmount(){return r2(G.locked.ante*2);}
+// The BET button is only enabled when the 2x-Ante Bet is affordable. Folding is
+// always allowed, so a player who somehow can't cover the Bet can still fold.
+function updateBetButtonState(){
+  const bet=document.getElementById('btn-bet');
+  if(bet)bet.disabled=!(G.phase==='dealt'&&G.locked.ante>0&&betAmount()<=G.bankroll+G.freePlay);
 }
 
-// ── WIN/LOSS CHIP-GHOST SWEEP -- ported wholesale from craps/sicbo/uth ───────
-// Ghost/win-stack/wager-ghost elements are position:fixed, appended straight to document.body
-// -- OUTSIDE whatever CSS container the real bet spot's --chip value was declared relative to
-// (#ante-spot etc. set --chip in "cqh", container-query-height units -- see body{--chip:70px}
-// vs #ante-spot{--chip:7cqh}). getComputedStyle(el).getPropertyValue('--chip') returns that raw
-// declared string ("7cqh"), NOT a resolved pixel value -- custom properties are never unit-
-// resolved by getComputedStyle the way real properties like font-size are. Copying that string
-// onto a ghost living in a completely different container silently resolves to a totally
-// different actual size there (found live in UTH first: real chip-amt font-size measured
-// ~8.93px, the ghost's copy of the same "7cqh" rendered at ~16.8px).
-// Fixed by measuring .chip-amt's own rendered height instead -- its CSS rule is literally
-// `height:var(--chip)` (see .chip-stack .chip-amt below), a direct 1:1 mapping the browser
-// must resolve to real pixels for layout regardless of what unit --chip was declared in.
-function chipPxFor(el){
-  const amt=el?el.querySelector('.chip-amt'):null;
-  const h=amt?amt.getBoundingClientRect().height:0;
-  if(h>0)return h+'px';
-  return getComputedStyle(document.body).getPropertyValue('--chip').trim()||'32px';
-}
-function spawnChipGhost(el,opts){
-  opts=opts||{};
-  if(!el)return;
-  const rect=el.getBoundingClientRect();
-  if(rect.width<=0&&rect.height<=0)return;
-  const amtSpan=el.querySelector('.chip-amt');
-  const label=amtSpan?amtSpan.textContent:'';
-  const chipImgs=el.querySelectorAll('.chip-img');
-  const topChip=chipImgs.length?chipImgs[chipImgs.length-1]:null;
-  const chipSrc=topChip?topChip.getAttribute('src'):null;
-  if(!label&&!chipSrc)return;
-  const ghost=document.createElement('div');
-  ghost.className='chip-ghost';
-  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
-  ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
-  // Each spot scopes --chip differently (cqh-based here, unlike craps' single felt
-  // value), so read it live off the source element rather than a shared stage element.
-  ghost.style.setProperty('--chip',chipPxFor(el));
-  if(chipSrc){
-    const img=document.createElement('img');
-    img.src=chipSrc;img.draggable=false;
-    img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:auto;z-index:1';
-    ghost.appendChild(img);
-  }
-  if(label){
-    const amtFs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
-    const span=document.createElement('span');
-    span.textContent=label;
-    span.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*'+amtFs+');color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap;pointer-events:none';
-    ghost.appendChild(span);
-  }
-  document.body.appendChild(ghost);
-  const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
-  if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
-  setTimeout(()=>{
-    // Clear the real chip stack right as the ghost starts sliding away, not before --
-    // until this instant the ghost sits exactly on top of it so the swap is invisible,
-    // but leaving the original in place any longer means it's still sitting there once
-    // the ghost has moved off, looking like a duplicate got left behind.
-    el.innerHTML='';
-    el.classList.remove('has-stack');
-    ghost.classList.add(sweepClass);
-  },900);
-  setTimeout(()=>{ghost.remove();},1450);
-}
-// Bet-name -> stake-element-id table, matched against roll-iluvsuits' exact log-line
-// prefixes. Win/loss is read off the same win|pays / lost keywords addLog() already
-// uses for line coloring, so this stays in sync with the server's wording for free.
-// THE LIGHT is intentionally left out here -- its own stake is swept separately at deal-time,
-// same convention as UTH's Light handling.
-function iluvsuitsGhostChecks(){
-  return [[/^Ante:/,'ante'],[/^Play:/,'play'],[/^Flush Rush:/,'flushrush'],[/^Super Flush Rush:/,'superflushrush']];
-}
-// Real dealer-style payout: a fresh stack holding ONLY the profit amount drops in from the top
-// of the screen, settles just barely touching the wager it's paying against, holds a beat,
-// then sweeps to the bottom together with the wager. Every I Luv Suits bet spot clears every
-// hand (confirmed against roll-iluvsuits' resolve logic -- game_state.iluvsuits is set to
-// phase:'done' every hand, nothing carries state forward), so like UTH/Sic-Bo there's no
-// "stays" case: the wager always sweeps along with its win-stack.
-const WIN_DROP_MS=480,WIN_HOLD_MS=420,WIN_SWEEP_MS=550;
-function spawnWinPair(elId,amt){
-  const stakeEl=document.getElementById(elId);
-  if(!stakeEl||!(amt>0))return;
-  const rect=stakeEl.getBoundingClientRect();
-  if(rect.width<=0&&rect.height<=0)return;
-  const liveChipVar=chipPxFor(stakeEl);
-  const existingAmtSpan=stakeEl.querySelector('.chip-amt');
-  const isFP=!!(existingAmtSpan&&/^FP\$/.test(existingAmtSpan.textContent));
-  const gap=1;
-  // Prefer landing to the left of the wager (mirrors a dealer squaring a payout next to the
-  // original bet, chips just barely touching); if that would land off-screen (a bet parked
-  // near the felt's left edge), fall back to the right instead rather than clipping.
-  let targetLeft=rect.left-rect.width-gap;
-  if(targetLeft<4)targetLeft=rect.right+gap;
-
-  const winGhost=document.createElement('div');
-  winGhost.className='chip-ghost win-start';
-  winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
-  winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
-  winGhost.style.setProperty('--chip',liveChipVar);
-  winGhost.innerHTML=chipStackHTML(amt,false,isFP);
-  document.body.appendChild(winGhost);
-  // Double rAF, not single -- a single rAF scheduled synchronously right after appendChild()
-  // can land in the SAME frame as the element's first paint, so the browser never actually
-  // commits a frame with .win-start applied before swapping to .win-in, and the transition
-  // has nothing to animate from (snaps instantly, no visible motion). The first rAF waits for
-  // the current frame to finish painting .win-start; the nested one swaps on the NEXT frame.
-  requestAnimationFrame(()=>{requestAnimationFrame(()=>{winGhost.classList.remove('win-start');winGhost.classList.add('win-in');});});
-
-  const wagerGhost=document.createElement('div');
-  wagerGhost.className='chip-ghost';
-  wagerGhost.style.left=rect.left+'px';wagerGhost.style.top=rect.top+'px';
-  wagerGhost.style.width=rect.width+'px';wagerGhost.style.height=rect.height+'px';
-  wagerGhost.style.setProperty('--chip',liveChipVar);
-  wagerGhost.innerHTML=stakeEl.innerHTML;
-  document.body.appendChild(wagerGhost);
-
-  setTimeout(()=>{
-    // Clear the real chip stack right as the ghosts start sliding away, same convention as
-    // spawnChipGhost above -- until this instant the ghosts sit exactly on top of it.
-    stakeEl.innerHTML='';
-    stakeEl.classList.remove('has-stack');
-    winGhost.classList.remove('win-in');
-    winGhost.classList.add('sweep-down');
-    wagerGhost.classList.add('sweep-down');
-  },WIN_DROP_MS+WIN_HOLD_MS);
-  setTimeout(()=>{
-    winGhost.remove();
-    wagerGhost.remove();
-  },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+100);
-}
-function spawnILuvSuitsGhosts(rawLog,folded){
-  iluvsuitsGhostChecks().forEach(([re,key])=>{
-    const line=rawLog.find(l=>re.test(l));
-    if(!line)return;
-    const el=document.getElementById('stk-'+key);
-    if(/lost/i.test(line)){spawnChipGhost(el);return;}
-    if(/push/i.test(line)){spawnChipGhost(el,{direction:'down',noDim:true});return;}
-    if(/win|pays/i.test(line)){
-      const m=line.match(/\+([\d.]+)/);
-      if(m)spawnWinPair('stk-'+key,parseFloat(m[1]));
-    }
-  });
-  // "Folded — Ante lost." doesn't match the /^Ante:/ prefix above -- handle separately.
-  if(folded)spawnChipGhost(document.getElementById('stk-ante'));
-}
-
-// ── CARD SLOTS (7 each -- no community row in this game) ─────────────────────
+// ── CARD SLOTS ────────────────────────────────────────────────────────────────
+// Guards against being built twice -- module-level, not on G, since startSession() always
+// resets G (including G.cardEls) to a fresh object right before calling this, which used to
+// make a `G.cardEls` guard here a no-op: logging out and back in without a full page reload
+// re-ran this and appended a second set of slot elements into the same row containers,
+// leaving the original set behind as an orphaned but still-attached (never GC'd) DOM subtree.
+let _cardSlots=null;
 function buildCardSlots(){
-  if(G.cardEls)return;
-  const dealerRow=document.getElementById('dealer-row');
-  const playerRow=document.getElementById('player-row');
-  const dealer=Array.from({length:7},()=>Cards.makeSlot());
-  const player=Array.from({length:7},()=>Cards.makeSlot());
-  dealer.forEach(el=>dealerRow.appendChild(el));
-  player.forEach(el=>playerRow.appendChild(el));
-  G.cardEls={dealer,player};
-}
-// ── FAN GEOMETRY ──────────────────────────────────────────────────────────────
-// Each 7-card hand fans out left-to-right, slightly overlapping, centered within
-// its region. Widths are in cqh (matching --pc-w) so they scale with the panel
-// regardless of viewport -- see panel-art skill reference. Region widths below are
-// the dealer/player regions' own %-of-panel-width converted to cqh. The cqh-per-%
-// conversion factor depends on the panel's own aspect ratio, which differs between
-// landscape (3200x1800 -- 100cqh-of-height == 177.78cqh-of-width-equivalent) and
-// portrait (375x812 -- 100cqh-of-height == 46.18cqh-of-width-equivalent); cardW and
-// the fan step are also tuned per-orientation since portrait's panel is nearly full
-// device height (not landscape's much shorter letterboxed panel), so a shared cqh
-// value would render enormously oversized cards there -- see the analogous fix in
-// uth.html's portrait mode.
-// A one-time matchMedia() check at script-parse time is not safe here: Discord's mobile
-// Activity renders in a bottom sheet that can still be animating/settling into its final
-// size when this script first runs, so an orientation read taken right now can freeze on
-// the wrong answer even though the (always-live) CSS media query goes on to paint the
-// correct, later orientation -- landscape-tuned fan positions rendered against a
-// portrait-sized panel is exactly the kind of scrambled card layout that mismatch
-// produces. Recomputed on demand instead of frozen at load, and also on resize/
-// orientationchange as a second safety net for live rotation.
-let PLAYER_FAN_LEFTS,DEALER_FAN_LEFTS;
-function recomputeFanGeometry(){
-  const isPortrait=window.matchMedia('(orientation:portrait)').matches;
-  const widthCqhPerPct=isPortrait?0.4618:1.7778;
-  const fanStepCqh=isPortrait?5:11;     // horizontal offset between consecutive fanned cards
-  const cardWCqh=isPortrait?8:15;       // must match --pc-w
-  const playerRegionWidthCqh=(isPortrait?85:52)*widthCqhPerPct;
-  const dealerRegionWidthCqh=(isPortrait?85:90)*widthCqhPerPct;
-  function computeFanLefts(n,regionWidthCqh){
-    const total=cardWCqh+(n-1)*fanStepCqh;
-    const start=Math.max(0,(regionWidthCqh-total)/2);
-    return Array.from({length:n},(_,i)=>start+i*fanStepCqh);
+  if(!_cardSlots){
+    const dealerRow=document.getElementById('dealer-row');
+    const playerRow=document.getElementById('player-row');
+    const dealer=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
+    const player=[Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot(),Cards.makeSlot()];
+    dealer.forEach(el=>dealerRow.appendChild(el));
+    player.forEach(el=>playerRow.appendChild(el));
+    _cardSlots={dealer,player};
   }
-  PLAYER_FAN_LEFTS=computeFanLefts(7,playerRegionWidthCqh);
-  DEALER_FAN_LEFTS=computeFanLefts(7,dealerRegionWidthCqh);
+  G.cardEls=_cardSlots;
 }
-recomputeFanGeometry();
-window.addEventListener('resize',recomputeFanGeometry);
-window.addEventListener('orientationchange',recomputeFanGeometry);
-function resetCardPosition(el){el.style.transition='';el.style.left='';el.style.zIndex='';}
-
-// Static render (no animation) -- used only when resuming an abandoned hand. Player's
-// hand is already fully known so it's shown fanned immediately; dealer's stays a
-// hidden face-down stack, same as mid-decision state.
+// A slot with nothing dealt into it yet (not on the table at all, physically) --
+// 'empty' hides both faces (see cards.js) while still reserving its layout space,
+// so the row doesn't reflow as cards land street by street.
+function hideSlot(el){Cards.reset(el);el.classList.add('empty');}
+function hideUndealtSlots(){
+  G.cardEls.dealer.forEach(hideSlot);
+  G.cardEls.player.forEach(hideSlot);
+}
+// Static render (no animation) -- used only when resuming an abandoned hand after a
+// refresh, where a suspenseful deal would be strange since the player already knows
+// their cards. The server only persists an in-progress hand at 'dealt', so the
+// player's five cards are face up and the dealer's five sit face down (backs).
 function renderHandCardsStatic(){
-  const n=G.cardEls.player.length;
-  G.cardEls.player.forEach((el,i)=>{
-    Cards.reset(el);resetCardPosition(el);el.classList.remove('discarded');
-    Cards.setFront(el,G.hand.playerHand[i]);Cards.flipUp(el);
-    // Final rest position: the first-revealed card ends up pushed furthest right (see
-    // sweatReveal below for why), so slot assignment runs in reverse of reveal order.
-    // z-index matches sweatReveal's rule too: further-right final slot -> higher layer.
-    el.style.left=PLAYER_FAN_LEFTS[(n-1)-i]+'cqh';el.style.zIndex=n-i;
+  G.cardEls.player.forEach((el,i)=>{el.classList.remove('empty');Cards.reset(el);Cards.setFront(el,G.hand.playerCards[i]);Cards.flipUp(el);});
+  G.cardEls.dealer.forEach(el=>{el.classList.remove('empty');Cards.reset(el);}); // face-down backs
+}
+// Slides `els` in face down (dealer backs), staggered. No flip. Calls onDone when done.
+const DEAL_STAGGER_MS=140;
+function dealBacks(els,onDone){
+  els.forEach((el,i)=>{
+    setTimeout(()=>{
+      el.classList.remove('empty');
+      Cards.reset(el);
+      Cards.dealIn(el,0);
+      setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),400);
+    },i*DEAL_STAGGER_MS);
   });
+  if(onDone)setTimeout(onDone,(els.length-1)*DEAL_STAGGER_MS+450);
+}
+// Deals `cards` into `els` in turn (staggered), each sliding in face down and then
+// flipping face up shortly after it lands -- used for the player's own deal and for
+// revealing the dealer's hand at showdown. Calls onDone once the group finishes.
+const DEAL_REVEAL_STAGGER_MS=190;
+function dealAndRevealCards(els,cards,onDone){
+  els.forEach((el,i)=>{
+    setTimeout(()=>{
+      el.classList.remove('empty');
+      Cards.reset(el);
+      Cards.setFront(el,cards[i]);
+      Cards.dealIn(el,0);
+      setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),400);
+      setTimeout(()=>{playSfx(SFX_CARD_SLIDE,true);Cards.flipUp(el);},600);
+    },i*DEAL_REVEAL_STAGGER_MS);
+  });
+  if(onDone)setTimeout(onDone,(els.length-1)*DEAL_REVEAL_STAGGER_MS+600+450);
+}
+// Flip already-dealt dealer backs up to reveal their fronts (showdown).
+function revealDealerCards(cards,onDone){
   G.cardEls.dealer.forEach((el,i)=>{
-    Cards.reset(el);resetCardPosition(el);
-    el.style.left=DEALER_FAN_LEFTS[0]+'cqh';el.style.zIndex=7-i;
-  });
-  document.getElementById('dealer-row').classList.add('active');
-  document.getElementById('player-row').classList.add('active');
-}
-// Animated deal: alternates player/dealer cards sliding into their hand's shared
-// STACK spot (not individual slots -- they land in one pile, face down, per hand),
-// same per-card pace as Ultimate Texas Hold'em. The "sweat" reveal (below) is what
-// later flips and fans each stack out.
-const DEAL_STAGGER_MS=110;
-function dealCardsAnimated(){
-  document.getElementById('dealer-row').classList.add('active');
-  document.getElementById('player-row').classList.add('active');
-  const order=[];
-  for(let i=0;i<7;i++){
-    order.push({el:G.cardEls.player[i],stackLeft:PLAYER_FAN_LEFTS[0]});
-    order.push({el:G.cardEls.dealer[i],stackLeft:DEALER_FAN_LEFTS[0]});
-  }
-  order.forEach((item,i)=>{
-    Cards.reset(item.el);
-    item.el.classList.remove('discarded');
-    item.el.style.transition='none';
-    item.el.style.left=item.stackLeft+'cqh';
-    item.el.style.zIndex=1;
-    void item.el.offsetWidth;
-    item.el.style.transition='';
-    Cards.dealIn(item.el,i*DEAL_STAGGER_MS);
-    // 400ms matches pc-deal-in's own animation length (cards.js) -- play the landing
-    // sound when the card actually settles, not when its staggered slide-in starts.
-    pendingDealTimeouts.push(setTimeout(()=>playSfx(SFX_CARD_SLIDE,true),i*DEAL_STAGGER_MS+400));
-  });
-  return order.length*DEAL_STAGGER_MS+450;
-}
-// The "sweat": flips the whole stack face up at once (so only the top card shows),
-// then reveals the rest one at a time. Each newly-revealed card takes the vacated
-// spot right at the top of the stack (the shortest possible trip -- it doesn't travel
-// at all, it was already there, just uncovered); every card revealed *before* it gets
-// pushed one slot further right to make room. So the first card shown (the original
-// top of the stack) gets pushed at *every* subsequent reveal and ends up traveling
-// the farthest, while each newer card has been pushed fewer times and travels less --
-// the last card revealed never moves at all. onAllRevealed fires only once the last
-// card has settled -- callers use it to reveal the hand-strength text, never before
-// every card is up.
-//
-// z-index: only card 0 needs to outrank the (still identical-position, still hidden)
-// rest of the pile at the start -- everything else starts at 0. Each card is assigned
-// its permanent z-index at the moment it's revealed, ranked so that whichever card
-// ends up furthest RIGHT in the final fan is always on top -- since a card's final
-// slot is already fixed the instant it's revealed (nothing revealed later can ever
-// land to its right), that assignment never needs to change again. This also
-// guarantees a not-yet-revealed card (still sitting at 0) can never outrank an
-// already-revealed one.
-const SWEAT_SPEEDS={slow:550,normal:400,fast:260};
-let sweatSpeedKey=localStorage.getItem('iluvsuits_sweat_speed')||'normal';
-function getSweatStaggerMs(){return SWEAT_SPEEDS[sweatSpeedKey]||SWEAT_SPEEDS.normal;}
-function cycleSweatSpeed(){
-  const keys=Object.keys(SWEAT_SPEEDS);
-  sweatSpeedKey=keys[(keys.indexOf(sweatSpeedKey)+1)%keys.length];
-  localStorage.setItem('iluvsuits_sweat_speed',sweatSpeedKey);
-  updateSweatSpeedButton();
-}
-function updateSweatSpeedButton(){
-  const btn=document.getElementById('sweat-speed-btn');
-  if(btn)btn.textContent='Sweat: '+sweatSpeedKey[0].toUpperCase()+sweatSpeedKey.slice(1);
-}
-function sweatReveal(cardEls,cards,fanLefts,onAllRevealed){
-  const stagger=getSweatStaggerMs();
-  const n=cardEls.length;
-  cardEls.forEach((el,i)=>{
-    el.style.transition='none';
-    el.style.left=fanLefts[0]+'cqh';
-    el.style.zIndex=i===0?100:0; // card 0 alone sits atop the still-hidden pile
-  });
-  void cardEls[0].offsetWidth;
-  cardEls.forEach(el=>{el.style.transition='';});
-  cardEls.forEach((el,i)=>{Cards.setFront(el,cards[i]);Cards.flipUp(el);});
-  for(let revealIdx=0;revealIdx<n;revealIdx++){
-    pendingDealTimeouts.push(setTimeout(()=>{
+    setTimeout(()=>{
+      Cards.setFront(el,cards[i]);
       playSfx(SFX_CARD_SLIDE,true);
-      // Every card revealed so far now sits (revealIdx - itsOwnIndex) slots from the
-      // stack origin: the just-revealed card (j===revealIdx) lands back at slot 0
-      // (unmoved), and each older one gets pushed exactly one slot further right than
-      // it was a moment ago.
-      for(let j=0;j<=revealIdx;j++){
-        cardEls[j].style.left=fanLefts[revealIdx-j]+'cqh';
-      }
-      cardEls[revealIdx].style.zIndex=n-revealIdx; // further-right final slot -> higher layer
-      if(revealIdx===n-1)pendingDealTimeouts.push(setTimeout(()=>{if(onAllRevealed)onAllRevealed();},550));
-    },revealIdx*stagger));
-  }
-}
-// Dealer's sweat fans all 7 cards out in one motion instead of one-at-a-time -- still
-// paced by the Sweat Speed setting, just used as the fan-out's own transition duration
-// here instead of a per-card stagger. Final positions match sweatReveal's end state
-// exactly (and renderHandCardsStatic's), so nothing looks different once it's settled.
-function sweatRevealAllAtOnce(cardEls,cards,fanLefts,onAllRevealed){
-  const duration=getSweatStaggerMs();
-  const n=cardEls.length;
-  cardEls.forEach((el,i)=>{
-    el.style.transition='none';
-    el.style.left=fanLefts[0]+'cqh';
-    el.style.zIndex=i===0?100:0;
+      Cards.flipUp(el);
+    },i*DEAL_REVEAL_STAGGER_MS);
   });
-  void cardEls[0].offsetWidth;
-  cardEls.forEach(el=>{el.style.transition='left '+duration+'ms cubic-bezier(.4,.2,.2,1)';});
-  cardEls.forEach((el,i)=>{playSfx(SFX_CARD_FAN);Cards.setFront(el,cards[i]);Cards.flipUp(el);});
-  cardEls.forEach((el,i)=>{
-    el.style.left=fanLefts[(n-1)-i]+'cqh';
-    el.style.zIndex=n-i;
-  });
-  // The 3D flip (cards.js) always transitions over a fixed .5s regardless of Sweat
-  // Speed, so wait for whichever of that or the fan-out actually takes longer.
-  setTimeout(()=>{
-    cardEls.forEach(el=>{el.style.transition='';});
-    if(onAllRevealed)onAllRevealed();
-  },Math.max(duration,500)+50);
+  if(onDone)setTimeout(onDone,(G.cardEls.dealer.length-1)*DEAL_REVEAL_STAGGER_MS+600);
 }
-// Called once all 7 of the player's cards are face up (or immediately, on a resumed
-// hand): shows the live hand description, decides whether the Play spot/button is
-// available at all (Rainbow = Fold only), and reveals the action buttons.
-function onHandFullyRevealed(){
-  dealAnimInProgress=false;
-  updateLiveHandDisplay();
-  const rainbow=isRainbow(evalHand(G.hand.playerHand));
-  const playSpot=document.getElementById('play-spot');
-  playSpot.classList.toggle('inert',rainbow);
-  renderActionButtons();
-  updateRaiseButtonStates();
-  updateUI();
-}
-// Mobile browsers throttle/suspend setTimeout chains in a backgrounded tab (app
-// switch, screen lock, etc.), which can strand the deal/sweat animation mid-flight
-// with no visible cards. If the tab comes back while a deal is still "in progress"
-// per the guard above but the player's hand was never marked revealed, skip straight
-// to the final state instead of leaving the player staring at a stalled table.
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState!=='visible')return;
-  if(!dealAnimInProgress||G.phase!=='dealt'||!G.hand||!G.cardEls)return;
-  pendingDealTimeouts.forEach(clearTimeout);
-  pendingDealTimeouts=[];
-  renderHandCardsStatic();
-  onHandFullyRevealed();
-});
-
-// ── SCREEN STATE (persistent felt panel -- only the card rows/action buttons toggle) ──
-function resetCardRows(){
-  document.getElementById('dealer-row').classList.remove('active');
-  document.getElementById('player-row').classList.remove('active');
-}
-
 // ── ACTION BUTTONS ────────────────────────────────────────────────────────────
-function setDisplay(id,show){document.getElementById(id).style.display=show?'':'none';}
+const ACTION_BTN_IDS=['btn-deal','btn-fold','btn-bet'];
+const PHASE_BUTTONS={betting:['btn-deal'],dealt:['btn-fold','btn-bet'],showdown:[]};
 function renderActionButtons(){
-  const allRaiseIds=Object.values(RAISE_BTN_ID);
-  if(G.phase==='betting'){
-    setDisplay('btn-deal',true);setDisplay('btn-fold',false);
-    allRaiseIds.forEach(id=>setDisplay(id,false));
-  }else if(G.phase==='dealt'){
-    const opts=raiseOptions();
-    setDisplay('btn-deal',false);
-    setDisplay('btn-fold',true);
-    allRaiseIds.forEach(id=>setDisplay(id,false));
-    opts.forEach(mult=>setDisplay(RAISE_BTN_ID[mult],true));
-  }else{
-    setDisplay('btn-deal',false);setDisplay('btn-fold',false);
-    allRaiseIds.forEach(id=>setDisplay(id,false));
-  }
+  const show=new Set(PHASE_BUTTONS[G.phase]||[]);
+  ACTION_BTN_IDS.forEach(id=>{document.getElementById(id).style.display=show.has(id)?'':'none';});
+  updateBetButtonState();
 }
 
 function updateStatusZone(){
-  const rainbow=G.hand&&isRainbow(evalHand(G.hand.playerHand));
   const map={
-    betting:['Place Your Ante','Flush Rush and Super Flush Rush are optional side bets on your own 7-card hand.'],
-    dealt: rainbow
-      ? ['Rainbow — Fold Only','A bare 2-card flush has no Play option. Fold to end the hand.']
-      : ['Raise, or Fold','Raise up to your flush\'s max (1X for 3-4 cards, 2X for 5, 3X for 6-7) -- or Fold to give up the Ante.'],
+    betting:['Place Your Ante','Blind auto-matches your Ante. Trips & The Light are optional.'],
+    dealt:['Fold, or Bet 2X','Deuces & the Joker are wild. Fold, or make the Bet (2x your Ante).'],
     showdown:['Showdown','']
   };
   const m=map[G.phase]||['',''];
@@ -1482,48 +1226,41 @@ function updateStatusZone(){
 
 // ── DEAL ──────────────────────────────────────────────────────────────────────
 async function dealHand(){
-  // Guards against a double-tap (or a tap landing in the brief window between the
-  // fetch resolving and the deal/fold buttons actually being hidden) starting a
-  // second overlapping deal/sweat animation chain that stomps this one's card
-  // positions. Cleared once the player's hand is fully revealed (or on any early
-  // return below).
-  if(dealAnimInProgress)return;
   const ante=G.bets.ante||0;
   if(ante<=0){addLog('Place an Ante bet before dealing.','info');return;}
-  // G.bankroll already has Ante/side bets deducted (placeBet subtracts as soon as
-  // chips are staged), so this is exactly the reserve left over -- never let a hand
-  // start that can't afford even the smallest possible Play bet (1x Ante, the floor
-  // for any scoreable hand per raiseMultiplier()), or every non-Rainbow hand would
-  // force a Fold no matter what's drawn.
-  if(G.bankroll+G.freePlay<ante-0.01){addLog('Not enough bankroll left to cover a 1x Play bet ('+fmt(ante)+') after seeing your hand. Lower your Ante/side bets or add funds.','info');return;}
-  const flushRush=G.bets.flushRush||0;
-  const superFlushRush=G.bets.superFlushRush||0;
+  // G.bankroll already has Ante/Blind/Trips/Light deducted (placeBet/toggleProgressive
+  // subtract as soon as chips are staged), so this is the reserve left over -- never
+  // deal a hand that can't cover the Bet (2x Ante), or a made hand can only be folded.
+  const betLeg=r2(ante*2);
+  if(G.bankroll+G.freePlay<betLeg-0.01){addLog('Not enough bankroll left to cover the Bet (2x Ante = '+fmt(betLeg)+'). Lower your Ante/Trips or add funds.','info');return;}
+  const trips=G.bets.trips||0;
   const progressive=(G.bets.progressive||0)>0;
-  dealAnimInProgress=true;
   document.getElementById('btn-deal').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll-iluvsuits',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,flushRush,superFlushRush,progressive})});
+    const res=await fetch(FUNCTIONS_URL+'/roll-djwild',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'deal',ante,trips,progressive})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
   document.getElementById('btn-deal').disabled=false;
-  if(!data.ok){dealAnimInProgress=false;addLog(data.message||'Deal failed.','lose');return;}
+  if(!data.ok){addLog(data.message||'Deal failed.','lose');return;}
   playSfx(SFX_CARD_SHUFFLE);
-  G.locked={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush,progressive:data.progressive};
-  G.lastBetSnapshot={ante:data.ante,flushRush:data.flushRush,superFlushRush:data.superFlushRush,progressive:data.progressive?PROGRESSIVE_BET:0};
-  G.hand={playerHand:data.playerHand,dealerHand:null};
+  G.locked={ante:data.ante,blind:data.blind,trips:data.trips,progressive:data.progressive};
+  G.lastBetSnapshot={ante:data.ante,trips:data.trips,progressive:!!data.progressive};
+  G.hand={playerCards:data.playerCards,dealerCards:null};
   G.bankroll=data.newBankroll;
   if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
   if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
   if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-  G.bets={ante:0,flushRush:0,superFlushRush:0,progressive:0};
-  G.playBet=0;
+  G.bets={ante:0,trips:0,progressive:0};
+  G.betBet=0;
   G.phase='dealt';
+  document.getElementById('dealer-row').classList.add('active');
+  document.getElementById('player-row').classList.add('active');
+  hideUndealtSlots();
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
-  setDisplay('btn-deal',false);setDisplay('btn-fold',false);
-  Object.values(RAISE_BTN_ID).forEach(id=>setDisplay(id,false)); // hidden until deal+reveal finishes
+  ACTION_BTN_IDS.forEach(id=>document.getElementById(id).style.display='none'); // hidden until the deal+reveal finishes
   updateStatusZone();
   document.getElementById('repeat-btn').disabled=false;
   // Sweep the staged $5 chip away (not dimmed -- same noDim ghost style as a win-side
@@ -1534,106 +1271,101 @@ async function dealHand(){
     const img=document.getElementById('light-on-img');
     img.classList.remove('lit-in');void img.offsetWidth;img.classList.add('lit-in');
   }
-  pendingDealTimeouts.forEach(clearTimeout);
-  pendingDealTimeouts=[];
-  const dealMs=dealCardsAnimated();
-  pendingDealTimeouts.push(setTimeout(()=>{sweatReveal(G.cardEls.player,G.hand.playerHand,PLAYER_FAN_LEFTS,onHandFullyRevealed);},dealMs));
+  // Deal the dealer's five face-down backs, then deal + reveal the player's five.
+  dealBacks(G.cardEls.dealer);
+  dealAndRevealCards(G.cardEls.player,G.hand.playerCards,()=>{
+    updateLiveHandDisplay();
+    renderActionButtons();
+  });
 }
 
-// ── PLAY / FOLD (server-resolved) ─────────────────────────────────────────────
-function doFold(){
-  if(G.playBet>0){G.bankroll=r2(G.bankroll+G.playBet);G.playBet=0;} // refund staged-but-uncommitted Play chips
-  commitDecision('fold',0);
+// ── FOLD / BET (server-resolved) ─────────────────────────────────────────────
+function doFold(){commitDecision('fold');}
+function doBet(){
+  if(document.getElementById('btn-bet').disabled)return;
+  const amt=betAmount();
+  if(amt<=0||amt>G.bankroll+G.freePlay)return;
+  G.betBet=amt;
+  G.bankroll=r2(G.bankroll-amt);
+  updateUI();
+  commitDecision('bet');
 }
-async function commitDecision(decision,playBet){
-  Object.values(RAISE_BTN_ID).forEach(id=>{const btn=document.getElementById(id);if(btn)btn.disabled=true;});
+async function commitDecision(decision){
   document.getElementById('btn-fold').disabled=true;
+  document.getElementById('btn-bet').disabled=true;
   const token=localStorage.getItem('craps_session');
   let data;
   try{
-    const res=await fetch(FUNCTIONS_URL+'/roll-iluvsuits',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'resolve',decision,playBet})});
+    const res=await fetch(FUNCTIONS_URL+'/roll-djwild',{method:'POST',headers:FN_HEADERS,body:JSON.stringify({session_token:token,action:'resolve',decision})});
     data=await res.json();
   }catch(e){data={ok:false,message:'Network error. Try again.'};}
-  document.getElementById('btn-fold').disabled=false;
-  updateRaiseButtonStates();
-  if(!data.ok){addLog(data.message||'Action failed.','lose');return;}
+  if(!data.ok){
+    addLog(data.message||'Action failed.','lose');
+    // Roll back the optimistic Bet deduction so the felt matches reality.
+    if(decision==='bet'&&G.betBet>0){G.bankroll=r2(G.bankroll+G.betBet);G.betBet=0;updateUI();}
+    document.getElementById('btn-fold').disabled=false;
+    updateBetButtonState();
+    return;
+  }
   finishHand(data);
 }
 function finishHand(data){
-  // Computed regardless of fold -- the dealer's hand always comes down (sweatRevealAllAtOnce
-  // below runs unconditionally), so the history tooltip can show what the dealer actually had
-  // even on a hand the player folded.
-  const playerFinal=evalHand(G.hand.playerHand);
-  const dealerFinal=evalHand(data.dealerHand);
-  if(data.folded){
-    document.getElementById('player-hand-name').textContent='Folded';
-  }else{
-    applyDiscardVisual(playerFinal);
-  }
-  // (player-hand-name already shows its live description from the initial sweat when not folded)
-  (data.log||[]).forEach(line=>{
-    const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
-    addLog(line,cls);
-  });
-  G.bankroll=data.newBankroll;
-  if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
-  if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
-  G.lastWin=data.payout||0;
-  G.lastBetDisplay=r2(G.locked.ante+G.locked.flushRush+G.locked.superFlushRush+(data.playBet||0));
-  if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
-  const histLabel=data.folded?'Fold':(isRainbow(playerFinal)?'Rainbow':playerFinal.count+'-Flush');
-  // Full hand descriptions (with kicker) for the history pip's hover tooltip -- shown even
-  // on a fold, so "what did the dealer have" doesn't require digging into the log.
-  let playerDesc=data.folded?'Folded':describeHandTierFull(playerFinal);
-  if(G.locked.progressive){
-    playerDesc+=data.progressiveTier?' — THE LIGHT: '+data.progressiveTier.toUpperCase()+'!':' — THE LIGHT: no prize';
-  }
-  const dealerDesc=describeHandTierFull(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
-  G.history.unshift({result:data.result,payout:data.payout,label:histLabel,playerDesc,dealerDesc});
-  if(G.history.length>20)G.history.length=20;
-  G.phase='showdown';
-  renderActionButtons();updateStatusZone();
-  updateUI();checkBroke();
-
-  // Sweat the dealer's hand now (it's sat as a hidden face-down stack since the deal) --
-  // described regardless of fold, since the player still wants to see what the dealer
-  // had. The winner modal (and the no-payout reset timer) waits for this to finish, so
-  // it never pops up before the dealer's hand is fully revealed and described.
-  sweatRevealAllAtOnce(G.cardEls.dealer,data.dealerHand,DEALER_FAN_LEFTS,()=>{
-    document.getElementById('dealer-hand-name').textContent=describeHandTier(dealerFinal)+(dealerQualifies(dealerFinal)?'':' (no qualify)');
-    spawnILuvSuitsGhosts(data.log||[],data.folded);
-    const totalWagered=G.lastBetDisplay||1;
-    const sfrWin=data.superFlushRushWin||0;
-    const remaining=r2((data.payout||0)-sfrWin);
-
-    const showMainPayout=()=>{
-      if(remaining>0){
-        const bigWin=(remaining/totalWagered)>=7;
-        WinnerModal.show(remaining,{big:bigWin,onClose:resetToBetScreen});
+  const playerFinal=bestWild5(G.hand.playerCards);
+  const dealerFinal=bestWild5(data.dealerCards);
+  const showHandNames=()=>{
+    if(data.folded){
+      document.getElementById('dealer-hand-name').textContent='';
+      document.getElementById('player-hand-name').textContent='Folded';
+    }else{
+      document.getElementById('dealer-hand-name').textContent=describeScore(dealerFinal);
+      document.getElementById('player-hand-name').textContent=describeScore(playerFinal);
+    }
+  };
+  const afterReveal=()=>{
+    G.betBet=data.betAmt||0;
+    (data.log||[]).forEach(line=>{
+      const cls=/win|pays/i.test(line)?'win':/lost/i.test(line)?'lose':'info';
+      addLog(line,cls);
+    });
+    G.bankroll=data.newBankroll;
+    if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+    if(data.tier!=null){if(currentPlayer)currentPlayer.tier=data.tier;refreshTierLimits(data.tier);}
+    G.lastWin=data.payout||0;
+    G.lastBetDisplay=r2(G.locked.ante+G.locked.blind+G.locked.trips+(data.betAmt||0));
+    if(data.progressivePool!=null)G.progressivePool=data.progressivePool;
+    const histLabel=data.folded?'Fold':categoryName(playerFinal);
+    let playerDesc=data.folded?'Folded':describeScoreFull(playerFinal);
+    if(G.locked.progressive){
+      playerDesc+=data.progressiveTier?' — THE LIGHT: '+data.progressiveTier.toUpperCase()+'!':' — THE LIGHT: no prize';
+    }
+    const dealerDesc=describeScoreFull(dealerFinal);
+    G.history.unshift({result:data.result,payout:data.payout,label:histLabel,playerDesc,dealerDesc});
+    if(G.history.length>20)G.history.length=20;
+    G.phase='showdown';
+    renderActionButtons();updateStatusZone();
+    updateUI();checkBroke();
+    postRoundTimer=setTimeout(()=>{
+      postRoundTimer=null;
+      spawnDjGhosts(data.log||[],data.folded);
+      const totalWagered=G.lastBetDisplay||1;
+      if(data.payout>0){
+        const bigWin=(data.payout/totalWagered)>=7;
+        WinnerModal.show(data.payout,{big:bigWin,onClose:resetToBetScreen});
       }else{
-        // postRoundTimer tracks this so repeatLastBet() can cancel it and fast-forward
-        // straight to the betting screen -- the round is already fully resolved
-        // server-side, this delay exists only so the player can watch the sweep.
         postRoundTimer=setTimeout(()=>{postRoundTimer=null;resetToBetScreen();},3500);
       }
-      if(data.capped)setTimeout(openCapModal,remaining>0?4200:900);
-    };
-
-    if(sfrWin>0){
-      // Super Flush Rush can pay up to 8000:1 -- easy to miss as one line among several
-      // in the scrolling log, so it gets its own flash + modal before the hand's total.
-      flashSpotHit('superflushrush-spot');
-      WinnerModal.show(sfrWin,{big:true,onClose:showMainPayout});
-    }else{
-      showMainPayout();
-    }
-  });
+      if(data.capped)setTimeout(openCapModal,data.payout>0?4200:900);
+    },550);
+  };
+  // Always flip the dealer's five cards up (DJ Wild always shows the dealer's hand,
+  // win, lose, or folded-against), then settle.
+  revealDealerCards(data.dealerCards,()=>{showHandNames();afterReveal();});
 }
 function resetToBetScreen(){
-  G.phase='betting';G.hand=null;G.locked={ante:0,flushRush:0,superFlushRush:0,progressive:false};G.playBet=0;
-  [...G.cardEls.player,...G.cardEls.dealer].forEach(el=>{Cards.reset(el);resetCardPosition(el);el.classList.remove('discarded');});
-  resetCardRows();
-  document.getElementById('play-spot').classList.remove('inert');
+  G.phase='betting';G.hand=null;G.locked={ante:0,blind:0,trips:0,progressive:false};G.betBet=0;
+  hideUndealtSlots();
+  document.getElementById('dealer-row').classList.remove('active');
+  document.getElementById('player-row').classList.remove('active');
   document.getElementById('dealer-hand-name').textContent='';
   document.getElementById('player-hand-name').textContent='';
   renderActionButtons();updateStatusZone();
@@ -1666,23 +1398,21 @@ function updateUI(){
   document.getElementById('hud-lastwin').textContent=G.lastWin>0?fmtS(G.lastWin):'—';
   renderRollHistory();
 
-  // Ante/Flush Rush/Super Flush Rush: their amount comes from G.locked once dealt
-  // (G.bets is cleared right after a successful deal). The chip stack itself never
-  // disappears -- it stays up the same way a craps Pass Line bet does -- a small
-  // lock badge is just added on top of it once they become contract (uneditable)
-  // bets. See chipStackHTML()'s locked parameter.
+  // Ante/Blind/Trips: their amount comes from G.locked once dealt (G.bets is cleared
+  // right after a successful deal). The chip stack itself never disappears -- it stays
+  // up the same way a craps Pass Line bet does -- a small lock badge is just added on
+  // top of it once they become contract (uneditable) bets. See chipStackHTML().
   const locked=G.phase!=='betting';
   const anteAmt=locked?G.locked.ante:(G.bets.ante||0);
-  const frAmt=locked?G.locked.flushRush:(G.bets.flushRush||0);
-  const sfrAmt=locked?G.locked.superFlushRush:(G.bets.superFlushRush||0);
+  const tripsAmt=locked?G.locked.trips:(G.bets.trips||0);
   document.getElementById('stk-ante').textContent=anteAmt?fmt(anteAmt):'';
-  document.getElementById('stk-flushrush').textContent=frAmt?fmt(frAmt):'';
-  document.getElementById('stk-superflushrush').textContent=sfrAmt?fmt(sfrAmt):'';
-  document.getElementById('stk-play').textContent=G.playBet?fmt(G.playBet):'';
+  document.getElementById('stk-blind').textContent=anteAmt?fmt(anteAmt):'';
+  document.getElementById('stk-trips').textContent=tripsAmt?fmt(tripsAmt):'';
+  document.getElementById('stk-bet').textContent=G.betBet?fmt(G.betBet):'';
   document.getElementById('ante-spot').classList.toggle('active',anteAmt>0);
-  document.getElementById('flushrush-spot').classList.toggle('active',frAmt>0);
-  document.getElementById('superflushrush-spot').classList.toggle('active',sfrAmt>0);
-  document.getElementById('play-spot').classList.toggle('active',G.playBet>0);
+  document.getElementById('blind-spot').classList.toggle('active',anteAmt>0);
+  document.getElementById('trips-spot').classList.toggle('active',tripsAmt>0);
+  document.getElementById('bet-spot').classList.toggle('active',G.betBet>0);
   // The Light: a staged $5 stake shows like any other spot pre-deal, then the chip
   // sweeps away and lightON.webp takes over once dealt (G.locked.progressive) --
   // there's no locked-chip-stack display for this one, just the bulb art itself.
@@ -1708,14 +1438,14 @@ const SFX_CHIP={
 const SFX_CHIP_MANY='lots_of_chips.ogg';
 const SFX_CARD_SHUFFLE=['card-shuffle.ogg'];
 const SFX_CARD_SLIDE=['card-slide-1.ogg','card-slide-2.ogg','card-slide-3.ogg','card-slide-4.ogg','card-slide-5.ogg','card-slide-6.ogg','card-slide-7.ogg','card-slide-8.ogg'];
-const SFX_CARD_FAN=['card-fan-1.ogg','card-fan-2.ogg'];
 const _sfxCache={};
-// Every sound effect clones a cached Audio element and plays it, with nothing ever
-// explicitly releasing the clone afterward. On iOS, decoded-audio sessions are a scarce
-// OS-level resource -- explicitly clearing .src once a clone is done tells the OS to
-// release the decoder promptly instead of waiting on GC, which has no visibility into
-// (and no pressure to reclaim) a native media resource. Confirmed as the real cause of a
-// reported progressive slowdown in uth.html that DOM/JS-heap inspection couldn't see.
+// Every card slide/burn/reveal/chip placement plays a sound by cloning a cached Audio
+// element and calling play() -- with nothing ever explicitly releasing the clone
+// afterward. On iOS, decoded-audio sessions are a scarce OS-level resource separate from
+// the JS heap/DOM (doesn't show up in either), and a handful of these fire per hand
+// (multiple card reveals, chip sounds, etc.) -- explicitly clearing .src once each clone
+// is done tells the OS to release the decoder promptly instead of waiting on GC, which
+// has no visibility into (and no pressure to reclaim) a native media resource.
 function releaseAudioClone(inst){
   const release=()=>{inst.src='';inst.removeEventListener('ended',release);inst.removeEventListener('pause',release);inst.removeEventListener('error',release);};
   inst.addEventListener('ended',release);
@@ -1769,15 +1499,13 @@ function chipStackHTML(amt,locked,isFP){
   const label=chipLabel(amt,isFP);
   const fs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
   h+='<span class="chip-amt" style="bottom:calc(var(--edge)*'+(n-1)+');font-size:calc(var(--chip)*'+fs+')">'+label+'</span>';
-  // Same anchor/build-into-the-stack approach as craps' chip-lock badge (see index.html) --
-  // a separately-positioned floating badge kept landing on the wrong ancestor box.
   if(locked)h+='<span class="chip-lock" style="bottom:0">🔒</span>';
   h+='</span>';
   return h;
 }
-// Ante/Flush Rush/Super Flush Rush are locked (contract) once dealt; Play is locked
-// once resolved (showdown). The chip stack stays up the whole time either way --
-// only whether the lock badge is appended changes.
+// Ante/Blind/Trips are locked (contract) once dealt; Play is locked once resolved
+// (showdown). The chip stack stays up the whole time either way -- only whether the
+// lock badge is appended changes.
 // Freeplay eligibility per spot is a client-side estimate, not the server's real
 // accounting (that only happens on resolve) -- each spot is checked in render order
 // against a running balance that depletes as earlier spots claim it, so the total
@@ -1787,27 +1515,181 @@ function renderChipStacks(){
   const contractLocked=G.phase!=='betting';
   _fpRemainingForRender=(window.FreePlayBadge&&FreePlayBadge.getBalance())||0;
   applyChipStackVisual('stk-ante',contractLocked);
-  applyChipStackVisual('stk-flushrush',contractLocked);
-  applyChipStackVisual('stk-superflushrush',contractLocked);
-  applyChipStackVisual('stk-play',G.phase==='showdown');
-  // stk-light's text only ever holds a value pre-deal (cleared to '' once locked, when
-  // the bulb art takes over instead -- see updateUI()), so this never needs a "locked"
-  // badge of its own; false just matches that it's always shown as an editable stake.
+  // Blind always mirrors Ante's amount -- it's not a separate player action, so its own
+  // visual update stays silent rather than doubling up Ante's chip sound.
+  applyChipStackVisual('stk-blind',contractLocked,true);
+  applyChipStackVisual('stk-trips',contractLocked);
+  applyChipStackVisual('stk-bet',G.phase==='showdown');
+  // The Light: real chip stack while staged (pre-deal), same as Ante/Trips -- its own
+  // updateUI() block already blanks the text once locked, so there's nothing left to render
+  // by the time dealHand() sweeps the chip away and lightON.webp takes over.
   applyChipStackVisual('stk-light',false);
 }
-function applyChipStackVisual(id,locked){
+function applyChipStackVisual(id,locked,silent){
   const el=document.getElementById(id);
   const m=(el.textContent||'').trim().match(/^\$([0-9,]+(?:\.[0-9]+)?)$/);
-  if(!m){maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
+  if(!m){if(!silent)maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
   const amt=parseFloat(m[1].replace(/,/g,''));
-  if(!(amt>0)){maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
-  maybeTriggerChipSound(id,amt);
+  if(!(amt>0)){if(!silent)maybeTriggerChipSound(id,0);el.classList.remove('has-stack');return;}
+  if(!silent)maybeTriggerChipSound(id,amt);
   const isFP=amt<=_fpRemainingForRender;
   if(isFP)_fpRemainingForRender-=amt;
   el.innerHTML=chipStackHTML(amt,locked,isFP);
   el.classList.add('has-stack');
 }
 document.addEventListener('dragstart',e=>{if(e.target.closest('.chip-stack'))e.preventDefault();});
+
+// ── WIN/LOSS CHIP-GHOST SWEEP -- ported wholesale from craps/sicbo/I Luv Suits ───
+// Ghost/win-stack/wager-ghost elements are position:fixed, appended straight to document.body
+// -- OUTSIDE whatever CSS container the real bet spot's --chip value was declared relative to
+// (#ante-spot etc. set --chip in "cqh", container-query-height units -- see body{--chip:70px}
+// vs #ante-spot{--chip:7cqh}). getComputedStyle(el).getPropertyValue('--chip') returns that raw
+// declared string ("7cqh"), NOT a resolved pixel value -- custom properties are never unit-
+// resolved by getComputedStyle the way real properties like font-size are. Copying that string
+// onto a ghost living in a completely different container silently resolves to a totally
+// different actual size there (confirmed live: real chip-amt renders at ~11.4px, the ghost's
+// copy of the same "7cqh" rendered at ~16.8px).
+// Fixed by measuring .chip-amt's own rendered height instead -- its CSS rule is literally
+// `height:var(--chip)` (see .chip-stack .chip-amt below), a direct 1:1 mapping the browser
+// must resolve to real pixels for layout regardless of what unit --chip was declared in. No
+// back-solving needed, unlike two earlier attempts: measuring .chip-img's height was unreliable
+// (only has width:100% with no explicit height, so it depends on the PNG having already loaded/
+// decoded elsewhere on the page, reading 0 otherwise), and measuring .chip-stack's height and
+// solving back through the --edge:calc(var(--chip)*0.16) ratio was needlessly indirect and, in
+// practice, came out measurably wrong (~19% off) for reasons never fully pinned down.
+function chipPxFor(el){
+  const amt=el?el.querySelector('.chip-amt'):null;
+  const h=amt?amt.getBoundingClientRect().height:0;
+  if(h>0)return h+'px';
+  return getComputedStyle(document.body).getPropertyValue('--chip').trim()||'32px';
+}
+function spawnChipGhost(el,opts){
+  opts=opts||{};
+  if(!el)return;
+  const rect=el.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const amtSpan=el.querySelector('.chip-amt');
+  const label=amtSpan?amtSpan.textContent:'';
+  const chipImgs=el.querySelectorAll('.chip-img');
+  const topChip=chipImgs.length?chipImgs[chipImgs.length-1]:null;
+  const chipSrc=topChip?topChip.getAttribute('src'):null;
+  if(!label&&!chipSrc)return;
+  const ghost=document.createElement('div');
+  ghost.className='chip-ghost';
+  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
+  ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
+  ghost.style.setProperty('--chip',chipPxFor(el));
+  if(chipSrc){
+    const img=document.createElement('img');
+    img.src=chipSrc;img.draggable=false;
+    img.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;height:auto;z-index:1';
+    ghost.appendChild(img);
+  }
+  if(label){
+    const amtFs=label.length<=3?0.3:(label.length===4?0.26:(label.length===5?0.22:0.18));
+    const span=document.createElement('span');
+    span.textContent=label;
+    span.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;font-size:calc(var(--chip)*'+amtFs+');color:#111;font-weight:800;text-shadow:0 0 3px #fff,0 0 4px #fff;line-height:1;white-space:nowrap;pointer-events:none';
+    ghost.appendChild(span);
+  }
+  document.body.appendChild(ghost);
+  const sweepClass=opts.direction==='down'?'sweep-down':'sweep';
+  if(!opts.noDim)requestAnimationFrame(()=>{ghost.classList.add('dim');});
+  setTimeout(()=>{
+    // Clear the real chip stack right as the ghost starts sliding away, not before --
+    // until this instant the ghost sits exactly on top of it so the swap is invisible,
+    // but leaving the original in place any longer means it's still sitting there once
+    // the ghost has moved off, looking like a duplicate got left behind.
+    el.innerHTML='';
+    el.classList.remove('has-stack');
+    ghost.classList.add(sweepClass);
+  },900);
+  setTimeout(()=>{ghost.remove();},1450);
+}
+// Bet-name -> stake-element-id table, matched against roll-djwild's exact log-line
+// prefixes. Win/loss is read off the same win|pays / lost keywords addLog() already
+// uses for line coloring, so this stays in sync with the server's wording for free.
+// THE LIGHT is intentionally left out here -- its own $5 stake is swept separately at
+// deal-time, and its win lines report a payout with no stake left on the felt to pair against.
+function djGhostChecks(){
+  return [[/^Ante:/,'ante'],[/^Blind:/,'blind'],[/^Trips:/,'trips'],[/^Bet/,'bet']];
+}
+// Real dealer-style payout: a fresh stack holding ONLY the profit amount drops in from the top
+// of the screen, settles just barely touching the wager it's paying against, holds a beat,
+// then sweeps to the bottom together with the wager. Every UTH bet spot clears every hand
+// (confirmed against roll-uth's resolve logic -- G.locked is reset to all-zero every hand, no
+// bet ever carries state forward), so unlike craps there is no "stays" case at all: the wager
+// always sweeps along with its win-stack.
+const WIN_DROP_MS=480,WIN_HOLD_MS=420,WIN_SWEEP_MS=550;
+function spawnWinPair(elId,amt){
+  const stakeEl=document.getElementById(elId);
+  if(!stakeEl||!(amt>0))return;
+  const rect=stakeEl.getBoundingClientRect();
+  if(rect.width<=0&&rect.height<=0)return;
+  const liveChipVar=chipPxFor(stakeEl);
+  const existingAmtSpan=stakeEl.querySelector('.chip-amt');
+  const isFP=!!(existingAmtSpan&&/^FP\$/.test(existingAmtSpan.textContent));
+  const gap=1;
+  // Prefer landing to the left of the wager (mirrors a dealer squaring a payout next to the
+  // original bet, chips just barely touching); if that would land off-screen (a bet parked
+  // near the felt's left edge), fall back to the right instead rather than clipping.
+  let targetLeft=rect.left-rect.width-gap;
+  if(targetLeft<4)targetLeft=rect.right+gap;
+
+  const winGhost=document.createElement('div');
+  winGhost.className='chip-ghost win-start';
+  winGhost.style.left=targetLeft+'px';winGhost.style.top=rect.top+'px';
+  winGhost.style.width=rect.width+'px';winGhost.style.height=rect.height+'px';
+  winGhost.style.setProperty('--chip',liveChipVar);
+  winGhost.innerHTML=chipStackHTML(amt,false,isFP);
+  document.body.appendChild(winGhost);
+  // Double rAF, not single -- a single rAF scheduled synchronously right after appendChild()
+  // can land in the SAME frame as the element's first paint, so the browser never actually
+  // commits a frame with .win-start applied before swapping to .win-in, and the transition
+  // has nothing to animate from (snaps instantly, no visible motion). The first rAF waits for
+  // the current frame to finish painting .win-start; the nested one swaps on the NEXT frame.
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{winGhost.classList.remove('win-start');winGhost.classList.add('win-in');});});
+
+  const wagerGhost=document.createElement('div');
+  wagerGhost.className='chip-ghost';
+  wagerGhost.style.left=rect.left+'px';wagerGhost.style.top=rect.top+'px';
+  wagerGhost.style.width=rect.width+'px';wagerGhost.style.height=rect.height+'px';
+  wagerGhost.style.setProperty('--chip',liveChipVar);
+  wagerGhost.innerHTML=stakeEl.innerHTML;
+  document.body.appendChild(wagerGhost);
+
+  setTimeout(()=>{
+    // Clear the real chip stack right as the ghosts start sliding away, same convention as
+    // spawnChipGhost above -- until this instant the ghosts sit exactly on top of it.
+    stakeEl.innerHTML='';
+    stakeEl.classList.remove('has-stack');
+    winGhost.classList.remove('win-in');
+    winGhost.classList.add('sweep-down');
+    wagerGhost.classList.add('sweep-down');
+  },WIN_DROP_MS+WIN_HOLD_MS);
+  setTimeout(()=>{
+    winGhost.remove();
+    wagerGhost.remove();
+  },WIN_DROP_MS+WIN_HOLD_MS+WIN_SWEEP_MS+100);
+}
+function spawnDjGhosts(rawLog,folded){
+  djGhostChecks().forEach(([re,key])=>{
+    const line=rawLog.find(l=>re.test(l));
+    if(!line)return;
+    const el=document.getElementById('stk-'+key);
+    if(/lost/i.test(line)){spawnChipGhost(el);return;}
+    if(/push/i.test(line)){spawnChipGhost(el,{direction:'down',noDim:true});return;}
+    if(/win|pays/i.test(line)){
+      const m=line.match(/\+([\d.]+)/);
+      if(m)spawnWinPair('stk-'+key,parseFloat(m[1]));
+    }
+  });
+  // "Folded — Ante & Blind lost." doesn't match the /^Ante:/ or /^Blind:/ prefixes above.
+  if(folded){
+    spawnChipGhost(document.getElementById('stk-ante'));
+    spawnChipGhost(document.getElementById('stk-blind'));
+  }
+}
 
 // ── CASHOUT ───────────────────────────────────────────────────────────────────
 async function cashOut(){
@@ -1841,7 +1723,6 @@ function closeCashoutModal(){document.getElementById('modal-cashout').classList.
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 renderActionButtons();
-updateSweatSpeedButton();
 tryRestoreSession();
 </script>
 <script src="winner-modal.js?v=0.5.4"></script>
