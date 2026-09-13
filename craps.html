@@ -14,7 +14,7 @@
      never blocks on the request. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&family=Permanent+Marker&family=Caveat:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&family=Permanent+Marker&family=Caveat:wght@600&family=Open+Sans:wght@700;800&family=Kaushan+Script&display=swap">
 <script src="sb-client.bundle.js?v=1"></script>
 <script src="audio-settings.js?v=1"></script>
 <script src="discord-embedded-app-sdk.js?v=1"></script>
@@ -2299,6 +2299,126 @@ body[data-felt="classic"],.felt-classic{
 /* The two light boards take the darkened pass-line blue; #4a9eff on cream measures
    about 2.7:1, which is under the 4.5 body-text bar. */
 body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-passline-dark)}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   INTERBLOCK "BUBBLE CRAPS" SKIN (Ver. 1.0.71) -- Deck: "1:1 mimic the look and feel of the
+   bubble craps machine." Reference: Interblock Crapless Craps 5.2 screenshots.
+
+   APPEARANCE ONLY. This block sets colours, rims, radii, fonts and chrome. It never sets
+   position / left / top / width / height / flex / margin on anything -- every .felt-abs keeps
+   its FELT_LAYOUT / LR_LAYOUT percentages, so the portrait + landscape phone work (1.0.56-69)
+   is untouched by construction. The two things that DO change shape (the circular ROLL and
+   the uppercase special buttons) are scoped to :not(.felt-mobile) for exactly that reason.
+
+   How it gets its reach cheaply: every box's visible "border" is var(--metal) showing through
+   a transparent border, and every big label is a background-clip gradient driven by a
+   --text-grad-* token. Redefining those tokens in the palette below reskins the whole felt
+   in one place; the per-element rules further down only handle what the machine draws
+   differently from the token defaults (red COME, blue PASS LINE, chrome buttons, red dice).
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* 1. PALETTE -- the machine's saturated green becomes Craps' native "classic" palette, so the
+   board-colour picker keeps working: the other palettes now tint these same shapes. Street
+   keeps its chalk board (it sets its own felt background outright). */
+body[data-felt="classic"]:not(.game-street),.felt-classic{
+  --felt-1:#2f9440;--felt-2:#1f7230;--felt-3:#27833a;--felt-4:#0e4419;--felt-rail:#0a3312;
+  --glow-hi:rgba(120,230,140,.28);--glow-lo:rgba(4,30,12,.6);
+  /* Lighter, softer-centred glow than the old vignette -- the machine's felt reads as lit
+     from above the middle of the table, falling off to a deep green at the frame. */
+  --felt-bg:radial-gradient(ellipse 72% 64% at 50% 44%,#3aa24a 0%,#24803a 42%,#166028 72%,#0d4318 100%);
+  --box-1:#1c6c2e;--box-2:#124d20;--box-3:#0b3616;
+  --edge-1:#072d10;--edge-4:rgba(150,235,160,.6);
+  /* The rim. Light green bevel instead of gold metal -- this one token restyles every bet box. */
+  --metal:linear-gradient(180deg,#9be6a4 0%,#5cc26b 35%,#3a9c49 70%,#2c7d39 100%);
+  --box-fill:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#1f7433 0%,#124b20 100%) padding-box,var(--metal) border-box;
+  --box-fill-flat:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#155a26 0%,#0c3a17 100%) padding-box,var(--metal) border-box;
+  --box-fill-lightest:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#2f9a42 0%,#1e7230 100%) padding-box,var(--metal) border-box;
+  --box-fill-darkest:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#0b3a17 0%,#062410 100%) padding-box,var(--metal) border-box;
+  --box-border-color:rgba(150,235,160,.6);
+  --box-radius:7px;
+  --ink-accent:#ffd85c;--ink-accent-rgb:255,216,92;
+  /* Flat machine lettering: the gradient-clip plumbing stays, the gradients become solid. */
+  --text-grad-white:linear-gradient(#ffffff,#ffffff);
+  --text-grad-gold:linear-gradient(#ffffff,#ffffff);
+  --text-grad-red:linear-gradient(#ff3b2e,#ff3b2e);
+  --color-passline:#4d9cf0;
+  --font-heavy:'Open Sans','Arial Black',Arial,Helvetica,sans-serif;
+  --font-script:'Kaushan Script','Brush Script MT',cursive;
+}
+body.felt-mode #game-screen{background:#062a10}
+
+/* 2. TYPE -- the machine's clean bold sans on the board and its chrome (modals/auth untouched).
+   #info-panel is deliberately NOT listed: Open Sans is wider than system-ui at the HUD's 17px
+   uppercase labels, and switching it wrapped LAST BET / PLAYABLE onto extra lines and jumbled
+   the panel. The HUD keeps its face; it still gets the dark chrome backing from rule 7. */
+body.felt-mode:not(.felt-mobile) #felt-stage,body.felt-mode:not(.felt-mobile) #bottom-section,body.felt-mode:not(.felt-mobile) #left-col-header{font-family:'Open Sans',system-ui,sans-serif}
+/* Phones keep system-ui: the 1.0.56-69 portrait/landscape layouts were tuned on its metrics,
+   and Open Sans is taller -- on the 852x393 landscape board it grew the special-button stack
+   enough to push "Bets On" up under the line-mode tab row. Numerals / SIX / NINE still take
+   --font-heavy / --font-script (sized per box, verified on both phone layouts). The chrome
+   buttons below get the machine face only where the layout has room for it. */
+body.felt-mode:not(.felt-mobile) #felt-stage .sc-btn,body.felt-mode:not(.felt-mobile) #felt-stage #tab-hw,body.felt-mode:not(.felt-mobile) #felt-stage #tab-hop,body.felt-mode:not(.felt-mobile) #felt-stage #line-mode-toggle .mode-btn,body.felt-mode:not(.felt-mobile) .bar-btn,body.felt-mode:not(.felt-mobile) .info-btn{font-family:'Open Sans',system-ui,sans-serif;font-weight:800}
+
+/* 3. NUMBER LINE -- dark bevelled body, BUY pill on top, PLACE + "N FOR M" below, white numerals,
+   script SIX / NINE (Kaushan is already cursive-slanted, so the synthesized italic comes off). */
+body.felt-mode #felt-stage .num-box{box-shadow:inset 0 2px 0 rgba(255,255,255,.08),0 2px 4px rgba(0,0,0,.45)}
+body.felt-mode #felt-stage .nb-buy,body.felt-mode #felt-stage .nb-buy-left{background:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#3fae52 0%,#258238 100%) padding-box,var(--metal) border-box;border-radius:6px}
+body.felt-mode #felt-stage .nb-place{background:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#2a8c3d 0%,#1a6a2b 100%) padding-box,var(--metal) border-box;border-radius:6px}
+body.felt-mode #felt-stage .nb-num-word{font-family:var(--font-script)!important;font-style:normal!important;font-weight:400!important}
+
+/* 4. COME (red) / PASS LINE (blue) / FIELD -- the machine's colour-coding for the line bets. */
+body.felt-mode #felt-stage #come-bar .zone-name{background:linear-gradient(#ff3b2e,#ff3b2e)!important;-webkit-background-clip:text!important;background-clip:text!important}
+body.felt-mode #felt-stage #pass-bar .zone-name{background:linear-gradient(var(--color-passline),var(--color-passline))!important;-webkit-background-clip:text!important;background-clip:text!important}
+body.felt-mode #felt-stage .field-info,body.felt-mode #felt-stage #field-bar div[style*="font-size:15px"]{color:#fff!important;opacity:.95}
+
+/* 5. LEFT PANEL -- dark banded white headers, dark rounded slots (the dice inside them go red
+   via the JS sweep), white odds. SEVEN / ANY CRAPS stay red through --text-grad-red. */
+body.felt-mode #felt-stage .fm-panel-label,body.felt-mode #felt-stage .hop-section-hdr{background:linear-gradient(180deg,#0f4a1e,#082e12);color:#fff!important;font-family:'Open Sans',system-ui,sans-serif;font-weight:800;letter-spacing:.08em;border-radius:5px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+body.felt-mode #felt-stage .bb,body.felt-mode #felt-stage .horn-cell{background:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#0f4a1f 0%,#082e12 100%) padding-box,linear-gradient(180deg,#5cc26b,#2c7d39) border-box;border-radius:9px}
+body.felt-mode #felt-stage .bb .pay,body.felt-mode #felt-stage .hc-pay{color:#fff!important;opacity:.92;font-weight:700}
+body.felt-mode #felt-stage .prop-bar{background:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#0f4a1f,#082e12) padding-box,linear-gradient(180deg,#5cc26b,#2c7d39) border-box!important;border-radius:9px}
+body.felt-mode #felt-stage .prop-bar-odds{color:#fff!important;font-weight:700}
+body.felt-mode #felt-stage .horn-center{background:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#155a26,#0c3a17) padding-box,linear-gradient(180deg,#5cc26b,#2c7d39) border-box}
+
+/* 6. HARDWAYS / HOP BETS tabs (glossy chrome pills, green when active, $ readout in a dark
+   pill), the C / C&E / E circles, and the special buttons (grey chrome like SET BETS ON /
+   PRESS / ACROSS; green when on, amber when locked, dark when unavailable). */
+body.felt-mode #felt-stage #tab-hw,body.felt-mode #felt-stage #tab-hop{background:linear-gradient(180deg,#f2f2f2 0%,#c9c9c9 55%,#a9a9a9 100%);border:1px solid #6d6d6d;border-radius:999px;color:#222!important;box-shadow:inset 0 1px 0 #fff,0 2px 3px rgba(0,0,0,.5)}
+body.felt-mode #felt-stage #tab-hw.active,body.felt-mode #felt-stage #tab-hop.active{background:linear-gradient(180deg,#bff3a4 0%,#7fd45c 50%,#4fae35 100%);border-color:#2f7a1f;color:#0b2a05!important}
+body.felt-mode #felt-stage .mode-btn-amt{background:linear-gradient(180deg,#3a3a3a,#1a1a1a);color:#fff!important;border-radius:999px;padding:0 .5em;font-weight:700}
+/* Full / Limited / Easy line-mode tabs (a game feature the machine expresses as separate
+   variants) -- same chrome pills as HARDWAYS / HOP BETS so they stop reading as the old gold. */
+body.felt-mode #felt-stage #line-mode-toggle .mode-btn{background:linear-gradient(180deg,#f2f2f2 0%,#c9c9c9 55%,#a9a9a9 100%);border:1px solid #6d6d6d;border-radius:999px;color:#222!important;box-shadow:inset 0 1px 0 #fff,0 2px 3px rgba(0,0,0,.5)}
+body.felt-mode #felt-stage #line-mode-toggle .mode-btn.active{background:linear-gradient(180deg,#bff3a4 0%,#7fd45c 50%,#4fae35 100%);border-color:#2f7a1f;color:#0b2a05!important}
+body.felt-mode #felt-stage .prop-circle{background:linear-gradient(var(--sheen),var(--sheen)) padding-box,linear-gradient(180deg,#155a26,#0c3a17) padding-box,linear-gradient(180deg,#8fdc9a,#2c7d39) border-box;border:2px solid transparent;color:#fff;font-family:'Open Sans',system-ui,sans-serif;font-weight:800}
+body.felt-mode #felt-stage .sc-btn{background:linear-gradient(180deg,#f4f4f4 0%,#cfcfcf 55%,#ababab 100%);border:1px solid #666;border-radius:8px;color:#1e1e1e;letter-spacing:.03em;box-shadow:inset 0 1px 0 #fff,0 2px 3px rgba(0,0,0,.5)}
+body.felt-mode:not(.felt-mobile) #felt-stage .sc-btn{text-transform:uppercase}
+body.felt-mode #felt-stage .sc-btn:hover{background:linear-gradient(180deg,#fff 0%,#dcdcdc 55%,#bdbdbd 100%)}
+body.felt-mode #felt-stage .sc-btn.on{background:linear-gradient(180deg,#bff3a4 0%,#7fd45c 50%,#4fae35 100%);border-color:#2f7a1f;color:#0b2a05}
+body.felt-mode #felt-stage .sc-btn.locked{background:linear-gradient(180deg,#ffe9a8,#e0b53a);border-color:#8a6a10;color:#3a2a00}
+body.felt-mode #felt-stage .sc-btn:disabled{background:linear-gradient(180deg,#5a5a5a,#3a3a3a);color:#9a9a9a;border-color:#2a2a2a;box-shadow:none}
+
+/* 7. CHROME -- dark glossy bars top and bottom, chip tray with a glowing selected chip, grey
+   chrome bar buttons, and the big round ROLL. The round ROLL and the transparent history strip
+   are desktop-only: on phones the bottom bar is a hand-tuned 3-row split and the history strip
+   floats over the felt, so both keep their current shape and backing there. */
+body.felt-mode #bottom-section,body.felt-mode #left-col-header,body.felt-mode #info-panel{background:linear-gradient(180deg,#3b3b3b 0%,#1c1c1c 40%,#0e0e0e 100%)!important;border:1px solid #4a4a4a!important;box-shadow:0 2px 6px rgba(0,0,0,.6)}
+body.felt-mode:not(.felt-mobile) #bottom-bar,body.felt-mode:not(.felt-mobile) #history-strip{background:transparent}
+body.felt-mode #bottom-bar .chip.sel{box-shadow:0 0 0 2px #fff,0 0 14px 4px rgba(255,255,160,.85);transform:scale(1.15)}
+body.felt-mode .bar-btn,body.felt-mode .info-btn{background:linear-gradient(180deg,#f2f2f2 0%,#c9c9c9 55%,#a9a9a9 100%);border:1px solid #666;border-radius:999px;color:#1e1e1e;box-shadow:inset 0 1px 0 #fff,0 2px 3px rgba(0,0,0,.5)}
+body.felt-mode .bar-btn:hover,body.felt-mode .info-btn:hover{background:linear-gradient(180deg,#fff,#dcdcdc 55%,#bdbdbd)}
+body.felt-mode .bar-btn:disabled{opacity:.4}
+body.felt-mode .hud-lbl{color:rgba(255,255,255,.55)}
+body.felt-mode #roll-btn{background:linear-gradient(180deg,#ffffff 0%,#d9d9d9 45%,#9e9e9e 100%);color:#1a1a1a;border:2px solid #6a6a6a;font-family:'Open Sans',system-ui,sans-serif;font-weight:800;letter-spacing:.04em;box-shadow:inset 0 2px 0 #fff,0 3px 8px rgba(0,0,0,.7);text-shadow:none}
+body.felt-mode:not(.felt-mobile) #roll-btn{background:radial-gradient(circle at 40% 30%,#ffffff 0%,#d9d9d9 45%,#9e9e9e 100%);border-width:3px;border-radius:50%!important;aspect-ratio:1;align-self:center;height:88%;padding:0!important;margin:0 .4em}
+body.felt-mode #roll-btn:hover{background:radial-gradient(circle at 40% 30%,#fff 0%,#ececec 45%,#b5b5b5 100%);box-shadow:inset 0 2px 0 #fff,0 0 18px rgba(255,255,255,.5)}
+
+/* 8. ROLL HISTORY + LUCKY ROLLER -- same rim/body language; a hit Lucky Roller number keeps
+   its own glow (the :not(.hit) guard keeps this ID-weighted rule from out-ranking it). */
+body.felt-mode .roll-pip .rp-num{background:#111;border-radius:4px}
+body.felt-mode #log-btn{background:linear-gradient(180deg,#f2f2f2,#a9a9a9);border:1px solid #666;color:#111}
+body.felt-mode #felt-stage .lr-num:not(.hit){background:linear-gradient(180deg,#1f7433,#124b20);border:1px solid rgba(150,235,160,.55);color:#fff}
+body.felt-mode #felt-stage .lr-title{color:#fff}
 </style>
 </head>
 <body>
@@ -2738,7 +2858,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
           <div class="bwrap"><div class="bb" id="bet-hard8" onclick="placeBet('hard8')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('hard8')"><span class="dp"><img class="dice-combo-img" src="marble44.png" style="width:2em;height:1em;vertical-align:middle;display:inline-block"></span><span class="stk" id="stk-hard8"></span><span class="pay">10 for 1</span></div></div>
         </div>
         <div id="prop-block">
-          <div id="prop-panel-label" class="fm-panel-label">PROPOSITION BETS</div>
+          <div id="prop-panel-label" class="fm-panel-label">ONE ROLL BETS</div>
           <div class="bwrap"><div id="bet-any7" onclick="placeBet('any7')" oncontextmenu="event.preventDefault();event.stopPropagation();removeBet('any7')" class="prop-bar" style="background:var(--box-fill-flat)"><span class="prop-bar-odds" style="color:rgba(var(--ink-bad-rgb),.9)">5 for 1</span><div style="text-align:center"><div class="prop-bar-name" style="color:var(--ink-bad)">SEVEN</div><div class="prop-bar-stk" id="stk-any7"></div></div><span class="prop-bar-odds" style="color:rgba(var(--ink-bad-rgb),.9)">5 for 1</span></div></div>
           <div class="horn-stack">
             <div class="horn-row" style="border-bottom:0.5px solid rgba(255,255,255,.1)">
@@ -3012,7 +3132,7 @@ body[data-felt="ivory"],body[data-felt="rose"]{--color-passline:var(--color-pass
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.70</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.71</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -4808,6 +4928,38 @@ async function switchGameMode(mode){
 
 function diceComboImg(d1,d2,h){const hi=Math.max(d1,d2),lo=Math.min(d1,d2);return '<img class="dice-combo-img" src="marble'+hi+lo+'.png" style="width:'+(parseInt(h)*2)+'px;height:'+h+';vertical-align:middle;display:inline-block">';}
 
+// INTERBLOCK SKIN -- red dice with white pips (Hard Ways / Hop / Horn / Field / roll history /
+// DC bar), drawn as an inline-SVG data URI so they stay crisp at every felt scale and need no
+// art assets. Every marble<hi><lo>.png reference in this file is a single PAIR image (width =
+// 2x height), so this emits one two-die SVG per pair and keeps the <img class="dice-combo-img">
+// element exactly as it was: the felt image-hider exemption, every size override, and the
+// portrait/compact rules all key off that tag+class and are untouched.
+//
+// Why a sweep instead of editing the generators: the marble srcs are hard-coded in ~30 places
+// (the static Hard Ways / Hop / Horn cells, #dp-bar12, the DC bar) as well as in two builders.
+// One idempotent pass over img.dice-combo-img[src=marble..] catches all of them, and running
+// it off updateUI() (coalesced to a single rAF) covers every dynamic re-render -- roll history,
+// Field info, the DC waiting box -- without a MutationObserver. Already-converted imgs carry a
+// data: src and don't match the regex, so repeat passes are free.
+const RED_DIE_PIPS={1:[[50,50]],2:[[27,27],[73,73]],3:[[27,27],[50,50],[73,73]],4:[[27,27],[73,27],[27,73],[73,73]],5:[[27,27],[73,27],[50,50],[27,73],[73,73]],6:[[27,25],[73,25],[27,50],[73,50],[27,75],[73,75]]};
+function redDiePairSrc(hi,lo){
+  const die=(n,x)=>'<rect x="'+(x+3)+'" y="3" width="94" height="94" rx="16" fill="url(#g)" stroke="#6e0d08" stroke-width="3"/>'
+    +RED_DIE_PIPS[n].map(p=>'<circle cx="'+(x+p[0])+'" cy="'+p[1]+'" r="9.5" fill="#fff"/>').join('');
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f04a3b"/><stop offset="1" stop-color="#b3140c"/></linearGradient></defs>'+die(hi,0)+die(lo,100)+'</svg>';
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+let redDiceSweepQueued=false;
+function scheduleRedDiceSweep(){
+  if(redDiceSweepQueued)return;redDiceSweepQueued=true;
+  requestAnimationFrame(()=>{
+    redDiceSweepQueued=false;
+    document.querySelectorAll('img.dice-combo-img').forEach(img=>{
+      const m=/marble([1-6])([1-6])\.png$/.exec(img.getAttribute('src')||'');
+      if(m)img.src=redDiePairSrc(+m[1],+m[2]);
+    });
+  });
+}
+
 const r2=n=>Math.round(n*100)/100;
 const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtS=n=>'$'+Math.abs(n).toFixed(0);
@@ -5608,7 +5760,11 @@ function buildStrip(){
     const dcs=document.createElement('div');dcs.id='dc-slot-'+n;dcs.className='dc-chip-box';
     md.appendChild(nl);md.appendChild(cs);md.appendChild(dcs);
     const pd=document.createElement('div');pd.className='nb-place';pd.id='nb-place-'+n;pd.dataset.betKey='place'+n;pd.onclick=()=>placeBet('place'+n);pd.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();removeBet('place'+n);};
-    pd.innerHTML='<span class="nb-lbl">PLACE</span><span class="nb-stk" id="stk-place'+n+'"></span><div class="off-ov" id="off-place-'+n+'" style="display:none"><span>OFF</span></div><span class="nb-pay">'+w+':'+d+'</span>';
+    // Crapless prints the machine's "N FOR M" (stake included) under PLACE -- 11:2 reads as
+    // "13 FOR 2", matching the Interblock number line 1:1. Display only; payout math is
+    // unchanged (def.place is still the to-odds pair everywhere it is computed).
+    const payLbl=activeGame==='crapless'?(w+d)+' FOR '+d:w+':'+d;
+    pd.innerHTML='<span class="nb-lbl">PLACE</span><span class="nb-stk" id="stk-place'+n+'"></span><div class="off-ov" id="off-place-'+n+'" style="display:none"><span>OFF</span></div><span class="nb-pay">'+payLbl+'</span>';
     box.appendChild(md);box.appendChild(pd);wrap.appendChild(box);
     strip.appendChild(wrap);
   });
@@ -7450,6 +7606,7 @@ async function rollDice(isRetry){
 // 'roll' Edge Function. The client never computes win/loss locally.
 
 function updateUI(){
+  scheduleRedDiceSweep(); // Interblock skin: recolour any marble dice rendered this tick (see redDiePairSrc)
   const net=calcNet();
   const pnlEl=document.getElementById('hud-pnl');pnlEl.textContent=(net>=0?'+':'')+fmt(net);pnlEl.style.color=net>=0?'#7ee87e':'#f08080';
   const hudBrEl=document.getElementById('hud-bankroll');
