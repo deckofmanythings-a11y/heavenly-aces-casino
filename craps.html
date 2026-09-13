@@ -2415,7 +2415,10 @@ body.felt-mode #roll-btn:hover{background:radial-gradient(circle at 40% 30%,#fff
 
 /* 8. ROLL HISTORY + LUCKY ROLLER -- same rim/body language; a hit Lucky Roller number keeps
    its own glow (the :not(.hit) guard keeps this ID-weighted rule from out-ranking it). */
-body.felt-mode .roll-pip .rp-num{background:#111;border-radius:4px}
+/* Radius only -- no background here. This selector out-ranks the base .rp-num.made/.win (blue:
+   point made / seven front-line winner) and .rp-num.out (red: seven-out) classes, so setting a
+   background on it painted every pip dark (Deck: "return the blue and red shading"). */
+body.felt-mode .roll-pip .rp-num{border-radius:4px}
 body.felt-mode #log-btn{background:linear-gradient(180deg,#f2f2f2,#a9a9a9);border:1px solid #666;color:#111}
 body.felt-mode #felt-stage .lr-num:not(.hit){background:linear-gradient(180deg,#1f7433,#124b20);border:1px solid rgba(150,235,160,.55);color:#fff}
 body.felt-mode #felt-stage .lr-title{color:#fff}
@@ -3132,7 +3135,7 @@ body.felt-mode #felt-stage .lr-title{color:#fff}
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.72</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.73</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
