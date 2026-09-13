@@ -3132,7 +3132,7 @@ body.felt-mode #felt-stage .lr-title{color:#fff}
         </div>
         <div class="bb-row">
           <div id="ver-wrap" style="flex:1;display:flex;align-items:center;justify-content:center">
-            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.71</span>
+            <span id="version-tag" style="font-size:10px;color:rgba(var(--ink-rgb),.35);letter-spacing:.04em">Ver. 1.0.72</span>
           </div>
           <span id="hud-pnl" style="font-size:21px;font-weight:700;color:var(--ink-good);flex-shrink:0;padding:0 4px">+$0.00</span>
           <button class="bar-btn danger" onclick="clearRemovable()">Clear</button>
@@ -7485,6 +7485,15 @@ async function rollDice(isRetry){
       }
     }
     if(data.free_play_balance!=null)G.freePlay=data.free_play_balance;
+    // Feed the roll response to the shared FP badge: it refreshes the displayed balance and
+    // flashes "-$X used" for the portion Free Play covered this roll. This page only ever
+    // READ the badge (getBalance, for the FP$ chip-label estimate) and never wrote back, so
+    // after a roll the badge went stale and the "used" flash never fired -- Deck: "$25 buy on
+    // 2/3/4/10/11/12 + $2 on each Lucky Roller, $0 playable, one roll, somehow $6 Playable --
+    // establishing the point pays $6?" It didn't: FP covered the $6 Lucky Roller stake, so
+    // real bankroll was only charged $150 and the re-sync restored the $6 the client had
+    // optimistically deducted. Correct accounting, zero explanation; this is the explanation.
+    if(window.FreePlayBadge)FreePlayBadge.handle(data);
     // Every roll response reports the player's current tier (the streak system can move it
     // mid-session, no re-login involved) -- refreshTierLimits() no-ops unless it changed, so
     // this is free on the common path and catches a promotion/demotion the moment it lands.
